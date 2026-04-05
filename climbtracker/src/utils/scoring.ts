@@ -98,16 +98,18 @@ export function calculateRankings(
   competitors:  Competitor[],
   completions:  Completion[],
 ): RankResult[] {
-  // Build one result row per competitor
-  const results = competitors.map(competitor => {
+  // Exclude the organizer and any judges — they don't compete
+  const actualCompetitors = competitors.filter(c =>
+    c.id !== competition.ownerId && c.role !== 'judge'
+  )
+
+  const results = actualCompetitors.map(competitor => {
     const mine = completions.filter(c => c.competitorId === competitor.id)
 
     const totalPoints   = calcCompetitorScore(competitor, competition, boulders, completions)
     const totalTops     = mine.length
     const totalAttempts = mine.reduce((sum, c) => sum + c.attempts, 0)
     const flashCount    = mine.filter(c => c.attempts === 1).length
-
-    // Find the category name for display
     const category = competition.categories.find(cat => cat.id === competitor.categoryId)
 
     return {
@@ -119,18 +121,16 @@ export function calculateRankings(
       totalTops,
       totalAttempts,
       flashCount,
-      rank:          0,   // placeholder — we assign this below
+      rank: 0,
     }
   })
 
-  // Sort by: most points → fewest attempts → most flashes
   results.sort((a, b) => {
     if (b.totalPoints   !== a.totalPoints)   return b.totalPoints   - a.totalPoints
     if (a.totalAttempts !== b.totalAttempts) return a.totalAttempts - b.totalAttempts
     return b.flashCount - a.flashCount
   })
 
-  // Assign ranks — competitors with equal points share the same rank
   results.forEach((result, index) => {
     if (index === 0) {
       result.rank = 1
@@ -140,7 +140,6 @@ export function calculateRankings(
         result.totalPoints   === prev.totalPoints &&
         result.totalAttempts === prev.totalAttempts &&
         result.flashCount    === prev.flashCount
-
       result.rank = sameScore ? prev.rank : index + 1
     }
   })

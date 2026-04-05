@@ -57,7 +57,7 @@ export default function LeaderboardPage({
 
   // ── Filtered rankings ────────────────────────────────────────────────────
   const visible = useMemo(() => {
-    let list = [...rankings]
+    let list = rankings.filter(r => r.competitorId !== competition.ownerId)
 
     if (filterCategory !== 'all') {
       list = list.filter(r => r.category === filterCategory)

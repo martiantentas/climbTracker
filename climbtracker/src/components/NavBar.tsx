@@ -78,7 +78,7 @@ export default function NavBar({
         : 'bg-white/80 backdrop-blur-xl border-slate-200 shadow-sm'
       }
     `}>
-      <div className="w-full px-4 md:px-6 py-2 flex items-center gap-3">
+      <div className="w-full px-4 md:px-6 py-2 flex items-center gap-4">
 
         {/* ── Logo ── */}
         <div className="flex-shrink-0">
@@ -109,7 +109,7 @@ export default function NavBar({
 
         {/* ── Centre: Nav pills — takes remaining space, scrollable if needed ── */}
         <nav className={`
-          hidden lg:flex items-center gap-1 p-1.5 rounded-2xl flex-1 overflow-x-auto
+          hidden lg:flex items-center gap-1 p-1.5 rounded-2xl overflow-x-auto
           ${theme === 'dark' ? 'bg-white/5 border border-white/5' : 'bg-slate-200/50'}
         `}>
           <NavPill to="/"             label={t.boulders}       theme={theme} />

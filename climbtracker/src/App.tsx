@@ -20,13 +20,14 @@ import BouldersPage from './pages/BouldersPage'
 import LeaderboardPage from './pages/LeaderboardPage'
 import RulesPage from './pages/RulesPage'
 import ProfilePage from './pages/ProfilePage'
+import CompetitionsPage from './pages/CompetitionsPage'
+import UsersPage from './pages/UsersPage'
 
 // ─── PAGES (placeholders for now — we'll replace these one by one) ────────────
 
 function AnalyticsPage()    { return <div className="p-8 text-white">Analytics page</div> }
 function SettingsPage()     { return <div className="p-8 text-white">Settings page</div> }
 function JudgingPage()      { return <div className="p-8 text-white">Judging page</div> }
-function CompetitionsPage() { return <div className="p-8 text-white">Competitions page</div> }
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
@@ -80,6 +81,16 @@ export default function App() {
   const isOrganizer = useMemo(() =>
     currentUser?.id === activeCompetition?.ownerId,
     [currentUser, activeCompetition]
+  )
+
+  // Can the current user see the full competition content?
+  // True if: they are the organizer, OR they are a registered participant
+  const canAccessActiveComp = useMemo(() =>
+    isOrganizer || (activeCompetition
+      ? (competitorsMap[activeCompetition.id] ?? []).some(c => c.id === currentUser?.id)
+      : false
+    ),
+    [isOrganizer, activeCompetition, competitorsMap, currentUser]
   )
 
   const rankings = useMemo(() =>
@@ -212,13 +223,10 @@ export default function App() {
 
   function handleLeaveCompetition(compId: string) {
     if (!currentUser) return
+    // Only remove the participant — completions stay as historical record
     setCompetitorsMap(prev => ({
       ...prev,
       [compId]: (prev[compId] ?? []).filter(c => c.id !== currentUser.id),
-    }))
-    setCompletionsMap(prev => ({
-      ...prev,
-      [compId]: (prev[compId] ?? []).filter(c => c.competitorId !== currentUser.id),
     }))
   }
 
@@ -232,6 +240,28 @@ export default function App() {
 
   function isUserRegistered(compId: string): boolean {
     return (competitorsMap[compId] ?? []).some(c => c.id === currentUser?.id)
+  }
+
+  function handleUpdateRole(competitorId: string, role: 'competitor' | 'judge') {
+    if (!activeCompetition) return
+    setCompetitorsMap(prev => ({
+      ...prev,
+      [activeCompetition.id]: (prev[activeCompetition.id] ?? []).map(c =>
+        c.id === competitorId ? { ...c, role } : c
+      ),
+    }))
+    showToast(t.successSaved)
+  }
+
+  function handleRemoveUser(competitorId: string) {
+    if (!activeCompetition) return
+    setCompetitorsMap(prev => ({
+      ...prev,
+      [activeCompetition.id]: (prev[activeCompetition.id] ?? []).filter(c =>
+        c.id !== competitorId
+      ),
+    }))
+    showToast(t.successSaved)
   }
 
   // ── Auth screen ──────────────────────────────────────────────────────────────
@@ -310,39 +340,23 @@ export default function App() {
 
         <main className="max-w-7xl mx-auto px-4 md:px-6 py-8">
           <Routes>
-            <Route path="/" element={
-              <BouldersPage
-                competition={activeCompetition}
-                boulders={activeBoulders}
-                completions={activeCompletions}
+
+            {/* ── Always accessible ── */}
+            <Route path="/competitions" element={
+              <CompetitionsPage
+                competitions={competitions}
+                activeCompId={activeCompId}
                 currentUser={currentUser}
-                isOrganizer={isOrganizer}
                 theme={theme}
                 lang={lang}
-                onToggle={handleToggleCompletion}
-                onUpdateBoulders={updateBoulders}
+                onEnter={setActiveCompId}
+                onCreate={handleCreateCompetition}
+                onDelete={handleDeleteCompetition}
+                onLeave={handleLeaveCompetition}
+                onJoinByCode={handleJoinByCode}
+                isRegistered={isUserRegistered}
               />
             } />
-            <Route path="/leaderboard" element={
-              <LeaderboardPage
-                rankings={rankings}
-                competition={activeCompetition}
-                theme={theme}
-                lang={lang}
-              />
-            } />
-            <Route path="/rules" element={
-              <RulesPage
-                competition={activeCompetition}
-                isOrganizer={isOrganizer}
-                theme={theme}
-                lang={lang}
-                onUpdate={updateCompetition}
-              />
-            } />
-            <Route path="/analytics"    element={<AnalyticsPage />} />
-            <Route path="/settings"     element={<SettingsPage />} />
-            <Route path="/judging"      element={<JudgingPage />} />
             <Route path="/profile" element={
               <ProfilePage
                 currentUser={currentUser}
@@ -351,11 +365,78 @@ export default function App() {
                 onJoinByCode={handleJoinByCode}
               />
             } />
-            <Route path="/competitions" element={<CompetitionsPage />} />
-            <Route path="*"             element={<Navigate to="/" />} />
+
+            {/* ── Restricted: must be registered or organizer ── */}
+            {canAccessActiveComp ? (
+              <>
+                <Route path="/" element={
+                  <BouldersPage
+                    competition={activeCompetition}
+                    boulders={activeBoulders}
+                    completions={activeCompletions}
+                    currentUser={currentUser}
+                    isOrganizer={isOrganizer}
+                    theme={theme}
+                    lang={lang}
+                    onToggle={handleToggleCompletion}
+                    onUpdateBoulders={updateBoulders}
+                  />
+                } />
+                <Route path="/leaderboard" element={
+                  <LeaderboardPage
+                    rankings={rankings}
+                    competition={activeCompetition}
+                    theme={theme}
+                    lang={lang}
+                  />
+                } />
+                <Route path="/rules" element={
+                  <RulesPage
+                    competition={activeCompetition}
+                    isOrganizer={isOrganizer}
+                    theme={theme}
+                    lang={lang}
+                    onUpdate={updateCompetition}
+                  />
+                } />
+                <Route path="/users" element={
+                  <UsersPage
+                    competitors={activeCompetitors}
+                    competition={activeCompetition}
+                    currentUser={currentUser}
+                    theme={theme}
+                    lang={lang}
+                    onUpdateRole={handleUpdateRole}
+                    onRemoveUser={handleRemoveUser}
+                  />
+                } />
+                <Route path="/analytics" element={<AnalyticsPage />} />
+                <Route path="/settings"  element={<SettingsPage />} />
+                <Route path="/judging"   element={<JudgingPage />} />
+              </>
+            ) : (
+              <Route path="/*" element={
+                <div className="flex flex-col items-center justify-center py-24 text-center gap-6">
+                  <p className="text-5xl">🔒</p>
+                  <h2 className={`text-2xl font-black tracking-tight ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                    You're not registered for this event
+                  </h2>
+                  <p className={`text-sm max-w-sm ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                    You can still view the event in My Events and rejoin at any time.
+                  </p>
+                  
+                    href="#/competitions"
+                    className="px-6 py-3 bg-sky-400 text-sky-950 rounded-xl font-black text-sm hover:bg-sky-300 transition-all"
+                  <a>
+                    Go to My Events
+                  </a>
+                </div>
+              } />
+            )}
+
+            <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </main>
-
       </div>
     </HashRouter>
   )

@@ -55,6 +55,7 @@ export interface Competitor {
   categoryId:  string
   bibNumber:   number
   avatar?:     string        // optional profile picture URL
+  role?:       'competitor' | 'judge'
 }
 
 // ─── COMPLETION ───────────────────────────────────────────────────────────────

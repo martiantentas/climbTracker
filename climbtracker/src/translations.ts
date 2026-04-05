@@ -91,6 +91,7 @@ export const translations = {
 
     // Competitions list
     newCompetition:   'New Competition',
+    createCompetition: 'Create Competition',
     noCompetitions:   'No competitions yet. Create one to get started!',
     enterCompetition: 'Enter',
     manageEvent:      'Manage',
@@ -128,6 +129,13 @@ export const translations = {
     theme: 'Display Mode',
     demoAdmin: 'Demo Organizer Access',
     demoPass:  'Password: admin123',
+
+    banUser:        'Ban from event',
+    deleteUser:     'Delete user',
+    makeJudge:      'Make judge',
+    makeCompetitor: 'Make competitor',
+    makeOrganizer:  'Make organizer',
+    banned:         'Banned',
   },
 
   es: {
@@ -214,6 +222,7 @@ export const translations = {
 
     // Competitions list
     newCompetition:   'Nueva Competición',
+    createCompetition: 'Crear Competición',
     noCompetitions:   'Sin competiciones. ¡Crea una para empezar!',
     enterCompetition: 'Entrar',
     manageEvent:      'Gestionar',
@@ -251,6 +260,15 @@ export const translations = {
     theme: 'Modo Visual',
     demoAdmin: 'Acceso Demo Organizador',
     demoPass:  'Contraseña: admin123',
+
+    users:          'Usuarios',
+    searchUsers:    'Buscar usuario...',
+    banUser:        'Vetar del evento',
+    deleteUser:     'Eliminar usuario',
+    makeJudge:      'Hacer juez',
+    makeCompetitor: 'Hacer competidor',
+    makeOrganizer:  'Hacer organizador',
+    banned:         'Vetado',
   },
 
   ca: {
@@ -337,6 +355,7 @@ export const translations = {
 
     // Competitions list
     newCompetition:   'Nova Competició',
+    createCompetition: 'Crear Competició',
     noCompetitions:   'Sense competicions. Crea una per començar!',
     enterCompetition: 'Entrar',
     manageEvent:      'Gestionar',
@@ -374,5 +393,14 @@ export const translations = {
     theme: 'Mode Visual',
     demoAdmin: 'Accés Demo Organitzador',
     demoPass:  'Contrasenya: admin123',
+
+    users:          'Usuaris',
+    searchUsers:    'Cerca un usuari...',
+    banUser:        "Vetar de l'event",
+    deleteUser:     'Eliminar usuari',
+    makeJudge:      'Fer jutge',
+    makeCompetitor: 'Fer competidor',
+    makeOrganizer:  'Fer organitzador',
+    banned:         'Vetat',
   },
 } as const
