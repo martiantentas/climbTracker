@@ -1,0 +1,123 @@
+import type {
+  Competition,
+  Boulder,
+  Competitor,
+  Completion,
+  Category,
+  DifficultyLevel,
+} from './types'
+
+import {
+  CompetitionStatus,
+  ScoringType,
+} from './types'
+// ─── CATEGORIES ───────────────────────────────────────────────────────────────
+
+export const INITIAL_CATEGORIES: Category[] = [
+  { id: 'cat-1', name: 'Open Men' },
+  { id: 'cat-2', name: 'Open Women' },
+  { id: 'cat-3', name: 'Masters' },
+  { id: 'cat-4', name: 'Youth' },
+]
+
+// ─── DIFFICULTY LEVELS ────────────────────────────────────────────────────────
+
+export const INITIAL_DIFFICULTIES: DifficultyLevel[] = [
+  { id: 'diff-1', level: 1, basePoints: 100 },
+  { id: 'diff-2', level: 2, basePoints: 200 },
+  { id: 'diff-3', level: 3, basePoints: 300 },
+  { id: 'diff-4', level: 4, basePoints: 400 },
+  { id: 'diff-5', level: 5, basePoints: 500 },
+  { id: 'diff-6', level: 6, basePoints: 600 },
+  { id: 'diff-7', level: 7, basePoints: 700 },
+  { id: 'diff-8', level: 8, basePoints: 800 },
+  { id: 'diff-9', level: 9, basePoints: 900 },
+]
+
+// ─── MOCK COMPETITION ─────────────────────────────────────────────────────────
+
+export const MOCK_COMPETITION: Competition = {
+  id:          'comp-1',
+  ownerId:     'u-admin',
+  name:        'Summer Sizzler Bouldering 2024',
+  description: 'The biggest community boulder comp of the summer.',
+  location:    'Vertical Heights Gym, Barcelona',
+  startDate:   '2024-07-15T09:00:00Z',
+  endDate:     '2024-07-15T18:00:00Z',
+  status:      CompetitionStatus.LIVE,
+  scoringType: ScoringType.DYNAMIC,
+  categories:        INITIAL_CATEGORIES,
+  difficultyLevels:  INITIAL_DIFFICULTIES,
+  topKBoulders:      6,
+  dynamicPot:        1000,
+  minDynamicPoints:  50,
+  isLocked:          false,
+  canSelfScore:      true,
+  inviteCode:        'SUMMER24',
+  rules: {
+    en: '### Rules\n1. Log your tops in the app.\n2. Judges must sign off on Puntuable boulders.',
+    es: '### Reglas\n1. Registra tus tops en la app.\n2. Los bloques Puntuables requieren juez.',
+    ca: '### Regles\n1. Registra els teus tops a la app.\n2. Els blocs Puntuables requereixen jutge.',
+  },
+  penalizeAttempts:   true,
+  penaltyType:        'fixed',
+  penaltyValue:       20,
+  minScorePerBoulder: 50,
+}
+
+// ─── MOCK BOULDERS ────────────────────────────────────────────────────────────
+
+// A small helper array of colours to cycle through
+const COLORS = ['#38bdf8', '#fbbf24', '#f87171', '#4ade80', '#c084fc', '#ffffff', '#000000']
+
+export const MOCK_BOULDERS: Boulder[] = Array.from({ length: 15 }, (_, i) => ({
+  id:           `b-${i + 1}`,
+  number:       i + 1,
+  name:         i % 7 === 0 ? 'Beta Blaster' : undefined,
+  color:        COLORS[i % COLORS.length],
+  difficultyId: INITIAL_DIFFICULTIES[i % 9].id,
+  style:        ['Slab', 'Overhang', 'Dyno'][i % 3],
+  isPuntuable:  i < 3,
+  status:       'active',
+}))
+
+// ─── MOCK COMPETITORS ─────────────────────────────────────────────────────────
+
+export const MOCK_COMPETITORS: Competitor[] = [
+  {
+    id: 'u-admin', firstName: 'Admin', lastName: 'Organizer',
+    displayName: 'Admin O.', email: 'admin@climbtracker.com',
+    gender: 'Other', categoryId: 'cat-1', bibNumber: 0,
+  },
+  {
+    id: 'u-1', firstName: 'Alex', lastName: 'Honnold',
+    displayName: 'Alex H.', email: 'alex@example.com',
+    gender: 'Male', categoryId: 'cat-1', bibNumber: 101,
+  },
+  {
+    id: 'u-2', firstName: 'Janja', lastName: 'Garnbret',
+    displayName: 'Janja G.', email: 'janja@example.com',
+    gender: 'Female', categoryId: 'cat-2', bibNumber: 102,
+  },
+  {
+    id: 'u-3', firstName: 'Adam', lastName: 'Ondra',
+    displayName: 'Adam O.', email: 'adam@example.com',
+    gender: 'Male', categoryId: 'cat-1', bibNumber: 103,
+  },
+  {
+    id: 'u-4', firstName: 'Brooke', lastName: 'Raboutou',
+    displayName: 'Brooke R.', email: 'brooke@example.com',
+    gender: 'Female', categoryId: 'cat-2', bibNumber: 104,
+  },
+]
+
+// ─── MOCK COMPLETIONS ─────────────────────────────────────────────────────────
+
+export const MOCK_COMPLETIONS: Completion[] = [
+  { competitorId: 'u-1', boulderId: 'b-1', attempts: 1, timestamp: Date.now() - 3600000 },
+  { competitorId: 'u-1', boulderId: 'b-2', attempts: 2, timestamp: Date.now() - 3000000 },
+  { competitorId: 'u-2', boulderId: 'b-1', attempts: 1, timestamp: Date.now() - 3500000 },
+  { competitorId: 'u-3', boulderId: 'b-1', attempts: 1, timestamp: Date.now() - 3400000 },
+  { competitorId: 'u-3', boulderId: 'b-3', attempts: 3, timestamp: Date.now() - 3300000 },
+  { competitorId: 'u-4', boulderId: 'b-2', attempts: 2, timestamp: Date.now() - 3200000 },
+]
