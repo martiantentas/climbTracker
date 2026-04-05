@@ -18,10 +18,10 @@ import Toast from './components/Toast'
 import MobileMenu from './components/MobileMenu'
 import BouldersPage from './pages/BouldersPage'
 import LeaderboardPage from './pages/LeaderboardPage'
+import RulesPage from './pages/RulesPage'
 
 // ─── PAGES (placeholders for now — we'll replace these one by one) ────────────
 
-function RulesPage()        { return <div className="p-8 text-white">Rules page</div> }
 function AnalyticsPage()    { return <div className="p-8 text-white">Analytics page</div> }
 function SettingsPage()     { return <div className="p-8 text-white">Settings page</div> }
 function JudgingPage()      { return <div className="p-8 text-white">Judging page</div> }
@@ -331,7 +331,15 @@ export default function App() {
                 lang={lang}
               />
             } />
-            <Route path="/rules"        element={<RulesPage />} />
+            <Route path="/rules" element={
+              <RulesPage
+                competition={activeCompetition}
+                isOrganizer={isOrganizer}
+                theme={theme}
+                lang={lang}
+                onUpdate={updateCompetition}
+              />
+            } />
             <Route path="/analytics"    element={<AnalyticsPage />} />
             <Route path="/settings"     element={<SettingsPage />} />
             <Route path="/judging"      element={<JudgingPage />} />
