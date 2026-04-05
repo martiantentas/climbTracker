@@ -19,13 +19,13 @@ import MobileMenu from './components/MobileMenu'
 import BouldersPage from './pages/BouldersPage'
 import LeaderboardPage from './pages/LeaderboardPage'
 import RulesPage from './pages/RulesPage'
+import ProfilePage from './pages/ProfilePage'
 
 // ─── PAGES (placeholders for now — we'll replace these one by one) ────────────
 
 function AnalyticsPage()    { return <div className="p-8 text-white">Analytics page</div> }
 function SettingsPage()     { return <div className="p-8 text-white">Settings page</div> }
 function JudgingPage()      { return <div className="p-8 text-white">Judging page</div> }
-function ProfilePage()      { return <div className="p-8 text-white">Profile page</div> }
 function CompetitionsPage() { return <div className="p-8 text-white">Competitions page</div> }
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
@@ -343,7 +343,14 @@ export default function App() {
             <Route path="/analytics"    element={<AnalyticsPage />} />
             <Route path="/settings"     element={<SettingsPage />} />
             <Route path="/judging"      element={<JudgingPage />} />
-            <Route path="/profile"      element={<ProfilePage />} />
+            <Route path="/profile" element={
+              <ProfilePage
+                currentUser={currentUser}
+                theme={theme}
+                lang={lang}
+                onJoinByCode={handleJoinByCode}
+              />
+            } />
             <Route path="/competitions" element={<CompetitionsPage />} />
             <Route path="*"             element={<Navigate to="/" />} />
           </Routes>
