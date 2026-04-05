@@ -17,10 +17,10 @@ import NavBar from './components/NavBar'
 import Toast from './components/Toast'
 import MobileMenu from './components/MobileMenu'
 import BouldersPage from './pages/BouldersPage'
+import LeaderboardPage from './pages/LeaderboardPage'
 
 // ─── PAGES (placeholders for now — we'll replace these one by one) ────────────
 
-function LeaderboardPage()  { return <div className="p-8 text-white">Leaderboard page</div> }
 function RulesPage()        { return <div className="p-8 text-white">Rules page</div> }
 function AnalyticsPage()    { return <div className="p-8 text-white">Analytics page</div> }
 function SettingsPage()     { return <div className="p-8 text-white">Settings page</div> }
@@ -323,7 +323,14 @@ export default function App() {
                 onUpdateBoulders={updateBoulders}
               />
             } />
-            <Route path="/leaderboard"  element={<LeaderboardPage />} />
+            <Route path="/leaderboard" element={
+              <LeaderboardPage
+                rankings={rankings}
+                competition={activeCompetition}
+                theme={theme}
+                lang={lang}
+              />
+            } />
             <Route path="/rules"        element={<RulesPage />} />
             <Route path="/analytics"    element={<AnalyticsPage />} />
             <Route path="/settings"     element={<SettingsPage />} />
