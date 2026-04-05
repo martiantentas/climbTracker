@@ -1,3 +1,4 @@
+import MobileMenu from './components/MobileMenu'
 import { useState, useMemo } from 'react'
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 
@@ -71,6 +72,7 @@ export default function App() {
   const [toast, setToast] = useState<{ message: string; visible: boolean }>({
     message: '', visible: false,
   })
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   // ── Derived values ───────────────────────────────────────────────────────────
   // useMemo means "only recalculate this when the listed dependencies change"
@@ -294,15 +296,27 @@ export default function App() {
       <div className={`min-h-screen ${theme === 'dark' ? 'bg-slate-900 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
 
         <NavBar
-            theme={theme}
-            setTheme={setTheme}
-            lang={lang}
-            setLang={setLang}
-            currentUser={currentUser}
-            activeCompetition={activeCompetition}
-            isOrganizer={isOrganizer}
-            onOpenMenu={() => {}}
-          />
+          theme={theme}
+          setTheme={setTheme}
+          lang={lang}
+          setLang={setLang}
+          currentUser={currentUser}
+          activeCompetition={activeCompetition}
+          isOrganizer={isOrganizer}
+          onOpenMenu={() => setIsMenuOpen(true)}
+          onLogout={() => setCurrentUser(null)}
+        />
+
+        <MobileMenu
+          isOpen={isMenuOpen}
+          onClose={() => setIsMenuOpen(false)}
+          theme={theme}
+          lang={lang}
+          currentUser={currentUser}
+          competition={activeCompetition}
+          isOrganizer={isOrganizer}
+          onLogout={() => setCurrentUser(null)}
+        />
 
         {/* Pages */}
         <Routes>
