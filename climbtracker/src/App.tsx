@@ -13,6 +13,7 @@ import {
 import { calculateRankings } from './utils/scoring'
 import type { Language } from './translations'
 import { translations } from './translations'
+import NavBar from './components/NavBar'
 
 // ─── PAGES (placeholders for now — we'll replace these one by one) ────────────
 
@@ -277,21 +278,31 @@ export default function App() {
 
   // ── Main app (shown when logged in) ─────────────────────────────────────────
 
+  // Guard — if no active competition exists yet, show nothing
+  if (!activeCompetition) {
+    return (
+      <HashRouter>
+        <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+          <p className="text-slate-400">No competition found.</p>
+        </div>
+      </HashRouter>
+    )
+  }
+
   return (
     <HashRouter>
       <div className={`min-h-screen ${theme === 'dark' ? 'bg-slate-900 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
 
-        {/* Temporary nav — we'll replace this with NavBar component next */}
-        <div className="p-4 border-b border-white/10 flex gap-4 items-center">
-          <span className="font-black text-white">ClimbTracker</span>
-          <span className="text-slate-400 text-sm">{activeCompetition?.name}</span>
-          <button
-            onClick={() => setCurrentUser(null)}
-            className="ml-auto text-xs text-slate-400 hover:text-white"
-          >
-            Logout
-          </button>
-        </div>
+        <NavBar
+            theme={theme}
+            setTheme={setTheme}
+            lang={lang}
+            setLang={setLang}
+            currentUser={currentUser}
+            activeCompetition={activeCompetition}
+            isOrganizer={isOrganizer}
+            onOpenMenu={() => {}}
+          />
 
         {/* Pages */}
         <Routes>

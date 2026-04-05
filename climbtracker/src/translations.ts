@@ -14,6 +14,7 @@ export const translations = {
     settings:     'Settings',
     profile:      'Profile',
     judging:      'Judging',
+    users:        'Users',
     myCompetitions: 'My Events',
 
     // Filters
@@ -25,6 +26,7 @@ export const translations = {
 
     // Search
     search:           'Find a boulder...',
+    searchUsers:      'Find a user...',
     searchCompetitor: 'Search by name or BIB...',
 
     // Actions
