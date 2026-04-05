@@ -22,11 +22,11 @@ import RulesPage from './pages/RulesPage'
 import ProfilePage from './pages/ProfilePage'
 import CompetitionsPage from './pages/CompetitionsPage'
 import UsersPage from './pages/UsersPage'
+import SettingsPage from './pages/SettingsPage'
 
 // ─── PAGES (placeholders for now — we'll replace these one by one) ────────────
 
 function AnalyticsPage()    { return <div className="p-8 text-white">Analytics page</div> }
-function SettingsPage()     { return <div className="p-8 text-white">Settings page</div> }
 function JudgingPage()      { return <div className="p-8 text-white">Judging page</div> }
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
@@ -367,7 +367,7 @@ export default function App() {
             } />
 
             {/* ── Restricted: must be registered or organizer ── */}
-            {canAccessActiveComp ? (
+            {canAccessActiveComp && (
               <>
                 <Route path="/" element={
                   <BouldersPage
@@ -411,10 +411,20 @@ export default function App() {
                   />
                 } />
                 <Route path="/analytics" element={<AnalyticsPage />} />
-                <Route path="/settings"  element={<SettingsPage />} />
+                <Route path="/settings" element={
+                  <SettingsPage
+                    competition={activeCompetition}
+                    theme={theme}
+                    lang={lang}
+                    onUpdate={updateCompetition}
+                  />
+                } />
                 <Route path="/judging"   element={<JudgingPage />} />
               </>
-            ) : (
+            )}
+
+            {/* ── Gate screen: not registered ── */}
+            {!canAccessActiveComp && (
               <Route path="/*" element={
                 <div className="flex flex-col items-center justify-center py-24 text-center gap-6">
                   <p className="text-5xl">🔒</p>
@@ -424,12 +434,12 @@ export default function App() {
                   <p className={`text-sm max-w-sm ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
                     You can still view the event in My Events and rejoin at any time.
                   </p>
-                  
-                    href="#/competitions"
+                  <button
+                    onClick={() => window.location.hash = '/competitions'}
                     className="px-6 py-3 bg-sky-400 text-sky-950 rounded-xl font-black text-sm hover:bg-sky-300 transition-all"
-                  <a>
+                  >
                     Go to My Events
-                  </a>
+                  </button>
                 </div>
               } />
             )}

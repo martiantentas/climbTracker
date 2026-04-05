@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Sun, Moon, User, Menu, LogOut } from 'lucide-react'
+import { Sun, Moon, User, Menu, LogOut, Settings } from 'lucide-react'
 
 import type { Competitor, Competition } from '../types'
 import { CompetitionStatus } from '../types'
@@ -114,16 +114,55 @@ export default function NavBar({
         `}>
           <NavPill to="/"             label={t.boulders}       theme={theme} />
           <NavPill to="/leaderboard"  label={t.leaderboard}    theme={theme} />
-          <NavPill to="/rules"        label={t.rules}          theme={theme} />
+          <NavPill to="/rules" label="Rules" theme={theme} />
           <div className="w-px h-4 bg-slate-500/20 mx-1 flex-shrink-0" />
           <NavPill to="/competitions" label={t.myCompetitions} theme={theme} />
-          {isOrganizer && (
-            <>
-              <NavPill to="/analytics" label={t.analytics} theme={theme} />
-              <NavPill to="/judging"   label={t.judging}   theme={theme} />
-              <NavPill to="/settings"  label={t.settings}  theme={theme} />
-            </>
-          )}
+          {/* Settings icon — organizer only */}
+            {isOrganizer && (
+                <Link
+                to="/settings"
+                className={`
+                    p-2.5 rounded-xl transition-all
+                    ${theme === 'dark'
+                    ? 'bg-white/5 text-slate-400 hover:text-sky-300 hover:bg-white/10'
+                    : 'bg-slate-100 text-slate-500 hover:text-sky-600 hover:bg-slate-200'
+                    }
+                `}
+                >
+                <Settings size={18} />
+                </Link>
+            )}
+
+            {/* Profile icon */}
+            <Link
+                to="/profile"
+                className={`
+                p-2.5 rounded-xl transition-all
+                ${theme === 'dark'
+                    ? 'bg-white/5 text-slate-400 hover:text-sky-300 hover:bg-white/10'
+                    : 'bg-slate-100 text-slate-500 hover:text-sky-600 hover:bg-slate-200'
+                }
+                `}
+            >
+                <User size={18} />
+            </Link>
+
+            {/* Logout */}
+            <button
+                onClick={onLogout}
+                className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black uppercase tracking-widest text-red-400 hover:bg-red-400/10 transition-all"
+            >
+                <LogOut size={15} />
+                {t.logout}
+            </button>
+
+            {/* Hamburger — mobile only */}
+            <button
+                onClick={onOpenMenu}
+                className="lg:hidden p-2 rounded-xl bg-sky-400 text-sky-950 shadow-lg shadow-sky-400/20"
+            >
+                <Menu size={18} />
+            </button>
         </nav>
 
         {/* ── Right: Controls ── */}
@@ -161,42 +200,6 @@ export default function NavBar({
             {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
           </button>
 
-          {/* Profile pill — hidden on mobile */}
-          <Link
-            to="/profile"
-            className={`
-              hidden sm:flex items-center gap-2 pl-2 pr-3 py-1.5
-              rounded-2xl border transition-all
-              ${theme === 'dark'
-                ? 'bg-white/5 border-white/5 hover:bg-white/10'
-                : 'bg-white border-slate-200 hover:bg-slate-50 shadow-sm'
-              }
-            `}
-          >
-            <div className="w-7 h-7 rounded-lg bg-sky-200 flex items-center justify-center overflow-hidden">
-              {currentUser.avatar
-                ? <img src={currentUser.avatar} alt="" className="w-full h-full object-cover" />
-                : <User size={16} className="text-sky-700" />
-              }
-            </div>
-            <div className="flex flex-col text-left">
-              <span className={`text-xs font-black leading-tight ${theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}`}>
-                {currentUser.displayName}
-              </span>
-              <span className="text-[9px] font-black text-sky-500 leading-tight">
-                BIB #{currentUser.bibNumber}
-              </span>
-            </div>
-          </Link>
-
-          {/* Logout — desktop */}
-          <button
-            onClick={onLogout}
-            className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black uppercase tracking-widest text-red-400 hover:bg-red-400/10 transition-all"
-          >
-            <LogOut size={15} />
-            {t.logout}
-          </button>
 
           {/* Hamburger — mobile only */}
           <button

@@ -12,6 +12,7 @@ import {
   LogOut,
   ChevronRight,
   TrendingUp,
+  Users,
 } from 'lucide-react'
 
 import logo from '../assets/climbtracker-logo.svg'
@@ -148,11 +149,12 @@ export default function MobileMenu({
 
             {/* Organizer-only links */}
             {isOrganizer && (
-              <>
-                <MenuLink to="/analytics" icon={<BarChart2 size={20} />}    label={t.analytics}      theme={theme} onClick={onClose} />
-                <MenuLink to="/judging"   icon={<ClipboardList size={20} />} label={t.judging}       theme={theme} onClick={onClose} />
-                <MenuLink to="/settings"  icon={<Settings size={20} />}     label={t.settings}       theme={theme} onClick={onClose} />
-              </>
+            <>
+                <MenuLink to="/users"     icon={<Users size={20} />}          label={t.users}     theme={theme} onClick={onClose} />
+                <MenuLink to="/analytics" icon={<BarChart2 size={20} />}      label={t.analytics} theme={theme} onClick={onClose} />
+                <MenuLink to="/judging"   icon={<ClipboardList size={20} />}  label={t.judging}   theme={theme} onClick={onClose} />
+                <MenuLink to="/settings"  icon={<Settings size={20} />}       label={t.settings}  theme={theme} onClick={onClose} />
+            </>
             )}
           </nav>
 
