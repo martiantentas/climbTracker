@@ -8,23 +8,30 @@ function calcTraditionalPoints(
   boulder:    Boulder,
   comp:       Competition,
 ): number {
-  // Find the difficulty level assigned to this boulder
   const difficulty = comp.difficultyLevels.find(d => d.id === boulder.difficultyId)
-
-  // If the boulder has no difficulty assigned, it's worth 0 points
   if (!difficulty) return 0
+
+  // Only count validated tops
+  if (!completion.topValidated) {
+    // If zone scoring adds to score, count zone points even without top
+    if (comp.zoneScoring === 'adds_to_score' && completion.hasZone) {
+      return Math.max(difficulty.zonePoints, comp.minScorePerBoulder)
+    }
+    return 0
+  }
 
   let points = difficulty.basePoints
 
-  // Apply attempt penalty if the competition has it enabled
+  // Add zone points if zone scoring is additive
+  if (comp.zoneScoring === 'adds_to_score' && completion.hasZone) {
+    points += difficulty.zonePoints
+  }
+
   if (comp.penalizeAttempts && completion.attempts > 1) {
     const extraAttempts = completion.attempts - 1
-
     if (comp.penaltyType === 'fixed') {
-      // Subtract a flat amount per extra attempt
       points -= extraAttempts * comp.penaltyValue
     } else {
-      // Subtract a percentage of base points per extra attempt
       points -= extraAttempts * (difficulty.basePoints * comp.penaltyValue / 100)
     }
   }
@@ -104,26 +111,41 @@ export function calculateRankings(
   )
 
   const results = actualCompetitors.map(competitor => {
-    const mine = completions.filter(c => c.competitorId === competitor.id)
+  const mine = completions.filter(c => c.competitorId === competitor.id)
 
-    const totalPoints   = calcCompetitorScore(competitor, competition, boulders, completions)
-    const totalTops     = mine.length
-    const totalAttempts = mine.reduce((sum, c) => sum + c.attempts, 0)
-    const flashCount    = mine.filter(c => c.attempts === 1).length
-    const category = competition.categories.find(cat => cat.id === competitor.categoryId)
+  const totalPoints   = calcCompetitorScore(competitor, competition, boulders, completions)
+  const totalTops     = mine.filter(c => c.topValidated).length
+  const totalAttempts = mine.reduce((sum, c) => sum + c.attempts, 0)
+  const flashCount    = mine.filter(c => c.attempts === 1 && c.topValidated).length
+  const totalZones    = mine.filter(c => c.hasZone).length
+  const zoneAttempts  = mine.reduce((sum, c) => sum + c.zoneAttempts, 0)
 
-    return {
-      competitorId:  competitor.id,
-      name:          competitor.displayName,
-      bib:           competitor.bibNumber,
-      category:      category?.name ?? 'Unknown',
-      totalPoints,
-      totalTops,
-      totalAttempts,
-      flashCount,
-      rank: 0,
-    }
-  })
+  const category = competition.categories.find(cat => cat.id === competitor.categoryId)
+
+  return {
+    competitorId:  competitor.id,
+    name:          competitor.displayName,
+    bib:           competitor.bibNumber,
+    category:      category?.name ?? 'Unknown',
+    totalPoints,
+    totalTops,
+    totalAttempts,
+    flashCount,
+    totalZones,
+    zoneAttempts,
+    rank: 0,
+  }
+})
+
+// Update sort to use zones as tie-breaker
+results.sort((a, b) => {
+  if (b.totalPoints   !== a.totalPoints)   return b.totalPoints   - a.totalPoints
+  if (b.totalTops     !== a.totalTops)     return b.totalTops     - a.totalTops
+  if (a.totalAttempts !== b.totalAttempts) return a.totalAttempts - b.totalAttempts
+  if (b.totalZones    !== a.totalZones)    return b.totalZones    - a.totalZones
+  if (a.zoneAttempts  !== b.zoneAttempts)  return a.zoneAttempts  - b.zoneAttempts
+  return b.flashCount - a.flashCount
+})
 
   results.sort((a, b) => {
     if (b.totalPoints   !== a.totalPoints)   return b.totalPoints   - a.totalPoints

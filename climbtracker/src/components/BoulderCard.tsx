@@ -1,4 +1,4 @@
-import { Check, RotateCcw } from 'lucide-react'
+import { Check, RotateCcw, ShieldCheck } from 'lucide-react'
 import type { Boulder, Completion, DifficultyLevel } from '../types'
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
@@ -78,19 +78,20 @@ export default function BoulderCard({
   const holdColor = boulder.color ?? '#94a3b8'
 
   // ── Handle card click ─────────────────────────────────────────────────────
+  // In handleClick:  
   function handleClick() {
     if (isLocked) return
+    if (boulder.isPuntuable && !isOrganizer) return  // ← judges only
     if (isOrganizer) {
-      onEdit?.(boulder)
-      return
+        onEdit?.(boulder)
+        return
     }
-    // Toggle top on/off
     if (isTopped) {
-      onToggle(boulder.id, completion.attempts, false)
+        onToggle(boulder.id, completion.attempts, false)
     } else {
-      onToggle(boulder.id, 1, true)
+        onToggle(boulder.id, 1, true)
     }
-  }
+    }
 
   function handleAttemptChange(attempts: number) {
     if (isLocked) return
@@ -197,13 +198,26 @@ export default function BoulderCard({
           )}
         </div>
 
-        {/* ── Attempt buttons — only shown when topped and not locked ── */}
-        {isTopped && !isLocked && !isOrganizer && (
-          <AttemptButtons
-            current={completion.attempts}
-            theme={theme}
-            onChange={handleAttemptChange}
-          />
+        {/* ── Puntuable indicator — replaces attempt buttons for competitors ── */}
+        {boulder.isPuntuable && !isOrganizer && (
+            <div className={`
+                flex items-center gap-1.5 mt-2 px-2 py-1.5 rounded-xl
+                ${theme === 'dark' ? 'bg-purple-400/10 border border-purple-400/20' : 'bg-purple-50 border border-purple-100'}
+            `}>
+                <ShieldCheck size={11} className="text-purple-400 flex-shrink-0" />
+                <span className="text-[9px] font-black uppercase tracking-widest text-purple-400">
+                Judge required
+                </span>
+            </div>
+        )}
+
+        {/* ── Normal attempt buttons — only for non-puntuable boulders ── */}
+        {isTopped && !isLocked && !isOrganizer && !boulder.isPuntuable && (
+            <AttemptButtons
+                current={completion.attempts}
+                theme={theme}
+                onChange={handleAttemptChange}
+            />
         )}
 
         {/* ── Organizer edit hint ── */}

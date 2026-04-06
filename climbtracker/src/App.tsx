@@ -23,11 +23,11 @@ import ProfilePage from './pages/ProfilePage'
 import CompetitionsPage from './pages/CompetitionsPage'
 import UsersPage from './pages/UsersPage'
 import SettingsPage from './pages/SettingsPage'
+import JudgingPage from './pages/JudgingPage'
 
 // ─── PAGES (placeholders for now — we'll replace these one by one) ────────────
 
 function AnalyticsPage()    { return <div className="p-8 text-white">Analytics page</div> }
-function JudgingPage()      { return <div className="p-8 text-white">Judging page</div> }
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
@@ -140,8 +140,16 @@ export default function App() {
         if (forceStatus === true) {
           updated = [
             ...current,
-            { competitorId, boulderId, attempts: Math.max(1, attempts), timestamp: Date.now() },
-          ]
+            {
+                competitorId,
+                boulderId,
+                attempts:     Math.max(1, attempts),
+                timestamp:    Date.now(),
+                hasZone:      false,
+                zoneAttempts: 0,
+                topValidated: true,   // self-scored tops are auto-validated
+              },
+            ]
         } else {
           updated = current
         }
@@ -263,6 +271,52 @@ export default function App() {
     }))
     showToast(t.successSaved)
   }
+
+  function handleLogScore(
+  competitorId: string,
+  boulderId:    string,
+  attempts:     number,
+  hasZone:      boolean,
+  zoneAttempts: number,
+  isTop:        boolean,
+  judgeId:      string,
+) {
+  if (!activeCompetition) return
+  if (activeCompetition.isLocked) return
+
+  setCompletionsMap(prev => {
+    const current  = prev[activeCompetition.id] ?? []
+    const existing = current.find(
+      c => c.competitorId === competitorId && c.boulderId === boulderId
+    )
+
+    const updated: Completion = {
+      competitorId,
+      boulderId,
+      attempts,
+      timestamp:       Date.now(),
+      hasZone,
+      zoneAttempts,
+      zoneValidatedBy: judgeId,
+      topValidated:    isTop,
+      topValidatedBy:  isTop ? judgeId : undefined,
+      topValidatedAt:  isTop ? Date.now() : undefined,
+    }
+
+    if (existing) {
+      return {
+        ...prev,
+        [activeCompetition.id]: current.map(c =>
+          c.competitorId === competitorId && c.boulderId === boulderId ? updated : c
+        ),
+      }
+    }
+    return {
+      ...prev,
+      [activeCompetition.id]: [...current, updated],
+    }
+  })
+}
 
   // ── Auth screen ──────────────────────────────────────────────────────────────
 
@@ -419,7 +473,19 @@ export default function App() {
                     onUpdate={updateCompetition}
                   />
                 } />
-                <Route path="/judging"   element={<JudgingPage />} />
+                <Route path="/judging" element={
+                  <JudgingPage
+                    competition={activeCompetition}
+                    boulders={activeBoulders}
+                    competitors={activeCompetitors}
+                    completions={activeCompletions}
+                    theme={theme}
+                    lang={lang}
+                    onLogScore={handleLogScore}
+                    currentUser={currentUser}
+                    showSuccess={showToast}
+                  />
+                } />
               </>
             )}
 

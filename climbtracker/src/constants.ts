@@ -23,15 +23,15 @@ export const INITIAL_CATEGORIES: Category[] = [
 // ─── DIFFICULTY LEVELS ────────────────────────────────────────────────────────
 
 export const INITIAL_DIFFICULTIES: DifficultyLevel[] = [
-  { id: 'diff-1', level: 1, basePoints: 100 },
-  { id: 'diff-2', level: 2, basePoints: 200 },
-  { id: 'diff-3', level: 3, basePoints: 300 },
-  { id: 'diff-4', level: 4, basePoints: 400 },
-  { id: 'diff-5', level: 5, basePoints: 500 },
-  { id: 'diff-6', level: 6, basePoints: 600 },
-  { id: 'diff-7', level: 7, basePoints: 700 },
-  { id: 'diff-8', level: 8, basePoints: 800 },
-  { id: 'diff-9', level: 9, basePoints: 900 },
+  { id: 'diff-1', level: 1, label: 'Green',  basePoints: 100, zonePoints: 50  },
+  { id: 'diff-2', level: 2, label: 'Yellow', basePoints: 200, zonePoints: 100 },
+  { id: 'diff-3', level: 3, label: 'Orange', basePoints: 300, zonePoints: 150 },
+  { id: 'diff-4', level: 4, label: 'Red',    basePoints: 400, zonePoints: 200 },
+  { id: 'diff-5', level: 5, label: 'Blue',   basePoints: 500, zonePoints: 250 },
+  { id: 'diff-6', level: 6, label: 'Purple', basePoints: 600, zonePoints: 300 },
+  { id: 'diff-7', level: 7, label: 'Black',  basePoints: 700, zonePoints: 350 },
+  { id: 'diff-8', level: 8, label: 'White',  basePoints: 800, zonePoints: 400 },
+  { id: 'diff-9', level: 9, label: 'Pink',   basePoints: 900, zonePoints: 450 },
 ]
 
 // ─── MOCK COMPETITION ─────────────────────────────────────────────────────────
@@ -63,6 +63,7 @@ export const MOCK_COMPETITION: Competition = {
   penaltyType:        'fixed',
   penaltyValue:       20,
   minScorePerBoulder: 50,
+  zoneScoring: 'adds_to_score',
 }
 
 // ─── MOCK BOULDERS ────────────────────────────────────────────────────────────
@@ -114,10 +115,10 @@ export const MOCK_COMPETITORS: Competitor[] = [
 // ─── MOCK COMPLETIONS ─────────────────────────────────────────────────────────
 
 export const MOCK_COMPLETIONS: Completion[] = [
-  { competitorId: 'u-1', boulderId: 'b-1', attempts: 1, timestamp: Date.now() - 3600000 },
-  { competitorId: 'u-1', boulderId: 'b-2', attempts: 2, timestamp: Date.now() - 3000000 },
-  { competitorId: 'u-2', boulderId: 'b-1', attempts: 1, timestamp: Date.now() - 3500000 },
-  { competitorId: 'u-3', boulderId: 'b-1', attempts: 1, timestamp: Date.now() - 3400000 },
-  { competitorId: 'u-3', boulderId: 'b-3', attempts: 3, timestamp: Date.now() - 3300000 },
-  { competitorId: 'u-4', boulderId: 'b-2', attempts: 2, timestamp: Date.now() - 3200000 },
+  { competitorId: 'u-1', boulderId: 'b-1', attempts: 1, timestamp: Date.now() - 3600000, hasZone: true, zoneAttempts: 1, topValidated: true },
+  { competitorId: 'u-1', boulderId: 'b-2', attempts: 2, timestamp: Date.now() - 3000000, hasZone: true, zoneAttempts: 1, topValidated: true },
+  { competitorId: 'u-2', boulderId: 'b-1', attempts: 1, timestamp: Date.now() - 3500000, hasZone: true, zoneAttempts: 1, topValidated: true },
+  { competitorId: 'u-3', boulderId: 'b-1', attempts: 1, timestamp: Date.now() - 3400000, hasZone: true, zoneAttempts: 1, topValidated: true },
+  { competitorId: 'u-3', boulderId: 'b-3', attempts: 3, timestamp: Date.now() - 3300000, hasZone: true, zoneAttempts: 2, topValidated: true },
+  { competitorId: 'u-4', boulderId: 'b-2', attempts: 2, timestamp: Date.now() - 3200000, hasZone: false, zoneAttempts: 0, topValidated: true },
 ]

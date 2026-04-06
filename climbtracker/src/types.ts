@@ -23,11 +23,23 @@ export interface Category {
   name: string
 }
 
+// ─── ZONE SCORING ─────────────────────────────────────────────────────────────
+
+export const ZoneScoring = {
+  ADDS_TO_SCORE:    'adds_to_score',
+  TIE_BREAKER_ONLY: 'tie_breaker_only',
+} as const
+
+export type ZoneScoring = typeof ZoneScoring[keyof typeof ZoneScoring]
+
 export interface DifficultyLevel {
   id:         string
-  level:      number   // 1 to 9
+  level:      number
+  label:      string
   basePoints: number
+  zonePoints: number
 }
+
 
 // ─── BOULDER ──────────────────────────────────────────────────────────────────
 
@@ -61,12 +73,19 @@ export interface Competitor {
 // ─── COMPLETION ───────────────────────────────────────────────────────────────
 
 export interface Completion {
-  competitorId: string
-  boulderId:    string
-  attempts:     number
-  timestamp:    number       // Unix timestamp — Date.now()
-  isPuntuable?: boolean
+  competitorId:      string
+  boulderId:         string
+  attempts:          number       // attempts at the top
+  timestamp:         number       // when top was logged/validated
+  hasZone:           boolean      // reached the zone hold?
+  zoneAttempts:      number       // attempts to reach zone
+  zoneTimestamp?:    number
+  zoneValidatedBy?:  string       // judge profile id
+  topValidated:      boolean      // true = judge confirmed top
+  topValidatedBy?:   string       // judge profile id
+  topValidatedAt?:   number
 }
+
 
 // ─── RULES ────────────────────────────────────────────────────────────────────
 
@@ -101,6 +120,7 @@ export interface Competition {
   penaltyType:        'fixed' | 'percent'
   penaltyValue:       number
   minScorePerBoulder: number
+  zoneScoring:        ZoneScoring
 }
 
 // ─── LEADERBOARD ROW ──────────────────────────────────────────────────────────
@@ -115,4 +135,6 @@ export interface RankResult {
   totalAttempts: number
   rank:          number
   flashCount:    number
+  totalZones:    number
+  zoneAttempts:  number
 }
