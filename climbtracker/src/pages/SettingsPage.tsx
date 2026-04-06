@@ -170,12 +170,28 @@ export default function SettingsPage({
     set('categories', draft.categories.filter(c => c.id !== id))
   }
 
-  // ── Difficulty levels ────────────────────────────────────────────────────
-  function updateDifficulty(id: string, field: keyof DifficultyLevel, value: number) {
-    set('difficultyLevels', draft.difficultyLevels.map(d =>
-      d.id === id ? { ...d, [field]: value } : d
-    ))
+  function addDifficulty() {
+  const maxLevel = Math.max(...draft.difficultyLevels.map(d => d.level), 0)
+  const newLevel: DifficultyLevel = {
+    id:         `diff-${Date.now()}`,
+    level:      maxLevel + 1,
+    label:      `Level ${maxLevel + 1}`,
+    basePoints: (maxLevel + 1) * 100,
+    zonePoints: (maxLevel + 1) * 50,
   }
+  set('difficultyLevels', [...draft.difficultyLevels, newLevel])
+}
+
+function removeDifficulty(id: string) {
+  if (draft.difficultyLevels.length <= 1) return
+  set('difficultyLevels', draft.difficultyLevels.filter(d => d.id !== id))
+}
+
+function updateDifficulty(id: string, field: keyof DifficultyLevel, value: string | number) {
+  set('difficultyLevels', draft.difficultyLevels.map(d =>
+    d.id === id ? { ...d, [field]: value } : d
+  ))
+}
 
   // ── Save ─────────────────────────────────────────────────────────────────
   function handleSave() {
@@ -493,43 +509,93 @@ export default function SettingsPage({
       {/* ── Difficulty levels ── */}
       <SectionCard title="Difficulty Levels" theme={theme} defaultOpen={false}>
 
+        {/* Column headers */}
         <div className={`
-          grid grid-cols-[40px_1fr_140px] gap-2 px-3 py-2 mb-2
-          text-[10px] font-black uppercase tracking-widest
-          ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}
+            grid grid-cols-[40px_1fr_120px_120px_44px] gap-2 px-3 py-2 mb-2
+            text-[10px] font-black uppercase tracking-widest
+            ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}
         `}>
-          <div>Level</div>
-          <div>Label</div>
-          <div>Base Points</div>
+            <div>Lvl</div>
+            <div>Label (shown to competitors)</div>
+            <div>Top pts</div>
+            <div>Zone pts</div>
+            <div></div>
         </div>
 
-        <div className="space-y-2">
-          {draft.difficultyLevels.map(d => (
-            <div key={d.id} className="grid grid-cols-[40px_1fr_140px] gap-2 items-center">
-              <div className={`
-                w-8 h-8 rounded-lg flex items-center justify-center
-                text-xs font-black
+        <div className="space-y-2 mb-4">
+            {draft.difficultyLevels.map(d => (
+            <div key={d.id} className="grid grid-cols-[40px_1fr_120px_120px_44px] gap-2 items-center">
+
+                {/* Level number — read only */}
+                <div className={`
+                w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black flex-shrink-0
                 ${theme === 'dark' ? 'bg-white/5 text-slate-400' : 'bg-slate-100 text-slate-500'}
-              `}>
+                `}>
                 {d.level}
-              </div>
-              <div className={`
-                px-3 py-2 rounded-xl border text-sm
-                ${theme === 'dark' ? 'bg-white/5 border-white/10 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-500'}
-              `}>
-                Level {d.level}
-              </div>
-              <input
+                </div>
+
+                {/* Label — editable */}
+                <input
+                type="text"
+                value={d.label}
+                onChange={e => updateDifficulty(d.id, 'label', e.target.value)}
+                placeholder="e.g. Easy, Green, 6a+"
+                className={`${inputClass} py-2 text-sm`}
+                />
+
+                {/* Base points */}
+                <input
                 type="number"
                 value={d.basePoints}
                 onChange={e => updateDifficulty(d.id, 'basePoints', Number(e.target.value))}
                 className={`${inputClass} py-2`}
-              />
+                />
+
+                {/* Zone points */}
+                <input
+                type="number"
+                value={d.zonePoints}
+                onChange={e => updateDifficulty(d.id, 'zonePoints', Number(e.target.value))}
+                className={`${inputClass} py-2`}
+                />
+
+                {/* Delete */}
+                <button
+                onClick={() => removeDifficulty(d.id)}
+                disabled={draft.difficultyLevels.length <= 1}
+                className={`
+                    p-2 rounded-xl transition-all flex-shrink-0
+                    ${theme === 'dark'
+                    ? 'text-slate-600 hover:text-red-400 hover:bg-red-400/10'
+                    : 'text-slate-300 hover:text-red-500 hover:bg-red-50'
+                    }
+                    disabled:opacity-20 disabled:cursor-not-allowed
+                `}
+                >
+                <Trash2 size={14} />
+                </button>
+
             </div>
-          ))}
+            ))}
         </div>
 
-      </SectionCard>
+        {/* Add new level */}
+        <button
+            onClick={addDifficulty}
+            className={`
+            w-full py-3 rounded-xl border-2 border-dashed text-sm font-black
+            flex items-center justify-center gap-2 transition-all
+            ${theme === 'dark'
+                ? 'border-white/10 text-slate-600 hover:border-sky-400/30 hover:text-sky-400'
+                : 'border-slate-200 text-slate-400 hover:border-sky-400/50 hover:text-sky-500'
+            }
+            `}
+        >
+            <Plus size={15} />
+            Add Difficulty Level
+        </button>
+
+        </SectionCard>
 
       {/* ── Access control ── */}
       <SectionCard title="Access Control" theme={theme} defaultOpen={false}>

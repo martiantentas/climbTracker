@@ -189,24 +189,23 @@ export default function BoulderModal({
               <label className={labelCls}>Difficulty Level</label>
               <div className="flex flex-wrap gap-2">
                 {competition.difficultyLevels.map(d => (
-                  <button
-                    key={d.id}
-                    onClick={() => setDifficultyId(d.id)}
-                    className={`
-                      px-3 py-2 rounded-xl text-xs font-black border transition-all
-                      ${difficultyId === d.id
-                        ? 'bg-sky-400/10 text-sky-400 border-sky-400/30'
-                        : theme === 'dark'
-                          ? 'bg-white/5 text-slate-400 border-white/10 hover:bg-white/10'
-                          : 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200'
-                      }
-                    `}
-                  >
-                    <span className="opacity-60 mr-1">L{d.level}</span>
-                    {d.label}
-                    <span className="ml-1 opacity-40">{d.basePoints}pts</span>
-                  </button>
-                ))}
+                    <button
+                        key={d.id}
+                        onClick={() => setDifficultyId(d.id)}
+                        className={`
+                        px-3 py-2 rounded-xl text-xs font-black border transition-all
+                        ${difficultyId === d.id
+                            ? 'bg-sky-400/10 text-sky-400 border-sky-400/30'
+                            : theme === 'dark'
+                            ? 'bg-white/5 text-slate-400 border-white/10 hover:bg-white/10'
+                            : 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200'
+                        }
+                        `}
+                    >
+                        {d.label}
+                        <span className={`ml-1.5 text-[10px] opacity-50`}>{d.basePoints}pts</span>
+                    </button>
+                    ))}
               </div>
             </div>
           )}

@@ -188,14 +188,20 @@ export default function BoulderCard({
           </div>
 
           {/* Difficulty badge */}
-          {difficulty && (
+        {difficulty && (
             <span className={`
-              text-[10px] font-black px-2 py-0.5 rounded-lg
-              ${theme === 'dark' ? 'bg-white/10 text-slate-400' : 'bg-slate-100 text-slate-500'}
+                text-[10px] font-black px-2.5 py-1 rounded-lg border
+                ${theme === 'dark'
+                ? 'bg-white/10 text-slate-300 border-white/20'
+                : 'bg-slate-100 text-slate-600 border-slate-200'
+                }
             `}>
-              L{difficulty.level}
+                L{difficulty.level}
+                {difficulty.label && (
+                <span className="ml-1 opacity-60">{difficulty.label}</span>
+                )}
             </span>
-          )}
+            )}
         </div>
 
         {/* ── Puntuable indicator — replaces attempt buttons for competitors ── */}
