@@ -24,10 +24,8 @@ import CompetitionsPage from './pages/CompetitionsPage'
 import UsersPage from './pages/UsersPage'
 import SettingsPage from './pages/SettingsPage'
 import JudgingPage from './pages/JudgingPage'
+import AnalyticsPage from './pages/AnalyticsPage'
 
-// ─── PAGES (placeholders for now — we'll replace these one by one) ────────────
-
-function AnalyticsPage()    { return <div className="p-8 text-white">Analytics page</div> }
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
@@ -464,7 +462,16 @@ export default function App() {
                     onRemoveUser={handleRemoveUser}
                   />
                 } />
-                <Route path="/analytics" element={<AnalyticsPage />} />
+                <Route path="/analytics" element={
+                  <AnalyticsPage
+                    competition={activeCompetition}
+                    boulders={activeBoulders}
+                    competitors={activeCompetitors}
+                    completions={activeCompletions}
+                    theme={theme}
+                    lang={lang}
+                  />
+                } />
                 <Route path="/settings" element={
                   <SettingsPage
                     competition={activeCompetition}
