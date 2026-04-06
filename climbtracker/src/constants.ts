@@ -64,6 +64,7 @@ export const MOCK_COMPETITION: Competition = {
   penaltyValue:       20,
   minScorePerBoulder: 50,
   zoneScoring: 'adds_to_score',
+  scoringMethod: 'self_scoring',
 }
 
 // ─── MOCK BOULDERS ────────────────────────────────────────────────────────────

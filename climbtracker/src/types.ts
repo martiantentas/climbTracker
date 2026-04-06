@@ -121,6 +121,7 @@ export interface Competition {
   penaltyValue:       number
   minScorePerBoulder: number
   zoneScoring:        ZoneScoring
+  scoringMethod: ScoringMethod
 }
 
 // ─── LEADERBOARD ROW ──────────────────────────────────────────────────────────
@@ -138,3 +139,11 @@ export interface RankResult {
   totalZones:    number
   zoneAttempts:  number
 }
+
+export const ScoringMethod = {
+  SELF_SCORING:          'self_scoring',
+  SELF_WITH_APPROVAL:    'self_with_approval',
+  JUDGE_REQUIRED:        'judge_required',
+} as const
+
+export type ScoringMethod = typeof ScoringMethod[keyof typeof ScoringMethod]

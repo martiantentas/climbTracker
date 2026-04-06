@@ -4,6 +4,10 @@ import { Trophy, Medal, Search } from 'lucide-react'
 import type { Competition, RankResult } from '../types'
 import type { Language } from '../translations'
 import { translations } from '../translations'
+import { usePagination } from '../hooks/usePagination'
+import { useSortedData } from '../hooks/useSortedData'
+import PaginationBar from '../components/PaginationBar'
+import SortableHeader from '../components/SortableHeader'
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -15,7 +19,6 @@ interface LeaderboardPageProps {
 }
 
 // ─── RANK BADGE ───────────────────────────────────────────────────────────────
-// Shows a trophy icon for top 3, a number for everyone else
 
 function RankBadge({ rank }: { rank: number }) {
   if (rank === 1) return <Trophy size={18} className="text-amber-400" />
@@ -38,31 +41,32 @@ export default function LeaderboardPage({
 }: LeaderboardPageProps) {
   const t = translations[lang]
 
-  // ── Local filter state ───────────────────────────────────────────────────
-  const [search,          setSearch]          = useState('')
-  const [filterCategory,  setFilterCategory]  = useState('all')
-  const [filterGender,    setFilterGender]    = useState('all')
+  // ── Filters ──────────────────────────────────────────────────────────────
+  const [search,         setSearch]         = useState('')
+  const [filterCategory, setFilterCategory] = useState('all')
+  const [filterGender,   setFilterGender]   = useState('all')
 
-  // ── Collect unique categories and genders from rankings ──────────────────
-  const categories = useMemo(() => {
-    const names = [...new Set(rankings.map(r => r.category))]
-    return names.sort()
-  }, [rankings])
+  // ── Unique values for filter dropdowns ───────────────────────────────────
+  const categories = useMemo(() =>
+    [...new Set(rankings.map(r => r.category))].sort(),
+    [rankings]
+  )
 
-  const genders = useMemo(() => {
-    // We don't have gender on RankResult directly, so we'll skip gender
-    // filter for now — it will be wired up when Supabase is connected
-    return [] as string[]
-  }, [])
+  const genders = useMemo(() =>
+    [...new Set(rankings.map(r => r.gender).filter(Boolean))].sort() as string[],
+    [rankings]
+  )
 
-  // ── Filtered rankings ────────────────────────────────────────────────────
-  const visible = useMemo(() => {
-    let list = rankings.filter(r => r.competitorId !== competition.ownerId)
+  // ── Base filtered list ────────────────────────────────────────────────────
+  const filtered = useMemo(() => {
+    let list = [...rankings]
 
     if (filterCategory !== 'all') {
       list = list.filter(r => r.category === filterCategory)
     }
-
+    if (filterGender !== 'all') {
+      list = list.filter(r => r.gender === filterGender)
+    }
     if (search.trim()) {
       const q = search.toLowerCase()
       list = list.filter(r =>
@@ -72,9 +76,31 @@ export default function LeaderboardPage({
     }
 
     return list
-  }, [rankings, filterCategory, search])
+  }, [rankings, filterCategory, filterGender, search])
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  // ── Sorting ───────────────────────────────────────────────────────────────
+  const { sorted, sortKey, sortDir, toggleSort } = useSortedData(
+    filtered, 'totalPoints', 'desc'
+  )
+
+  // Re-assign ranks after sorting/filtering
+  const withRanks = useMemo(() => {
+    return sorted.map((r, i) => ({ ...r, displayRank: i + 1 }))
+  }, [sorted])
+
+  // ── Pagination ────────────────────────────────────────────────────────────
+  const { page, pageSize, totalPages, totalItems, pageItems, setPage, setPageSize } =
+    usePagination(withRanks, 25)
+
+  // ─────────────────────────────────────────────────────────────────────────
+  const selectCls = `
+    px-3 py-2 rounded-xl border outline-none text-xs font-black cursor-pointer transition-all
+    ${theme === 'dark'
+      ? 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+      : 'bg-white border-slate-200 text-slate-600 shadow-sm hover:bg-slate-50'
+    }
+  `
+
   return (
     <div>
 
@@ -88,147 +114,167 @@ export default function LeaderboardPage({
         </p>
       </div>
 
-      {/* ── Search bar ── */}
-      <div className={`
-        flex items-center gap-3 px-4 py-3 rounded-2xl border mb-4
-        ${theme === 'dark'
-          ? 'bg-white/5 border-white/10'
-          : 'bg-white border-slate-200 shadow-sm'
-        }
-      `}>
-        <Search size={16} className={theme === 'dark' ? 'text-slate-500' : 'text-slate-400'} />
-        <input
-          type="text"
-          placeholder={t.searchCompetitor}
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="flex-1 bg-transparent outline-none text-sm placeholder:text-slate-500"
-        />
+      {/* ── Filters row ── */}
+      <div className="flex flex-wrap gap-3 mb-4">
+
+        {/* Search */}
+        <div className={`
+          flex items-center gap-2 px-4 py-2.5 rounded-2xl border flex-1 min-w-[200px]
+          ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-slate-200 shadow-sm'}
+        `}>
+          <Search size={14} className={theme === 'dark' ? 'text-slate-500' : 'text-slate-400'} />
+          <input
+            type="text"
+            placeholder={t.searchCompetitor}
+            value={search}
+            onChange={e => { setSearch(e.target.value); setPage(1) }}
+            className="flex-1 bg-transparent outline-none text-sm placeholder:text-slate-500"
+          />
+        </div>
+
+        {/* Category filter */}
+        {categories.length > 1 && (
+          <select
+            value={filterCategory}
+            onChange={e => { setFilterCategory(e.target.value); setPage(1) }}
+            className={selectCls}
+          >
+            <option value="all">All categories</option>
+            {categories.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        )}
+
+        {/* Gender filter */}
+        {genders.length > 1 && (
+          <select
+            value={filterGender}
+            onChange={e => { setFilterGender(e.target.value); setPage(1) }}
+            className={selectCls}
+          >
+            <option value="all">All genders</option>
+            {genders.map(g => <option key={g} value={g}>{g}</option>)}
+          </select>
+        )}
+
       </div>
 
-      {/* ── Category filter pills ── */}
-      {categories.length > 1 && (
-        <div className="flex items-center gap-2 mb-6 flex-wrap">
-          <span className={`text-[10px] uppercase tracking-widest font-black ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
-            {t.category}:
-          </span>
-          {['all', ...categories].map(cat => (
-            <button
-              key={cat}
-              onClick={() => setFilterCategory(cat)}
-              className={`
-                px-4 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-widest
-                transition-all duration-150
-                ${filterCategory === cat
-                  ? 'bg-sky-400 text-sky-950'
-                  : theme === 'dark'
-                    ? 'bg-white/5 text-slate-400 hover:bg-white/10'
-                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                }
-              `}
-            >
-              {cat === 'all' ? t.all : cat}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* ── Rankings table ── */}
-      {visible.length === 0 ? (
+      {/* ── Table ── */}
+      {pageItems.length === 0 ? (
         <div className={`text-center py-20 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
           <p className="text-4xl mb-4">🏆</p>
           <p className="font-black uppercase tracking-widest text-sm">No results found</p>
         </div>
       ) : (
-        <div className={`rounded-2xl border overflow-hidden ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}>
+        <>
+          <div className={`rounded-2xl border overflow-hidden ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}>
 
-          {/* Table header */}
-          <div className={`
-            grid grid-cols-[40px_1fr_80px_80px_80px] gap-2
-            px-4 py-3 text-[10px] font-black uppercase tracking-widest
-            ${theme === 'dark' ? 'bg-white/5 text-slate-500' : 'bg-slate-50 text-slate-400'}
-          `}>
-            <div className="text-center">#</div>
-            <div>{t.competitor}</div>
-            <div className="text-center">{t.tops}</div>
-            <div className="text-center">{t.attempts}</div>
-            <div className="text-right">pts</div>
+            {/* Table header */}
+            <div className={`
+              grid grid-cols-[40px_1fr_100px_80px_80px_80px_80px] gap-2
+              px-4 py-3
+              ${theme === 'dark' ? 'bg-white/5' : 'bg-slate-50'}
+            `}>
+              <div className={`text-[10px] font-black uppercase tracking-widest ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>#</div>
+              <div className={`text-[10px] font-black uppercase tracking-widest ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>{t.competitor}</div>
+              <SortableHeader label="Category"  sortKey="category"      activeSortKey={sortKey} sortDir={sortDir} onSort={k => { toggleSort(k); setPage(1) }} theme={theme} />
+              <SortableHeader label="Pts"        sortKey="totalPoints"  activeSortKey={sortKey} sortDir={sortDir} onSort={k => { toggleSort(k); setPage(1) }} theme={theme} align="center" />
+              <SortableHeader label="Tops"       sortKey="totalTops"    activeSortKey={sortKey} sortDir={sortDir} onSort={k => { toggleSort(k); setPage(1) }} theme={theme} align="center" />
+              <SortableHeader label="Zones"      sortKey="totalZones"   activeSortKey={sortKey} sortDir={sortDir} onSort={k => { toggleSort(k); setPage(1) }} theme={theme} align="center" />
+              <SortableHeader label="Attempts"   sortKey="totalAttempts" activeSortKey={sortKey} sortDir={sortDir} onSort={k => { toggleSort(k); setPage(1) }} theme={theme} align="center" />
+            </div>
+
+            {/* Table rows */}
+            {pageItems.map((result, index) => {
+              const isEven = index % 2 === 0
+              const isTop3 = result.displayRank <= 3
+
+              return (
+                <div
+                  key={result.competitorId}
+                  className={`
+                    grid grid-cols-[40px_1fr_100px_80px_80px_80px_80px] gap-2
+                    px-4 py-3 items-center border-t transition-colors
+                    ${theme === 'dark'
+                      ? `border-white/5 ${isEven ? 'bg-transparent' : 'bg-white/[0.02]'} hover:bg-white/5`
+                      : `border-slate-100 ${isEven ? 'bg-white' : 'bg-slate-50/50'} hover:bg-slate-50`
+                    }
+                  `}
+                >
+                  {/* Rank */}
+                  <div className="flex items-center justify-center">
+                    <RankBadge rank={result.displayRank} />
+                  </div>
+
+                  {/* Name + BIB */}
+                  <div>
+                    <p className={`
+                      text-sm font-black leading-tight
+                      ${isTop3 ? 'text-sky-400' : theme === 'dark' ? 'text-slate-100' : 'text-slate-900'}
+                    `}>
+                      {result.name}
+                    </p>
+                    <p className={`text-[10px] font-black uppercase tracking-widest mt-0.5 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
+                      {result.gender ? `${result.gender} · ` : ''}BIB #{result.bib}
+                    </p>
+                  </div>
+
+                  {/* Category */}
+                  <div>
+                    <span className={`text-xs font-bold ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                      {result.category}
+                    </span>
+                  </div>
+
+                  {/* Points */}
+                  <div className="text-center">
+                    <span className={`text-sm font-black ${isTop3 ? 'text-amber-400' : theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
+                      {result.totalPoints}
+                    </span>
+                  </div>
+
+                  {/* Tops */}
+                  <div className="text-center">
+                    <span className={`text-sm font-black ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
+                      {result.totalTops}
+                    </span>
+                  </div>
+
+                  {/* Zones */}
+                  <div className="text-center">
+                    <span className={`text-sm font-black ${result.totalZones > 0 ? 'text-purple-400' : theme === 'dark' ? 'text-slate-700' : 'text-slate-300'}`}>
+                      {result.totalZones}
+                    </span>
+                  </div>
+
+                  {/* Attempts */}
+                  <div className="text-center">
+                    <span className={`text-sm ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+                      {result.totalAttempts}
+                    </span>
+                  </div>
+
+                </div>
+              )
+            })}
           </div>
 
-          {/* Table rows */}
-          {visible.map((result, index) => {
-            const isEven = index % 2 === 0
-            const isTop3 = result.rank <= 3
-
-            return (
-              <div
-                key={result.competitorId}
-                className={`
-                  grid grid-cols-[40px_1fr_80px_80px_80px] gap-2
-                  px-4 py-3 items-center
-                  border-t transition-colors
-                  ${theme === 'dark'
-                    ? `border-white/5 ${isEven ? 'bg-transparent' : 'bg-white/[0.02]'} hover:bg-white/5`
-                    : `border-slate-100 ${isEven ? 'bg-white' : 'bg-slate-50/50'} hover:bg-slate-50`
-                  }
-                `}
-              >
-                {/* Rank */}
-                <div className="flex items-center justify-center">
-                  <RankBadge rank={result.rank} />
-                </div>
-
-                {/* Name + category + BIB */}
-                <div>
-                  <p className={`
-                    text-sm font-black leading-tight
-                    ${isTop3
-                      ? 'text-sky-400'
-                      : theme === 'dark' ? 'text-slate-100' : 'text-slate-900'
-                    }
-                  `}>
-                    {result.name}
-                  </p>
-                  <p className={`text-[10px] font-black uppercase tracking-widest mt-0.5 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
-                    {result.category} · BIB #{result.bib}
-                  </p>
-                </div>
-
-                {/* Tops */}
-                <div className="text-center">
-                  <span className={`text-sm font-black ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
-                    {result.totalTops}
-                  </span>
-                </div>
-
-                {/* Attempts */}
-                <div className="text-center">
-                  <span className={`text-sm ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
-                    {result.totalAttempts}
-                  </span>
-                </div>
-
-                {/* Points */}
-                <div className="text-right">
-                  <span className={`
-                    text-sm font-black
-                    ${isTop3 ? 'text-amber-400' : theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}
-                  `}>
-                    {result.totalPoints}
-                  </span>
-                </div>
-
-              </div>
-            )
-          })}
-
-        </div>
+          {/* Pagination */}
+          <PaginationBar
+            page={page}
+            pageSize={pageSize}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            onPage={setPage}
+            onPageSize={setPageSize}
+            theme={theme}
+          />
+        </>
       )}
 
-      {/* ── Flash count note ── */}
-      {visible.some(r => r.flashCount > 0) && (
+      {/* Tie-breaker note */}
+      {rankings.length > 0 && (
         <p className={`text-[11px] mt-4 text-center ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
-          ⚡ Flash count used as tie-breaker · Fewer attempts ranked higher
+          Default sort: points → tops → zones → attempts → flashes
         </p>
       )}
 
