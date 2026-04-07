@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { User, Mail, Hash, Edit3, Save, X, Key, Tag, Info } from 'lucide-react'
+import { User, Mail, Edit3, Save, X, Key, Tag, Info } from 'lucide-react'
 
 import type { Competitor } from '../types'
 import type { Language } from '../translations'
@@ -17,14 +17,13 @@ interface ProfilePageProps {
 // ─── INFO ROW ─────────────────────────────────────────────────────────────────
 
 interface InfoRowProps {
-  icon:       React.ReactNode
-  label:      string
-  value:      string
-  theme:      'light' | 'dark'
-  locked?:    boolean   // true = competition-level, not editable here
+  icon:    React.ReactNode
+  label:   string
+  value:   string
+  theme:   'light' | 'dark'
 }
 
-function InfoRow({ icon, label, value, theme, locked }: InfoRowProps) {
+function InfoRow({ icon, label, value, theme }: InfoRowProps) {
   return (
     <div className="flex items-center gap-4 py-3">
       <div className={`
@@ -34,19 +33,9 @@ function InfoRow({ icon, label, value, theme, locked }: InfoRowProps) {
         {icon}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-0.5">
-          <p className={`text-[10px] font-black uppercase tracking-widest ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
-            {label}
-          </p>
-          {locked && (
-            <span className={`
-              text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md
-              ${theme === 'dark' ? 'bg-amber-400/10 text-amber-500' : 'bg-amber-50 text-amber-600'}
-            `}>
-              per competition
-            </span>
-          )}
-        </div>
+        <p className={`text-[10px] font-black uppercase tracking-widest mb-0.5 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
+          {label}
+        </p>
         <p className={`text-sm font-bold truncate ${theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}`}>
           {value}
         </p>
@@ -92,10 +81,10 @@ export default function ProfilePage({
   const t = translations[lang]
 
   // ── Edit state ───────────────────────────────────────────────────────────
-  const [isEditing,   setIsEditing]   = useState(false)
-  const [displayName, setDisplayName] = useState(currentUser.displayName)
-  const [email,       setEmail]       = useState(currentUser.email)
-  const [gender,      setGender]      = useState(currentUser.gender)
+  const [isEditing,    setIsEditing]    = useState(false)
+  const [displayName,  setDisplayName]  = useState(currentUser.displayName)
+  const [email,        setEmail]        = useState(currentUser.email)
+  const [gender,       setGender]       = useState(currentUser.gender)
   const [customGender, setCustomGender] = useState(
     GENDER_OPTIONS.includes(currentUser.gender) ? '' : currentUser.gender
   )
@@ -105,14 +94,11 @@ export default function ProfilePage({
   const [codeError,   setCodeError]   = useState(false)
   const [codeSuccess, setCodeSuccess] = useState(false)
 
-  // The displayed gender value — either the selected option or custom text
   const effectiveGender = gender === 'Other' && customGender.trim()
     ? customGender.trim()
     : gender
 
   function handleSave() {
-    // Will write back to Supabase in Phase 5
-    // For now just closes edit mode
     setIsEditing(false)
   }
 
@@ -238,7 +224,6 @@ export default function ProfilePage({
         {isEditing ? (
           <div className="p-6 space-y-4">
 
-            {/* Display name */}
             <div>
               <label className={`block text-[10px] font-black uppercase tracking-widest mb-2 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
                 {t.displayName}
@@ -251,7 +236,6 @@ export default function ProfilePage({
               />
             </div>
 
-            {/* Email */}
             <div>
               <label className={`block text-[10px] font-black uppercase tracking-widest mb-2 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
                 {t.email}
@@ -264,7 +248,6 @@ export default function ProfilePage({
               />
             </div>
 
-            {/* Gender */}
             <div>
               <label className={`block text-[10px] font-black uppercase tracking-widest mb-2 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
                 {t.gender}
@@ -278,8 +261,6 @@ export default function ProfilePage({
                   <option key={opt} value={opt}>{opt}</option>
                 ))}
               </select>
-
-              {/* Custom gender text field — only shown when Other is selected */}
               {gender === 'Other' && (
                 <input
                   type="text"
@@ -294,47 +275,36 @@ export default function ProfilePage({
           </div>
         ) : (
           <div className="px-6 divide-y divide-white/5">
-            <InfoRow icon={<User size={15} />}  label={t.displayName} value={currentUser.displayName} theme={theme} />
-            <InfoRow icon={<Mail size={15} />}  label={t.email}       value={currentUser.email}       theme={theme} />
-            <InfoRow icon={<Tag  size={15} />}  label={t.gender}      value={effectiveGender}         theme={theme} />
+            <InfoRow icon={<User size={15} />} label={t.displayName} value={currentUser.displayName} theme={theme} />
+            <InfoRow icon={<Mail size={15} />} label={t.email}       value={currentUser.email}       theme={theme} />
+            <InfoRow icon={<Tag  size={15} />} label={t.gender}      value={effectiveGender}         theme={theme} />
           </div>
         )}
       </div>
 
-      {/* ── Competition-level fields (read-only here) ── */}
+      {/* ── Competition registration ── */}
       <div className={cardClass}>
-        <SectionLabel label="Competition details — set per event" theme={theme} />
-        <div className="px-6 divide-y divide-white/5">
-          <InfoRow
-            icon={<Hash size={15} />}
-            label="BIB Number"
-            value={`#${currentUser.bibNumber}`}
-            theme={theme}
-            locked
-          />
-          <InfoRow
-            icon={<Tag size={15} />}
-            label={t.category}
-            value={currentUser.categoryId}
-            theme={theme}
-            locked
-          />
-        </div>
-
-        {/* Explanation note */}
-        <div className={`
-          flex items-start gap-3 mx-6 my-4 p-3 rounded-xl
-          ${theme === 'dark' ? 'bg-amber-400/5 border border-amber-400/10' : 'bg-amber-50 border border-amber-100'}
-        `}>
-          <Info size={14} className="text-amber-400 flex-shrink-0 mt-0.5" />
-          <p className={`text-[11px] leading-relaxed ${theme === 'dark' ? 'text-amber-300/70' : 'text-amber-700'}`}>
-            BIB number and category are assigned per competition by the organizer.
-            They can differ across events you participate in.
+        <SectionLabel label="Competition registration" theme={theme} />
+        <div className="px-6 py-5">
+          <p className={`text-sm leading-relaxed ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+            When you join a competition, you'll be asked to choose your category and gender for that event. These can differ across competitions — for example, you might compete in Open at one event and Masters at another.
           </p>
+          <p className={`text-xs mt-3 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
+            BIB numbers are assigned automatically when you join. Judges and organizers don't have a BIB number.
+          </p>
+          <div className={`
+            flex items-start gap-3 mt-4 p-3 rounded-xl
+            ${theme === 'dark' ? 'bg-amber-400/5 border border-amber-400/10' : 'bg-amber-50 border border-amber-100'}
+          `}>
+            <Info size={14} className="text-amber-400 flex-shrink-0 mt-0.5" />
+            <p className={`text-[11px] leading-relaxed ${theme === 'dark' ? 'text-amber-300/70' : 'text-amber-700'}`}>
+              BIB number and category are assigned per competition by the organizer and can differ across events you participate in.
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* ── Join competition by code ── */}
+      {/* ── Join by code ── */}
       <div className={cardClass}>
         <SectionLabel label={t.joinWithCode} theme={theme} />
         <div className="p-6">

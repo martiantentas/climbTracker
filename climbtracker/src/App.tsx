@@ -248,7 +248,7 @@ export default function App() {
     return (competitorsMap[compId] ?? []).some(c => c.id === currentUser?.id)
   }
 
-  function handleUpdateRole(competitorId: string, role: 'competitor' | 'judge') {
+  function handleUpdateRole(competitorId: string, role: 'competitor' | 'judge' | 'organizer') {
     if (!activeCompetition) return
     setCompetitorsMap(prev => ({
       ...prev,
@@ -269,6 +269,17 @@ export default function App() {
     }))
     showToast(t.successSaved)
   }
+
+  function handleUpdateBib(competitorId: string, bib: number) {
+  if (!activeCompetition) return
+  setCompetitorsMap(prev => ({
+    ...prev,
+    [activeCompetition.id]: (prev[activeCompetition.id] ?? []).map(c =>
+      c.id === competitorId ? { ...c, bibNumber: bib } : c
+    ),
+  }))
+  showToast(t.successSaved)
+}
 
   function handleLogScore(
   competitorId: string,
@@ -459,6 +470,7 @@ export default function App() {
                     theme={theme}
                     lang={lang}
                     onUpdateRole={handleUpdateRole}
+                    onUpdateBib={handleUpdateBib}
                     onRemoveUser={handleRemoveUser}
                   />
                 } />
