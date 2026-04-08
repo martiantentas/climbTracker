@@ -40,20 +40,20 @@ export interface DifficultyLevel {
   zonePoints: number
 }
 
-
 // ─── BOULDER ──────────────────────────────────────────────────────────────────
 
 export interface Boulder {
   id:           string
   number:       number
-  name?:        string        // optional — the ? means it can be missing
+  name?:        string
   color:        string
-  difficultyId?: string       // which DifficultyLevel this boulder uses
-  isPuntuable?: boolean       // true = requires a referee to validate
-  maxPoints?:   number        // override for Dynamic scoring
-  style?:       string        // e.g. "Slab", "Overhang", "Dyno"
+  difficultyId?: string
+  isPuntuable?: boolean
+  maxPoints?:   number
+  style?:       string
   status:       'active' | 'hidden' | 'removed'
   zoneCount:    number
+  tags:         string[]
 }
 
 // ─── COMPETITOR ───────────────────────────────────────────────────────────────
@@ -67,7 +67,7 @@ export interface Competitor {
   gender:      string
   categoryId:  string
   bibNumber:   number
-  avatar?:     string        // optional profile picture URL
+  avatar?:     string
   role?:       'competitor' | 'judge' | 'organizer'
 }
 
@@ -76,32 +76,41 @@ export interface Competitor {
 export interface Completion {
   competitorId:      string
   boulderId:         string
-  attempts:          number       // attempts at the top
-  timestamp:         number       // when top was logged/validated
-  hasZone:           boolean      // reached the zone hold?
-  zoneAttempts:      number       // attempts to reach zone
+  attempts:          number
+  timestamp:         number
+  hasZone:           boolean
+  zoneAttempts:      number
   zonesReached:      number
   zoneTimestamp?:    number
-  zoneValidatedBy?:  string       // judge profile id
-  topValidated:      boolean      // true = judge confirmed top
-  topValidatedBy?:   string       // judge profile id
+  zoneValidatedBy?:  string
+  topValidated:      boolean
+  topValidatedBy?:   string
   topValidatedAt?:   number
 }
-
 
 // ─── RULES ────────────────────────────────────────────────────────────────────
 
 export interface RuleSet {
-  en: string   // English
-  es: string   // Spanish
-  ca: string   // Catalan
+  en: string
+  es: string
+  ca: string
 }
+
+// ─── SCORING METHOD ───────────────────────────────────────────────────────────
+
+export const ScoringMethod = {
+  SELF_SCORING:          'self_scoring',
+  SELF_WITH_APPROVAL:    'self_with_approval',
+  JUDGE_REQUIRED:        'judge_required',
+} as const
+
+export type ScoringMethod = typeof ScoringMethod[keyof typeof ScoringMethod]
 
 // ─── COMPETITION ──────────────────────────────────────────────────────────────
 
 export interface Competition {
   id:                 string
-  ownerId:            string            // who created and manages this comp
+  ownerId:            string
   name:               string
   description:        string
   location:           string
@@ -111,19 +120,19 @@ export interface Competition {
   scoringType:        ScoringType
   categories:         Category[]
   difficultyLevels:   DifficultyLevel[]
-  topKBoulders?:      number            // only count best N boulders per competitor
-  dynamicPot?:        number            // total points shared in Dynamic mode
-  minDynamicPoints?:  number            // floor — nobody gets less than this
-  isLocked:           boolean           // when true, scores can't be edited
-  canSelfScore:       boolean           // competitors log their own tops
+  topKBoulders?:      number
+  dynamicPot?:        number
+  minDynamicPoints?:  number
+  isLocked:           boolean
+  canSelfScore:       boolean
   rules:              RuleSet
-  inviteCode:         string            // short code to join the comp
+  inviteCode:         string
   penalizeAttempts:   boolean
   penaltyType:        'fixed' | 'percent'
   penaltyValue:       number
   minScorePerBoulder: number
   zoneScoring:        ZoneScoring
-  scoringMethod: ScoringMethod
+  scoringMethod:      ScoringMethod
 }
 
 // ─── LEADERBOARD ROW ──────────────────────────────────────────────────────────
@@ -133,6 +142,7 @@ export interface RankResult {
   name:          string
   bib:           number
   category:      string
+  gender:        string       // ← added: used in LeaderboardPage filters
   totalPoints:   number
   totalTops:     number
   totalAttempts: number
@@ -141,11 +151,3 @@ export interface RankResult {
   totalZones:    number
   zoneAttempts:  number
 }
-
-export const ScoringMethod = {
-  SELF_SCORING:          'self_scoring',
-  SELF_WITH_APPROVAL:    'self_with_approval',
-  JUDGE_REQUIRED:        'judge_required',
-} as const
-
-export type ScoringMethod = typeof ScoringMethod[keyof typeof ScoringMethod]

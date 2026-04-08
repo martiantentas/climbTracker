@@ -22,13 +22,13 @@ interface JudgingPageProps {
     zoneAttempts: number,
     isTop:        boolean,
     judgeId:      string,
+    zonesReached: number,
   ) => void
   currentUser:  Competitor
   showSuccess:  (msg: string) => void
 }
 
 // ─── BOULDER JUDGING ROW ──────────────────────────────────────────────────────
-// One row per puntuable boulder inside a competitor card
 
 interface BoulderJudgingRowProps {
   boulder:    Boulder
@@ -107,7 +107,7 @@ function BoulderJudgingRow({
         </div>
       </div>
 
-      {/* Zone buttons — one per zone defined on the boulder */}
+      {/* Zone buttons */}
       {totalZones > 0 && (
         <div className="mb-4">
           <p className={`text-[10px] font-black uppercase tracking-widest mb-2 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
@@ -115,14 +115,13 @@ function BoulderJudgingRow({
           </p>
           <div className="flex gap-2 flex-wrap">
             {Array.from({ length: totalZones }, (_, i) => {
-              const zoneNum     = i + 1
-              const isReached   = zonesReached >= zoneNum
+              const zoneNum   = i + 1
+              const isReached = zonesReached >= zoneNum
               return (
                 <button
                   key={zoneNum}
                   disabled={isLocked}
                   onClick={() => {
-                    // Toggle: if this zone is already the last reached, decrement; otherwise set to this zone
                     if (zonesReached === zoneNum) {
                       setZonesReached(zoneNum - 1)
                     } else {
@@ -149,7 +148,6 @@ function BoulderJudgingRow({
             })}
           </div>
 
-          {/* Zone attempts counter */}
           {hasZone && (
             <div className="flex items-center gap-2 mt-2">
               <p className={`text-[10px] font-black uppercase tracking-widest ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
@@ -258,7 +256,6 @@ function BoulderJudgingRow({
         )}
       </div>
 
-      {/* Session memory */}
       {completion && (
         <p className={`text-[10px] mt-2 text-center ${theme === 'dark' ? 'text-slate-700' : 'text-slate-400'}`}>
           Saved: {completion.attempts} top att. · {completion.zonesReached ?? 0}/{totalZones} zones · top: {completion.topValidated ? 'yes' : 'no'}
@@ -268,102 +265,17 @@ function BoulderJudgingRow({
   )
 }
 
-      {/* Zone + Top toggles */}
-      <div className="flex items-center gap-2 mb-3">
-        <button
-          onClick={() => { setHasZone(z => !z); if (hasZone) setZoneAttempts(0) }}
-          disabled={isLocked}
-          className={`
-            flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black
-            uppercase tracking-widest border transition-all
-            ${hasZone
-              ? 'bg-sky-400/10 text-sky-400 border-sky-400/30'
-              : theme === 'dark'
-                ? 'bg-white/5 text-slate-500 border-white/10 hover:bg-white/10'
-                : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'
-            }
-            ${isLocked ? 'opacity-40 cursor-not-allowed' : ''}
-          `}
-        >
-          <Target size={11} />
-          Zone {hasZone ? '✓' : ''}
-        </button>
-
-        <button
-          onClick={() => setIsTop(t => !t)}
-          disabled={isLocked}
-          className={`
-            flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black
-            uppercase tracking-widest border transition-all
-            ${isTop
-              ? 'bg-green-400/10 text-green-400 border-green-400/30'
-              : theme === 'dark'
-                ? 'bg-white/5 text-slate-500 border-white/10 hover:bg-white/10'
-                : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'
-            }
-            ${isLocked ? 'opacity-40 cursor-not-allowed' : ''}
-          `}
-        >
-          <CheckCircle2 size={11} />
-          Top {isTop ? '✓' : ''}
-        </button>
-
-        {/* Clear button */}
-        {hasActivity && !isLocked && (
-          <button
-            onClick={() => {
-              setAttempts(0)
-              setHasZone(false)
-              setZoneAttempts(0)
-              setIsTop(false)
-              onClear()
-            }}
-            className={`
-              flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black
-              uppercase tracking-widest border transition-all ml-auto
-              ${theme === 'dark'
-                ? 'text-slate-600 hover:text-red-400 hover:bg-red-400/10 border-white/5'
-                : 'text-slate-400 hover:text-red-500 hover:bg-red-50 border-slate-200'
-              }
-            `}
-          >
-            <XCircle size={11} />
-            Clear
-          </button>
-        )}
-      </div>
-
-      {/* Save button */}
-      {!isLocked && (
-        <button
-          onClick={handleSave}
-          className="w-full py-2 rounded-lg text-xs font-black bg-sky-400 text-sky-950 hover:bg-sky-300 transition-all"
-        >
-          Save score
-        </button>
-      )}
-
-      {/* Session memory note */}
-      {completion && (
-        <p className={`text-[10px] mt-2 text-center ${theme === 'dark' ? 'text-slate-700' : 'text-slate-400'}`}>
-          Last saved: {completion.attempts} attempts · zone: {completion.hasZone ? 'yes' : 'no'} · top: {completion.topValidated ? 'yes' : 'no'}
-        </p>
-      )}
-    </div>
-  )
-}
-
 // ─── COMPETITOR CARD ──────────────────────────────────────────────────────────
 
 interface CompetitorCardProps {
-  competitor:       Competitor
+  competitor:        Competitor
   puntuableBoulders: Boulder[]
-  completions:      Completion[]
-  theme:            'light' | 'dark'
-  isLocked:         boolean
-  judgeId:          string
-  onLogScore:       JudgingPageProps['onLogScore']
-  onClear:          (competitorId: string, boulderId: string) => void
+  completions:       Completion[]
+  theme:             'light' | 'dark'
+  isLocked:          boolean
+  judgeId:           string
+  onLogScore:        JudgingPageProps['onLogScore']
+  onClear:           (competitorId: string, boulderId: string) => void
 }
 
 function CompetitorCard({
@@ -388,7 +300,6 @@ function CompetitorCard({
       ${theme === 'dark' ? 'border-white/10 bg-white/[0.02]' : 'border-slate-200 bg-white shadow-sm'}
     `}>
 
-      {/* Header — clickable to expand */}
       <button
         onClick={() => setExpanded(e => !e)}
         className={`
@@ -396,7 +307,6 @@ function CompetitorCard({
           ${theme === 'dark' ? 'hover:bg-white/[0.03]' : 'hover:bg-slate-50'}
         `}
       >
-        {/* Avatar */}
         <div className={`
           w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden
           ${theme === 'dark' ? 'bg-white/5' : 'bg-slate-100'}
@@ -409,7 +319,6 @@ function CompetitorCard({
           }
         </div>
 
-        {/* Name + BIB */}
         <div className="flex-1 min-w-0">
           <p className={`text-sm font-black truncate ${theme === 'dark' ? 'text-slate-100' : 'text-slate-900'}`}>
             {competitor.displayName}
@@ -419,7 +328,6 @@ function CompetitorCard({
           </p>
         </div>
 
-        {/* Progress summary */}
         <div className="flex items-center gap-3 flex-shrink-0">
           {toppedCount > 0 && (
             <span className="flex items-center gap-1 text-[9px] font-black text-green-400 bg-green-400/10 px-2 py-1 rounded-full border border-green-400/20">
@@ -441,7 +349,6 @@ function CompetitorCard({
         </div>
       </button>
 
-      {/* Expanded boulder list */}
       {expanded && (
         <div className={`px-5 pb-5 border-t space-y-3 ${theme === 'dark' ? 'border-white/5' : 'border-slate-100'}`}>
           <p className={`text-[10px] font-black uppercase tracking-widest pt-4 mb-3 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
@@ -456,7 +363,7 @@ function CompetitorCard({
               isLocked={isLocked}
               onLog={(attempts, hasZone, zoneAttempts, isTop, zonesReached) =>
                 onLogScore(competitor.id, boulder.id, attempts, hasZone, zoneAttempts, isTop, judgeId, zonesReached)
-                }
+              }
               onClear={() => onClear(competitor.id, boulder.id)}
             />
           ))}
@@ -482,19 +389,16 @@ export default function JudgingPage({
   const t = translations[lang]
   const [search, setSearch] = useState('')
 
-  // Puntuable boulders only
   const puntuableBoulders = useMemo(() =>
     boulders.filter(b => b.isPuntuable && b.status === 'active'),
     [boulders]
   )
 
-  // Actual competitors only
   const actualCompetitors = useMemo(() =>
     competitors.filter(c => c.id !== competition.ownerId && c.role !== 'judge'),
     [competitors, competition.ownerId]
   )
 
-  // Filtered competitors
   const visible = useMemo(() => {
     if (!search.trim()) return actualCompetitors
     const q = search.toLowerCase()
@@ -504,30 +408,27 @@ export default function JudgingPage({
     )
   }, [actualCompetitors, search])
 
-  // Stats
-  const toppedCount  = actualCompetitors.reduce((sum, c) =>
+  const toppedCount = actualCompetitors.reduce((sum, c) =>
     sum + completions.filter(x => x.competitorId === c.id && x.topValidated).length, 0
   )
-  const zoneCount    = actualCompetitors.reduce((sum, c) =>
+  const zoneCount = actualCompetitors.reduce((sum, c) =>
     sum + completions.filter(x => x.competitorId === c.id && x.hasZone && !x.topValidated).length, 0
   )
   const pendingCount = (actualCompetitors.length * puntuableBoulders.length) - toppedCount - zoneCount
 
-  // Clear a score
   function handleClear(competitorId: string, boulderId: string) {
-  onLogScore(competitorId, boulderId, 0, false, 0, false, currentUser.id, 0)
-  showSuccess('Score cleared')
+    onLogScore(competitorId, boulderId, 0, false, 0, false, currentUser.id, 0)
+    showSuccess('Score cleared')
   }
 
   function handleLog(...args: Parameters<typeof onLogScore>) {
-  onLogScore(...args)
-  showSuccess('Score saved ✓')
+    onLogScore(...args)
+    showSuccess('Score saved ✓')
   }
 
   return (
     <div className="max-w-3xl mx-auto">
 
-      {/* Header */}
       <div className="mb-6">
         <h1 className={`text-2xl font-black tracking-tight ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
           {t.judging}
@@ -537,7 +438,6 @@ export default function JudgingPage({
         </p>
       </div>
 
-      {/* Judging method badge */}
       <div className={`
         flex items-center gap-2 px-4 py-2.5 rounded-xl border mb-6 w-fit
         ${theme === 'dark' ? 'bg-white/[0.03] border-white/10' : 'bg-white border-slate-200 shadow-sm'}
@@ -553,11 +453,10 @@ export default function JudgingPage({
         </span>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-3 gap-3 mb-6">
         {[
-          { label: 'Topped',    value: toppedCount,  color: 'text-green-400' },
-          { label: 'Zone only', value: zoneCount,    color: 'text-sky-400'   },
+          { label: 'Topped',    value: toppedCount,              color: 'text-green-400' },
+          { label: 'Zone only', value: zoneCount,                color: 'text-sky-400'   },
           { label: 'Pending',   value: Math.max(0, pendingCount), color: 'text-amber-400' },
         ].map(s => (
           <div key={s.label} className={`rounded-2xl border p-4 text-center ${theme === 'dark' ? 'bg-white/[0.03] border-white/10' : 'bg-white border-slate-200 shadow-sm'}`}>
@@ -567,7 +466,6 @@ export default function JudgingPage({
         ))}
       </div>
 
-      {/* No puntuable boulders */}
       {puntuableBoulders.length === 0 ? (
         <div className={`text-center py-20 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
           <p className="text-4xl mb-4">🏔️</p>
@@ -576,7 +474,6 @@ export default function JudgingPage({
         </div>
       ) : (
         <>
-          {/* Search */}
           <div className={`
             flex items-center gap-3 px-4 py-3 rounded-2xl border mb-4
             ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-slate-200 shadow-sm'}
@@ -596,7 +493,6 @@ export default function JudgingPage({
             )}
           </div>
 
-          {/* Competitor cards */}
           <div className="space-y-3">
             {visible.map(competitor => (
               <CompetitorCard
@@ -613,11 +509,10 @@ export default function JudgingPage({
             ))}
           </div>
 
-          {/* Legend */}
           <div className={`flex items-start gap-3 mt-6 p-4 rounded-2xl border ${theme === 'dark' ? 'bg-white/[0.02] border-white/5' : 'bg-slate-50 border-slate-100'}`}>
             <ShieldCheck size={14} className={`flex-shrink-0 mt-0.5 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`} />
             <p className={`text-[11px] leading-relaxed ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
-              Click a competitor card to expand their judge-required boulders. Use <span className="font-black">+/−</span> to log attempts, toggle <span className="font-black">Zone</span> and <span className="font-black">Top</span>, then hit <span className="font-black">Save score</span>. Previous session data loads automatically.
+              Click a competitor card to expand their judge-required boulders. Use <span className="font-black">+/−</span> to log attempts, toggle zone buttons and <span className="font-black">Top</span>, then hit <span className="font-black">Save score</span>.
             </p>
           </div>
         </>
