@@ -351,6 +351,102 @@ function updateDifficulty(id: string, field: keyof DifficultyLevel, value: strin
       {/* ── Scoring ── */}
       <SectionCard title="Scoring" theme={theme}>
 
+        {/* ── Judging method ── */}
+        <div className="mt-6">
+        <label className={`block text-[10px] font-black uppercase tracking-widest mb-3 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+            Judging Method
+        </label>
+        <div className="flex flex-col gap-2">
+            {([
+            {
+                value: 'self_scoring',
+                title: 'Fully self-scoring',
+                desc:  'Competitors log all their own tops and attempts. No judge validation required.',
+            },
+            {
+                value: 'self_with_approval',
+                title: 'Self-scoring with approval',
+                desc:  'Competitors log tops themselves, but a judge must approve each completion before it counts.',
+            },
+            {
+                value: 'judge_required',
+                title: 'Judge logging (hybrid)',
+                desc:  'Non-puntuable boulders are self-scored. Puntuable boulders require a judge to log attempts, zones, and tops.',
+            },
+            ] as const).map(option => (
+            <button
+                key={option.value}
+                onClick={() => set('scoringMethod', option.value)}
+                className={`
+                text-left px-4 py-4 rounded-xl border transition-all
+                ${draft.scoringMethod === option.value
+                    ? 'bg-sky-400/10 border-sky-400/30'
+                    : theme === 'dark'
+                    ? 'bg-white/5 border-white/10 hover:bg-white/8'
+                    : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
+                }
+                `}
+            >
+                <div className="flex items-center gap-3">
+                <div className={`
+                    w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center
+                    ${draft.scoringMethod === option.value
+                    ? 'border-sky-400 bg-sky-400'
+                    : theme === 'dark' ? 'border-slate-600' : 'border-slate-300'
+                    }
+                `}>
+                    {draft.scoringMethod === option.value && (
+                    <div className="w-1.5 h-1.5 rounded-full bg-sky-950" />
+                    )}
+                </div>
+                <div>
+                    <p className={`text-sm font-black ${draft.scoringMethod === option.value ? 'text-sky-400' : theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}`}>
+                    {option.title}
+                    </p>
+                    <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+                    {option.desc}
+                    </p>
+                </div>
+                </div>
+            </button>
+            ))}
+        </div>
+        </div>
+
+        {/* ── Zone scoring ── */}
+        <div className="mt-6">
+        <label className={`block text-[10px] font-black uppercase tracking-widest mb-3 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+            Zone Scoring
+        </label>
+        <div className="flex gap-2">
+            {([
+            { value: 'adds_to_score',    label: 'Adds to score',    desc: 'Zone points add to the competitor\'s total even without a top' },
+            { value: 'tie_breaker_only', label: 'Tie-breaker only', desc: 'Zone does not add points — used only to break ties' },
+            ] as const).map(opt => (
+            <button
+                key={opt.value}
+                onClick={() => set('zoneScoring', opt.value)}
+                className={`
+                flex-1 py-3 px-4 rounded-xl text-xs font-black border transition-all text-left
+                ${draft.zoneScoring === opt.value
+                    ? 'bg-sky-400/10 text-sky-400 border-sky-400/30'
+                    : theme === 'dark'
+                    ? 'bg-white/5 text-slate-500 border-white/10 hover:bg-white/10'
+                    : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'
+                }
+                `}
+            >
+                <div className="font-black uppercase tracking-widest text-[10px] mb-1">
+                {opt.label}
+                </div>
+                <div className={`text-[10px] font-normal normal-case tracking-normal ${draft.zoneScoring === opt.value ? 'text-sky-300' : theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
+                {opt.desc}
+                </div>
+            </button>
+            ))}
+        </div>
+        </div>
+
         {/* Scoring system */}
         <div className="mb-6">
           <label className={`block text-[10px] font-black uppercase tracking-widest mb-2 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>

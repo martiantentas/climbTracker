@@ -145,6 +145,7 @@ export default function App() {
                 timestamp:    Date.now(),
                 hasZone:      false,
                 zoneAttempts: 0,
+                zonesReached: 0,
                 topValidated: true,   // self-scored tops are auto-validated
               },
             ]
@@ -195,6 +196,8 @@ export default function App() {
         es: '### Reglas\n1. Usa el sentido común.',
         ca: '### Regles\n1. Fes servir el seny.',
       },
+      zoneScoring:   'adds_to_score',
+      scoringMethod: 'self_scoring',
     }
     setCompetitions(prev => [...prev, newComp])
     setBouldersMap(prev    => ({ ...prev, [newId]: [] }))
@@ -289,6 +292,7 @@ export default function App() {
   zoneAttempts: number,
   isTop:        boolean,
   judgeId:      string,
+  zonesReached: number,    // ← add this
 ) {
   if (!activeCompetition) return
   if (activeCompetition.isLocked) return
@@ -306,6 +310,7 @@ export default function App() {
       timestamp:       Date.now(),
       hasZone,
       zoneAttempts,
+      zonesReached,            // ← add this
       zoneValidatedBy: judgeId,
       topValidated:    isTop,
       topValidatedBy:  isTop ? judgeId : undefined,

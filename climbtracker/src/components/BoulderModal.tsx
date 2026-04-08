@@ -41,6 +41,7 @@ export default function BoulderModal({
   onClose,
 }: BoulderModalProps) {
   const isEditing = !!boulder
+  const [zoneCount, setZoneCount] = useState(boulder?.zoneCount ?? 0)
 
   // ── Draft state ──────────────────────────────────────────────────────────
   const [number,       setNumber]       = useState(boulder?.number       ?? 1)
@@ -72,6 +73,7 @@ export default function BoulderModal({
       maxPoints:    maxPoints,
       tags:         boulder?.tags ?? [],
       status,
+      zoneCount
     }
     onSave(saved)
     onClose()
@@ -262,6 +264,35 @@ export default function BoulderModal({
               </div>
             </button>
           </div>
+
+        {/* Zone count — only shown for puntuable boulders */}
+        {isPuntuable && (
+        <div className={sectionCls}>
+            <label className={labelCls}>Number of Zones</label>
+            <p className={`text-[11px] mb-3 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
+            How many intermediate zone holds does this boulder have?
+            </p>
+            <div className="flex gap-2">
+            {[0, 1, 2, 3, 4].map(n => (
+                <button
+                key={n}
+                onClick={() => setZoneCount(n)}
+                className={`
+                    flex-1 py-2.5 rounded-xl text-sm font-black border transition-all
+                    ${zoneCount === n
+                    ? 'bg-sky-400/10 text-sky-400 border-sky-400/30'
+                    : theme === 'dark'
+                        ? 'bg-white/5 text-slate-500 border-white/10 hover:bg-white/10'
+                        : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'
+                    }
+                `}
+                >
+                {n === 0 ? 'None' : n}
+                </button>
+            ))}
+            </div>
+        </div>
+        )}
 
           {/* Dynamic scoring override */}
           {competition.scoringType === 'DYNAMIC' && (

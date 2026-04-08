@@ -65,6 +65,8 @@ export const MOCK_COMPETITION: Competition = {
   minScorePerBoulder: 50,
   zoneScoring: 'adds_to_score',
   scoringMethod: 'self_scoring',
+  zoneScoring:   'adds_to_score',
+  scoringMethod: 'self_scoring',
 }
 
 // ─── MOCK BOULDERS ────────────────────────────────────────────────────────────
@@ -80,7 +82,9 @@ export const MOCK_BOULDERS: Boulder[] = Array.from({ length: 15 }, (_, i) => ({
   difficultyId: INITIAL_DIFFICULTIES[i % 9].id,
   style:        ['Slab', 'Overhang', 'Dyno'][i % 3],
   isPuntuable:  i < 3,
+  tags:         [],
   status:       'active',
+  zoneCount:    i < 3 ? 2 : 0,   // puntuable boulders get 2 zones
 }))
 
 // ─── MOCK COMPETITORS ─────────────────────────────────────────────────────────
@@ -116,10 +120,10 @@ export const MOCK_COMPETITORS: Competitor[] = [
 // ─── MOCK COMPLETIONS ─────────────────────────────────────────────────────────
 
 export const MOCK_COMPLETIONS: Completion[] = [
-  { competitorId: 'u-1', boulderId: 'b-1', attempts: 1, timestamp: Date.now() - 3600000, hasZone: true, zoneAttempts: 1, topValidated: true },
-  { competitorId: 'u-1', boulderId: 'b-2', attempts: 2, timestamp: Date.now() - 3000000, hasZone: true, zoneAttempts: 1, topValidated: true },
-  { competitorId: 'u-2', boulderId: 'b-1', attempts: 1, timestamp: Date.now() - 3500000, hasZone: true, zoneAttempts: 1, topValidated: true },
-  { competitorId: 'u-3', boulderId: 'b-1', attempts: 1, timestamp: Date.now() - 3400000, hasZone: true, zoneAttempts: 1, topValidated: true },
-  { competitorId: 'u-3', boulderId: 'b-3', attempts: 3, timestamp: Date.now() - 3300000, hasZone: true, zoneAttempts: 2, topValidated: true },
-  { competitorId: 'u-4', boulderId: 'b-2', attempts: 2, timestamp: Date.now() - 3200000, hasZone: false, zoneAttempts: 0, topValidated: true },
+  { competitorId: 'u-1', boulderId: 'b-1', attempts: 1, timestamp: Date.now() - 3600000, hasZone: true, zoneAttempts: 1, zonesReached: 2, topValidated: true },
+  { competitorId: 'u-1', boulderId: 'b-2', attempts: 2, timestamp: Date.now() - 3000000, hasZone: true, zoneAttempts: 1, zonesReached: 1, topValidated: true },
+  { competitorId: 'u-2', boulderId: 'b-1', attempts: 1, timestamp: Date.now() - 3500000, hasZone: true, zoneAttempts: 1, zonesReached: 2, topValidated: true },
+  { competitorId: 'u-3', boulderId: 'b-1', attempts: 1, timestamp: Date.now() - 3400000, hasZone: true, zoneAttempts: 1, zonesReached: 1, topValidated: true },
+  { competitorId: 'u-3', boulderId: 'b-3', attempts: 3, timestamp: Date.now() - 3300000, hasZone: true, zoneAttempts: 2, zonesReached: 2, topValidated: true },
+  { competitorId: 'u-4', boulderId: 'b-2', attempts: 2, timestamp: Date.now() - 3200000, hasZone: false, zoneAttempts: 0, zonesReached: 0, topValidated: true },
 ]

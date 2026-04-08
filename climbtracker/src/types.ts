@@ -53,6 +53,7 @@ export interface Boulder {
   maxPoints?:   number        // override for Dynamic scoring
   style?:       string        // e.g. "Slab", "Overhang", "Dyno"
   status:       'active' | 'hidden' | 'removed'
+  zoneCount:    number
 }
 
 // ─── COMPETITOR ───────────────────────────────────────────────────────────────
@@ -67,7 +68,7 @@ export interface Competitor {
   categoryId:  string
   bibNumber:   number
   avatar?:     string        // optional profile picture URL
-  role?:       'competitor' | 'judge'
+  role?:       'competitor' | 'judge' | 'organizer'
 }
 
 // ─── COMPLETION ───────────────────────────────────────────────────────────────
@@ -79,6 +80,7 @@ export interface Completion {
   timestamp:         number       // when top was logged/validated
   hasZone:           boolean      // reached the zone hold?
   zoneAttempts:      number       // attempts to reach zone
+  zonesReached:      number
   zoneTimestamp?:    number
   zoneValidatedBy?:  string       // judge profile id
   topValidated:      boolean      // true = judge confirmed top

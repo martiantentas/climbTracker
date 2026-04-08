@@ -11,6 +11,37 @@ function calcTraditionalPoints(
   const difficulty = comp.difficultyLevels.find(d => d.id === boulder.difficultyId)
   if (!difficulty) return 0
 
+  let points = 0
+
+  // Zone points — awarded even without a top if zoneScoring adds to score
+  if (comp.zoneScoring === 'adds_to_score' && completion.zonesReached > 0) {
+    const totalZones = boulder.zoneCount || 1
+    // Points are proportional to how many zones were reached
+    const zonePointsEarned = Math.floor(
+      difficulty.zonePoints * (completion.zonesReached / totalZones)
+    )
+    points += zonePointsEarned
+  }
+
+  // Top points — only if top was validated
+  if (completion.topValidated) {
+    let topPoints = difficulty.basePoints
+
+    if (comp.penalizeAttempts && completion.attempts > 1) {
+      const extra = completion.attempts - 1
+      if (comp.penaltyType === 'fixed') {
+        topPoints -= extra * comp.penaltyValue
+      } else {
+        topPoints -= extra * (difficulty.basePoints * comp.penaltyValue / 100)
+      }
+    }
+
+    points += Math.max(topPoints, comp.minScorePerBoulder)
+  }
+
+  return Math.max(points, 0)
+}
+
   // Only count validated tops
   if (!completion.topValidated) {
     // If zone scoring adds to score, count zone points even without top
@@ -42,25 +73,70 @@ function calcTraditionalPoints(
 
 // ─── DYNAMIC SCORING ──────────────────────────────────────────────────────────
 
-function calcDynamicPoints(
-  boulder:     Boulder,
-  completions: Completion[],  // all completions across all competitors
-  comp:        Competition,
-): number {
-  // Count how many competitors topped this specific boulder
-  const tops = completions.filter(c => c.boulderId === boulder.id).length
+export function calculateRankings(
+  competition:  Competition,
+  boulders:     Boulder[],
+  competitors:  Competitor[],
+  completions:  Completion[],
+): RankResult[] {
+  const actualCompetitors = competitors.filter(c =>
+    c.id !== competition.ownerId && c.role !== 'judge'
+  )
 
-  // If nobody topped it, it's worth 0
-  if (tops === 0) return 0
+  const results = actualCompetitors.map(competitor => {
+    // Include ALL completions — not just topped ones
+    // Zone-only completions still contribute points
+    const mine = completions.filter(c => c.competitorId === competitor.id)
 
-  const pot = boulder.maxPoints ?? comp.dynamicPot ?? 1000
-  const min = comp.minDynamicPoints ?? 0
+    const totalPoints   = calcCompetitorScore(competitor, competition, boulders, completions)
+    const totalTops     = mine.filter(c => c.topValidated).length
+    const totalAttempts = mine.reduce((sum, c) => sum + c.attempts, 0)
+    const flashCount    = mine.filter(c => c.attempts === 1 && c.topValidated).length
+    const totalZones    = mine.reduce((sum, c) => sum + (c.zonesReached ?? 0), 0)
+    const zoneAttempts  = mine.reduce((sum, c) => sum + c.zoneAttempts, 0)
 
-  // The pot is shared equally among everyone who topped it
-  const shared = Math.floor(pot / tops)
+    const category = competition.categories.find(cat => cat.id === competitor.categoryId)
 
-  // Never go below the minimum
-  return Math.max(shared, min)
+    return {
+      competitorId:  competitor.id,
+      name:          competitor.displayName,
+      bib:           competitor.bibNumber,
+      category:      category?.name ?? 'Unknown',
+      gender:        competitor.gender,
+      totalPoints,
+      totalTops,
+      totalAttempts,
+      flashCount,
+      totalZones,
+      zoneAttempts,
+      rank: 0,
+    }
+  })
+
+  results.sort((a, b) => {
+    if (b.totalPoints   !== a.totalPoints)   return b.totalPoints   - a.totalPoints
+    if (b.totalTops     !== a.totalTops)     return b.totalTops     - a.totalTops
+    if (a.totalAttempts !== b.totalAttempts) return a.totalAttempts - b.totalAttempts
+    if (b.totalZones    !== a.totalZones)    return b.totalZones    - a.totalZones
+    if (a.zoneAttempts  !== b.zoneAttempts)  return a.zoneAttempts  - b.zoneAttempts
+    return b.flashCount - a.flashCount
+  })
+
+  results.forEach((result, index) => {
+    if (index === 0) {
+      result.rank = 1
+    } else {
+      const prev = results[index - 1]
+      const sameScore =
+        result.totalPoints   === prev.totalPoints &&
+        result.totalAttempts === prev.totalAttempts &&
+        result.totalZones    === prev.totalZones &&
+        result.flashCount    === prev.flashCount
+      result.rank = sameScore ? prev.rank : index + 1
+    }
+  })
+
+  return results
 }
 
 // ─── TOTAL SCORE FOR ONE COMPETITOR ───────────────────────────────────────────
