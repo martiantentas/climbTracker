@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { Plus, SlidersHorizontal } from 'lucide-react'
 
-import type { Boulder, Competition, Competitor, Completion } from '../types'
+import type { Boulder, Competition, Competitor, Completion, AttemptTracking } from '../types'
 import { translations } from '../translations'
 import type { Language } from '../translations'
 import BoulderCard from '../components/BoulderCard'
@@ -24,6 +24,16 @@ interface BouldersPageProps {
 type FilterStatus = 'all' | 'completed' | 'incomplete'
 type SortKey      = 'number' | 'difficulty'
 
+// ─── HELPER: resolve tracking mode for a boulder ──────────────────────────────
+// Boulder-level override wins; falls back to competition default.
+// Judge-required boulders always use 'count' (judges use the judging page anyway,
+// but this keeps the card consistent if an organizer is previewing it).
+
+function resolveTracking(boulder: Boulder, competition: Competition): AttemptTracking {
+  if (boulder.isPuntuable) return 'count'
+  return boulder.attemptTrackingOverride ?? competition.attemptTracking
+}
+
 // ─── BOULDERS PAGE ────────────────────────────────────────────────────────────
 
 export default function BouldersPage({
@@ -40,14 +50,10 @@ export default function BouldersPage({
   const t = translations[lang]
 
   // ── Local UI state ───────────────────────────────────────────────────────
-  const [filter,        setFilter]        = useState<FilterStatus>('all')
-  const [sortBy,        setSortBy]        = useState<SortKey>('number')
-  const [search,        setSearch]        = useState('')
-  const [modalBoulder,  setModalBoulder]  = useState<Boulder | null | 'new'>(null)
-
-  // null    = modal closed
-  // 'new'   = creating a new boulder
-  // Boulder = editing that boulder
+  const [filter,       setFilter]       = useState<FilterStatus>('all')
+  const [sortBy,       setSortBy]       = useState<SortKey>('number')
+  const [search,       setSearch]       = useState('')
+  const [modalBoulder, setModalBoulder] = useState<Boulder | null | 'new'>(null)
 
   // ── My completions ────────────────────────────────────────────────────────
   const myCompletions = useMemo(() =>
@@ -116,12 +122,11 @@ export default function BouldersPage({
     return list
   }, [boulders, filter, sortBy, search, myCompletions, isOrganizer, competition.difficultyLevels])
 
-  // ── Handle toggle ─────────────────────────────────────────────────────────
+  // ── Handlers ─────────────────────────────────────────────────────────────
   function handleToggle(boulderId: string, attempts: number, forceStatus: boolean) {
     onToggle(currentUser.id, boulderId, attempts, forceStatus)
   }
 
-  // ── Handle save boulder (add or edit) ─────────────────────────────────────
   function handleSaveBoulder(saved: Boulder) {
     const exists = boulders.find(b => b.id === saved.id)
     if (exists) {
@@ -131,9 +136,7 @@ export default function BouldersPage({
     }
   }
 
-  // ── Handle delete boulder ─────────────────────────────────────────────────
   function handleDeleteBoulder(boulderId: string) {
-    // Soft delete — mark as removed rather than truly deleting
     onUpdateBoulders(boulders.map(b =>
       b.id === boulderId ? { ...b, status: 'removed' as const } : b
     ))
@@ -143,6 +146,20 @@ export default function BouldersPage({
   const totalBoulders = boulders.filter(b => b.status === 'active').length
   const toppedCount   = myCompletions.filter(c => c.topValidated).length
   const flashCount    = myCompletions.filter(c => c.attempts === 1 && c.topValidated).length
+
+  // Shared pill button style
+  function pillCls(active: boolean, accent: 'sky' | 'purple' = 'sky') {
+    const activeStyle = accent === 'sky' ? 'bg-sky-400 text-sky-950' : 'bg-purple-400 text-purple-950'
+    return `
+      px-4 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all
+      ${active
+        ? activeStyle
+        : theme === 'dark'
+          ? 'bg-white/5 text-slate-400 hover:bg-white/10'
+          : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+      }
+    `
+  }
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -174,7 +191,6 @@ export default function BouldersPage({
           </div>
         </div>
 
-        {/* Add boulder button — organizer only */}
         {isOrganizer && (
           <button
             onClick={() => setModalBoulder('new')}
@@ -209,77 +225,36 @@ export default function BouldersPage({
         )}
       </div>
 
-      {/* ── Filter + sort pills — competitors only ── */}
-      {!isOrganizer && (
-        <div className="flex items-center gap-2 mb-6 flex-wrap">
-          {(['all', 'completed', 'incomplete'] as FilterStatus[]).map(f => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`
-                px-4 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all
-                ${filter === f
-                  ? 'bg-sky-400 text-sky-950'
-                  : theme === 'dark'
-                    ? 'bg-white/5 text-slate-400 hover:bg-white/10'
-                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                }
-              `}
-            >
-              {f === 'all' ? t.all : f === 'completed' ? t.completed : t.incomplete}
-            </button>
-          ))}
+      {/* ── Filter + sort pills ── */}
+      <div className="flex items-center gap-2 mb-6 flex-wrap">
+        {!isOrganizer && (
+          <>
+            {(['all', 'completed', 'incomplete'] as FilterStatus[]).map(f => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={pillCls(filter === f, 'sky')}
+              >
+                {f === 'all' ? t.all : f === 'completed' ? t.completed : t.incomplete}
+              </button>
+            ))}
+            <div className={`w-px h-4 mx-1 ${theme === 'dark' ? 'bg-white/10' : 'bg-slate-200'}`} />
+          </>
+        )}
 
-          <div className={`w-px h-4 mx-1 ${theme === 'dark' ? 'bg-white/10' : 'bg-slate-200'}`} />
-
-          <span className={`text-[10px] uppercase tracking-widest font-black ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
-            {t.sortBy}:
-          </span>
-          {(['number', 'difficulty'] as SortKey[]).map(s => (
-            <button
-              key={s}
-              onClick={() => setSortBy(s)}
-              className={`
-                px-4 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all
-                ${sortBy === s
-                  ? 'bg-purple-400 text-purple-950'
-                  : theme === 'dark'
-                    ? 'bg-white/5 text-slate-400 hover:bg-white/10'
-                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                }
-              `}
-            >
-              {s === 'number' ? t.number : t.difficulty}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* ── Organizer sort pills ── */}
-      {isOrganizer && (
-        <div className="flex items-center gap-2 mb-6">
-          <span className={`text-[10px] uppercase tracking-widest font-black ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
-            {t.sortBy}:
-          </span>
-          {(['number', 'difficulty'] as SortKey[]).map(s => (
-            <button
-              key={s}
-              onClick={() => setSortBy(s)}
-              className={`
-                px-4 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all
-                ${sortBy === s
-                  ? 'bg-purple-400 text-purple-950'
-                  : theme === 'dark'
-                    ? 'bg-white/5 text-slate-400 hover:bg-white/10'
-                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                }
-              `}
-            >
-              {s === 'number' ? t.number : t.difficulty}
-            </button>
-          ))}
-        </div>
-      )}
+        <span className={`text-[10px] uppercase tracking-widest font-black ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
+          {t.sortBy}:
+        </span>
+        {(['number', 'difficulty'] as SortKey[]).map(s => (
+          <button
+            key={s}
+            onClick={() => setSortBy(s)}
+            className={pillCls(sortBy === s, 'purple')}
+          >
+            {s === 'number' ? t.number : t.difficulty}
+          </button>
+        ))}
+      </div>
 
       {/* ── Boulder grid ── */}
       {visibleBoulders.length === 0 ? (
@@ -309,8 +284,10 @@ export default function BouldersPage({
               isOrganizer={isOrganizer}
               isLocked={competition.isLocked}
               theme={theme}
+              attemptTracking={resolveTracking(boulder, competition)}
+              maxFixedAttempts={competition.maxFixedAttempts}
               onToggle={handleToggle}
-              onEdit={isOrganizer ? (b) => setModalBoulder(b) : undefined}
+              onEdit={isOrganizer ? b => setModalBoulder(b) : undefined}
             />
           ))}
         </div>

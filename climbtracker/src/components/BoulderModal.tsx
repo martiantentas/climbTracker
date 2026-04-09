@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react'
 import { X, Save, Trash2 } from 'lucide-react'
 
-import type { Boulder, Competition } from '../types'
+import type { Boulder, Competition, AttemptTracking } from '../types'
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
 interface BoulderModalProps {
-  boulder?:    Boulder           // undefined = creating new, defined = editing
+  boulder?:    Boulder
   competition: Competition
   theme:       'light' | 'dark'
   onSave:      (boulder: Boulder) => void
@@ -30,6 +30,31 @@ const HOLD_COLORS = [
 
 const STYLES = ['Slab', 'Overhang', 'Dyno', 'Crimp', 'Volume', 'Cave', 'Vertical', 'Other']
 
+// ─── ATTEMPT TRACKING OPTIONS ─────────────────────────────────────────────────
+
+const TRACKING_OPTIONS: { value: AttemptTracking | 'inherit'; label: string; desc: string }[] = [
+  {
+    value: 'inherit',
+    label: 'Inherit from event',
+    desc:  'Use the default set in competition settings',
+  },
+  {
+    value: 'none',
+    label: 'Top / No top only',
+    desc:  'Only record whether the boulder was topped — no attempt count',
+  },
+  {
+    value: 'fixed_options',
+    label: 'Fixed options',
+    desc:  'Pill buttons (1 / 2 / … / N+) — quickest to tap',
+  },
+  {
+    value: 'count',
+    label: 'Free count',
+    desc:  '+/− stepper — records any number of attempts precisely',
+  },
+]
+
 // ─── BOULDER MODAL ────────────────────────────────────────────────────────────
 
 export default function BoulderModal({
@@ -41,20 +66,23 @@ export default function BoulderModal({
   onClose,
 }: BoulderModalProps) {
   const isEditing = !!boulder
-  const [zoneCount, setZoneCount] = useState(boulder?.zoneCount ?? 0)
 
   // ── Draft state ──────────────────────────────────────────────────────────
-  const [number,       setNumber]       = useState(boulder?.number       ?? 1)
-  const [name,         setName]         = useState(boulder?.name         ?? '')
-  const [color,        setColor]        = useState(boulder?.color        ?? HOLD_COLORS[0].value)
-  const [difficultyId, setDifficultyId] = useState(boulder?.difficultyId ?? competition.difficultyLevels[0]?.id ?? '')
-  const [style,        setStyle]        = useState(boulder?.style        ?? '')
-  const [isPuntuable,  setIsPuntuable]  = useState(boulder?.isPuntuable  ?? false)
-  const [maxPoints,    setMaxPoints]    = useState(boulder?.maxPoints    ?? competition.dynamicPot ?? 1000)
-  const [status,       setStatus]       = useState<Boulder['status']>(boulder?.status ?? 'active')
+  const [number,           setNumber]           = useState(boulder?.number           ?? 1)
+  const [name,             setName]             = useState(boulder?.name             ?? '')
+  const [color,            setColor]            = useState(boulder?.color            ?? HOLD_COLORS[0].value)
+  const [difficultyId,     setDifficultyId]     = useState(boulder?.difficultyId     ?? competition.difficultyLevels[0]?.id ?? '')
+  const [style,            setStyle]            = useState(boulder?.style            ?? '')
+  const [isPuntuable,      setIsPuntuable]      = useState(boulder?.isPuntuable      ?? false)
+  const [maxPoints,        setMaxPoints]        = useState(boulder?.maxPoints        ?? competition.dynamicPot ?? 1000)
+  const [status,           setStatus]           = useState<Boulder['status']>(boulder?.status ?? 'active')
+  const [zoneCount,        setZoneCount]        = useState(boulder?.zoneCount        ?? 0)
+  const [trackingOverride, setTrackingOverride] = useState<AttemptTracking | 'inherit'>(
+    boulder?.attemptTrackingOverride ?? 'inherit'
+  )
   const [confirmDelete, setConfirmDelete] = useState(false)
 
-  // Close on Escape key
+  // Close on Escape
   useEffect(() => {
     function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
@@ -70,16 +98,17 @@ export default function BoulderModal({
       difficultyId: difficultyId || undefined,
       style:        style || undefined,
       isPuntuable,
-      maxPoints:    maxPoints,
+      maxPoints,
       tags:         boulder?.tags ?? [],
       status,
-      zoneCount
+      zoneCount,
+      attemptTrackingOverride: trackingOverride === 'inherit' ? undefined : trackingOverride,
     }
     onSave(saved)
     onClose()
   }
 
-  // ── Styles ───────────────────────────────────────────────────────────────
+  // ── Shared styles ────────────────────────────────────────────────────────
   const inputCls = `
     w-full px-4 py-3 rounded-xl border outline-none text-sm transition-all
     ${theme === 'dark'
@@ -87,17 +116,14 @@ export default function BoulderModal({
       : 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-sky-400'
     }
   `
-  const labelCls = `block text-[10px] font-black uppercase tracking-widest mb-2 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`
+  const labelCls   = `block text-[10px] font-black uppercase tracking-widest mb-2 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`
   const sectionCls = `mb-5`
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <>
       {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-[400] bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 z-[400] bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
       <div className={`
@@ -126,7 +152,7 @@ export default function BoulderModal({
         {/* Body */}
         <div className="p-6">
 
-          {/* Number + Name row */}
+          {/* Number + Name */}
           <div className="grid grid-cols-[100px_1fr] gap-3 mb-5">
             <div>
               <label className={labelCls}>Number *</label>
@@ -161,24 +187,18 @@ export default function BoulderModal({
                   title={c.label}
                   className={`
                     w-9 h-9 rounded-xl transition-all border-2
-                    ${color === c.value
-                      ? 'border-sky-400 scale-110 shadow-lg'
-                      : 'border-transparent hover:scale-105'
-                    }
+                    ${color === c.value ? 'border-sky-400 scale-110 shadow-lg' : 'border-transparent hover:scale-105'}
                   `}
                   style={{ backgroundColor: c.value }}
                 />
               ))}
-              {/* Custom colour picker */}
-              <div className="relative">
-                <input
-                  type="color"
-                  value={color}
-                  onChange={e => setColor(e.target.value)}
-                  className="w-9 h-9 rounded-xl cursor-pointer border-2 border-transparent hover:scale-105 transition-all"
-                  title="Custom colour"
-                />
-              </div>
+              <input
+                type="color"
+                value={color}
+                onChange={e => setColor(e.target.value)}
+                className="w-9 h-9 rounded-xl cursor-pointer border-2 border-transparent hover:scale-105 transition-all"
+                title="Custom colour"
+              />
             </div>
             <p className={`text-[10px] mt-2 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
               Selected: <span className="font-black" style={{ color }}>{color}</span>
@@ -191,23 +211,23 @@ export default function BoulderModal({
               <label className={labelCls}>Difficulty Level</label>
               <div className="flex flex-wrap gap-2">
                 {competition.difficultyLevels.map(d => (
-                    <button
-                        key={d.id}
-                        onClick={() => setDifficultyId(d.id)}
-                        className={`
-                        px-3 py-2 rounded-xl text-xs font-black border transition-all
-                        ${difficultyId === d.id
-                            ? 'bg-sky-400/10 text-sky-400 border-sky-400/30'
-                            : theme === 'dark'
-                            ? 'bg-white/5 text-slate-400 border-white/10 hover:bg-white/10'
-                            : 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200'
-                        }
-                        `}
-                    >
-                        {d.label}
-                        <span className={`ml-1.5 text-[10px] opacity-50`}>{d.basePoints}pts</span>
-                    </button>
-                    ))}
+                  <button
+                    key={d.id}
+                    onClick={() => setDifficultyId(d.id)}
+                    className={`
+                      px-3 py-2 rounded-xl text-xs font-black border transition-all
+                      ${difficultyId === d.id
+                        ? 'bg-sky-400/10 text-sky-400 border-sky-400/30'
+                        : theme === 'dark'
+                          ? 'bg-white/5 text-slate-400 border-white/10 hover:bg-white/10'
+                          : 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200'
+                      }
+                    `}
+                  >
+                    {d.label}
+                    <span className="ml-1.5 text-[10px] opacity-50">{d.basePoints}pts</span>
+                  </button>
+                ))}
               </div>
             </div>
           )}
@@ -236,6 +256,54 @@ export default function BoulderModal({
             </div>
           </div>
 
+          {/* ── Attempt tracking override ── */}
+          <div className={sectionCls}>
+            <label className={labelCls}>Attempt Tracking</label>
+            <p className={`text-[11px] mb-3 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
+              Competition default: <span className="font-black">{competition.attemptTracking}</span>
+              {competition.attemptTracking === 'fixed_options' && ` (up to ${competition.maxFixedAttempts}+)`}
+            </p>
+            <div className="flex flex-col gap-2">
+              {TRACKING_OPTIONS.map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => setTrackingOverride(opt.value)}
+                  className={`
+                    text-left px-4 py-3 rounded-xl border transition-all
+                    ${trackingOverride === opt.value
+                      ? 'bg-sky-400/10 border-sky-400/30'
+                      : theme === 'dark'
+                        ? 'bg-white/5 border-white/10 hover:bg-white/8'
+                        : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
+                    }
+                  `}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`
+                      w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center
+                      ${trackingOverride === opt.value
+                        ? 'border-sky-400 bg-sky-400'
+                        : theme === 'dark' ? 'border-slate-600' : 'border-slate-300'
+                      }
+                    `}>
+                      {trackingOverride === opt.value && (
+                        <div className="w-1.5 h-1.5 rounded-full bg-sky-950" />
+                      )}
+                    </div>
+                    <div>
+                      <p className={`text-xs font-black ${trackingOverride === opt.value ? 'text-sky-400' : theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}`}>
+                        {opt.label}
+                      </p>
+                      <p className={`text-[10px] mt-0.5 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+                        {opt.desc}
+                      </p>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Judge required toggle */}
           <div className={`
             flex items-center justify-between p-4 rounded-xl border mb-5
@@ -252,10 +320,7 @@ export default function BoulderModal({
             <button onClick={() => setIsPuntuable(p => !p)}>
               <div className={`
                 w-12 h-6 rounded-full transition-all relative
-                ${isPuntuable
-                  ? 'bg-purple-400'
-                  : theme === 'dark' ? 'bg-white/10' : 'bg-slate-200'
-                }
+                ${isPuntuable ? 'bg-purple-400' : theme === 'dark' ? 'bg-white/10' : 'bg-slate-200'}
               `}>
                 <div className={`
                   absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all
@@ -265,34 +330,34 @@ export default function BoulderModal({
             </button>
           </div>
 
-        {/* Zone count — only shown for puntuable boulders */}
-        {isPuntuable && (
-        <div className={sectionCls}>
-            <label className={labelCls}>Number of Zones</label>
-            <p className={`text-[11px] mb-3 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
-            How many intermediate zone holds does this boulder have?
-            </p>
-            <div className="flex gap-2">
-            {[0, 1, 2, 3, 4].map(n => (
-                <button
-                key={n}
-                onClick={() => setZoneCount(n)}
-                className={`
-                    flex-1 py-2.5 rounded-xl text-sm font-black border transition-all
-                    ${zoneCount === n
-                    ? 'bg-sky-400/10 text-sky-400 border-sky-400/30'
-                    : theme === 'dark'
-                        ? 'bg-white/5 text-slate-500 border-white/10 hover:bg-white/10'
-                        : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'
-                    }
-                `}
-                >
-                {n === 0 ? 'None' : n}
-                </button>
-            ))}
+          {/* Zone count — only for puntuable boulders */}
+          {isPuntuable && (
+            <div className={sectionCls}>
+              <label className={labelCls}>Number of Zones</label>
+              <p className={`text-[11px] mb-3 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
+                How many intermediate zone holds does this boulder have?
+              </p>
+              <div className="flex gap-2">
+                {[0, 1, 2, 3, 4].map(n => (
+                  <button
+                    key={n}
+                    onClick={() => setZoneCount(n)}
+                    className={`
+                      flex-1 py-2.5 rounded-xl text-sm font-black border transition-all
+                      ${zoneCount === n
+                        ? 'bg-sky-400/10 text-sky-400 border-sky-400/30'
+                        : theme === 'dark'
+                          ? 'bg-white/5 text-slate-500 border-white/10 hover:bg-white/10'
+                          : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'
+                      }
+                    `}
+                  >
+                    {n === 0 ? 'None' : n}
+                  </button>
+                ))}
+              </div>
             </div>
-        </div>
-        )}
+          )}
 
           {/* Dynamic scoring override */}
           {competition.scoringType === 'DYNAMIC' && (
@@ -346,7 +411,6 @@ export default function BoulderModal({
           sticky bottom-0 flex items-center justify-between gap-3 px-6 py-4 border-t
           ${theme === 'dark' ? 'bg-slate-900 border-white/10' : 'bg-white border-slate-100'}
         `}>
-          {/* Delete — only when editing */}
           {isEditing && onDelete && (
             confirmDelete ? (
               <div className="flex items-center gap-2">

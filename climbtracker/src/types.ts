@@ -16,6 +16,14 @@ export const CompetitionStatus = {
 
 export type CompetitionStatus = typeof CompetitionStatus[keyof typeof CompetitionStatus]
 
+// ─── ATTEMPT TRACKING ─────────────────────────────────────────────────────────
+//
+//  none          → only "topped / not topped" is recorded; no attempt count shown
+//  count         → +/− stepper; any number of attempts recorded
+//  fixed_options → pill buttons (1 / 2 / 3 / N+); maxFixedAttempts controls N
+
+export type AttemptTracking = 'none' | 'count' | 'fixed_options'
+
 // ─── SMALL BUILDING BLOCKS ────────────────────────────────────────────────────
 
 export interface Category {
@@ -54,6 +62,8 @@ export interface Boulder {
   status:       'active' | 'hidden' | 'removed'
   zoneCount:    number
   tags:         string[]
+  // When set, overrides the competition-level attemptTracking for this boulder.
+  attemptTrackingOverride?: AttemptTracking
 }
 
 // ─── COMPETITOR ───────────────────────────────────────────────────────────────
@@ -133,6 +143,13 @@ export interface Competition {
   minScorePerBoulder: number
   zoneScoring:        ZoneScoring
   scoringMethod:      ScoringMethod
+
+  // How attempts are tracked by default across all self-scored boulders.
+  // Judge-required boulders always use 'count' regardless of this setting.
+  attemptTracking:    AttemptTracking
+  // Only relevant when attemptTracking === 'fixed_options'.
+  // The highest pill shown; anything ≥ this value is shown as "N+".
+  maxFixedAttempts:   number
 }
 
 // ─── LEADERBOARD ROW ──────────────────────────────────────────────────────────
@@ -142,7 +159,7 @@ export interface RankResult {
   name:          string
   bib:           number
   category:      string
-  gender:        string       // ← added: used in LeaderboardPage filters
+  gender:        string
   totalPoints:   number
   totalTops:     number
   totalAttempts: number

@@ -11,6 +11,7 @@ import {
   CompetitionStatus,
   ScoringType,
 } from './types'
+
 // ─── CATEGORIES ───────────────────────────────────────────────────────────────
 
 export const INITIAL_CATEGORIES: Category[] = [
@@ -63,15 +64,15 @@ export const MOCK_COMPETITION: Competition = {
   penaltyType:        'fixed',
   penaltyValue:       20,
   minScorePerBoulder: 50,
-  zoneScoring: 'adds_to_score',
-  scoringMethod: 'self_scoring',
-  zoneScoring:   'adds_to_score',
-  scoringMethod: 'self_scoring',
+  zoneScoring:        'adds_to_score',
+  scoringMethod:      'self_scoring',
+  // Attempt tracking defaults
+  attemptTracking:    'fixed_options',
+  maxFixedAttempts:   4,
 }
 
 // ─── MOCK BOULDERS ────────────────────────────────────────────────────────────
 
-// A small helper array of colours to cycle through
 const COLORS = ['#38bdf8', '#fbbf24', '#f87171', '#4ade80', '#c084fc', '#ffffff', '#000000']
 
 export const MOCK_BOULDERS: Boulder[] = Array.from({ length: 15 }, (_, i) => ({
@@ -84,7 +85,10 @@ export const MOCK_BOULDERS: Boulder[] = Array.from({ length: 15 }, (_, i) => ({
   isPuntuable:  i < 3,
   tags:         [],
   status:       'active',
-  zoneCount:    i < 3 ? 2 : 0,   // puntuable boulders get 2 zones
+  zoneCount:    i < 3 ? 2 : 0,
+  // Puntuable boulders override to 'count' so judges get the stepper;
+  // regular boulders inherit the competition default.
+  attemptTrackingOverride: i < 3 ? 'count' : undefined,
 }))
 
 // ─── MOCK COMPETITORS ─────────────────────────────────────────────────────────
@@ -94,26 +98,31 @@ export const MOCK_COMPETITORS: Competitor[] = [
     id: 'u-admin', firstName: 'Admin', lastName: 'Organizer',
     displayName: 'Admin O.', email: 'admin@climbtracker.com',
     gender: 'Other', categoryId: 'cat-1', bibNumber: 0,
+    role: 'organizer',
   },
   {
     id: 'u-1', firstName: 'Alex', lastName: 'Honnold',
     displayName: 'Alex H.', email: 'alex@example.com',
     gender: 'Male', categoryId: 'cat-1', bibNumber: 101,
+    role: 'competitor',
   },
   {
     id: 'u-2', firstName: 'Janja', lastName: 'Garnbret',
     displayName: 'Janja G.', email: 'janja@example.com',
     gender: 'Female', categoryId: 'cat-2', bibNumber: 102,
+    role: 'competitor',
   },
   {
     id: 'u-3', firstName: 'Adam', lastName: 'Ondra',
     displayName: 'Adam O.', email: 'adam@example.com',
     gender: 'Male', categoryId: 'cat-1', bibNumber: 103,
+    role: 'competitor',
   },
   {
     id: 'u-4', firstName: 'Brooke', lastName: 'Raboutou',
     displayName: 'Brooke R.', email: 'brooke@example.com',
     gender: 'Female', categoryId: 'cat-2', bibNumber: 104,
+    role: 'competitor',
   },
 ]
 

@@ -16,6 +16,7 @@ import { translations } from './translations'
 import NavBar from './components/NavBar'
 import Toast from './components/Toast'
 import MobileMenu from './components/MobileMenu'
+import ProtectedRoute from './components/ProtectedRoute'
 import BouldersPage from './pages/BouldersPage'
 import LeaderboardPage from './pages/LeaderboardPage'
 import RulesPage from './pages/RulesPage'
@@ -25,7 +26,6 @@ import UsersPage from './pages/UsersPage'
 import SettingsPage from './pages/SettingsPage'
 import JudgingPage from './pages/JudgingPage'
 import AnalyticsPage from './pages/AnalyticsPage'
-
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
@@ -56,11 +56,11 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<Competitor | null>(null)
 
   // ── Competition state ────────────────────────────────────────────────────────
-  const [competitions,    setCompetitions]    = useState<Competition[]>([MOCK_COMPETITION])
-  const [activeCompId,    setActiveCompId]    = useState<string>(MOCK_COMPETITION.id)
-  const [bouldersMap,     setBouldersMap]     = useState<Record<string, Boulder[]>>({ [MOCK_COMPETITION.id]: MOCK_BOULDERS })
-  const [completionsMap,  setCompletionsMap]  = useState<Record<string, Completion[]>>({ [MOCK_COMPETITION.id]: MOCK_COMPLETIONS })
-  const [competitorsMap,  setCompetitorsMap]  = useState<Record<string, Competitor[]>>({ [MOCK_COMPETITION.id]: MOCK_COMPETITORS })
+  const [competitions,   setCompetitions]   = useState<Competition[]>([MOCK_COMPETITION])
+  const [activeCompId,   setActiveCompId]   = useState<string>(MOCK_COMPETITION.id)
+  const [bouldersMap,    setBouldersMap]    = useState<Record<string, Boulder[]>>({ [MOCK_COMPETITION.id]: MOCK_BOULDERS })
+  const [completionsMap, setCompletionsMap] = useState<Record<string, Completion[]>>({ [MOCK_COMPETITION.id]: MOCK_COMPLETIONS })
+  const [competitorsMap, setCompetitorsMap] = useState<Record<string, Competitor[]>>({ [MOCK_COMPETITION.id]: MOCK_COMPETITORS })
 
   // ── UI state ─────────────────────────────────────────────────────────────────
   const [toast,      setToast]      = useState<{ message: string; visible: boolean }>({ message: '', visible: false })
@@ -77,12 +77,16 @@ export default function App() {
   const activeCompetitors = competitorsMap[activeCompetition?.id] ?? []
 
   const isOrganizer = useMemo(() =>
-    currentUser?.id === activeCompetition?.ownerId,
+    currentUser?.id === activeCompetition?.ownerId ||
+    currentUser?.role === 'organizer',
     [currentUser, activeCompetition]
   )
 
-  // Can the current user see the full competition content?
-  // True if: they are the organizer, OR they are a registered participant
+  const isJudgeOrOrganizer = useMemo(() =>
+    isOrganizer || currentUser?.role === 'judge',
+    [isOrganizer, currentUser]
+  )
+
   const canAccessActiveComp = useMemo(() =>
     isOrganizer || (activeCompetition
       ? (competitorsMap[activeCompetition.id] ?? []).some(c => c.id === currentUser?.id)
@@ -139,16 +143,16 @@ export default function App() {
           updated = [
             ...current,
             {
-                competitorId,
-                boulderId,
-                attempts:     Math.max(1, attempts),
-                timestamp:    Date.now(),
-                hasZone:      false,
-                zoneAttempts: 0,
-                zonesReached: 0,
-                topValidated: true,   // self-scored tops are auto-validated
-              },
-            ]
+              competitorId,
+              boulderId,
+              attempts:     Math.max(1, attempts),
+              timestamp:    Date.now(),
+              hasZone:      false,
+              zoneAttempts: 0,
+              zonesReached: 0,
+              topValidated: true,
+            },
+          ]
         } else {
           updated = current
         }
@@ -196,8 +200,10 @@ export default function App() {
         es: '### Reglas\n1. Usa el sentido común.',
         ca: '### Regles\n1. Fes servir el seny.',
       },
-      zoneScoring:   'adds_to_score',
-      scoringMethod: 'self_scoring',
+      zoneScoring:        'adds_to_score',
+      scoringMethod:      'self_scoring',
+      attemptTracking:    'fixed_options',
+      maxFixedAttempts:   4,
     }
     setCompetitions(prev => [...prev, newComp])
     setBouldersMap(prev    => ({ ...prev, [newId]: [] }))
@@ -232,7 +238,6 @@ export default function App() {
 
   function handleLeaveCompetition(compId: string) {
     if (!currentUser) return
-    // Only remove the participant — completions stay as historical record
     setCompetitorsMap(prev => ({
       ...prev,
       [compId]: (prev[compId] ?? []).filter(c => c.id !== currentUser.id),
@@ -274,66 +279,87 @@ export default function App() {
   }
 
   function handleUpdateBib(competitorId: string, bib: number) {
-  if (!activeCompetition) return
-  setCompetitorsMap(prev => ({
-    ...prev,
-    [activeCompetition.id]: (prev[activeCompetition.id] ?? []).map(c =>
-      c.id === competitorId ? { ...c, bibNumber: bib } : c
-    ),
-  }))
-  showToast(t.successSaved)
-}
+    if (!activeCompetition) return
+    setCompetitorsMap(prev => ({
+      ...prev,
+      [activeCompetition.id]: (prev[activeCompetition.id] ?? []).map(c =>
+        c.id === competitorId ? { ...c, bibNumber: bib } : c
+      ),
+    }))
+    showToast(t.successSaved)
+  }
 
   function handleLogScore(
-  competitorId: string,
-  boulderId:    string,
-  attempts:     number,
-  hasZone:      boolean,
-  zoneAttempts: number,
-  isTop:        boolean,
-  judgeId:      string,
-  zonesReached: number,    // ← add this
-) {
-  if (!activeCompetition) return
-  if (activeCompetition.isLocked) return
+    competitorId: string,
+    boulderId:    string,
+    attempts:     number,
+    hasZone:      boolean,
+    zoneAttempts: number,
+    isTop:        boolean,
+    judgeId:      string,
+    zonesReached: number,
+  ) {
+    if (!activeCompetition) return
+    if (activeCompetition.isLocked) return
 
-  setCompletionsMap(prev => {
-    const current  = prev[activeCompetition.id] ?? []
-    const existing = current.find(
-      c => c.competitorId === competitorId && c.boulderId === boulderId
-    )
+    setCompletionsMap(prev => {
+      const current  = prev[activeCompetition.id] ?? []
+      const existing = current.find(
+        c => c.competitorId === competitorId && c.boulderId === boulderId
+      )
 
-    const updated: Completion = {
-      competitorId,
-      boulderId,
-      attempts,
-      timestamp:       Date.now(),
-      hasZone,
-      zoneAttempts,
-      zonesReached,            // ← add this
-      zoneValidatedBy: judgeId,
-      topValidated:    isTop,
-      topValidatedBy:  isTop ? judgeId : undefined,
-      topValidatedAt:  isTop ? Date.now() : undefined,
-    }
+      const updated: Completion = {
+        competitorId,
+        boulderId,
+        attempts,
+        timestamp:       Date.now(),
+        hasZone,
+        zoneAttempts,
+        zonesReached,
+        zoneValidatedBy: judgeId,
+        topValidated:    isTop,
+        topValidatedBy:  isTop ? judgeId : undefined,
+        topValidatedAt:  isTop ? Date.now() : undefined,
+      }
 
-    if (existing) {
+      if (existing) {
+        return {
+          ...prev,
+          [activeCompetition.id]: current.map(c =>
+            c.competitorId === competitorId && c.boulderId === boulderId ? updated : c
+          ),
+        }
+      }
       return {
         ...prev,
-        [activeCompetition.id]: current.map(c =>
-          c.competitorId === competitorId && c.boulderId === boulderId ? updated : c
-        ),
+        [activeCompetition.id]: [...current, updated],
       }
-    }
-    return {
-      ...prev,
-      [activeCompetition.id]: [...current, updated],
-    }
-  })
-}
+    })
+  }
 
-  // ── Auth screen ──────────────────────────────────────────────────────────────
+  // ── Shared ProtectedRoute props ────────────────────────────────────────────
+  // Avoids repeating all three props on every route.
+  function Guard({
+    required,
+    children,
+  }: {
+    required: 'any' | 'judge_or_organizer' | 'organizer'
+    children: React.ReactNode
+  }) {
+    return (
+      <ProtectedRoute
+        currentUser={currentUser}
+        isOrganizer={isOrganizer}
+        canAccessComp={canAccessActiveComp}
+        required={required}
+        onAccessDenied={showToast}
+      >
+        {children}
+      </ProtectedRoute>
+    )
+  }
 
+  // ── Auth screen ────────────────────────────────────────────────────────────
   if (!currentUser) {
     return (
       <HashRouter>
@@ -359,8 +385,6 @@ export default function App() {
     )
   }
 
-  // ── No competition guard ──────────────────────────────────────────────────────
-
   if (!activeCompetition) {
     return (
       <HashRouter>
@@ -371,17 +395,12 @@ export default function App() {
     )
   }
 
-  // ── Main app ─────────────────────────────────────────────────────────────────
-
+  // ── Main app ───────────────────────────────────────────────────────────────
   return (
     <HashRouter>
       <div className={`min-h-screen ${theme === 'dark' ? 'bg-slate-900 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
 
-        <Toast
-          message={toast.message}
-          visible={toast.visible}
-          theme={theme}
-        />
+        <Toast message={toast.message} visible={toast.visible} theme={theme} />
 
         <NavBar
           theme={theme}
@@ -409,7 +428,7 @@ export default function App() {
         <main className="max-w-7xl mx-auto px-4 md:px-6 py-8">
           <Routes>
 
-            {/* ── Always accessible ── */}
+            {/* ── Always accessible (logged-in users) ── */}
             <Route path="/competitions" element={
               <CompetitionsPage
                 competitions={competitions}
@@ -425,6 +444,7 @@ export default function App() {
                 isRegistered={isUserRegistered}
               />
             } />
+
             <Route path="/profile" element={
               <ProfilePage
                 currentUser={currentUser}
@@ -434,107 +454,104 @@ export default function App() {
               />
             } />
 
-            {/* ── Restricted: must be registered or organizer ── */}
-            {canAccessActiveComp && (
-              <>
-                <Route path="/" element={
-                  <BouldersPage
-                    competition={activeCompetition}
-                    boulders={activeBoulders}
-                    completions={activeCompletions}
-                    currentUser={currentUser}
-                    isOrganizer={isOrganizer}
-                    theme={theme}
-                    lang={lang}
-                    onToggle={handleToggleCompletion}
-                    onUpdateBoulders={updateBoulders}
-                  />
-                } />
-                <Route path="/leaderboard" element={
-                  <LeaderboardPage
-                    rankings={rankings}
-                    competition={activeCompetition}
-                    theme={theme}
-                    lang={lang}
-                  />
-                } />
-                <Route path="/rules" element={
-                  <RulesPage
-                    competition={activeCompetition}
-                    isOrganizer={isOrganizer}
-                    theme={theme}
-                    lang={lang}
-                    onUpdate={updateCompetition}
-                  />
-                } />
-                <Route path="/users" element={
-                  <UsersPage
-                    competitors={activeCompetitors}
-                    competition={activeCompetition}
-                    currentUser={currentUser}
-                    theme={theme}
-                    lang={lang}
-                    onUpdateRole={handleUpdateRole}
-                    onUpdateBib={handleUpdateBib}
-                    onRemoveUser={handleRemoveUser}
-                  />
-                } />
-                <Route path="/analytics" element={
-                  <AnalyticsPage
-                    competition={activeCompetition}
-                    boulders={activeBoulders}
-                    competitors={activeCompetitors}
-                    completions={activeCompletions}
-                    theme={theme}
-                    lang={lang}
-                  />
-                } />
-                <Route path="/settings" element={
-                  <SettingsPage
-                    competition={activeCompetition}
-                    theme={theme}
-                    lang={lang}
-                    onUpdate={updateCompetition}
-                  />
-                } />
-                <Route path="/judging" element={
-                  <JudgingPage
-                    competition={activeCompetition}
-                    boulders={activeBoulders}
-                    competitors={activeCompetitors}
-                    completions={activeCompletions}
-                    theme={theme}
-                    lang={lang}
-                    onLogScore={handleLogScore}
-                    currentUser={currentUser}
-                    showSuccess={showToast}
-                  />
-                } />
-              </>
-            )}
+            {/* ── Registered competitors + organizers ── */}
+            <Route path="/" element={
+              <Guard required="any">
+                <BouldersPage
+                  competition={activeCompetition}
+                  boulders={activeBoulders}
+                  completions={activeCompletions}
+                  currentUser={currentUser}
+                  isOrganizer={isOrganizer}
+                  theme={theme}
+                  lang={lang}
+                  onToggle={handleToggleCompletion}
+                  onUpdateBoulders={updateBoulders}
+                />
+              </Guard>
+            } />
 
-            {/* ── Gate screen: not registered ── */}
-            {!canAccessActiveComp && (
-              <Route path="/*" element={
-                <div className="flex flex-col items-center justify-center py-24 text-center gap-6">
-                  <p className="text-5xl">🔒</p>
-                  <h2 className={`text-2xl font-black tracking-tight ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
-                    You're not registered for this event
-                  </h2>
-                  <p className={`text-sm max-w-sm ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
-                    You can still view the event in My Events and rejoin at any time.
-                  </p>
-                  <button
-                    onClick={() => window.location.hash = '/competitions'}
-                    className="px-6 py-3 bg-sky-400 text-sky-950 rounded-xl font-black text-sm hover:bg-sky-300 transition-all"
-                  >
-                    Go to My Events
-                  </button>
-                </div>
-              } />
-            )}
+            <Route path="/leaderboard" element={
+              <Guard required="any">
+                <LeaderboardPage
+                  rankings={rankings}
+                  competition={activeCompetition}
+                  theme={theme}
+                  lang={lang}
+                />
+              </Guard>
+            } />
 
-            <Route path="*" element={<Navigate to="/" />} />
+            <Route path="/rules" element={
+              <Guard required="any">
+                <RulesPage
+                  competition={activeCompetition}
+                  isOrganizer={isOrganizer}
+                  theme={theme}
+                  lang={lang}
+                  onUpdate={updateCompetition}
+                />
+              </Guard>
+            } />
+
+            {/* ── Judges + organizers ── */}
+            <Route path="/judging" element={
+              <Guard required="judge_or_organizer">
+                <JudgingPage
+                  competition={activeCompetition}
+                  boulders={activeBoulders}
+                  competitors={activeCompetitors}
+                  completions={activeCompletions}
+                  theme={theme}
+                  lang={lang}
+                  onLogScore={handleLogScore}
+                  currentUser={currentUser}
+                  showSuccess={showToast}
+                />
+              </Guard>
+            } />
+
+            {/* ── Organizers only ── */}
+            <Route path="/users" element={
+              <Guard required="organizer">
+                <UsersPage
+                  competitors={activeCompetitors}
+                  competition={activeCompetition}
+                  currentUser={currentUser}
+                  theme={theme}
+                  lang={lang}
+                  onUpdateRole={handleUpdateRole}
+                  onUpdateBib={handleUpdateBib}
+                  onRemoveUser={handleRemoveUser}
+                />
+              </Guard>
+            } />
+
+            <Route path="/analytics" element={
+              <Guard required="organizer">
+                <AnalyticsPage
+                  competition={activeCompetition}
+                  boulders={activeBoulders}
+                  competitors={activeCompetitors}
+                  completions={activeCompletions}
+                  theme={theme}
+                  lang={lang}
+                />
+              </Guard>
+            } />
+
+            <Route path="/settings" element={
+              <Guard required="organizer">
+                <SettingsPage
+                  competition={activeCompetition}
+                  theme={theme}
+                  lang={lang}
+                  onUpdate={updateCompetition}
+                />
+              </Guard>
+            } />
+
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
       </div>
