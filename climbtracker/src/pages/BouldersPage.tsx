@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Plus, SlidersHorizontal } from 'lucide-react'
+import { Plus, SlidersHorizontal, Lock } from 'lucide-react'
 
 import type { Boulder, Competition, Competitor, Completion, AttemptTracking } from '../types'
 import { translations } from '../translations'
@@ -7,14 +7,13 @@ import type { Language } from '../translations'
 import BoulderCard from '../components/BoulderCard'
 import BoulderModal from '../components/BoulderModal'
 
-// ─── TYPES ────────────────────────────────────────────────────────────────────
-
 interface BouldersPageProps {
   competition:      Competition
   boulders:         Boulder[]
   completions:      Completion[]
   currentUser:      Competitor
   isOrganizer:      boolean
+  canSelfScore:     boolean
   theme:            'light' | 'dark'
   lang:             Language
   onToggle:         (competitorId: string, boulderId: string, attempts: number, forceStatus: boolean) => void
@@ -24,17 +23,10 @@ interface BouldersPageProps {
 type FilterStatus = 'all' | 'completed' | 'incomplete'
 type SortKey      = 'number' | 'difficulty'
 
-// ─── HELPER: resolve tracking mode for a boulder ──────────────────────────────
-// Boulder-level override wins; falls back to competition default.
-// Judge-required boulders always use 'count' (judges use the judging page anyway,
-// but this keeps the card consistent if an organizer is previewing it).
-
 function resolveTracking(boulder: Boulder, competition: Competition): AttemptTracking {
   if (boulder.isPuntuable) return 'count'
   return boulder.attemptTrackingOverride ?? competition.attemptTracking
 }
-
-// ─── BOULDERS PAGE ────────────────────────────────────────────────────────────
 
 export default function BouldersPage({
   competition,
@@ -42,6 +34,7 @@ export default function BouldersPage({
   completions,
   currentUser,
   isOrganizer,
+  canSelfScore,
   theme,
   lang,
   onToggle,
@@ -49,34 +42,28 @@ export default function BouldersPage({
 }: BouldersPageProps) {
   const t = translations[lang]
 
-  // ── Local UI state ───────────────────────────────────────────────────────
   const [filter,       setFilter]       = useState<FilterStatus>('all')
   const [sortBy,       setSortBy]       = useState<SortKey>('number')
   const [search,       setSearch]       = useState('')
   const [modalBoulder, setModalBoulder] = useState<Boulder | null | 'new'>(null)
 
-  // ── My completions ────────────────────────────────────────────────────────
   const myCompletions = useMemo(() =>
     completions.filter(c => c.competitorId === currentUser.id),
     [completions, currentUser.id]
   )
 
-  // ── Compute points for one boulder ────────────────────────────────────────
+  // ── Points calculation ────────────────────────────────────────────────────
   function getPoints(boulder: Boulder): number {
     const difficulty = competition.difficultyLevels.find(d => d.id === boulder.difficultyId)
     if (!difficulty) return 0
-
     const completion = myCompletions.find(c => c.boulderId === boulder.id)
-
     if (competition.scoringType === 'DYNAMIC') {
       const topsCount = completions.filter(c => c.boulderId === boulder.id && c.topValidated).length
       if (topsCount === 0) return boulder.maxPoints ?? competition.dynamicPot ?? 1000
       const pot = boulder.maxPoints ?? competition.dynamicPot ?? 1000
       return Math.max(Math.floor(pot / topsCount), competition.minDynamicPoints ?? 0)
     }
-
     if (!completion) return difficulty.basePoints
-
     let points = difficulty.basePoints
     if (competition.penalizeAttempts && completion.attempts > 1) {
       const extra = completion.attempts - 1
@@ -89,12 +76,27 @@ export default function BouldersPage({
     return Math.max(points, competition.minScorePerBoulder)
   }
 
-  // ── Filtered + sorted boulders ────────────────────────────────────────────
+  // ── My total score ────────────────────────────────────────────────────────
+  const myTotalScore = useMemo(() => {
+    const toppedBoulderIds = myCompletions
+      .filter(c => c.topValidated)
+      .map(c => c.boulderId)
+    const scores = toppedBoulderIds.map(bid => {
+      const b = boulders.find(x => x.id === bid)
+      return b ? getPoints(b) : 0
+    })
+    // If topKBoulders is set, only count the best N
+    if (competition.topKBoulders && scores.length > competition.topKBoulders) {
+      return scores.sort((a, b) => b - a).slice(0, competition.topKBoulders).reduce((a, b) => a + b, 0)
+    }
+    return scores.reduce((a, b) => a + b, 0)
+  }, [myCompletions, boulders, competition])
+
+  // ── Filter / sort ─────────────────────────────────────────────────────────
   const visibleBoulders = useMemo(() => {
     let list = boulders.filter(b =>
       isOrganizer ? b.status !== 'removed' : b.status === 'active'
     )
-
     if (search.trim()) {
       const q = search.toLowerCase()
       list = list.filter(b =>
@@ -103,26 +105,18 @@ export default function BouldersPage({
         b.style?.toLowerCase().includes(q)
       )
     }
-
     if (!isOrganizer) {
-      if (filter === 'completed') {
-        list = list.filter(b => myCompletions.some(c => c.boulderId === b.id))
-      } else if (filter === 'incomplete') {
-        list = list.filter(b => !myCompletions.some(c => c.boulderId === b.id))
-      }
+      if (filter === 'completed') list = list.filter(b => myCompletions.some(c => c.boulderId === b.id))
+      else if (filter === 'incomplete') list = list.filter(b => !myCompletions.some(c => c.boulderId === b.id))
     }
-
-    list = [...list].sort((a, b) => {
+    return [...list].sort((a, b) => {
       if (sortBy === 'number') return a.number - b.number
       const da = competition.difficultyLevels.find(d => d.id === a.difficultyId)?.level ?? 0
       const db = competition.difficultyLevels.find(d => d.id === b.difficultyId)?.level ?? 0
       return db - da
     })
-
-    return list
   }, [boulders, filter, sortBy, search, myCompletions, isOrganizer, competition.difficultyLevels])
 
-  // ── Handlers ─────────────────────────────────────────────────────────────
   function handleToggle(boulderId: string, attempts: number, forceStatus: boolean) {
     onToggle(currentUser.id, boulderId, attempts, forceStatus)
   }
@@ -142,31 +136,22 @@ export default function BouldersPage({
     ))
   }
 
-  // ── Stats ────────────────────────────────────────────────────────────────
   const totalBoulders = boulders.filter(b => b.status === 'active').length
   const toppedCount   = myCompletions.filter(c => c.topValidated).length
   const flashCount    = myCompletions.filter(c => c.attempts === 1 && c.topValidated).length
 
-  // Shared pill button style
+  // The effective locked state for competitors: locked by organizer OR self-scoring disabled
+  const effectivelyLocked = competition.isLocked || (!isOrganizer && !canSelfScore)
+
   function pillCls(active: boolean, accent: 'sky' | 'purple' = 'sky') {
     const activeStyle = accent === 'sky' ? 'bg-sky-400 text-sky-950' : 'bg-purple-400 text-purple-950'
-    return `
-      px-4 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all
-      ${active
-        ? activeStyle
-        : theme === 'dark'
-          ? 'bg-white/5 text-slate-400 hover:bg-white/10'
-          : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-      }
-    `
+    return `px-4 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${active ? activeStyle : theme === 'dark' ? 'bg-white/5 text-slate-400 hover:bg-white/10' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`
   }
 
-  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div>
-
-      {/* ── Page header ── */}
-      <div className="flex items-center justify-between mb-6">
+      {/* ── Header ── */}
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className={`text-2xl font-black tracking-tight ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
             {t.boulders}
@@ -182,31 +167,60 @@ export default function BouldersPage({
                   <span className="font-black text-sky-400">{toppedCount}</span>/{totalBoulders} topped
                 </span>
                 {flashCount > 0 && (
-                  <span className="text-sm font-black text-amber-400">
-                    ⚡ {flashCount} flash{flashCount !== 1 ? 'es' : ''}
-                  </span>
+                  <span className="text-sm font-black text-amber-400">⚡ {flashCount} flash{flashCount !== 1 ? 'es' : ''}</span>
                 )}
               </>
             )}
           </div>
         </div>
-
         {isOrganizer && (
-          <button
-            onClick={() => setModalBoulder('new')}
-            className="flex items-center gap-2 px-4 py-2 bg-sky-400 text-sky-950 rounded-xl font-black text-sm hover:bg-sky-300 transition-all"
-          >
+          <button onClick={() => setModalBoulder('new')} className="flex items-center gap-2 px-4 py-2 bg-sky-400 text-sky-950 rounded-xl font-black text-sm hover:bg-sky-300 transition-all">
             <Plus size={16} />
             {t.addBoulder}
           </button>
         )}
       </div>
 
-      {/* ── Search bar ── */}
-      <div className={`
-        flex items-center gap-3 px-4 py-3 rounded-2xl border mb-4
-        ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-slate-200 shadow-sm'}
-      `}>
+      {/* ── Self-score summary banner (competitors only) ── */}
+      {!isOrganizer && (
+        <div className={`flex items-center justify-between gap-4 px-5 py-4 rounded-2xl border mb-6 ${theme === 'dark' ? 'bg-white/[0.03] border-white/10' : 'bg-white border-slate-200 shadow-sm'}`}>
+          <div className="flex items-center gap-6">
+            <div>
+              <p className={`text-[10px] font-black uppercase tracking-widest mb-0.5 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>My Score</p>
+              <p className="text-2xl font-black text-sky-400 leading-none">{myTotalScore}<span className={`text-xs ml-1 font-normal ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>pts</span></p>
+            </div>
+            <div className={`w-px h-8 ${theme === 'dark' ? 'bg-white/10' : 'bg-slate-200'}`} />
+            <div>
+              <p className={`text-[10px] font-black uppercase tracking-widest mb-0.5 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>Tops</p>
+              <p className={`text-2xl font-black leading-none ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{toppedCount}<span className={`text-sm font-normal ml-0.5 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>/{totalBoulders}</span></p>
+            </div>
+            {flashCount > 0 && (
+              <>
+                <div className={`w-px h-8 ${theme === 'dark' ? 'bg-white/10' : 'bg-slate-200'}`} />
+                <div>
+                  <p className={`text-[10px] font-black uppercase tracking-widest mb-0.5 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>Flashes</p>
+                  <p className="text-2xl font-black text-amber-400 leading-none">⚡{flashCount}</p>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Self-score status */}
+          {!canSelfScore && !competition.isLocked && (
+            <div className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-black ${theme === 'dark' ? 'bg-amber-400/10 text-amber-400 border border-amber-400/20' : 'bg-amber-50 text-amber-600 border border-amber-200'}`}>
+              <Lock size={12} /> Judge scoring only
+            </div>
+          )}
+          {competition.isLocked && (
+            <div className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-black ${theme === 'dark' ? 'bg-red-400/10 text-red-400 border border-red-400/20' : 'bg-red-50 text-red-500 border border-red-200'}`}>
+              <Lock size={12} /> Results locked
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Search ── */}
+      <div className={`flex items-center gap-3 px-4 py-3 rounded-2xl border mb-4 ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-slate-200 shadow-sm'}`}>
         <SlidersHorizontal size={16} className={theme === 'dark' ? 'text-slate-500' : 'text-slate-400'} />
         <input
           type="text"
@@ -216,12 +230,7 @@ export default function BouldersPage({
           className="flex-1 bg-transparent outline-none text-sm placeholder:text-slate-500"
         />
         {search && (
-          <button
-            onClick={() => setSearch('')}
-            className={`text-xs font-black ${theme === 'dark' ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'}`}
-          >
-            Clear
-          </button>
+          <button onClick={() => setSearch('')} className={`text-xs font-black ${theme === 'dark' ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'}`}>Clear</button>
         )}
       </div>
 
@@ -230,33 +239,22 @@ export default function BouldersPage({
         {!isOrganizer && (
           <>
             {(['all', 'completed', 'incomplete'] as FilterStatus[]).map(f => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={pillCls(filter === f, 'sky')}
-              >
+              <button key={f} onClick={() => setFilter(f)} className={pillCls(filter === f, 'sky')}>
                 {f === 'all' ? t.all : f === 'completed' ? t.completed : t.incomplete}
               </button>
             ))}
             <div className={`w-px h-4 mx-1 ${theme === 'dark' ? 'bg-white/10' : 'bg-slate-200'}`} />
           </>
         )}
-
-        <span className={`text-[10px] uppercase tracking-widest font-black ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
-          {t.sortBy}:
-        </span>
+        <span className={`text-[10px] uppercase tracking-widest font-black ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>{t.sortBy}:</span>
         {(['number', 'difficulty'] as SortKey[]).map(s => (
-          <button
-            key={s}
-            onClick={() => setSortBy(s)}
-            className={pillCls(sortBy === s, 'purple')}
-          >
+          <button key={s} onClick={() => setSortBy(s)} className={pillCls(sortBy === s, 'purple')}>
             {s === 'number' ? t.number : t.difficulty}
           </button>
         ))}
       </div>
 
-      {/* ── Boulder grid ── */}
+      {/* ── Grid ── */}
       {visibleBoulders.length === 0 ? (
         <div className={`text-center py-20 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
           <p className="text-4xl mb-4">🪨</p>
@@ -264,10 +262,7 @@ export default function BouldersPage({
             {isOrganizer ? 'No boulders yet' : 'No boulders found'}
           </p>
           {isOrganizer && (
-            <button
-              onClick={() => setModalBoulder('new')}
-              className="mt-4 px-6 py-3 bg-sky-400 text-sky-950 rounded-xl font-black text-sm hover:bg-sky-300 transition-all"
-            >
+            <button onClick={() => setModalBoulder('new')} className="mt-4 px-6 py-3 bg-sky-400 text-sky-950 rounded-xl font-black text-sm hover:bg-sky-300 transition-all">
               Add your first boulder
             </button>
           )}
@@ -282,7 +277,7 @@ export default function BouldersPage({
               difficulty={competition.difficultyLevels.find(d => d.id === boulder.difficultyId)}
               points={getPoints(boulder)}
               isOrganizer={isOrganizer}
-              isLocked={competition.isLocked}
+              isLocked={effectivelyLocked}
               theme={theme}
               attemptTracking={resolveTracking(boulder, competition)}
               maxFixedAttempts={competition.maxFixedAttempts}
@@ -293,10 +288,11 @@ export default function BouldersPage({
         </div>
       )}
 
-      {/* ── Boulder modal ── */}
+      {/* ── Modal ── */}
       {modalBoulder !== null && (
         <BoulderModal
           boulder={modalBoulder === 'new' ? undefined : modalBoulder}
+          existingBoulders={boulders}
           competition={competition}
           theme={theme}
           onSave={handleSaveBoulder}
@@ -304,7 +300,6 @@ export default function BouldersPage({
           onClose={() => setModalBoulder(null)}
         />
       )}
-
     </div>
   )
 }

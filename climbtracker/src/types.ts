@@ -1,10 +1,9 @@
-// ─── CONSTANTS (replacing enums) ─────────────────────────────────────────────
+// ─── CONSTANTS ────────────────────────────────────────────────────────────────
 
 export const ScoringType = {
   TRADITIONAL: 'TRADITIONAL',
   DYNAMIC:     'DYNAMIC',
 } as const
-
 export type ScoringType = typeof ScoringType[keyof typeof ScoringType]
 
 export const CompetitionStatus = {
@@ -13,31 +12,19 @@ export const CompetitionStatus = {
   FINISHED: 'FINISHED',
   ARCHIVED: 'ARCHIVED',
 } as const
-
 export type CompetitionStatus = typeof CompetitionStatus[keyof typeof CompetitionStatus]
 
-// ─── ATTEMPT TRACKING ─────────────────────────────────────────────────────────
-//
-//  none          → only "topped / not topped" is recorded; no attempt count shown
-//  count         → +/− stepper; any number of attempts recorded
-//  fixed_options → pill buttons (1 / 2 / 3 / N+); maxFixedAttempts controls N
-
 export type AttemptTracking = 'none' | 'count' | 'fixed_options'
-
-// ─── SMALL BUILDING BLOCKS ────────────────────────────────────────────────────
 
 export interface Category {
   id:   string
   name: string
 }
 
-// ─── ZONE SCORING ─────────────────────────────────────────────────────────────
-
 export const ZoneScoring = {
   ADDS_TO_SCORE:    'adds_to_score',
   TIE_BREAKER_ONLY: 'tie_breaker_only',
 } as const
-
 export type ZoneScoring = typeof ZoneScoring[keyof typeof ZoneScoring]
 
 export interface DifficultyLevel {
@@ -51,18 +38,17 @@ export interface DifficultyLevel {
 // ─── BOULDER ──────────────────────────────────────────────────────────────────
 
 export interface Boulder {
-  id:           string
-  number:       number
-  name?:        string
-  color:        string
-  difficultyId?: string
-  isPuntuable?: boolean
-  maxPoints?:   number
-  style?:       string
-  status:       'active' | 'hidden' | 'removed'
-  zoneCount:    number
-  tags:         string[]
-  // When set, overrides the competition-level attemptTracking for this boulder.
+  id:                       string
+  number:                   number
+  name?:                    string
+  color:                    string
+  difficultyId?:            string
+  isPuntuable?:             boolean
+  maxPoints?:               number
+  style?:                   string
+  status:                   'active' | 'hidden' | 'removed'
+  zoneCount:                number
+  tags:                     string[]
   attemptTrackingOverride?: AttemptTracking
 }
 
@@ -84,21 +70,19 @@ export interface Competitor {
 // ─── COMPLETION ───────────────────────────────────────────────────────────────
 
 export interface Completion {
-  competitorId:      string
-  boulderId:         string
-  attempts:          number
-  timestamp:         number
-  hasZone:           boolean
-  zoneAttempts:      number
-  zonesReached:      number
-  zoneTimestamp?:    number
-  zoneValidatedBy?:  string
-  topValidated:      boolean
-  topValidatedBy?:   string
-  topValidatedAt?:   number
+  competitorId:     string
+  boulderId:        string
+  attempts:         number
+  timestamp:        number
+  hasZone:          boolean
+  zoneAttempts:     number
+  zonesReached:     number
+  zoneTimestamp?:   number
+  zoneValidatedBy?: string
+  topValidated:     boolean
+  topValidatedBy?:  string
+  topValidatedAt?:  number
 }
-
-// ─── RULES ────────────────────────────────────────────────────────────────────
 
 export interface RuleSet {
   en: string
@@ -106,14 +90,11 @@ export interface RuleSet {
   ca: string
 }
 
-// ─── SCORING METHOD ───────────────────────────────────────────────────────────
-
 export const ScoringMethod = {
-  SELF_SCORING:          'self_scoring',
-  SELF_WITH_APPROVAL:    'self_with_approval',
-  JUDGE_REQUIRED:        'judge_required',
+  SELF_SCORING:       'self_scoring',
+  SELF_WITH_APPROVAL: 'self_with_approval',
+  JUDGE_REQUIRED:     'judge_required',
 } as const
-
 export type ScoringMethod = typeof ScoringMethod[keyof typeof ScoringMethod]
 
 // ─── COMPETITION ──────────────────────────────────────────────────────────────
@@ -137,18 +118,15 @@ export interface Competition {
   canSelfScore:       boolean
   rules:              RuleSet
   inviteCode:         string
+  // Optional — when set, required in addition to the invite code or join link
+  joinPassword?:      string
   penalizeAttempts:   boolean
   penaltyType:        'fixed' | 'percent'
   penaltyValue:       number
   minScorePerBoulder: number
   zoneScoring:        ZoneScoring
   scoringMethod:      ScoringMethod
-
-  // How attempts are tracked by default across all self-scored boulders.
-  // Judge-required boulders always use 'count' regardless of this setting.
   attemptTracking:    AttemptTracking
-  // Only relevant when attemptTracking === 'fixed_options'.
-  // The highest pill shown; anything ≥ this value is shown as "N+".
   maxFixedAttempts:   number
 }
 

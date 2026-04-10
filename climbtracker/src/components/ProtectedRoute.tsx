@@ -2,20 +2,16 @@ import { useEffect, useRef } from 'react'
 import { Navigate } from 'react-router-dom'
 import type { Competitor } from '../types'
 
-// ─── TYPES ────────────────────────────────────────────────────────────────────
-
 export type RequiredRole = 'any' | 'judge_or_organizer' | 'organizer'
 
 interface ProtectedRouteProps {
-  currentUser:       Competitor | null
-  isOrganizer:       boolean
-  canAccessComp:     boolean   // registered or organizer
-  required:          RequiredRole
-  children:          React.ReactNode
-  onAccessDenied?:   (msg: string) => void
+  currentUser:     Competitor | null
+  isOrganizer:     boolean
+  canAccessComp:   boolean
+  required:        RequiredRole
+  children:        React.ReactNode
+  onAccessDenied?: (msg: string) => void
 }
-
-// ─── ROLE RESOLUTION ─────────────────────────────────────────────────────────
 
 function hasAccess(
   user:          Competitor | null,
@@ -24,17 +20,10 @@ function hasAccess(
   required:      RequiredRole,
 ): boolean {
   if (!user) return false
-
   switch (required) {
-    case 'any':
-      // Must be registered or organizer
-      return canAccessComp
-
-    case 'judge_or_organizer':
-      return isOrganizer || user.role === 'judge' || user.role === 'organizer'
-
-    case 'organizer':
-      return isOrganizer || user.role === 'organizer'
+    case 'any':                return canAccessComp
+    case 'judge_or_organizer': return isOrganizer || user.role === 'judge' || user.role === 'organizer'
+    case 'organizer':          return isOrganizer || user.role === 'organizer'
   }
 }
 
@@ -44,8 +33,6 @@ const DENIAL_MESSAGES: Record<RequiredRole, string> = {
   organizer:          'That page is only available to organizers.',
 }
 
-// ─── PROTECTED ROUTE ─────────────────────────────────────────────────────────
-
 export default function ProtectedRoute({
   currentUser,
   isOrganizer,
@@ -54,11 +41,9 @@ export default function ProtectedRoute({
   children,
   onAccessDenied,
 }: ProtectedRouteProps) {
-  const allowed = hasAccess(currentUser, isOrganizer, canAccessComp, required)
-
-  // Fire the denial callback once on mount if access is denied.
-  // useRef prevents it from firing again on re-renders.
+  const allowed  = hasAccess(currentUser, isOrganizer, canAccessComp, required)
   const firedRef = useRef(false)
+
   useEffect(() => {
     if (!allowed && onAccessDenied && !firedRef.current) {
       firedRef.current = true
@@ -67,7 +52,9 @@ export default function ProtectedRoute({
   }, [allowed, onAccessDenied, required])
 
   if (!allowed) {
-    return <Navigate to="/" replace />
+    // /competitions is always reachable for any logged-in user regardless of
+    // role or registration status, so it is the safe fallback for all cases.
+    return <Navigate to="/competitions" replace />
   }
 
   return <>{children}</>
