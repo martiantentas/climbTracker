@@ -6,6 +6,7 @@ import { getStatusColor } from '../App'
 import type { Language } from '../translations'
 import { translations } from '../translations'
 import PasswordModal from '../components/PasswordModal'
+import UndoToast from '../components/UndoToast'
 
 interface CompetitionsPageProps {
   competitions:   Competition[]
@@ -105,6 +106,8 @@ export default function CompetitionsPage({
   const [copiedId,      setCopiedId]      = useState<string | null>(null)
   // Briefly set to a compId after selecting it — triggers card flash + confirmation message
   const [justActivated, setJustActivated] = useState<string | null>(null)
+  // Pending delete — waits 5s before committing so user can undo
+  const [pendingDeleteComp, setPendingDeleteComp] = useState<Competition | null>(null)
 
   // Password modal
   const [pendingComp,   setPendingComp]   = useState<Competition | null>(null)
@@ -278,7 +281,10 @@ export default function CompetitionsPage({
             confirmDelete === comp.id ? (
               <div className="flex items-center gap-2 ml-auto">
                 <span className={`text-[10px] font-black ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>Delete?</span>
-                <button onClick={() => { onDelete(comp.id); setConfirmDelete(null) }} className="px-3 py-2 rounded-xl text-xs font-black bg-red-400 text-white hover:bg-red-500 transition-all">Yes, delete</button>
+                <button
+                  onClick={() => { setPendingDeleteComp(comp); setConfirmDelete(null) }}
+                  className="px-3 py-2 rounded-xl text-xs font-black bg-red-400 text-white hover:bg-red-500 transition-all"
+                >Yes, delete</button>
                 <button onClick={() => setConfirmDelete(null)} className={`px-3 py-2 rounded-xl text-xs font-black transition-all ${theme === 'dark' ? 'bg-white/5 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>{t.cancel}</button>
               </div>
             ) : (
@@ -390,6 +396,17 @@ export default function CompetitionsPage({
           externalError={passwordError}
           onConfirm={handlePasswordConfirm}
           onCancel={() => { setPendingComp(null); setPasswordError(false) }}
+        />
+      )}
+
+      {pendingDeleteComp && (
+        <UndoToast
+          key={pendingDeleteComp.id}
+          message={`"${pendingDeleteComp.name}" deleted`}
+          theme={theme}
+          onUndo={() => setPendingDeleteComp(null)}
+          onCommit={() => { onDelete(pendingDeleteComp.id); setPendingDeleteComp(null) }}
+          onDismiss={() => setPendingDeleteComp(null)}
         />
       )}
     </div>

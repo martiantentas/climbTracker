@@ -1,9 +1,31 @@
 import { useState, useMemo } from 'react'
-import { Search, ChevronDown, ChevronUp, Target, CheckCircle2, XCircle, ShieldCheck, Plus, Minus } from 'lucide-react'
+import { Search, ChevronDown, ChevronUp, Target, CheckCircle2, XCircle, ShieldCheck, Plus, Minus, Star } from 'lucide-react'
 
 import type { Boulder, Competitor, Completion, Competition } from '../types'
 import type { Language } from '../translations'
 import { translations } from '../translations'
+import { calcBoulderPoints } from '../utils/scoring'
+
+// ─── SCORE HELPER ─────────────────────────────────────────────────────────────
+// Uses the shared scoring util — identical numbers to the leaderboard.
+
+function calcCompetitorScore(
+  competitorId:   string,
+  competition:    Competition,
+  boulders:       Boulder[],
+  allCompletions: Completion[],
+): number {
+  const myCompletions = allCompletions.filter(c => c.competitorId === competitorId)
+  const scores = myCompletions.map(mc => {
+    const boulder = boulders.find(b => b.id === mc.boulderId)
+    if (!boulder) return 0
+    return calcBoulderPoints(mc, boulder, competition, allCompletions)
+  })
+  if (competition.topKBoulders && scores.length > competition.topKBoulders) {
+    return scores.sort((a, b) => b - a).slice(0, competition.topKBoulders).reduce((a, b) => a + b, 0)
+  }
+  return scores.reduce((a, b) => a + b, 0)
+}
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -269,8 +291,11 @@ function BoulderJudgingRow({
 
 interface CompetitorCardProps {
   competitor:        Competitor
+  competition:       Competition
   puntuableBoulders: Boulder[]
+  allBoulders:       Boulder[]
   completions:       Completion[]
+  allCompletions:    Completion[]
   theme:             'light' | 'dark'
   isLocked:          boolean
   judgeId:           string
@@ -280,8 +305,11 @@ interface CompetitorCardProps {
 
 function CompetitorCard({
   competitor,
+  competition,
   puntuableBoulders,
+  allBoulders,
   completions,
+  allCompletions,
   theme,
   isLocked,
   judgeId,
@@ -293,6 +321,11 @@ function CompetitorCard({
   const myCompletions = completions.filter(c => c.competitorId === competitor.id)
   const toppedCount   = myCompletions.filter(c => c.topValidated).length
   const zoneCount     = myCompletions.filter(c => c.hasZone && !c.topValidated).length
+
+  const score = useMemo(() =>
+    calcCompetitorScore(competitor.id, competition, allBoulders, allCompletions),
+    [competitor.id, competition, allBoulders, allCompletions]
+  )
 
   return (
     <div className={`
@@ -329,6 +362,18 @@ function CompetitorCard({
         </div>
 
         <div className="flex items-center gap-3 flex-shrink-0">
+          {/* Score */}
+          <span className={`flex items-center gap-1 text-[9px] font-black px-2 py-1 rounded-full border ${
+            score > 0
+              ? 'text-purple-400 bg-purple-400/10 border-purple-400/20'
+              : theme === 'dark'
+                ? 'text-slate-600 bg-white/5 border-white/10'
+                : 'text-slate-400 bg-slate-100 border-slate-200'
+          }`}>
+            <Star size={8} />
+            {score} pts
+          </span>
+
           {toppedCount > 0 && (
             <span className="flex items-center gap-1 text-[9px] font-black text-green-400 bg-green-400/10 px-2 py-1 rounded-full border border-green-400/20">
               <CheckCircle2 size={9} /> {toppedCount} top{toppedCount !== 1 ? 's' : ''}
@@ -498,8 +543,11 @@ export default function JudgingPage({
               <CompetitorCard
                 key={competitor.id}
                 competitor={competitor}
+                competition={competition}
                 puntuableBoulders={puntuableBoulders}
+                allBoulders={boulders}
                 completions={completions}
+                allCompletions={completions}
                 theme={theme}
                 isLocked={competition.isLocked}
                 judgeId={currentUser.id}

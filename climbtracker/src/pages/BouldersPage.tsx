@@ -6,6 +6,8 @@ import { translations } from '../translations'
 import type { Language } from '../translations'
 import BoulderCard from '../components/BoulderCard'
 import BoulderModal from '../components/BoulderModal'
+import UndoToast from '../components/UndoToast'
+import { calcBoulderPoints } from '../utils/scoring'
 
 interface BouldersPageProps {
   competition:      Competition
@@ -47,50 +49,51 @@ export default function BouldersPage({
   const [search,       setSearch]       = useState('')
   const [modalBoulder, setModalBoulder] = useState<Boulder | null | 'new'>(null)
 
+  // ── Undo state for boulder deletion ──────────────────────────────────────
+  const [pendingDelete, setPendingDelete] = useState<Boulder | null>(null)
+
   const myCompletions = useMemo(() =>
     completions.filter(c => c.competitorId === currentUser.id),
     [completions, currentUser.id]
   )
 
   // ── Points calculation ────────────────────────────────────────────────────
+  // getPoints: shows what a competitor has earned (or would earn) on a boulder.
+  // For the card display when there's no completion yet, we show potential points.
+  // When there IS a completion, we show actual earned points via calcBoulderPoints.
   function getPoints(boulder: Boulder): number {
-    const difficulty = competition.difficultyLevels.find(d => d.id === boulder.difficultyId)
-    if (!difficulty) return 0
     const completion = myCompletions.find(c => c.boulderId === boulder.id)
-    if (competition.scoringType === 'DYNAMIC') {
-      const topsCount = completions.filter(c => c.boulderId === boulder.id && c.topValidated).length
-      if (topsCount === 0) return boulder.maxPoints ?? competition.dynamicPot ?? 1000
-      const pot = boulder.maxPoints ?? competition.dynamicPot ?? 1000
-      return Math.max(Math.floor(pot / topsCount), competition.minDynamicPoints ?? 0)
-    }
-    if (!completion) return difficulty.basePoints
-    let points = difficulty.basePoints
-    if (competition.penalizeAttempts && completion.attempts > 1) {
-      const extra = completion.attempts - 1
-      if (competition.penaltyType === 'fixed') {
-        points -= extra * competition.penaltyValue
-      } else {
-        points -= extra * (difficulty.basePoints * competition.penaltyValue / 100)
+    if (!completion) {
+      // No activity — show potential points as a guide
+      if (competition.scoringType === 'DYNAMIC') {
+        const topsCount = completions.filter(c => c.boulderId === boulder.id && c.topValidated).length
+        const pot = boulder.maxPoints ?? competition.dynamicPot ?? 1000
+        if (topsCount === 0) return pot
+        return Math.max(Math.floor(pot / topsCount), competition.minDynamicPoints ?? 0)
       }
+      const difficulty = competition.difficultyLevels.find(d => d.id === boulder.difficultyId)
+      return difficulty?.basePoints ?? 0
     }
-    return Math.max(points, competition.minScorePerBoulder)
+    // Has a completion — return actual earned points (0 if dynamic + no top)
+    return calcBoulderPoints(completion, boulder, competition, completions)
   }
 
   // ── My total score ────────────────────────────────────────────────────────
+  // Sum actual earned points across all my completions.
+  // calcBoulderPoints returns 0 for zone-only dynamic completions, so they
+  // correctly don't inflate the score.
   const myTotalScore = useMemo(() => {
-    const toppedBoulderIds = myCompletions
-      .filter(c => c.topValidated)
-      .map(c => c.boulderId)
-    const scores = toppedBoulderIds.map(bid => {
-      const b = boulders.find(x => x.id === bid)
-      return b ? getPoints(b) : 0
+    const scores = myCompletions.map(mc => {
+      const boulder = boulders.find(b => b.id === mc.boulderId)
+      if (!boulder) return 0
+      return calcBoulderPoints(mc, boulder, competition, completions)
     })
-    // If topKBoulders is set, only count the best N
-    if (competition.topKBoulders && scores.length > competition.topKBoulders) {
-      return scores.sort((a, b) => b - a).slice(0, competition.topKBoulders).reduce((a, b) => a + b, 0)
-    }
-    return scores.reduce((a, b) => a + b, 0)
-  }, [myCompletions, boulders, competition])
+    const sorted = [...scores].sort((a, b) => b - a)
+    const counted = competition.topKBoulders
+      ? sorted.slice(0, competition.topKBoulders)
+      : sorted
+    return counted.reduce((a, b) => a + b, 0)
+  }, [myCompletions, boulders, competition, completions])
 
   // ── Filter / sort ─────────────────────────────────────────────────────────
   const visibleBoulders = useMemo(() => {
@@ -131,9 +134,23 @@ export default function BouldersPage({
   }
 
   function handleDeleteBoulder(boulderId: string) {
+    const boulder = boulders.find(b => b.id === boulderId)
+    if (!boulder) return
+    // Close the modal immediately so it doesn't linger behind the toast
+    setModalBoulder(null)
+    setPendingDelete(boulder)
+  }
+
+  function commitDeleteBoulder() {
+    if (!pendingDelete) return
     onUpdateBoulders(boulders.map(b =>
-      b.id === boulderId ? { ...b, status: 'removed' as const } : b
+      b.id === pendingDelete.id ? { ...b, status: 'removed' as const } : b
     ))
+    setPendingDelete(null)
+  }
+
+  function undoDeleteBoulder() {
+    setPendingDelete(null)
   }
 
   const totalBoulders = boulders.filter(b => b.status === 'active').length
@@ -298,6 +315,18 @@ export default function BouldersPage({
           onSave={handleSaveBoulder}
           onDelete={isOrganizer ? handleDeleteBoulder : undefined}
           onClose={() => setModalBoulder(null)}
+        />
+      )}
+
+      {/* ── Undo toast — boulder deletion ── */}
+      {pendingDelete && (
+        <UndoToast
+          key={pendingDelete.id}
+          message={`Boulder #${pendingDelete.number}${pendingDelete.name ? ` "${pendingDelete.name}"` : ''} deleted`}
+          theme={theme}
+          onUndo={undoDeleteBoulder}
+          onCommit={commitDeleteBoulder}
+          onDismiss={() => setPendingDelete(null)}
         />
       )}
     </div>

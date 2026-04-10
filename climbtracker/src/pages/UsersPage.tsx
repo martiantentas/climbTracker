@@ -3,6 +3,7 @@ import { Search, Shield, User, Trash2, ChevronDown, X, Save, Hash, AlertCircle }
 import type { Competitor, Competition } from '../types'
 import type { Language } from '../translations'
 import { translations } from '../translations'
+import UndoToast from '../components/UndoToast'
 
 interface UsersPageProps {
   competitors:  Competitor[]
@@ -56,7 +57,7 @@ function UserDetailModal({ competitor, allCompetitors, isMe, theme, onUpdateRole
   theme:          'light' | 'dark'
   onUpdateRole:   (id: string, role: 'competitor' | 'judge' | 'organizer') => void
   onUpdateBib:    (id: string, bib: number) => void
-  onRemove:       (id: string) => void
+  onRemove:       () => void
   onClose:        () => void
 }) {
   const [bibInput,      setBibInput]      = useState(String(competitor.bibNumber))
@@ -149,7 +150,7 @@ function UserDetailModal({ competitor, allCompetitors, isMe, theme, onUpdateRole
             {confirmDelete ? (
               <div className="flex items-center gap-3">
                 <p className={`text-xs font-black flex-1 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>Remove {competitor.displayName}?</p>
-                <button onClick={() => { onRemove(competitor.id); onClose() }} className="px-4 py-2 rounded-xl text-xs font-black bg-red-400 text-white hover:bg-red-500 transition-all">Remove</button>
+                <button onClick={() => { onRemove(); onClose() }} className="px-4 py-2 rounded-xl text-xs font-black bg-red-400 text-white hover:bg-red-500 transition-all">Remove</button>
                 <button onClick={() => setConfirmDelete(false)} className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${theme === 'dark' ? 'bg-white/5 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>Cancel</button>
               </div>
             ) : (
@@ -168,6 +169,7 @@ export default function UsersPage({ competitors, competition, currentUser, theme
   const t = translations[lang]
   const [search, setSearch] = useState('')
   const [selectedUser, setSelectedUser] = useState<Competitor | null>(null)
+  const [pendingRemove, setPendingRemove] = useState<Competitor | null>(null)
 
   const visible = useMemo(() => {
     let list = competitors.filter(c => c.id !== competition.ownerId)
@@ -260,8 +262,19 @@ export default function UsersPage({ competitors, competition, currentUser, theme
           theme={theme}
           onUpdateRole={(id, role) => { onUpdateRole(id, role); setSelectedUser(prev => prev ? { ...prev, role } : null) }}
           onUpdateBib={(id, bib)   => { onUpdateBib(id, bib);   setSelectedUser(prev => prev ? { ...prev, bibNumber: bib } : null) }}
-          onRemove={id => { onRemoveUser(id); setSelectedUser(null) }}
+          onRemove={() => { setPendingRemove(selectedUser); setSelectedUser(null) }}
           onClose={() => setSelectedUser(null)}
+        />
+      )}
+
+      {pendingRemove && (
+        <UndoToast
+          key={pendingRemove.id}
+          message={`${pendingRemove.displayName} removed from competition`}
+          theme={theme}
+          onUndo={() => setPendingRemove(null)}
+          onCommit={() => { onRemoveUser(pendingRemove.id); setPendingRemove(null) }}
+          onDismiss={() => setPendingRemove(null)}
         />
       )}
     </div>

@@ -2,6 +2,9 @@ import type { Competition, Boulder, Competitor, Completion, RankResult } from '.
 import { ScoringType } from '../types'
 
 // ─── TRADITIONAL SCORING ──────────────────────────────────────────────────────
+// Zone points are independent of topping — they're awarded for reaching a zone
+// regardless of whether the competitor topped the boulder (when zoneScoring =
+// 'adds_to_score'). Top points are only added when topValidated is true.
 
 function calcTraditionalPoints(
   completion: Completion,
@@ -13,26 +16,22 @@ function calcTraditionalPoints(
 
   let points = 0
 
-  // Zone points — awarded even without a top if zoneScoring adds to score
-  if (comp.zoneScoring === 'adds_to_score' && completion.zonesReached > 0) {
+  // Zone points — awarded even without a top when zoneScoring = 'adds_to_score'
+  if (comp.zoneScoring === 'adds_to_score' && (completion.zonesReached ?? 0) > 0) {
     const totalZones = boulder.zoneCount || 1
-    const zonePointsEarned = Math.floor(
-      difficulty.zonePoints * (completion.zonesReached / totalZones)
-    )
-    points += zonePointsEarned
+    points += Math.floor(difficulty.zonePoints * (completion.zonesReached / totalZones))
   }
+  // When zoneScoring = 'tie_breaker_only', zones contribute 0 pts (used for tie-breaking only)
 
-  // Top points — only if top was validated
+  // Top points — only when the top has been validated
   if (completion.topValidated) {
     let topPoints = difficulty.basePoints
 
     if (comp.penalizeAttempts && completion.attempts > 1) {
       const extra = completion.attempts - 1
-      if (comp.penaltyType === 'fixed') {
-        topPoints -= extra * comp.penaltyValue
-      } else {
-        topPoints -= extra * (difficulty.basePoints * comp.penaltyValue / 100)
-      }
+      topPoints -= comp.penaltyType === 'fixed'
+        ? extra * comp.penaltyValue
+        : extra * (difficulty.basePoints * comp.penaltyValue / 100)
     }
 
     points += Math.max(topPoints, comp.minScorePerBoulder)
@@ -42,23 +41,75 @@ function calcTraditionalPoints(
 }
 
 // ─── DYNAMIC SCORING ──────────────────────────────────────────────────────────
+// Points for a TOPPED boulder = pot / number of toppers (floor, min = minDynamicPoints).
+// A competitor only earns dynamic points if they actually topped the boulder.
+// Zone-only attempts don't count toward the pot or earn any points in dynamic mode.
 
-function calcDynamicPoints(
+function calcDynamicPointsForBoulder(
   boulder:     Boulder,
-  completions: Completion[],
+  allCompletions: Completion[],
   comp:        Competition,
 ): number {
-  const topsCount = completions.filter(
+  const topsCount = allCompletions.filter(
     c => c.boulderId === boulder.id && c.topValidated
   ).length
 
   if (topsCount === 0) return boulder.maxPoints ?? comp.dynamicPot ?? 1000
 
   const pot = boulder.maxPoints ?? comp.dynamicPot ?? 1000
-  return Math.max(
-    Math.floor(pot / topsCount),
-    comp.minDynamicPoints ?? 0
-  )
+  return Math.max(Math.floor(pot / topsCount), comp.minDynamicPoints ?? 0)
+}
+
+// ─── PER-BOULDER SCORE FOR ONE COMPETITOR ─────────────────────────────────────
+// Returns the actual points this competitor earned on one boulder.
+//
+// Traditional: top points (if topped) + zone points (if zoneScoring=adds_to_score)
+// Dynamic:     pot/toppers (if topped) + zone points (if zoneScoring=adds_to_score)
+//
+// Zone points use the difficulty's zonePoints field, prorated by zones reached.
+// A zone-only completion in dynamic mode earns zone points only (no top share).
+
+function calcZonePoints(
+  completion:  Completion,
+  boulder:     Boulder,
+  competition: Competition,
+): number {
+  if (competition.zoneScoring !== 'adds_to_score') return 0
+  if ((completion.zonesReached ?? 0) === 0) return 0
+  const difficulty = competition.difficultyLevels.find(d => d.id === boulder.difficultyId)
+  if (!difficulty) return 0
+  const totalZones = boulder.zoneCount || 1
+  return Math.floor(difficulty.zonePoints * (completion.zonesReached / totalZones))
+}
+
+export function calcBoulderPoints(
+  completion:     Completion,
+  boulder:        Boulder,
+  competition:    Competition,
+  allCompletions: Completion[],
+): number {
+  const zonePoints = calcZonePoints(completion, boulder, competition)
+
+  if (competition.scoringType === ScoringType.DYNAMIC) {
+    if (!completion.topValidated) return zonePoints
+
+    // Base share of the dynamic pot for this boulder
+    let topPoints = calcDynamicPointsForBoulder(boulder, allCompletions, competition)
+
+    // Apply attempt penalty to the competitor's personal share if configured
+    if (competition.penalizeAttempts && completion.attempts > 1) {
+      const extra = completion.attempts - 1
+      topPoints -= competition.penaltyType === 'fixed'
+        ? extra * competition.penaltyValue
+        : extra * (topPoints * competition.penaltyValue / 100)
+      topPoints = Math.max(topPoints, competition.minDynamicPoints ?? 0)
+    }
+
+    return Math.max(topPoints + zonePoints, 0)
+  }
+
+  // Traditional: zones + top + penalties all handled together
+  return calcTraditionalPoints(completion, boulder, competition)
 }
 
 // ─── TOTAL SCORE FOR ONE COMPETITOR ───────────────────────────────────────────
@@ -74,16 +125,11 @@ function calcCompetitorScore(
   const scores = mine.map(completion => {
     const boulder = boulders.find(b => b.id === completion.boulderId)
     if (!boulder) return 0
-
-    if (competition.scoringType === ScoringType.DYNAMIC) {
-      return calcDynamicPoints(boulder, completions, competition)
-    } else {
-      return calcTraditionalPoints(completion, boulder, competition)
-    }
+    return calcBoulderPoints(completion, boulder, competition, completions)
   })
 
+  // Sort descending and apply topK cap if set
   scores.sort((a, b) => b - a)
-
   const counted = competition.topKBoulders
     ? scores.slice(0, competition.topKBoulders)
     : scores
@@ -131,6 +177,7 @@ export function calculateRankings(
     }
   })
 
+  // Primary sort: points desc → tops desc → attempts asc → zones desc → zone attempts asc → flashes desc
   results.sort((a, b) => {
     if (b.totalPoints   !== a.totalPoints)   return b.totalPoints   - a.totalPoints
     if (b.totalTops     !== a.totalTops)     return b.totalTops     - a.totalTops
@@ -140,19 +187,20 @@ export function calculateRankings(
     return b.flashCount - a.flashCount
   })
 
+  // Assign ranks (tied competitors share a rank)
   results.forEach((result, index) => {
     if (index === 0) {
       result.rank = 1
     } else {
       const prev = results[index - 1]
-      const sameScore =
-        result.totalPoints   === prev.totalPoints &&
-        result.totalTops     === prev.totalTops   &&
+      const tied =
+        result.totalPoints   === prev.totalPoints   &&
+        result.totalTops     === prev.totalTops     &&
         result.totalAttempts === prev.totalAttempts &&
-        result.totalZones    === prev.totalZones  &&
-        result.zoneAttempts  === prev.zoneAttempts &&
+        result.totalZones    === prev.totalZones    &&
+        result.zoneAttempts  === prev.zoneAttempts  &&
         result.flashCount    === prev.flashCount
-      result.rank = sameScore ? prev.rank : index + 1
+      result.rank = tied ? prev.rank : index + 1
     }
   })
 
