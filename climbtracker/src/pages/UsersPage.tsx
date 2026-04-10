@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Search, Shield, User, Trash2, ChevronDown, X, Save, Hash, AlertCircle } from 'lucide-react'
 import type { Competitor, Competition } from '../types'
 import type { Language } from '../translations'
@@ -26,25 +27,63 @@ function RoleDropdown({ competitor, theme, onUpdateRole }: {
   competitor: Competitor; theme: 'light' | 'dark'
   onUpdateRole: (id: string, role: 'competitor' | 'judge' | 'organizer') => void
 }) {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen]     = useState(false)
+  const [menuStyle, setMenuStyle] = useState<{ top: number; left: number }>({ top: 0, left: 0 })
+  const btnRef = useRef<HTMLButtonElement>(null)
   const currentRole = competitor.role ?? 'competitor'
+  const labels: Record<string, string> = { competitor: 'Competitor', judge: 'Judge', organizer: 'Organizer' }
+
+  // Recompute position every time the menu opens
+  useEffect(() => {
+    if (!open || !btnRef.current) return
+    const r = btnRef.current.getBoundingClientRect()
+    setMenuStyle({ top: r.bottom + window.scrollY + 4, left: r.right + window.scrollX })
+  }, [open])
+
+  // Close on scroll/resize so the menu doesn't drift
+  useEffect(() => {
+    if (!open) return
+    const close = () => setOpen(false)
+    window.addEventListener('scroll', close, true)
+    window.addEventListener('resize', close)
+    return () => { window.removeEventListener('scroll', close, true); window.removeEventListener('resize', close) }
+  }, [open])
+
   return (
     <div className="relative">
-      <button onClick={() => setOpen(o => !o)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all border ${theme === 'dark' ? 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}>
-        {currentRole}<ChevronDown size={11} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
+      <button
+        ref={btnRef}
+        onClick={() => setOpen(o => !o)}
+        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-black transition-all border whitespace-nowrap ${theme === 'dark' ? 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
+      >
+        {labels[currentRole]}<ChevronDown size={10} className={`transition-transform flex-shrink-0 ${open ? 'rotate-180' : ''}`} />
       </button>
-      {open && (
+
+      {open && createPortal(
         <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className={`absolute right-0 top-full mt-1 z-20 rounded-xl border shadow-xl overflow-hidden min-w-[140px] ${theme === 'dark' ? 'bg-slate-800 border-white/10' : 'bg-white border-slate-200'}`}>
+          {/* Invisible backdrop to catch outside clicks */}
+          <div className="fixed inset-0 z-[900]" onClick={() => setOpen(false)} />
+          {/* Menu — positioned via inline style, right-aligned to button */}
+          <div
+            className={`fixed z-[901] rounded-xl border shadow-xl overflow-hidden min-w-[130px] ${theme === 'dark' ? 'bg-slate-800 border-white/10' : 'bg-white border-slate-200 shadow-slate-200/60'}`}
+            style={{ top: menuStyle.top, left: menuStyle.left, transform: 'translateX(-100%)' }}
+          >
             {(['competitor', 'judge', 'organizer'] as const).map(role => (
-              <button key={role} onClick={() => { onUpdateRole(competitor.id, role); setOpen(false) }}
-                className={`w-full px-4 py-2.5 text-left text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${currentRole === role ? theme === 'dark' ? 'bg-sky-400/10 text-sky-400' : 'bg-sky-50 text-sky-600' : theme === 'dark' ? 'text-slate-300 hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50'}`}>
-                <Shield size={11} />{role}
+              <button
+                key={role}
+                onClick={() => { onUpdateRole(competitor.id, role); setOpen(false) }}
+                className={`w-full px-3 py-2 text-left text-xs font-black transition-all flex items-center gap-2 ${
+                  currentRole === role
+                    ? theme === 'dark' ? 'bg-sky-400/10 text-sky-400' : 'bg-sky-50 text-sky-600'
+                    : theme === 'dark' ? 'text-slate-300 hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                <Shield size={10} />{labels[role]}
               </button>
             ))}
           </div>
-        </>
+        </>,
+        document.body
       )}
     </div>
   )
@@ -102,13 +141,31 @@ function UserDetailModal({ competitor, allCompetitors, isMe, theme, onUpdateRole
           {/* Role */}
           <div>
             <label className={`block text-[10px] font-black uppercase tracking-widest mb-2 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>Role</label>
-            <div className="flex gap-2">
-              {(['competitor', 'judge', 'organizer'] as const).map(role => (
-                <button key={role} onClick={() => !isMe && onUpdateRole(competitor.id, role)} disabled={isMe}
-                  className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest border transition-all ${currentRole === role ? role === 'organizer' ? 'bg-amber-400/10 text-amber-400 border-amber-400/30' : role === 'judge' ? 'bg-purple-400/10 text-purple-400 border-purple-400/30' : 'bg-sky-400/10 text-sky-400 border-sky-400/30' : theme === 'dark' ? 'bg-white/5 text-slate-500 border-white/10 hover:bg-white/10' : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'} ${isMe ? 'opacity-40 cursor-not-allowed' : ''}`}>
-                  {role}
-                </button>
-              ))}
+            <div className={`flex rounded-xl overflow-hidden border ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}>
+              {(['competitor', 'judge', 'organizer'] as const).map((role, i) => {
+                const active = currentRole === role
+                const activeColor = role === 'organizer'
+                  ? 'bg-amber-400/15 text-amber-400'
+                  : role === 'judge'
+                    ? 'bg-purple-400/15 text-purple-400'
+                    : 'bg-sky-400/15 text-sky-400'
+                return (
+                  <button
+                    key={role}
+                    onClick={() => !isMe && onUpdateRole(competitor.id, role)}
+                    disabled={isMe}
+                    className={`
+                      flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-black transition-all
+                      ${i > 0 ? theme === 'dark' ? 'border-l border-white/10' : 'border-l border-slate-200' : ''}
+                      ${active ? activeColor : theme === 'dark' ? 'text-slate-500 hover:text-slate-300 hover:bg-white/5' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}
+                      ${isMe ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
+                    `}
+                  >
+                    <Shield size={10} className="flex-shrink-0" />
+                    <span className="truncate">{role.charAt(0).toUpperCase() + role.slice(1)}</span>
+                  </button>
+                )
+              })}
             </div>
             {isMe && <p className={`text-[10px] mt-1.5 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>You cannot change your own role.</p>}
           </div>
@@ -212,14 +269,17 @@ export default function UsersPage({ competitors, competition, currentUser, theme
         </div>
       ) : (
         <div className={`rounded-2xl border overflow-hidden ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}>
-          <div className={`grid grid-cols-[1fr_120px_100px_44px] gap-2 px-5 py-3 text-[10px] font-black uppercase tracking-widest ${theme === 'dark' ? 'bg-white/5 text-slate-500' : 'bg-slate-50 text-slate-400'}`}>
-            <div>Competitor</div><div className="text-center">Role</div><div className="text-center">Change role</div><div></div>
+          <div className={`grid grid-cols-[1fr_auto_auto_36px] gap-3 px-5 py-3 text-[10px] font-black uppercase tracking-widest ${theme === 'dark' ? 'bg-white/5 text-slate-500' : 'bg-slate-50 text-slate-400'}`}>
+            <div>Competitor</div>
+            <div className="hidden sm:block text-center">Role</div>
+            <div className="hidden sm:block text-center">Change</div>
+            <div></div>
           </div>
           {visible.map((competitor, index) => {
             const isEven = index % 2 === 0
             const isMe   = competitor.id === currentUser.id
             return (
-              <div key={competitor.id} className={`grid grid-cols-[1fr_120px_100px_44px] gap-2 px-5 py-4 items-center border-t transition-colors ${theme === 'dark' ? `border-white/5 ${isEven ? 'bg-transparent' : 'bg-white/[0.02]'}` : `border-slate-100 ${isEven ? 'bg-white' : 'bg-slate-50/50'}`}`}>
+              <div key={competitor.id} className={`grid grid-cols-[1fr_auto_auto_36px] gap-3 px-5 py-3.5 items-center border-t transition-colors ${theme === 'dark' ? `border-white/5 ${isEven ? 'bg-transparent' : 'bg-white/[0.02]'}` : `border-slate-100 ${isEven ? 'bg-white' : 'bg-slate-50/50'}`}`}>
                 <button onClick={() => setSelectedUser(competitor)} className="flex items-center gap-3 min-w-0 text-left hover:opacity-80 transition-opacity">
                   <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden ${theme === 'dark' ? 'bg-white/5' : 'bg-slate-100'}`}>
                     {competitor.avatar ? <img src={competitor.avatar} alt="" className="w-full h-full object-cover" /> : <User size={15} className={theme === 'dark' ? 'text-slate-500' : 'text-slate-400'} />}
@@ -234,9 +294,12 @@ export default function UsersPage({ competitors, competition, currentUser, theme
                     </p>
                   </div>
                 </button>
-                <div className="flex justify-center"><RoleBadge role={competitor.role} theme={theme} /></div>
-                <div className="flex justify-center">
-                  {isMe ? <span className={`text-[10px] font-black ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>—</span> : <RoleDropdown competitor={competitor} theme={theme} onUpdateRole={onUpdateRole} />}
+                <div className="hidden sm:flex justify-center"><RoleBadge role={competitor.role} theme={theme} /></div>
+                <div className="hidden sm:flex justify-center">
+                  {isMe
+                    ? <span className={`text-[10px] font-black ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>—</span>
+                    : <RoleDropdown competitor={competitor} theme={theme} onUpdateRole={onUpdateRole} />
+                  }
                 </div>
                 <div className="flex justify-end">
                   <button onClick={() => setSelectedUser(competitor)} className={`p-2 rounded-xl transition-all text-xs font-black ${theme === 'dark' ? 'text-slate-600 hover:text-slate-300 hover:bg-white/5' : 'text-slate-300 hover:text-slate-600 hover:bg-slate-100'}`}>···</button>
