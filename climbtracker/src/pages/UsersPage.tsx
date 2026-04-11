@@ -89,9 +89,10 @@ function RoleDropdown({ competitor, theme, onUpdateRole }: {
   )
 }
 
-function UserDetailModal({ competitor, allCompetitors, isMe, theme, onUpdateRole, onUpdateBib, onRemove, onClose }: {
+function UserDetailModal({ competitor, allCompetitors, competition, isMe, theme, onUpdateRole, onUpdateBib, onRemove, onClose }: {
   competitor:     Competitor
   allCompetitors: Competitor[]
+  competition:    Competition
   isMe:           boolean
   theme:          'light' | 'dark'
   onUpdateRole:   (id: string, role: 'competitor' | 'judge' | 'organizer') => void
@@ -195,11 +196,36 @@ function UserDetailModal({ competitor, allCompetitors, isMe, theme, onUpdateRole
             )}
           </div>
 
-          {/* Info */}
-          <div className={`p-3 rounded-xl border text-xs space-y-1 ${theme === 'dark' ? 'bg-white/[0.02] border-white/5 text-slate-500' : 'bg-slate-50 border-slate-100 text-slate-400'}`}>
-            <p><span className="font-black">Gender:</span> {competitor.gender || '—'}</p>
-            <p><span className="font-black">Category ID:</span> {competitor.categoryId || '—'}</p>
-          </div>
+          {/* Traits */}
+          {(competition.traits?.length ?? 0) > 0 && (
+            <div>
+              <label className={`block text-[10px] font-black uppercase tracking-widest mb-2 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+                Traits
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {(competition.traits ?? []).map(trait => {
+                  const active = (competitor.traitIds ?? []).includes(trait.id)
+                  return (
+                    <span
+                      key={trait.id}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-black border ${
+                        active
+                          ? 'bg-sky-400/10 text-sky-400 border-sky-400/20'
+                          : theme === 'dark'
+                            ? 'bg-white/[0.03] text-slate-600 border-white/5'
+                            : 'bg-slate-50 text-slate-300 border-slate-100'
+                      }`}
+                    >
+                      {trait.name}
+                    </span>
+                  )
+                })}
+                {(competitor.traitIds ?? []).length === 0 && (
+                  <span className={`text-xs ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>No traits selected</span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {!isMe && (
@@ -290,7 +316,11 @@ export default function UsersPage({ competitors, competition, currentUser, theme
                       {isMe && <span className="ml-2 text-[9px] font-black text-sky-400 bg-sky-400/10 px-1.5 py-0.5 rounded-full">You</span>}
                     </p>
                     <p className={`text-[10px] truncate mt-0.5 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
-                      {competitor.email}{competitor.role !== 'judge' && competitor.role !== 'organizer' && <span className="ml-1">· BIB #{competitor.bibNumber}</span>}
+                      {competitor.email}
+                      {competitor.role !== 'judge' && competitor.role !== 'organizer' && <span className="ml-1">· BIB #{competitor.bibNumber}</span>}
+                      {(competitor.traitIds ?? []).length > 0 && (
+                        <span className="ml-1">· {(competitor.traitIds ?? []).map(id => competition.traits?.find(t => t.id === id)?.name).filter(Boolean).join(', ')}</span>
+                      )}
                     </p>
                   </div>
                 </button>
@@ -321,6 +351,7 @@ export default function UsersPage({ competitors, competition, currentUser, theme
         <UserDetailModal
           competitor={selectedUser}
           allCompetitors={competitors}
+          competition={competition}
           isMe={selectedUser.id === currentUser.id}
           theme={theme}
           onUpdateRole={(id, role) => { onUpdateRole(id, role); setSelectedUser(prev => prev ? { ...prev, role } : null) }}

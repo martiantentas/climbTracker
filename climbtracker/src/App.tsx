@@ -23,7 +23,11 @@ import UsersPage from './pages/UsersPage'
 import SettingsPage from './pages/SettingsPage'
 import JudgingPage from './pages/JudgingPage'
 import AnalyticsPage from './pages/AnalyticsPage'
-import JoinPage from './pages/JoinPage'
+import JoinPage          from './pages/JoinPage'
+import EventProfilePage  from './pages/EventProfilePage'
+import LandingPage       from './pages/LandingPage'
+import AuthPage          from './pages/AuthPage'
+import PaymentModal      from './components/PaymentModal'
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
@@ -94,8 +98,9 @@ function AppInner() {
   const [completionsMap, setCompletionsMap] = useState<Record<string, Completion[]>>({ [MOCK_COMPETITION.id]: MOCK_COMPLETIONS })
   const [competitorsMap, setCompetitorsMap] = useState<Record<string, Competitor[]>>({ [MOCK_COMPETITION.id]: MOCK_COMPETITORS })
 
-  const [toast,      setToast]      = useState<{ message: string; visible: boolean }>({ message: '', visible: false })
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [toast,        setToast]        = useState<{ message: string; visible: boolean }>({ message: '', visible: false })
+  const [isMenuOpen,   setIsMenuOpen]   = useState(false)
+  const [paymentComp,  setPaymentComp]  = useState<Competition | null>(null) // non-null = modal open
 
   // ── Derived ──────────────────────────────────────────────────────────────────
   const activeCompetition = useMemo(() =>
@@ -108,7 +113,8 @@ function AppInner() {
   const activeCompetitors = competitorsMap[activeCompetition?.id] ?? []
 
   const isOrganizer = useMemo(() =>
-    currentUser?.id === activeCompetition?.ownerId || currentUser?.role === 'organizer',
+    currentUser?.role === 'organizer' ||
+    currentUser?.id === activeCompetition?.ownerId,
     [currentUser, activeCompetition]
   )
 
@@ -164,7 +170,15 @@ function AppInner() {
   }
 
   function updateCompetition(updated: Competition) {
-    setCompetitions(prev => prev.map(c => c.id === updated.id ? updated : c))
+    const prev = competitions.find(c => c.id === updated.id)
+    // Gate: Draft → LIVE requires a subscription (payment or promo)
+    const goingLive = prev?.status === 'DRAFT' && updated.status === 'LIVE'
+    const hasSubscription = !!(updated as any).subscription
+    if (goingLive && !hasSubscription) {
+      setPaymentComp(updated) // open payment modal instead
+      return
+    }
+    setCompetitions(p => p.map(c => c.id === updated.id ? updated : c))
     showToast(t.successSaved)
   }
 
@@ -176,7 +190,7 @@ function AppInner() {
       startDate: new Date().toISOString(),
       endDate:   new Date(Date.now() + 86400000).toISOString(),
       status: CompetitionStatus.DRAFT, scoringType: ScoringType.TRADITIONAL,
-      categories: [{ id: 'cat-1', name: 'Open' }],
+      traits: [], requireTraits: false,
       difficultyLevels: INITIAL_DIFFICULTIES,
       isLocked: false, canSelfScore: true,
       inviteCode: generateInviteCode(),
@@ -202,12 +216,24 @@ function AppInner() {
   }
 
   // ── Core join logic (shared) ──────────────────────────────────────────────
-  function joinCompetition(compId: string, user: Competitor) {
+  function joinCompetition(compId: string, user: Competitor, traitIds?: string[]) {
     setCompetitorsMap(prev => {
       const list = prev[compId] ?? []
-      if (list.some(c => c.id === user.id)) return prev
-      const nextBib = list.length > 0 ? Math.max(...list.map(c => c.bibNumber)) + 1 : 101
-      return { ...prev, [compId]: [...list, { ...user, bibNumber: nextBib }] }
+      // Remove any existing duplicates for this user (defensive dedup)
+      const deduped = list.filter((c, idx) =>
+        c.id !== user.id || idx === list.findIndex(x => x.id === user.id)
+      )
+      if (deduped.some(c => c.id === user.id)) {
+        // Already registered — just update their traitIds if provided
+        if (traitIds) {
+          return { ...prev, [compId]: deduped.map(c => c.id === user.id ? { ...c, traitIds } : c) }
+        }
+        return prev
+      }
+      const nextBib = deduped.filter(c => c.bibNumber > 0).length > 0
+        ? Math.max(...deduped.map(c => c.bibNumber)) + 1
+        : 101
+      return { ...prev, [compId]: [...deduped, { ...user, bibNumber: nextBib, traitIds: traitIds ?? user.traitIds ?? [] }] }
     })
     setActiveCompId(compId)
     showToast(t.welcomeBack)
@@ -217,20 +243,20 @@ function AppInner() {
   // The code is the invite code string.
   // password is optional; if the competition has joinPassword set and the
   // supplied password doesn't match, returns false so the UI can show an error.
-  function handleJoinByCode(code: string, password?: string): boolean {
+  function handleJoinByCode(code: string, password?: string, traitIds?: string[]): boolean {
     const target = competitions.find(c => c.inviteCode === code.toUpperCase())
     if (!target || !currentUser) return false
     if (target.joinPassword && password !== target.joinPassword) return false
-    joinCompetition(target.id, currentUser)
+    joinCompetition(target.id, currentUser, traitIds)
     return true
   }
 
   // ── handleJoinByCompId — used by JoinPage (code already resolved to ID) ──
-  function handleJoinByCompId(compId: string, password?: string): boolean {
+  function handleJoinByCompId(compId: string, password?: string, traitIds?: string[]): boolean {
     const target = competitions.find(c => c.id === compId)
     if (!target || !currentUser) return false
     if (target.joinPassword && password !== target.joinPassword) return false
-    joinCompetition(compId, currentUser)
+    joinCompetition(compId, currentUser, traitIds)
     return true
   }
 
@@ -261,6 +287,26 @@ function AppInner() {
     showToast(t.successSaved)
   }
 
+  function handleUpdateCompetitorTraits(competitorId: string, traitIds: string[]) {
+    if (!activeCompetition) return
+    setCompetitorsMap(prev => {
+      const list = prev[activeCompetition.id] ?? []
+      // Deduplicate by id, keeping the first entry, then update traits
+      const seen = new Set<string>()
+      const deduped = list.filter(c => {
+        if (seen.has(c.id)) return false
+        seen.add(c.id)
+        return true
+      })
+      return {
+        ...prev,
+        [activeCompetition.id]: deduped.map(c =>
+          c.id === competitorId ? { ...c, traitIds } : c
+        ),
+      }
+    })
+  }
+
   function handleLogScore(
     competitorId: string, boulderId: string, attempts: number,
     hasZone: boolean, zoneAttempts: number, isTop: boolean,
@@ -287,29 +333,20 @@ function AppInner() {
     })
   }
 
-  // ── Auth screen ───────────────────────────────────────────────────────────
+  // ── Unauthenticated shell: Landing + Auth ─────────────────────────────────
   if (!currentUser) {
     return (
-      <div className={`min-h-screen flex items-center justify-center ${theme === 'dark' ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-900'}`}>
-        <div className="text-center space-y-4">
-          <h1 className="text-4xl font-black tracking-tight">ClimbTracker</h1>
-          <p className="text-slate-400">Auth screen coming soon</p>
-          <button
-            onClick={() => { setCurrentUser(MOCK_COMPETITORS[1]); navigate('/competitions', { replace: true }) }}
-            className="px-6 py-3 bg-sky-400 text-sky-950 rounded-2xl font-bold block mx-auto"
-          >Log in as Alex (Competitor)</button>
-          <button
-            onClick={() => { setCurrentUser(MOCK_COMPETITORS[0]); navigate('/competitions', { replace: true }) }}
-            className="px-6 py-3 bg-purple-400 text-purple-950 rounded-2xl font-bold block mx-auto"
-          >Log in as Admin (Organizer)</button>
-        </div>
-      </div>
+      <Routes>
+        <Route path="/"     element={<LandingPage />} />
+        <Route path="/auth" element={<AuthPage onLogin={u => { setCurrentUser(u); navigate('/competitions', { replace: true }) }} theme={theme} />} />
+        <Route path="*"     element={<Navigate to="/" replace />} />
+      </Routes>
     )
   }
 
   if (!activeCompetition) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+      <div style={{ minHeight: '100vh', background: '#121212' }} className="flex items-center justify-center">
         <p className="text-slate-400">No competition found.</p>
       </div>
     )
@@ -318,14 +355,28 @@ function AppInner() {
   // ── Main app ──────────────────────────────────────────────────────────────
   return (
     <>
-      <div className={`min-h-screen ${theme === 'dark' ? 'bg-slate-900 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
+      <div className={`min-h-screen ${theme === 'dark' ? 'text-slate-100' : 'bg-slate-50 text-slate-900'}`} style={theme === 'dark' ? { background: '#121212' } : {}}>
 
         <Toast message={toast.message} visible={toast.visible} theme={theme} />
+
+        {/* Payment modal — shown when organizer tries to publish a draft competition */}
+        {paymentComp && (
+          <PaymentModal
+            competition={paymentComp}
+            theme={theme}
+            onClose={() => setPaymentComp(null)}
+            onSuccess={published => {
+              setCompetitions(p => p.map(c => c.id === published.id ? published : c))
+              setPaymentComp(null)
+              showToast('🎉 Competition is now Live!')
+            }}
+          />
+        )}
 
         <NavBar
           theme={theme} setTheme={setTheme} lang={lang} setLang={setLang}
           currentUser={currentUser} activeCompetition={activeCompetition}
-          isOrganizer={isOrganizer}
+          isOrganizer={isOrganizer} canAccessComp={canAccessActiveComp}
           onOpenMenu={() => setIsMenuOpen(true)}
           onLogout={() => { setCurrentUser(null); navigate('/competitions', { replace: true }) }}
         />
@@ -334,6 +385,7 @@ function AppInner() {
           isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)}
           theme={theme} lang={lang} currentUser={currentUser}
           competition={activeCompetition} isOrganizer={isOrganizer}
+          canAccessComp={canAccessActiveComp}
           onLogout={() => { setCurrentUser(null); navigate('/competitions', { replace: true }) }}
         />
 
@@ -341,6 +393,11 @@ function AppInner() {
           <Routes>
 
             {/* ── Join page — no role guard needed, just needs to be logged in ── */}
+            {/* Redirect landing/auth to app if already logged in */}
+            <Route path="/"     element={<Navigate to="/competitions" replace />} />
+            <Route path="/auth" element={<Navigate to="/competitions" replace />} />
+
+            {/* ── Public join route ── */}
             <Route path="/join/:code" element={
               <JoinPage
                 competitions={competitions}
@@ -360,7 +417,12 @@ function AppInner() {
                 onEnter={setActiveCompId} onCreate={handleCreateCompetition}
                 onDelete={handleDeleteCompetition} onLeave={handleLeaveCompetition}
                 onJoinByCode={handleJoinByCode} isRegistered={isUserRegistered}
-                onManage={(compId) => { setActiveCompId(compId); navigate('/settings') }}
+                onManage={(compId) => { setActiveCompId(compId); setTimeout(() => navigate('/settings'), 0) }}
+                onJoinSuccess={(comp) => {
+                  if ((comp.traits?.length ?? 0) > 0) {
+                    setTimeout(() => navigate('/event-profile'), 0)
+                  }
+                }}
               />
             } />
 
@@ -369,6 +431,29 @@ function AppInner() {
                 currentUser={currentUser} theme={theme} lang={lang}
                 onJoinByCode={handleJoinByCode}
               />
+            } />
+
+            {/* ── Event profile — competitor role only ── */}
+            <Route path="/event-profile" element={
+              currentUser.role !== 'competitor'
+                ? <Navigate to="/competitions" replace />
+                : <Guard required="any" currentUser={currentUser} isOrganizer={isOrganizer} canAccessComp={canAccessActiveComp} onAccessDenied={showToast}>
+                    <EventProfilePage
+                      competition={activeCompetition}
+                      boulders={activeBoulders}
+                      completions={activeCompletions}
+                      currentUser={(() => {
+                        // Use the live competitor record (deduped, with latest traitIds)
+                        // rather than the auth user snapshot which may be stale
+                        const live = activeCompetitors.find(c => c.id === currentUser.id)
+                        return live ?? currentUser
+                      })()}
+                      rankings={rankings}
+                      theme={theme}
+                      lang={lang}
+                      onUpdateTraits={handleUpdateCompetitorTraits}
+                    />
+                  </Guard>
             } />
 
             {/* ── Registered competitors + organizers ── */}
@@ -386,7 +471,7 @@ function AppInner() {
 
             <Route path="/leaderboard" element={
               <Guard required="any" currentUser={currentUser} isOrganizer={isOrganizer} canAccessComp={canAccessActiveComp} onAccessDenied={showToast}>
-                <LeaderboardPage rankings={rankings} competition={activeCompetition} theme={theme} lang={lang} />
+                <LeaderboardPage rankings={rankings} competitors={activeCompetitors} competition={activeCompetition} theme={theme} lang={lang} />
               </Guard>
             } />
 

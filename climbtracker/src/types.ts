@@ -16,7 +16,7 @@ export type CompetitionStatus = typeof CompetitionStatus[keyof typeof Competitio
 
 export type AttemptTracking = 'none' | 'count' | 'fixed_options'
 
-export interface Category {
+export interface Trait {
   id:   string
   name: string
 }
@@ -60,8 +60,8 @@ export interface Competitor {
   lastName:    string
   displayName: string
   email:       string
-  gender:      string
-  categoryId:  string
+  gender?:     string
+  traitIds:    string[]   // IDs from competition.traits — multi-select
   bibNumber:   number
   avatar?:     string
   role?:       'competitor' | 'judge' | 'organizer'
@@ -109,7 +109,8 @@ export interface Competition {
   endDate:            string
   status:             CompetitionStatus
   scoringType:        ScoringType
-  categories:         Category[]
+  traits:             Trait[]
+  requireTraits:      boolean          // if true, competitors must pick traits on join
   difficultyLevels:   DifficultyLevel[]
   topKBoulders?:      number
   dynamicPot?:        number
@@ -126,6 +127,9 @@ export interface Competition {
   minScorePerBoulder: number
   zoneScoring:        ZoneScoring
   scoringMethod:      ScoringMethod
+
+  // Subscription — set when organiser pays to publish; gates Draft → Live
+  subscription?:      'one_shot' | 'pro' | 'platinum'
   attemptTracking:    AttemptTracking
   maxFixedAttempts:   number
 }
@@ -136,8 +140,8 @@ export interface RankResult {
   competitorId:  string
   name:          string
   bib:           number
-  category:      string
-  gender:        string
+  traitIds:      string[]
+  gender?:       string
   totalPoints:   number
   totalTops:     number
   totalAttempts: number

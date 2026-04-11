@@ -145,9 +145,10 @@ export function calculateRankings(
   competitors:  Competitor[],
   completions:  Completion[],
 ): RankResult[] {
-  const actualCompetitors = competitors.filter(c =>
-    c.id !== competition.ownerId && c.role !== 'judge'
-  )
+  const actualCompetitors = competitors
+    .filter(c => c.id !== competition.ownerId && c.role !== 'judge')
+    // Deduplicate: keep only the first entry per id (most up-to-date after trait edits)
+    .filter((c, idx, arr) => arr.findIndex(x => x.id === c.id) === idx)
 
   const results = actualCompetitors.map(competitor => {
     const mine = completions.filter(c => c.competitorId === competitor.id)
@@ -159,13 +160,13 @@ export function calculateRankings(
     const totalZones    = mine.reduce((sum, c) => sum + (c.zonesReached ?? 0), 0)
     const zoneAttempts  = mine.reduce((sum, c) => sum + c.zoneAttempts, 0)
 
-    const category = competition.categories.find(cat => cat.id === competitor.categoryId)
+    const category = competition.traits?.find(t => competitor.traitIds?.[0] === t.id)
 
     return {
       competitorId:  competitor.id,
       name:          competitor.displayName,
       bib:           competitor.bibNumber,
-      category:      category?.name ?? 'Unknown',
+      traitIds:      competitor.traitIds ?? [],
       gender:        competitor.gender,
       totalPoints,
       totalTops,

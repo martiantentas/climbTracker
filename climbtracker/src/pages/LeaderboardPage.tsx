@@ -1,32 +1,69 @@
 import { useState, useMemo } from 'react'
-import { Trophy, Medal, Search } from 'lucide-react'
+import { Trophy, ChevronDown, Zap, Target } from 'lucide-react'
 
-import type { Competition, RankResult } from '../types'
+import type { Competition, Competitor, RankResult } from '../types'
 import type { Language } from '../translations'
 import { translations } from '../translations'
-import { usePagination } from '../hooks/usePagination'
-import { useSortedData } from '../hooks/useSortedData'
-import PaginationBar from '../components/PaginationBar'
-import SortableHeader from '../components/SortableHeader'
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
 interface LeaderboardPageProps {
   rankings:    RankResult[]
+  competitors?: Competitor[]   // live state — for accurate category filtering; optional for backwards compat
   competition: Competition
   theme:       'light' | 'dark'
   lang:        Language
 }
 
-// ─── RANK BADGE ───────────────────────────────────────────────────────────────
+// ─── FILTER DROPDOWN ─────────────────────────────────────────────────────────
 
-function RankBadge({ rank }: { rank: number }) {
-  if (rank === 1) return <Trophy size={18} className="text-amber-400" />
-  if (rank === 2) return <Medal  size={18} className="text-slate-400" />
-  if (rank === 3) return <Medal  size={18} className="text-amber-700" />
+interface FilterDropdownProps {
+  label:    string
+  value:    string
+  options:  { value: string; label: string }[]
+  theme:    'light' | 'dark'
+  onChange: (v: string) => void
+}
+
+function FilterDropdown({ label, value, options, theme, onChange }: FilterDropdownProps) {
+  const dk = theme === 'dark'
+
   return (
-    <span className="text-sm font-black text-slate-500 w-[18px] text-center">
-      {rank}
+    <div className="relative">
+      <select
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        className={`
+          appearance-none pl-4 pr-9 py-2.5 rounded-xl text-sm font-black border cursor-pointer
+          outline-none transition-all
+          ${dk
+            ? 'bg-white/5 border-white/10 text-slate-200 hover:bg-white/10'
+            : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm'
+          }
+        `}
+      >
+        <option value="">{label}</option>
+        {options.map(o => (
+          <option key={o.value} value={o.value}>{o.label}</option>
+        ))}
+      </select>
+      <ChevronDown
+        size={14}
+        className={`absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none ${dk ? 'text-slate-400' : 'text-slate-500'}`}
+      />
+    </div>
+  )
+}
+
+// ─── RANK MEDAL ───────────────────────────────────────────────────────────────
+
+function RankBadge({ rank, theme }: { rank: number; theme: 'light' | 'dark' }) {
+  if (rank === 1) return <span className="text-lg">🥇</span>
+  if (rank === 2) return <span className="text-lg">🥈</span>
+  if (rank === 3) return <span className="text-lg">🥉</span>
+  return (
+    <span className={`text-sm font-black tabular-nums w-7 text-center ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+      #{rank}
     </span>
   )
 }
@@ -35,249 +72,268 @@ function RankBadge({ rank }: { rank: number }) {
 
 export default function LeaderboardPage({
   rankings,
+  competitors = [],
   competition,
   theme,
   lang,
 }: LeaderboardPageProps) {
-  const t = translations[lang]
+  const t  = translations[lang]
+  const dk = theme === 'dark'
 
-  // ── Filters ──────────────────────────────────────────────────────────────
-  const [search,         setSearch]         = useState('')
-  const [filterCategory, setFilterCategory] = useState('all')
-  const [filterGender,   setFilterGender]   = useState('all')
+  // ── Filter state ────────────────────────────────────────────────────────────
+  const [categoryFilter, setCategoryFilter] = useState('')
+  const [genderFilter,   setGenderFilter]   = useState('')
 
-  // ── Unique values for filter dropdowns ───────────────────────────────────
-  const categories = useMemo(() =>
-    [...new Set(rankings.map(r => r.category))].sort(),
-    [rankings]
+  // ── Resolve categories from competition (traits or categories) ────────────
+  const allCategories = useMemo(() => {
+    const comp = competition as any
+    const cats: { id: string; name: string }[] =
+      comp.traits?.length     ? comp.traits :
+      comp.categories?.length ? comp.categories : []
+    return cats
+  }, [competition])
+
+  // ── Build a lookup: competitorId → current category names ────────────────
+  // Handles all data combinations:
+  // - New source: competitor.traitIds with trait-1 IDs, competition.traits with trait-1 IDs ✓
+  // - Old source: competitor.categoryId with cat-1 IDs, competition.categories with cat-1 IDs ✓
+  // - Mixed (new constants + old competitors): categoryId='cat-1' vs traits with trait-1 IDs
+  //   → falls back to matching by name order (both lists share same names in same order)
+  const competitorCategoryMap = useMemo(() => {
+    const map = new Map<string, string[]>()
+    const compById = new Map(competitors.map(c => [c.id, c]))
+
+    // Build two lookup maps: by id and by index (for cross-system fallback)
+    const comp = competition as any
+    const oldCats: { id: string; name: string }[] = comp.categories ?? []
+    const newCats: { id: string; name: string }[] = comp.traits ?? []
+    // All available categories — try both systems
+    const allCatById = new Map([
+      ...oldCats.map(c => [c.id, c.name] as [string, string]),
+      ...newCats.map(c => [c.id, c.name] as [string, string]),
+    ])
+    // Cross-system fallback: 'cat-1' → index 0 → newCats[0].name
+    const oldCatIndexMap = new Map(oldCats.map((c, i) => [c.id, i]))
+
+    function resolveIds(ids: string[]): string[] {
+      return ids.map(id => {
+        // Direct lookup (works when IDs match)
+        if (allCatById.has(id)) return allCatById.get(id)!
+        // Cross-system fallback: old cat-N id → same position in newCats
+        const idx = oldCatIndexMap.get(id)
+        if (idx !== undefined && newCats[idx]) return newCats[idx].name
+        // Last resort: old cat name by index in old list
+        const oldCat = oldCats.find(c => c.id === id)
+        if (oldCat) return oldCat.name
+        return null
+      }).filter(Boolean) as string[]
+    }
+
+    for (const r of rankings) {
+      const live = compById.get(r.competitorId) as any
+      const rr   = r as any
+      let names: string[] = []
+
+      if (live) {
+        if (Array.isArray(live.traitIds) && live.traitIds.length > 0) {
+          names = resolveIds(live.traitIds)
+        } else if (live.categoryId) {
+          names = resolveIds([live.categoryId])
+        }
+      }
+
+      // Fallback to RankResult embedded data if live lookup yielded nothing
+      if (names.length === 0) {
+        if (Array.isArray(rr.traitIds) && rr.traitIds.length > 0) {
+          names = resolveIds(rr.traitIds)
+        } else if (rr.category && rr.category !== 'Unknown') {
+          names = [rr.category]
+        }
+      }
+
+      map.set(r.competitorId, names)
+    }
+    return map
+  }, [rankings, competitors, competition])
+
+  // ── Category filter options — from competition definition ─────────────────
+  const categoryOptions = useMemo(() =>
+    allCategories.map(c => ({ value: c.name, label: c.name })),
+    [allCategories]
   )
 
-  const genders = useMemo(() =>
-    [...new Set(rankings.map(r => r.gender).filter(Boolean))].sort() as string[],
-    [rankings]
-  )
+  // ── Gender options — derived from live competitors ─────────────────────────
+  const genderOptions = useMemo(() => {
+    const fromCompetitors = competitors.map(c => (c as any).gender)
+    const fromRankings    = rankings.map(r => (r as any).gender)
+    const genders = [...new Set([...fromCompetitors, ...fromRankings].filter(Boolean))] as string[]
+    return genders.map(g => ({ value: g, label: g }))
+  }, [competitors, rankings])
 
-  // ── Base filtered list ────────────────────────────────────────────────────
-  const filtered = useMemo(() => {
-    let list = [...rankings]
+  // ── Filtered + re-ranked results ───────────────────────────────────────────
+  const visible = useMemo(() => {
+    return rankings.filter(r => {
+      if (categoryFilter) {
+        const cats = competitorCategoryMap.get(r.competitorId) ?? []
+        if (!cats.includes(categoryFilter)) return false
+      }
+      if (genderFilter) {
+        const live = competitors.find(c => c.id === r.competitorId) as any
+        const gender = live?.gender ?? (r as any).gender
+        if (gender !== genderFilter) return false
+      }
+      return true
+    })
+  }, [rankings, categoryFilter, genderFilter, competitorCategoryMap, competitors])
 
-    if (filterCategory !== 'all') {
-      list = list.filter(r => r.category === filterCategory)
-    }
-    if (filterGender !== 'all') {
-      list = list.filter(r => r.gender === filterGender)
-    }
-    if (search.trim()) {
-      const q = search.toLowerCase()
-      list = list.filter(r =>
-        r.name.toLowerCase().includes(q) ||
-        String(r.bib).includes(q)
-      )
-    }
-
-    return list
-  }, [rankings, filterCategory, filterGender, search])
-
-  // ── Sorting ───────────────────────────────────────────────────────────────
-  const { sorted, sortKey, sortDir, toggleSort } = useSortedData(
-    filtered, 'totalPoints', 'desc'
-  )
-
-  // Re-assign ranks after sorting/filtering
-  const withRanks = useMemo(() => {
-    return sorted.map((r, i) => ({ ...r, displayRank: i + 1 }))
-  }, [sorted])
-
-  // ── Pagination ────────────────────────────────────────────────────────────
-  const { page, pageSize, totalPages, totalItems, pageItems, setPage, setPageSize } =
-    usePagination(withRanks, 25)
-
-  // ─────────────────────────────────────────────────────────────────────────
-  const selectCls = `
-    px-3 py-2 rounded-xl border outline-none text-xs font-black cursor-pointer transition-all
-    ${theme === 'dark'
-      ? 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
-      : 'bg-white border-slate-200 text-slate-600 shadow-sm hover:bg-slate-50'
-    }
-  `
+  // ── Stats ───────────────────────────────────────────────────────────────────
+  const totalTops = rankings.reduce((s, r) => s + r.totalTops, 0)
+  const topFlasher = rankings.reduce<RankResult | null>((best, r) => {
+    if (!best || r.flashCount > best.flashCount) return r
+    return best
+  }, null)
 
   return (
-    <div>
+    <div className="max-w-5xl mx-auto">
 
-      {/* ── Page header ── */}
+      {/* ── Header ── */}
       <div className="mb-6">
-        <h1 className={`text-2xl font-black tracking-tight ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+        <h1 className={`text-2xl font-black tracking-tight ${dk ? 'text-white' : 'text-slate-900'}`}>
           {t.leaderboard}
         </h1>
-        <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
-          {competition.name} · {rankings.length} competitors
+        <p className={`text-sm mt-1 ${dk ? 'text-slate-400' : 'text-slate-500'}`}>
+          {competition.name} · {competition.status === 'LIVE' ? 'Live standings' : 'Final standings'}
         </p>
       </div>
 
-      {/* ── Filters row ── */}
-      <div className="flex flex-wrap gap-3 mb-4">
+      {/* ── Summary chips ── */}
+      <div className="flex flex-wrap gap-3 mb-6">
+        {[
+          { icon: <Trophy size={12} />,  label: `${rankings.length} climbers`,    color: 'text-sky-400'    },
+          { icon: <Target size={12} />,  label: `${totalTops} total tops`,        color: 'text-green-400'  },
+          { icon: <Zap size={12} />,     label: topFlasher ? `${topFlasher.flashCount} flashes — ${topFlasher.name}` : 'No flashes yet', color: 'text-amber-400' },
+        ].map(s => (
+          <div key={s.label} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black border ${dk ? 'bg-white/[0.03] border-white/10' : 'bg-white border-slate-200 shadow-sm'} ${s.color}`}>
+            {s.icon}{s.label}
+          </div>
+        ))}
+      </div>
 
-        {/* Search */}
-        <div className={`
-          flex items-center gap-2 px-4 py-2.5 rounded-2xl border flex-1 min-w-[200px]
-          ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-slate-200 shadow-sm'}
-        `}>
-          <Search size={14} className={theme === 'dark' ? 'text-slate-500' : 'text-slate-400'} />
-          <input
-            type="text"
-            placeholder={t.searchCompetitor}
-            value={search}
-            onChange={e => { setSearch(e.target.value); setPage(1) }}
-            className="flex-1 bg-transparent outline-none text-sm placeholder:text-slate-500"
+      {/* ── Filters ── */}
+      <div className="flex flex-wrap items-center gap-2 mb-5">
+        {categoryOptions.length > 0 && (
+          <FilterDropdown
+            label="All categories"
+            value={categoryFilter}
+            options={categoryOptions}
+            theme={theme}
+            onChange={setCategoryFilter}
           />
-        </div>
-
-        {/* Category filter */}
-        {categories.length > 1 && (
-          <select
-            value={filterCategory}
-            onChange={e => { setFilterCategory(e.target.value); setPage(1) }}
-            className={selectCls}
-          >
-            <option value="all">All categories</option>
-            {categories.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
         )}
-
-        {/* Gender filter */}
-        {genders.length > 1 && (
-          <select
-            value={filterGender}
-            onChange={e => { setFilterGender(e.target.value); setPage(1) }}
-            className={selectCls}
-          >
-            <option value="all">All genders</option>
-            {genders.map(g => <option key={g} value={g}>{g}</option>)}
-          </select>
+        {genderOptions.length > 0 && (
+          <FilterDropdown
+            label="All genders"
+            value={genderFilter}
+            options={genderOptions}
+            theme={theme}
+            onChange={setGenderFilter}
+          />
         )}
-
+        {(categoryFilter || genderFilter) && (
+          <button
+            onClick={() => { setCategoryFilter(''); setGenderFilter('') }}
+            className={`px-3 py-2 rounded-xl text-xs font-black transition-all ${dk ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'}`}
+          >
+            Clear filters
+          </button>
+        )}
       </div>
 
       {/* ── Table ── */}
-      {pageItems.length === 0 ? (
-        <div className={`text-center py-20 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
-          <p className="text-4xl mb-4">🏆</p>
-          <p className="font-black uppercase tracking-widest text-sm">No results found</p>
+      {visible.length === 0 ? (
+        <div className={`text-center py-16 ${dk ? 'text-slate-600' : 'text-slate-400'}`}>
+          <p className="text-4xl mb-3">🏆</p>
+          <p className="font-black uppercase tracking-widest text-sm">No results</p>
+          <p className="text-xs mt-1">Try clearing your filters</p>
         </div>
       ) : (
-        <>
-          <div className={`rounded-2xl border overflow-hidden ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}>
-
-            {/* Table header */}
-            <div className={`
-              grid grid-cols-[40px_1fr_100px_80px_80px_80px_80px] gap-2
-              px-4 py-3
-              ${theme === 'dark' ? 'bg-white/5' : 'bg-slate-50'}
-            `}>
-              <div className={`text-[10px] font-black uppercase tracking-widest ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>#</div>
-              <div className={`text-[10px] font-black uppercase tracking-widest ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>{t.competitor}</div>
-              <SortableHeader label="Category"  sortKey="category"      activeSortKey={sortKey} sortDir={sortDir} onSort={k => { toggleSort(k); setPage(1) }} theme={theme} />
-              <SortableHeader label="Pts"        sortKey="totalPoints"  activeSortKey={sortKey} sortDir={sortDir} onSort={k => { toggleSort(k); setPage(1) }} theme={theme} align="center" />
-              <SortableHeader label="Tops"       sortKey="totalTops"    activeSortKey={sortKey} sortDir={sortDir} onSort={k => { toggleSort(k); setPage(1) }} theme={theme} align="center" />
-              <SortableHeader label="Zones"      sortKey="totalZones"   activeSortKey={sortKey} sortDir={sortDir} onSort={k => { toggleSort(k); setPage(1) }} theme={theme} align="center" />
-              <SortableHeader label="Attempts"   sortKey="totalAttempts" activeSortKey={sortKey} sortDir={sortDir} onSort={k => { toggleSort(k); setPage(1) }} theme={theme} align="center" />
-            </div>
-
-            {/* Table rows */}
-            {pageItems.map((result, index) => {
-              const isEven = index % 2 === 0
-              const isTop3 = result.displayRank <= 3
-
-              return (
-                <div
-                  key={result.competitorId}
-                  className={`
-                    grid grid-cols-[40px_1fr_100px_80px_80px_80px_80px] gap-2
-                    px-4 py-3 items-center border-t transition-colors
-                    ${theme === 'dark'
-                      ? `border-white/5 ${isEven ? 'bg-transparent' : 'bg-white/[0.02]'} hover:bg-white/5`
-                      : `border-slate-100 ${isEven ? 'bg-white' : 'bg-slate-50/50'} hover:bg-slate-50`
-                    }
-                  `}
-                >
-                  {/* Rank */}
-                  <div className="flex items-center justify-center">
-                    <RankBadge rank={result.displayRank} />
-                  </div>
-
-                  {/* Name + BIB */}
-                  <div>
-                    <p className={`
-                      text-sm font-black leading-tight
-                      ${isTop3 ? 'text-sky-400' : theme === 'dark' ? 'text-slate-100' : 'text-slate-900'}
-                    `}>
-                      {result.name}
-                    </p>
-                    <p className={`text-[10px] font-black uppercase tracking-widest mt-0.5 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
-                      {result.gender ? `${result.gender} · ` : ''}BIB #{result.bib}
-                    </p>
-                  </div>
-
-                  {/* Category */}
-                  <div>
-                    <span className={`text-xs font-bold ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
-                      {result.category}
-                    </span>
-                  </div>
-
-                  {/* Points */}
-                  <div className="text-center">
-                    <span className={`text-sm font-black ${isTop3 ? 'text-amber-400' : theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
-                      {result.totalPoints}
-                    </span>
-                  </div>
-
-                  {/* Tops */}
-                  <div className="text-center">
-                    <span className={`text-sm font-black ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
-                      {result.totalTops}
-                    </span>
-                  </div>
-
-                  {/* Zones */}
-                  <div className="text-center">
-                    <span className={`text-sm font-black ${result.totalZones > 0 ? 'text-purple-400' : theme === 'dark' ? 'text-slate-700' : 'text-slate-300'}`}>
-                      {result.totalZones}
-                    </span>
-                  </div>
-
-                  {/* Attempts */}
-                  <div className="text-center">
-                    <span className={`text-sm ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
-                      {result.totalAttempts}
-                    </span>
-                  </div>
-
+        <div className="space-y-2">
+          {visible.map((result, i) => {
+            const isTop3 = result.rank <= 3
+            return (
+              <div
+                key={result.competitorId}
+                className={`
+                  flex items-center gap-4 px-5 py-4 rounded-2xl border transition-all
+                  ${isTop3 && result.rank === 1
+                    ? dk ? 'bg-amber-400/5 border-amber-400/20' : 'bg-amber-50 border-amber-200'
+                    : dk ? 'bg-white/[0.02] border-white/8 hover:bg-white/[0.04]' : 'bg-white border-slate-200 hover:border-slate-300 shadow-sm'
+                  }
+                `}
+              >
+                {/* Rank */}
+                <div className="flex-shrink-0 w-8 flex justify-center">
+                  <RankBadge rank={result.rank} theme={theme} />
                 </div>
-              )
-            })}
-          </div>
 
-          {/* Pagination */}
-          <PaginationBar
-            page={page}
-            pageSize={pageSize}
-            totalPages={totalPages}
-            totalItems={totalItems}
-            onPage={setPage}
-            onPageSize={setPageSize}
-            theme={theme}
-          />
-        </>
+                {/* Avatar */}
+                <div className={`
+                  w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-black
+                  ${dk ? 'bg-white/5 text-slate-400' : 'bg-slate-100 text-slate-500'}
+                `}>
+                  {result.name.charAt(0).toUpperCase()}
+                </div>
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <p className={`font-black text-sm truncate ${dk ? 'text-slate-100' : 'text-slate-900'}`}>
+                    {result.name}
+                  </p>
+                  <div className={`flex items-center gap-2 text-[10px] ${dk ? 'text-slate-500' : 'text-slate-400'}`}>
+                    <span>BIB #{result.bib}</span>
+                    {(() => {
+                      const cats = competitorCategoryMap.get(result.competitorId) ?? []
+                      const label = cats.join(', ')
+                      if (!label) return null
+                      return (<><span>·</span><span className="font-black">{label}</span></>)
+                    })()}
+                    {(() => {
+                      const live = competitors.find(c => c.id === result.competitorId) as any
+                      const gender = live?.gender ?? (result as any).gender
+                      if (!gender) return null
+                      return (<><span>·</span><span>{gender}</span></>)
+                    })()}
+                  </div>
+                </div>
+
+                {/* Stats — progressively reveal more on wider screens */}
+                <div className="flex items-center gap-5 flex-shrink-0">
+                  <div className="text-center hidden md:block">
+                    <p className={`text-sm font-black ${dk ? 'text-green-400' : 'text-green-600'}`}>{result.totalTops}</p>
+                    <p className={`text-[9px] uppercase tracking-widest ${dk ? 'text-slate-600' : 'text-slate-400'}`}>Tops</p>
+                  </div>
+                  <div className="text-center hidden lg:block">
+                    <p className={`text-sm font-black ${dk ? 'text-purple-400' : 'text-purple-600'}`}>{result.totalZones ?? 0}</p>
+                    <p className={`text-[9px] uppercase tracking-widest ${dk ? 'text-slate-600' : 'text-slate-400'}`}>Zones</p>
+                  </div>
+                  <div className="text-center hidden lg:block">
+                    <p className={`text-sm font-black ${dk ? 'text-slate-400' : 'text-slate-500'}`}>{result.totalAttempts}</p>
+                    <p className={`text-[9px] uppercase tracking-widest ${dk ? 'text-slate-600' : 'text-slate-400'}`}>Tries</p>
+                  </div>
+                  <div className="text-center hidden sm:block">
+                    <p className="text-sm font-black text-amber-400">{result.flashCount}</p>
+                    <p className={`text-[9px] uppercase tracking-widest ${dk ? 'text-slate-600' : 'text-slate-400'}`}>⚡</p>
+                  </div>
+                  <div className="text-right min-w-[56px]">
+                    <p className="text-xl font-black text-sky-400">{result.totalPoints}</p>
+                    <p className={`text-[9px] uppercase tracking-widest ${dk ? 'text-slate-600' : 'text-slate-400'}`}>pts</p>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
       )}
-
-      {/* Tie-breaker note */}
-      {rankings.length > 0 && (
-        <p className={`text-[11px] mt-4 text-center ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
-          Default sort: points → tops → zones → attempts → flashes
-        </p>
-      )}
-
     </div>
   )
 }

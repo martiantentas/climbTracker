@@ -13,6 +13,7 @@ import {
   ChevronRight,
   TrendingUp,
   Users,
+  CalendarDays,
 } from 'lucide-react'
 
 import logo from '../assets/climbtracker-logo.svg'
@@ -23,18 +24,18 @@ import { translations } from '../translations'
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
 interface MobileMenuProps {
-  isOpen:       boolean
-  onClose:      () => void
-  theme:        'light' | 'dark'
-  lang:         Language
-  currentUser:  Competitor
-  competition:  Competition
-  isOrganizer:  boolean
-  onLogout:     () => void
+  isOpen:        boolean
+  onClose:       () => void
+  theme:         'light' | 'dark'
+  lang:          Language
+  currentUser:   Competitor
+  competition:   Competition
+  isOrganizer:   boolean
+  canAccessComp?: boolean   // optional
+  onLogout:      () => void
 }
 
 // ─── MENU LINK ────────────────────────────────────────────────────────────────
-// A single row in the mobile menu
 
 interface MenuLinkProps {
   to:      string
@@ -90,7 +91,7 @@ export default function MobileMenu({
 
   return (
     <>
-      {/* ── Backdrop — clicking it closes the menu ── */}
+      {/* ── Backdrop ── */}
       <div
         className={`
           fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm
@@ -100,7 +101,7 @@ export default function MobileMenu({
         onClick={onClose}
       />
 
-      {/* ── Drawer panel — slides in from the right ── */}
+      {/* ── Drawer panel ── */}
       <div
         className={`
           fixed right-0 top-0 bottom-0 z-[300] w-[80%] max-w-sm
@@ -138,30 +139,33 @@ export default function MobileMenu({
 
           {/* ── Navigation links ── */}
           <nav className="flex flex-col gap-1 flex-1">
-            <MenuLink to="/"             icon={<LayoutGrid size={20} />}    label={t.boulders}       theme={theme} onClick={onClose} />
-            <MenuLink to="/leaderboard"  icon={<Trophy size={20} />}        label={t.leaderboard}    theme={theme} onClick={onClose} />
-            <MenuLink to="/rules"        icon={<BookOpen size={20} />}      label={t.rules}          theme={theme} onClick={onClose} />
+            <MenuLink to="/"              icon={<LayoutGrid size={20} />}   label={t.boulders}       theme={theme} onClick={onClose} />
+            <MenuLink to="/leaderboard"   icon={<Trophy size={20} />}       label={t.leaderboard}    theme={theme} onClick={onClose} />
+            <MenuLink to="/rules"         icon={<BookOpen size={20} />}     label={t.rules}          theme={theme} onClick={onClose} />
+            {currentUser.role === 'competitor' && (
+              <MenuLink to="/event-profile" icon={<CalendarDays size={20} />} label="My Event" theme={theme} onClick={onClose} />
+            )}
 
             {/* Divider */}
             <div className={`h-px my-3 ${theme === 'dark' ? 'bg-white/5' : 'bg-slate-200'}`} />
 
-            <MenuLink to="/competitions" icon={<Layers size={20} />}        label={t.myCompetitions} theme={theme} onClick={onClose} />
+            <MenuLink to="/competitions" icon={<Layers size={20} />} label={t.myCompetitions} theme={theme} onClick={onClose} />
 
             {/* Organizer-only links */}
             {isOrganizer && (
-            <>
-                <MenuLink to="/users"     icon={<Users size={20} />}          label={t.users}     theme={theme} onClick={onClose} />
-                <MenuLink to="/analytics" icon={<BarChart2 size={20} />}      label={t.analytics} theme={theme} onClick={onClose} />
-                <MenuLink to="/judging"   icon={<ClipboardList size={20} />}  label={t.judging}   theme={theme} onClick={onClose} />
-                <MenuLink to="/settings"  icon={<Settings size={20} />}       label={t.settings}  theme={theme} onClick={onClose} />
-            </>
+              <>
+                <MenuLink to="/users"     icon={<Users size={20} />}         label={t.users}     theme={theme} onClick={onClose} />
+                <MenuLink to="/analytics" icon={<BarChart2 size={20} />}     label={t.analytics} theme={theme} onClick={onClose} />
+                <MenuLink to="/judging"   icon={<ClipboardList size={20} />} label={t.judging}   theme={theme} onClick={onClose} />
+                <MenuLink to="/settings"  icon={<Settings size={20} />}      label={t.settings}  theme={theme} onClick={onClose} />
+              </>
             )}
           </nav>
 
           {/* ── Footer: user info + logout ── */}
           <div className={`pt-6 border-t mt-6 ${theme === 'dark' ? 'border-white/5' : 'border-slate-200'}`}>
 
-            {/* User info row */}
+            {/* User info row → links to global profile */}
             <Link
               to="/profile"
               onClick={onClose}

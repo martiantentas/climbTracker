@@ -3,7 +3,7 @@ import {
   Save, Plus, Trash2, Globe,
   ToggleLeft, ToggleRight, ChevronDown, ChevronUp, Lock
 } from 'lucide-react'
-import type { Competition, Category, DifficultyLevel } from '../types'
+import type { Competition, Trait, DifficultyLevel } from '../types'
 import { CompetitionStatus, ScoringType } from '../types'
 import type { Language } from '../translations'
 import { translations } from '../translations'
@@ -62,20 +62,24 @@ function InputField({ label, value, type = 'text', theme, onChange, hint, min, m
 
 export default function SettingsPage({ competition, theme, lang, onUpdate }: SettingsPageProps) {
   const t = translations[lang]
-  const [draft, setDraft] = useState<Competition>({ ...competition })
+  const [draft, setDraft] = useState<Competition>({
+    ...competition,
+    difficultyLevels: competition.difficultyLevels ?? [],
+    traits:           (competition as any).traits ?? [],
+  })
   function set<K extends keyof Competition>(key: K, value: Competition[K]) {
     setDraft(prev => ({ ...prev, [key]: value }))
   }
 
-  const [newCatName, setNewCatName] = useState('')
-  function addCategory() {
-    if (!newCatName.trim()) return
-    set('categories', [...draft.categories, { id: `cat-${Date.now()}`, name: newCatName.trim() }])
-    setNewCatName('')
+  const [newTraitName, setNewTraitName] = useState('')
+  function addTrait() {
+    if (!newTraitName.trim()) return
+    set('traits', [...(draft.traits ?? []), { id: `trait-${Date.now()}`, name: newTraitName.trim() }])
+    setNewTraitName('')
   }
-  function removeCategory(id: string) { set('categories', draft.categories.filter(c => c.id !== id)) }
+  function removeTrait(id: string) { set('traits', (draft.traits ?? []).filter(t => t.id !== id)) }
   function addDifficulty() {
-    const maxLevel = Math.max(...draft.difficultyLevels.map(d => d.level), 0)
+    const maxLevel = Math.max(...(draft.difficultyLevels ?? []).map(d => d.level), 0)
     set('difficultyLevels', [...draft.difficultyLevels, { id: `diff-${Date.now()}`, level: maxLevel + 1, label: `Level ${maxLevel + 1}`, basePoints: (maxLevel + 1) * 100, zonePoints: (maxLevel + 1) * 50 }])
   }
   function removeDifficulty(id: string) {
@@ -83,7 +87,7 @@ export default function SettingsPage({ competition, theme, lang, onUpdate }: Set
     set('difficultyLevels', draft.difficultyLevels.filter(d => d.id !== id))
   }
   function updateDifficulty(id: string, field: keyof DifficultyLevel, value: string | number) {
-    set('difficultyLevels', draft.difficultyLevels.map(d => d.id === id ? { ...d, [field]: value } : d))
+    set('difficultyLevels', (draft.difficultyLevels ?? []).map(d => d.id === id ? { ...d, [field]: value } : d))
   }
 
   const inputClass = `w-full px-4 py-3 rounded-xl border outline-none text-sm transition-all ${theme === 'dark' ? 'bg-white/5 border-white/10 text-white focus:border-sky-400/50' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-sky-400'}`
@@ -239,19 +243,50 @@ export default function SettingsPage({ competition, theme, lang, onUpdate }: Set
         </div>
       </SectionCard>
 
-      {/* Categories */}
-      <SectionCard title="Categories" theme={theme}>
+      {/* Traits / Divisions */}
+      <SectionCard title="Traits / Divisions" theme={theme}>
+        <p className={`text-[11px] mb-4 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+          Traits are freeform labels competitors self-select when joining — e.g. "Open Men", "Youth U18", "Masters 40+". Competitors can hold multiple traits simultaneously.
+        </p>
+
+        {/* Require traits toggle */}
+        <ToggleRow
+          label="Require trait selection on join"
+          desc="Competitors must pick at least one trait before they can join the competition"
+          value={draft.requireTraits ?? false}
+          theme={theme}
+          onChange={v => set('requireTraits', v)}
+        />
+
+        <div className={`h-px my-3 ${theme === 'dark' ? 'bg-white/5' : 'bg-slate-100'}`} />
+
+        {/* Trait list */}
         <div className="space-y-2 mb-4">
-          {draft.categories.map(cat => (
-            <div key={cat.id} className={`flex items-center justify-between px-4 py-3 rounded-xl border ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-slate-50 border-slate-200'}`}>
-              <span className={`text-sm font-bold ${theme === 'dark' ? 'text-slate-200' : 'text-slate-700'}`}>{cat.name}</span>
-              <button onClick={() => removeCategory(cat.id)} className={`p-1.5 rounded-lg transition-all ${theme === 'dark' ? 'text-slate-600 hover:text-red-400 hover:bg-red-400/10' : 'text-slate-300 hover:text-red-500 hover:bg-red-50'}`}><Trash2 size={13} /></button>
+          {(draft.traits ?? []).length === 0 && (
+            <p className={`text-xs text-center py-4 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
+              No traits defined yet — add one below.
+            </p>
+          )}
+          {(draft.traits ?? []).map(trait => (
+            <div key={trait.id} className={`flex items-center justify-between px-4 py-3 rounded-xl border ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-slate-50 border-slate-200'}`}>
+              <span className={`text-sm font-bold ${theme === 'dark' ? 'text-slate-200' : 'text-slate-700'}`}>{trait.name}</span>
+              <button onClick={() => removeTrait(trait.id)} className={`p-1.5 rounded-lg transition-all ${theme === 'dark' ? 'text-slate-600 hover:text-red-400 hover:bg-red-400/10' : 'text-slate-300 hover:text-red-500 hover:bg-red-50'}`}><Trash2 size={13} /></button>
             </div>
           ))}
         </div>
+
         <div className="flex gap-2">
-          <input type="text" value={newCatName} onChange={e => setNewCatName(e.target.value)} onKeyDown={e => e.key === 'Enter' && addCategory()} placeholder="e.g. Open Women, Youth A, Masters..." className={`${inputClass} flex-1`} />
-          <button onClick={addCategory} disabled={!newCatName.trim()} className="flex items-center gap-2 px-4 py-3 bg-sky-400 text-sky-950 rounded-xl font-black text-sm hover:bg-sky-300 transition-all disabled:opacity-40 disabled:cursor-not-allowed"><Plus size={15} />{t.addCategory}</button>
+          <input
+            type="text"
+            value={newTraitName}
+            onChange={e => setNewTraitName(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && addTrait()}
+            placeholder="e.g. Open Men, Youth U18, Masters 40+…"
+            className={`${inputClass} flex-1`}
+          />
+          <button onClick={addTrait} disabled={!newTraitName.trim()} className="flex items-center gap-2 px-4 py-3 bg-sky-400 text-sky-950 rounded-xl font-black text-sm hover:bg-sky-300 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+            <Plus size={15} />Add
+          </button>
         </div>
       </SectionCard>
 
@@ -261,7 +296,7 @@ export default function SettingsPage({ competition, theme, lang, onUpdate }: Set
           <div>Lvl</div><div>Label</div><div>Top pts</div><div>Zone pts</div><div></div>
         </div>
         <div className="space-y-2 mb-4">
-          {draft.difficultyLevels.map(d => (
+          {(draft.difficultyLevels ?? []).map(d => (
             <div key={d.id} className="grid grid-cols-[40px_1fr_120px_120px_44px] gap-2 items-center">
               <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black flex-shrink-0 ${theme === 'dark' ? 'bg-white/5 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>{d.level}</div>
               <input type="text"   value={d.label}      onChange={e => updateDifficulty(d.id, 'label',      e.target.value)}      className={`${inputClass} py-2 text-sm`} />
