@@ -393,8 +393,7 @@ function AppInner() {
           <Routes>
 
             {/* ── Join page — no role guard needed, just needs to be logged in ── */}
-            {/* Redirect landing/auth to app if already logged in */}
-            <Route path="/"     element={<Navigate to="/competitions" replace />} />
+            {/* Redirect /auth to app if already logged in */}
             <Route path="/auth" element={<Navigate to="/competitions" replace />} />
 
             {/* ── Public join route ── */}
@@ -456,17 +455,17 @@ function AppInner() {
                   </Guard>
             } />
 
-            {/* ── Registered competitors + organizers ── */}
+            {/* ── Boulders — organizers always, competitors if registered ── */}
             <Route path="/" element={
-              <Guard required="any" currentUser={currentUser} isOrganizer={isOrganizer} canAccessComp={canAccessActiveComp} onAccessDenied={showToast}>
-                <BouldersPage
-                  competition={activeCompetition} boulders={activeBoulders}
-                  completions={activeCompletions} currentUser={currentUser}
-                  isOrganizer={isOrganizer} theme={theme} lang={lang}
-                  canSelfScore={activeCompetition.canSelfScore}
-                  onToggle={handleToggleCompletion} onUpdateBoulders={updateBoulders}
-                />
-              </Guard>
+              (isOrganizer || canAccessActiveComp)
+                ? <BouldersPage
+                    competition={activeCompetition} boulders={activeBoulders}
+                    completions={activeCompletions} currentUser={currentUser}
+                    isOrganizer={isOrganizer} theme={theme} lang={lang}
+                    canSelfScore={activeCompetition.canSelfScore}
+                    onToggle={handleToggleCompletion} onUpdateBoulders={updateBoulders}
+                  />
+                : <Navigate to="/competitions" replace />
             } />
 
             <Route path="/leaderboard" element={

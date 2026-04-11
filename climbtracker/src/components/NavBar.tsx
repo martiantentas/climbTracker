@@ -71,13 +71,16 @@ export default function NavBar({
   const t = translations[lang]
 
   return (
-    <header className={`
-      sticky top-0 z-[100] w-full border-b transition-all duration-300
-      ${theme === 'dark'
-        ? 'bg-slate-900/80 backdrop-blur-xl border-white/5 shadow-lg shadow-black/20'
-        : 'bg-white/80 backdrop-blur-xl border-slate-200 shadow-sm'
-      }
-    `}>
+    <header
+      className={`
+        sticky top-0 z-[100] w-full border-b transition-all duration-300
+        ${theme === 'dark'
+          ? 'backdrop-blur-xl border-white/5 shadow-lg shadow-black/30'
+          : 'bg-white/80 backdrop-blur-xl border-slate-200 shadow-sm'
+        }
+      `}
+      style={theme === 'dark' ? { backgroundColor: 'rgba(18, 18, 18, 0.85)' } : undefined}
+    >
       <div className="w-full px-4 md:px-6 py-2 flex items-center gap-4">
 
         {/* ── Logo ── */}
