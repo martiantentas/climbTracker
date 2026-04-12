@@ -114,7 +114,7 @@ export default function EventProfilePage({
       {/* ── Header ── */}
       <div className="mb-8">
         <h1 className={`text-2xl font-black tracking-tight ${dk ? 'text-white' : 'text-slate-900'}`}>
-          My Event Profile
+          Event Settings
         </h1>
         <p className={`text-sm mt-1 ${dk ? 'text-slate-400' : 'text-slate-500'}`}>
           {competition.name}
