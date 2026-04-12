@@ -3,7 +3,7 @@ import type {
   Boulder,
   Competitor,
   Completion,
-  Category,
+  Trait,
   DifficultyLevel,
 } from './types'
 
@@ -12,13 +12,13 @@ import {
   ScoringType,
 } from './types'
 
-// ─── CATEGORIES ───────────────────────────────────────────────────────────────
+// ─── TRAITS ───────────────────────────────────────────────────────────────────
 
-export const INITIAL_CATEGORIES: Category[] = [
-  { id: 'cat-1', name: 'Open Men' },
-  { id: 'cat-2', name: 'Open Women' },
-  { id: 'cat-3', name: 'Masters' },
-  { id: 'cat-4', name: 'Youth' },
+export const INITIAL_TRAITS: Trait[] = [
+  { id: 'trait-1', name: 'Open Men' },
+  { id: 'trait-2', name: 'Open Women' },
+  { id: 'trait-3', name: 'Masters' },
+  { id: 'trait-4', name: 'Youth' },
 ]
 
 // ─── DIFFICULTY LEVELS ────────────────────────────────────────────────────────
@@ -47,7 +47,8 @@ export const MOCK_COMPETITION: Competition = {
   endDate:     '2024-07-15T18:00:00Z',
   status:      CompetitionStatus.LIVE,
   scoringType: ScoringType.DYNAMIC,
-  categories:        INITIAL_CATEGORIES,
+  traits:            INITIAL_TRAITS,
+  requireTraits:     true,
   difficultyLevels:  INITIAL_DIFFICULTIES,
   topKBoulders:      6,
   dynamicPot:        1000,
@@ -97,31 +98,31 @@ export const MOCK_COMPETITORS: Competitor[] = [
   {
     id: 'u-admin', firstName: 'Admin', lastName: 'Organizer',
     displayName: 'Admin O.', email: 'admin@climbtracker.com',
-    gender: 'Other', categoryId: 'cat-1', bibNumber: 0,
+    traitIds: [], bibNumber: 0,
     role: 'organizer',
   },
   {
     id: 'u-1', firstName: 'Alex', lastName: 'Honnold',
     displayName: 'Alex H.', email: 'alex@example.com',
-    gender: 'Male', categoryId: 'cat-1', bibNumber: 101,
+    traitIds: ['trait-1'], bibNumber: 101,
     role: 'competitor',
   },
   {
     id: 'u-2', firstName: 'Janja', lastName: 'Garnbret',
     displayName: 'Janja G.', email: 'janja@example.com',
-    gender: 'Female', categoryId: 'cat-2', bibNumber: 102,
+    traitIds: ['trait-2'], bibNumber: 102,
     role: 'competitor',
   },
   {
     id: 'u-3', firstName: 'Adam', lastName: 'Ondra',
     displayName: 'Adam O.', email: 'adam@example.com',
-    gender: 'Male', categoryId: 'cat-1', bibNumber: 103,
+    traitIds: ['trait-1', 'trait-3'], bibNumber: 103,
     role: 'competitor',
   },
   {
     id: 'u-4', firstName: 'Brooke', lastName: 'Raboutou',
     displayName: 'Brooke R.', email: 'brooke@example.com',
-    gender: 'Female', categoryId: 'cat-2', bibNumber: 104,
+    traitIds: ['trait-2', 'trait-4'], bibNumber: 104,
     role: 'competitor',
   },
 ]

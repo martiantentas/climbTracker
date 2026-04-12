@@ -27,7 +27,8 @@ import JoinPage          from './pages/JoinPage'
 import EventProfilePage  from './pages/EventProfilePage'
 import LandingPage       from './pages/LandingPage'
 import AuthPage          from './pages/AuthPage'
-import PaymentModal      from './components/PaymentModal'
+import PaymentModal          from './components/PaymentModal'
+import PostRegistrationModal from './components/PostRegistrationModal'
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
@@ -100,7 +101,8 @@ function AppInner() {
 
   const [toast,        setToast]        = useState<{ message: string; visible: boolean }>({ message: '', visible: false })
   const [isMenuOpen,   setIsMenuOpen]   = useState(false)
-  const [paymentComp,  setPaymentComp]  = useState<Competition | null>(null) // non-null = modal open
+  const [paymentComp,    setPaymentComp]    = useState<Competition | null>(null)
+  const [joinProfileComp, setJoinProfileComp] = useState<Competition | null>(null) // show profile modal after joining
 
   // ── Derived ──────────────────────────────────────────────────────────────────
   const activeCompetition = useMemo(() =>
@@ -373,6 +375,22 @@ function AppInner() {
           />
         )}
 
+        {/* Profile modal — shown after a competitor joins a competition */}
+        {joinProfileComp && currentUser && (
+          <PostRegistrationModal
+            user={activeCompetitors.find(c => c.id === currentUser.id) ?? currentUser}
+            competition={joinProfileComp}
+            theme={theme}
+            onComplete={updated => {
+              // Persist gender + traits into competitorsMap
+              handleUpdateCompetitorTraits(updated.id, (updated as any).traitIds ?? [])
+              setCurrentUser({ ...currentUser, gender: updated.gender } as any)
+              setJoinProfileComp(null)
+              navigate('/event-profile')
+            }}
+          />
+        )}
+
         <NavBar
           theme={theme} setTheme={setTheme} lang={lang} setLang={setLang}
           currentUser={currentUser} activeCompetition={activeCompetition}
@@ -418,8 +436,9 @@ function AppInner() {
                 onJoinByCode={handleJoinByCode} isRegistered={isUserRegistered}
                 onManage={(compId) => { setActiveCompId(compId); setTimeout(() => navigate('/settings'), 0) }}
                 onJoinSuccess={(comp) => {
-                  if ((comp.traits?.length ?? 0) > 0) {
-                    setTimeout(() => navigate('/event-profile'), 0)
+                  // Always show profile modal for competitors after joining any competition
+                  if (currentUser?.role === 'competitor') {
+                    setJoinProfileComp(comp)
                   }
                 }}
               />

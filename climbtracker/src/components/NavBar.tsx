@@ -119,7 +119,7 @@ export default function NavBar({
           <NavPill to="/leaderboard"  label={t.leaderboard}    theme={theme} />
           <NavPill to="/rules"        label="Rules"            theme={theme} />
           {currentUser.role === 'competitor' && (
-            <NavPill to="/event-profile" label="My Event" theme={theme} />
+            <NavPill to="/event-profile" label="Event Settings" theme={theme} />
           )}
           <div className="w-px h-4 bg-slate-500/20 mx-1 flex-shrink-0" />
           <NavPill to="/competitions" label={t.myCompetitions} theme={theme} />
