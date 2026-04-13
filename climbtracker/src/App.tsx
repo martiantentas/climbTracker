@@ -29,6 +29,7 @@ import LandingPage       from './pages/LandingPage'
 import AuthPage, { updateAuthUser } from './pages/AuthPage'
 import PaymentModal          from './components/PaymentModal'
 import PostRegistrationModal from './components/PostRegistrationModal'
+import PublicLeaderboardPage from './pages/PublicLeaderboardPage'
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
@@ -339,9 +340,10 @@ function AppInner() {
   if (!currentUser) {
     return (
       <Routes>
-        <Route path="/"     element={<LandingPage />} />
-        <Route path="/auth" element={<AuthPage onLogin={u => { setCurrentUser(u); navigate('/competitions', { replace: true }) }} theme={theme} />} />
-        <Route path="*"     element={<Navigate to="/" replace />} />
+        <Route path="/"                element={<LandingPage />} />
+        <Route path="/auth"            element={<AuthPage onLogin={u => { setCurrentUser(u); navigate('/competitions', { replace: true }) }} theme={theme} />} />
+        <Route path="/results/:compId" element={<PublicLeaderboardPage competitions={competitions} competitorsMap={competitorsMap} bouldersMap={bouldersMap} completionsMap={completionsMap} />} />
+        <Route path="*"                element={<Navigate to="/" replace />} />
       </Routes>
     )
   }
@@ -493,9 +495,12 @@ function AppInner() {
 
             <Route path="/leaderboard" element={
               <Guard required="any" currentUser={currentUser} isOrganizer={isOrganizer} canAccessComp={canAccessActiveComp} onAccessDenied={showToast}>
-                <LeaderboardPage rankings={rankings} competitors={activeCompetitors} competition={activeCompetition} theme={theme} lang={lang} />
+                <LeaderboardPage rankings={rankings} competitors={activeCompetitors} competition={activeCompetition} theme={theme} lang={lang} isOrganizer={isOrganizer} />
               </Guard>
             } />
+
+            {/* Public results — accessible by logged-in users too */}
+            <Route path="/results/:compId" element={<PublicLeaderboardPage competitions={competitions} competitorsMap={competitorsMap} bouldersMap={bouldersMap} completionsMap={completionsMap} />} />
 
             <Route path="/rules" element={
               <Guard required="any" currentUser={currentUser} isOrganizer={isOrganizer} canAccessComp={canAccessActiveComp} onAccessDenied={showToast}>

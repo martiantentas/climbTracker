@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react'
-import { Trophy, Zap, Target, X } from 'lucide-react'
+import { useState, useMemo, useRef } from 'react'
+import { Trophy, Zap, Target, X, Download, FileText, Link2, ChevronDown as ChevDown } from 'lucide-react'
 
 import type { Competition, Competitor, RankResult } from '../types'
 import type { Language } from '../translations'
@@ -13,6 +13,7 @@ interface LeaderboardPageProps {
   competition:  Competition
   theme:        'light' | 'dark'
   lang:         Language
+  isOrganizer?: boolean
 }
 
 // ─── FILTER CHIP ─────────────────────────────────────────────────────────────
@@ -60,6 +61,7 @@ export default function LeaderboardPage({
   competition,
   theme,
   lang,
+  isOrganizer = false,
 }: LeaderboardPageProps) {
   const t  = translations[lang]
   const dk = theme === 'dark'
@@ -67,12 +69,78 @@ export default function LeaderboardPage({
   // ── Multi-select filter state ─────────────────────────────────────────────
   const [categoryFilters, setCategoryFilters] = useState<string[]>([])
   const [genderFilters,   setGenderFilters]   = useState<string[]>([])
+  const [showDownload,    setShowDownload]     = useState(false)
+  const downloadRef = useRef<HTMLDivElement>(null)
 
   const toggleCategory = (name: string) =>
     setCategoryFilters(prev => prev.includes(name) ? prev.filter(x => x !== name) : [...prev, name])
 
   const toggleGender = (g: string) =>
     setGenderFilters(prev => prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g])
+
+  // ── Export helpers ────────────────────────────────────────────────────────
+  function exportCSV() {
+    const headers = ['Rank', 'Name', 'BIB', 'Category', 'Gender', 'Points', 'Tops', 'Zones', 'Attempts', 'Flashes']
+    const rows = visible.map(r => {
+      const cats  = competitorCategoryMap.get(r.competitorId) ?? []
+      const live  = competitors.find(c => c.id === r.competitorId) as any
+      const gend  = live?.gender ?? (r as any).gender ?? ''
+      return [r.rank, r.name, r.bib, cats.join('+'), gend, r.totalPoints, r.totalTops, r.totalZones ?? 0, r.totalAttempts, r.flashCount].join(',')
+    })
+    const csv  = [headers.join(','), ...rows].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href = url
+    a.download = `${competition.name.replace(/\s+/g, '_')}_results.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+    setShowDownload(false)
+  }
+
+  function exportPDF() {
+    const rows = visible.map(r => {
+      const cats = competitorCategoryMap.get(r.competitorId) ?? []
+      const live = competitors.find(c => c.id === r.competitorId) as any
+      const gend = live?.gender ?? (r as any).gender ?? ''
+      return `<tr>
+        <td style="padding:6px 10px;border-bottom:1px solid #eee;font-weight:700">#${r.rank}</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #eee">${r.name}</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #eee">${r.bib}</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #eee">${cats.join(', ')}</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #eee">${gend}</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #eee;font-weight:800;color:#0ea5e9">${r.totalPoints}</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #eee">${r.totalTops}</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #eee">${r.totalAttempts}</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #eee">${r.flashCount}</td>
+      </tr>`
+    }).join('')
+    const html = `<!DOCTYPE html><html><head><title>${competition.name} — Results</title>
+    <style>body{font-family:system-ui,sans-serif;padding:32px;color:#111}h1{font-size:24px;font-weight:900;margin-bottom:4px}p{color:#64748b;margin-bottom:24px}table{width:100%;border-collapse:collapse}th{text-align:left;padding:8px 10px;background:#f8fafc;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#64748b;border-bottom:2px solid #e2e8f0}</style>
+    </head><body>
+    <h1>${competition.name}</h1>
+    <p>${competition.location} · ${new Date(competition.startDate).toLocaleDateString()}</p>
+    <table><thead><tr><th>Rank</th><th>Name</th><th>BIB</th><th>Category</th><th>Gender</th><th>Points</th><th>Tops</th><th>Attempts</th><th>Flashes</th></tr></thead>
+    <tbody>${rows}</tbody></table></body></html>`
+    const blob = new Blob([html], { type: 'text/html' })
+    const url  = URL.createObjectURL(blob)
+    const win  = window.open(url, '_blank')
+    if (win) setTimeout(() => { win.print(); URL.revokeObjectURL(url) }, 500)
+    setShowDownload(false)
+  }
+
+  function shareLink() {
+    // Public results URL — works for anyone with the link
+    const base = window.location.href.split('#')[0]
+    const url  = `${base}#/results/${competition.id}`
+    navigator.clipboard.writeText(url).then(() => {
+      setShowDownload(false)
+      alert('Public link copied to clipboard!')
+    }).catch(() => {
+      prompt('Copy this link:', `${base}#/results/${competition.id}`)
+      setShowDownload(false)
+    })
+  }
 
   // ── Resolve categories list ───────────────────────────────────────────────
   const allCategories = useMemo(() => {
@@ -160,13 +228,50 @@ export default function LeaderboardPage({
     <div className="max-w-5xl mx-auto">
 
       {/* Header */}
-      <div className="mb-6">
-        <h1 className={`text-2xl font-black tracking-tight ${dk ? 'text-white' : 'text-slate-900'}`}>
-          {t.leaderboard}
-        </h1>
-        <p className={`text-sm mt-1 ${dk ? 'text-slate-400' : 'text-slate-500'}`}>
-          {competition.name} · {competition.status === 'LIVE' ? 'Live standings' : 'Final standings'}
-        </p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className={`text-2xl font-black tracking-tight ${dk ? 'text-white' : 'text-slate-900'}`}>
+            {t.leaderboard}
+          </h1>
+          <p className={`text-sm mt-1 ${dk ? 'text-slate-400' : 'text-slate-500'}`}>
+            {competition.name} · {competition.status === 'LIVE' ? 'Live standings' : 'Final standings'}
+          </p>
+        </div>
+
+        {/* Download — organizer only */}
+        {isOrganizer && (
+          <div ref={downloadRef} className="relative flex-shrink-0">
+            <button
+              onClick={() => setShowDownload(v => !v)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-black border transition-all ${dk ? 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm'}`}
+            >
+              <Download size={15} />
+              Export
+              <ChevDown size={13} className={`transition-transform ${showDownload ? 'rotate-180' : ''}`} />
+            </button>
+
+            {showDownload && (
+              <>
+                {/* Backdrop to close */}
+                <div className="fixed inset-0 z-10" onClick={() => setShowDownload(false)} />
+                <div className={`absolute right-0 top-full mt-2 z-20 w-52 rounded-2xl border shadow-xl overflow-hidden ${dk ? 'bg-slate-900 border-white/10' : 'bg-white border-slate-200'}`}>
+                  <button onClick={exportCSV} className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-left transition-all ${dk ? 'hover:bg-white/5 text-slate-200' : 'hover:bg-slate-50 text-slate-700'}`}>
+                    <Download size={15} className="text-sky-400" />
+                    Download CSV
+                  </button>
+                  <button onClick={exportPDF} className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-left transition-all border-t ${dk ? 'hover:bg-white/5 text-slate-200 border-white/5' : 'hover:bg-slate-50 text-slate-700 border-slate-100'}`}>
+                    <FileText size={15} className="text-sky-400" />
+                    Download PDF
+                  </button>
+                  <button onClick={shareLink} className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-left transition-all border-t ${dk ? 'hover:bg-white/5 text-slate-200 border-white/5' : 'hover:bg-slate-50 text-slate-700 border-slate-100'}`}>
+                    <Link2 size={15} className="text-sky-400" />
+                    Copy public link
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Summary chips */}
