@@ -143,7 +143,7 @@ export default function MobileMenu({
             <MenuLink to="/leaderboard"   icon={<Trophy size={20} />}       label={t.leaderboard}    theme={theme} onClick={onClose} />
             <MenuLink to="/rules"         icon={<BookOpen size={20} />}     label={t.rules}          theme={theme} onClick={onClose} />
             {currentUser.role === 'competitor' && (
-              <MenuLink to="/event-profile" icon={<CalendarDays size={20} />} label="My Event" theme={theme} onClick={onClose} />
+              <MenuLink to="/event-profile" icon={<CalendarDays size={20} />} label="Event Settings" theme={theme} onClick={onClose} />
             )}
 
             {/* Divider */}

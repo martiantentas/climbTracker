@@ -20,9 +20,12 @@ function hasAccess(
   required:      RequiredRole,
 ): boolean {
   if (!user) return false
+  // Organizers and judges always bypass the 'any' registration check —
+  // they manage the competition and must never be locked out of any page.
+  const isOrgOrJudge = isOrganizer || user.role === 'organizer' || user.role === 'judge'
   switch (required) {
-    case 'any':                return canAccessComp
-    case 'judge_or_organizer': return isOrganizer || user.role === 'judge' || user.role === 'organizer'
+    case 'any':                return isOrgOrJudge || canAccessComp
+    case 'judge_or_organizer': return isOrgOrJudge
     case 'organizer':          return isOrganizer || user.role === 'organizer'
   }
 }

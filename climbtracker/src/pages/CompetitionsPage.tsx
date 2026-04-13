@@ -19,8 +19,9 @@ interface CompetitionsPageProps {
   onCreate:       (name: string, location: string, description: string) => void
   onDelete:       (compId: string) => void
   onLeave:        (compId: string) => void
-  onJoinByCode:   (code: string, password?: string) => boolean
+  onJoinByCode:   (code: string, password?: string, traitIds?: string[]) => boolean
   isRegistered:   (compId: string) => boolean
+  onJoinSuccess?: (comp: Competition) => void  // called after join — used to redirect to event profile
 }
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
@@ -95,7 +96,7 @@ function CreateModal({ theme, lang, onSave, onClose }: {
 
 export default function CompetitionsPage({
   competitions, activeCompId, currentUser, theme, lang,
-  onEnter, onManage, onCreate, onDelete, onLeave, onJoinByCode, isRegistered,
+  onEnter, onManage, onCreate, onDelete, onLeave, onJoinByCode, isRegistered, onJoinSuccess,
 }: CompetitionsPageProps) {
   const t = translations[lang]
 
@@ -127,6 +128,13 @@ export default function CompetitionsPage({
     setTimeout(() => setJustActivated(null), 700)
   }
 
+  // After a successful join, activate the competition and optionally redirect
+  // to event-profile so the user can set their traits immediately
+  function afterJoin(comp: Competition) {
+    activate(comp.id)
+    if (onJoinSuccess) onJoinSuccess(comp)
+  }
+
   function handleJoinCode(e: React.FormEvent) {
     e.preventDefault()
     setCodeError(false)
@@ -136,7 +144,7 @@ export default function CompetitionsPage({
       setPendingComp(target); setPasswordError(false)
     } else {
       const ok = onJoinByCode(joinCode.trim().toUpperCase())
-      if (ok) { setJoinCode(''); activate(target.id) }
+      if (ok) { setJoinCode(''); afterJoin(target) }
       else setCodeError(true)
     }
   }
@@ -144,17 +152,13 @@ export default function CompetitionsPage({
   function handlePasswordConfirm(password: string) {
     if (!pendingComp) return
     const ok = onJoinByCode(pendingComp.inviteCode, password)
-    if (ok) {
-      activate(pendingComp.id)
-      setPendingComp(null); setJoinCode(''); setPasswordError(false)
-    } else {
-      setPasswordError(true)
-    }
+    if (ok) { afterJoin(pendingComp); setPendingComp(null); setJoinCode(''); setPasswordError(false) }
+    else setPasswordError(true)
   }
 
   function handleJoinAvailable(comp: Competition) {
     if (comp.joinPassword) { setPendingComp(comp); setPasswordError(false) }
-    else { const ok = onJoinByCode(comp.inviteCode); if (ok) activate(comp.id) }
+    else { const ok = onJoinByCode(comp.inviteCode); if (ok) afterJoin(comp) }
   }
 
   function copyLink(comp: Competition) {

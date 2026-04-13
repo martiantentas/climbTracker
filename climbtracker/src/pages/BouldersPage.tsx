@@ -78,7 +78,31 @@ export default function BouldersPage({
     return calcBoulderPoints(completion, boulder, competition, completions)
   }
 
-  // ── My total score ────────────────────────────────────────────────────────
+  // ── Base points (un-penalised) — for penalty delta display ───────────────
+  function getBasePoints(boulder: Boulder): number {
+    if (competition.scoringType === 'DYNAMIC') {
+      const topsCount = completions.filter(c => c.boulderId === boulder.id && c.topValidated).length
+      const pot = boulder.maxPoints ?? competition.dynamicPot ?? 1000
+      if (topsCount === 0) return pot
+      return Math.max(Math.floor(pot / topsCount), competition.minDynamicPoints ?? 0)
+    }
+    const difficulty = competition.difficultyLevels?.find(d => d.id === boulder.difficultyId)
+    return difficulty?.basePoints ?? 0
+  }
+
+  // ── Penalty label — e.g. "−40 pts" or "−20%" shown on card ───────────────
+  function getPenaltyLabel(boulder: Boulder): string {
+    const completion = myCompletions.find(c => c.boulderId === boulder.id)
+    if (!completion || !competition.penalizeAttempts || completion.attempts <= 1) return ''
+    const extra = completion.attempts - 1
+    if (competition.penaltyType === 'fixed') {
+      const total = extra * competition.penaltyValue
+      return `−${total} pts`
+    }
+    // percent
+    const total = extra * competition.penaltyValue
+    return `−${total}%`
+  }
   // Sum actual earned points across all my completions.
   // calcBoulderPoints returns 0 for zone-only dynamic completions, so they
   // correctly don't inflate the score.
@@ -291,8 +315,11 @@ export default function BouldersPage({
               key={boulder.id}
               boulder={boulder}
               completion={myCompletions.find(c => c.boulderId === boulder.id)}
-              difficulty={competition.difficultyLevels.find(d => d.id === boulder.difficultyId)}
+              difficulty={competition.difficultyLevels?.find(d => d.id === boulder.difficultyId)}
               points={getPoints(boulder)}
+              basePoints={getBasePoints(boulder)}
+              penalizeAttempts={competition.penalizeAttempts}
+              penaltyLabel={getPenaltyLabel(boulder)}
               isOrganizer={isOrganizer}
               isLocked={effectivelyLocked}
               theme={theme}

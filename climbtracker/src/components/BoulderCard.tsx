@@ -8,11 +8,14 @@ interface BoulderCardProps {
   completion:      Completion | undefined
   difficulty:      DifficultyLevel | undefined
   points:          number
+  basePoints:      number   // un-penalised points — used to show penalty delta
+  penalizeAttempts: boolean
+  penaltyLabel:    string   // e.g. "−40 pts" or "−20%" pre-formatted
   isOrganizer:     boolean
   isLocked:        boolean
   theme:           'light' | 'dark'
-  attemptTracking: AttemptTracking   // resolved: boulder override → comp default
-  maxFixedAttempts: number           // only used when tracking === 'fixed_options'
+  attemptTracking: AttemptTracking
+  maxFixedAttempts: number
   onToggle:        (boulderId: string, attempts: number, forceStatus: boolean) => void
   onEdit?:         (boulder: Boulder) => void
 }
@@ -113,6 +116,9 @@ export default function BoulderCard({
   completion,
   difficulty,
   points,
+  basePoints,
+  penalizeAttempts,
+  penaltyLabel,
   isOrganizer,
   isLocked,
   theme,
@@ -236,6 +242,12 @@ export default function BoulderCard({
             <span className={`text-[10px] ml-1 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
               pts
             </span>
+            {/* Penalty indicator — only shown when topped with >1 attempt and penalty active */}
+            {isTopped && penalizeAttempts && (completion?.attempts ?? 1) > 1 && penaltyLabel && (
+              <span className="ml-2 text-[10px] font-black text-red-400 bg-red-400/10 px-1.5 py-0.5 rounded-md">
+                {penaltyLabel}
+              </span>
+            )}
           </div>
 
           {difficulty && (
