@@ -12,6 +12,7 @@ interface ProfilePageProps {
   theme:        'light' | 'dark'
   lang:         Language
   onJoinByCode: (code: string) => boolean
+  onSave:       (updated: Competitor) => void   // ← persists changes to App state
 }
 
 // ─── INFO ROW ─────────────────────────────────────────────────────────────────
@@ -46,13 +47,7 @@ function InfoRow({ icon, label, value, theme }: InfoRowProps) {
 
 // ─── GENDER OPTIONS ───────────────────────────────────────────────────────────
 
-const GENDER_OPTIONS = [
-  'Male',
-  'Female',
-  'Non-binary',
-  'Prefer not to say',
-  'Other',
-]
+const GENDER_OPTIONS = ['Male', 'Female', 'Prefer not to say']
 
 // ─── SECTION LABEL ────────────────────────────────────────────────────────────
 
@@ -77,36 +72,38 @@ export default function ProfilePage({
   theme,
   lang,
   onJoinByCode,
+  onSave,
 }: ProfilePageProps) {
   const t = translations[lang]
 
   // ── Edit state ───────────────────────────────────────────────────────────
-  const [isEditing,    setIsEditing]    = useState(false)
-  const [displayName,  setDisplayName]  = useState(currentUser.displayName)
-  const [email,        setEmail]        = useState(currentUser.email)
-  const [gender,       setGender]       = useState(currentUser.gender)
-  const [customGender, setCustomGender] = useState(
-    GENDER_OPTIONS.includes(currentUser.gender) ? '' : currentUser.gender
-  )
+  const [isEditing,   setIsEditing]   = useState(false)
+  const [displayName, setDisplayName] = useState(currentUser.displayName)
+  const [email,       setEmail]       = useState(currentUser.email)
+  const [gender,      setGender]      = useState(currentUser.gender)
 
   // ── Join by code state ───────────────────────────────────────────────────
   const [joinCode,    setJoinCode]    = useState('')
   const [codeError,   setCodeError]   = useState(false)
   const [codeSuccess, setCodeSuccess] = useState(false)
 
-  const effectiveGender = gender === 'Other' && customGender.trim()
-    ? customGender.trim()
-    : gender
-
   function handleSave() {
+    // Build updated user and push it up to App so the change persists
+    const updated: Competitor = {
+      ...currentUser,
+      displayName: displayName.trim() || currentUser.displayName,
+      email:       email.trim()       || currentUser.email,
+      gender,
+    }
+    onSave(updated)
     setIsEditing(false)
   }
 
   function handleCancel() {
+    // Reset local draft back to current persisted values
     setDisplayName(currentUser.displayName)
     setEmail(currentUser.email)
     setGender(currentUser.gender)
-    setCustomGender(GENDER_OPTIONS.includes(currentUser.gender) ? '' : currentUser.gender)
     setIsEditing(false)
   }
 
@@ -209,10 +206,10 @@ export default function ProfilePage({
         </div>
         <div className="flex-1 min-w-0">
           <p className={`text-xl font-black tracking-tight truncate ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
-            {isEditing ? displayName || '—' : currentUser.displayName}
+            {currentUser.displayName}
           </p>
           <p className={`text-[11px] font-black uppercase tracking-widest mt-1 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
-            {effectiveGender}
+            {currentUser.gender}
           </p>
         </div>
       </div>
@@ -261,15 +258,6 @@ export default function ProfilePage({
                   <option key={opt} value={opt}>{opt}</option>
                 ))}
               </select>
-              {gender === 'Other' && (
-                <input
-                  type="text"
-                  value={customGender}
-                  onChange={e => setCustomGender(e.target.value)}
-                  placeholder="Describe your gender..."
-                  className={`${inputClass} mt-2`}
-                />
-              )}
             </div>
 
           </div>
@@ -277,7 +265,7 @@ export default function ProfilePage({
           <div className="px-6 divide-y divide-white/5">
             <InfoRow icon={<User size={15} />} label={t.displayName} value={currentUser.displayName} theme={theme} />
             <InfoRow icon={<Mail size={15} />} label={t.email}       value={currentUser.email}       theme={theme} />
-            <InfoRow icon={<Tag  size={15} />} label={t.gender}      value={effectiveGender}         theme={theme} />
+            <InfoRow icon={<Tag  size={15} />} label={t.gender}      value={currentUser.gender}      theme={theme} />
           </div>
         )}
       </div>

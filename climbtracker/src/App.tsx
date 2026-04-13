@@ -26,7 +26,7 @@ import AnalyticsPage from './pages/AnalyticsPage'
 import JoinPage          from './pages/JoinPage'
 import EventProfilePage  from './pages/EventProfilePage'
 import LandingPage       from './pages/LandingPage'
-import AuthPage          from './pages/AuthPage'
+import AuthPage, { updateAuthUser } from './pages/AuthPage'
 import PaymentModal          from './components/PaymentModal'
 import PostRegistrationModal from './components/PostRegistrationModal'
 
@@ -448,6 +448,10 @@ function AppInner() {
               <ProfilePage
                 currentUser={currentUser} theme={theme} lang={lang}
                 onJoinByCode={handleJoinByCode}
+                onSave={updated => {
+                  updateAuthUser(updated, currentUser.email)
+                  setCurrentUser(updated)
+                }}
               />
             } />
 

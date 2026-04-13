@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { BarChart2, ChevronDown, Users, Mountain, CheckCircle2, Zap } from 'lucide-react'
+import { BarChart2, Users, Mountain, CheckCircle2, Zap, X } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 
 import type { Competition, Boulder, Competitor, Completion } from '../types'
@@ -57,7 +57,10 @@ export default function AnalyticsPage({
     return cats
   }, [competition])
 
-  const [categoryFilter, setCategoryFilter] = useState('')
+  const [categoryFilters, setCategoryFilters] = useState<string[]>([])
+
+  const toggleCategory = (name: string) =>
+    setCategoryFilters(prev => prev.includes(name) ? prev.filter(x => x !== name) : [...prev, name])
 
   // ── Filter competitors ──────────────────────────────────────────────────────
   const actualCompetitors = useMemo(() =>
@@ -66,7 +69,7 @@ export default function AnalyticsPage({
   )
 
   const filteredCompetitors = useMemo(() => {
-    if (!categoryFilter) return actualCompetitors
+    if (categoryFilters.length === 0) return actualCompetitors
     const comp   = competition as any
     const old    = (comp.categories ?? []) as { id: string; name: string }[]
     const neu    = (comp.traits     ?? []) as { id: string; name: string }[]
@@ -83,17 +86,18 @@ export default function AnalyticsPage({
       return old.find(c => c.id === id)?.name
     }
 
+    // Pass if competitor matches ANY of the selected categories (OR logic)
     return actualCompetitors.filter(c => {
       const cv = c as any
       if (Array.isArray(cv.traitIds) && cv.traitIds.length > 0) {
-        return cv.traitIds.some((id: string) => idToName(id) === categoryFilter)
+        return cv.traitIds.some((id: string) => categoryFilters.includes(idToName(id) ?? ''))
       }
       if (cv.categoryId) {
-        return idToName(cv.categoryId) === categoryFilter
+        return categoryFilters.includes(idToName(cv.categoryId) ?? '')
       }
       return false
     })
-  }, [actualCompetitors, categoryFilter, competition])
+  }, [actualCompetitors, categoryFilters, competition])
 
   // ── Boulder completion rates ─────────────────────────────────────────────────
   const activeBoulders = boulders.filter(b => b.status === 'active')
@@ -142,37 +146,48 @@ export default function AnalyticsPage({
       </div>
 
       {/* ── Filters ── */}
-      <div className="flex flex-wrap gap-2 mb-6">
-        {categoryOptions.length > 0 && (
-          <div className="relative">
-            <select
-              value={categoryFilter}
-              onChange={e => setCategoryFilter(e.target.value)}
-              className={`
-                appearance-none pl-4 pr-9 py-2.5 rounded-xl text-sm font-black border cursor-pointer outline-none transition-all
-                ${dk
-                  ? 'bg-white/5 border-white/10 text-slate-200 hover:bg-white/10'
-                  : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm'
-                }
-              `}
-            >
-              <option value="">All categories</option>
-              {categoryOptions.map(c => (
-                <option key={c.id} value={c.name}>{c.name}</option>
-              ))}
-            </select>
-            <ChevronDown size={14} className={`absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none ${dk ? 'text-slate-400' : 'text-slate-500'}`} />
+      {categoryOptions.length > 0 && (
+        <div className="mb-6 space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className={`text-[10px] font-black uppercase tracking-widest w-16 flex-shrink-0 ${dk ? 'text-slate-600' : 'text-slate-400'}`}>
+              Category
+            </span>
+            {categoryOptions.map(c => {
+              const active = categoryFilters.includes(c.name)
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => toggleCategory(c.name)}
+                  className={`
+                    px-3 py-1.5 rounded-xl text-xs font-black border transition-all
+                    ${active
+                      ? 'bg-sky-400/15 border-sky-400/40 text-sky-400'
+                      : dk
+                        ? 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/10'
+                        : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700 shadow-sm'
+                    }
+                  `}
+                >
+                  {c.name}
+                </button>
+              )
+            })}
           </div>
-        )}
-        {categoryFilter && (
-          <button
-            onClick={() => setCategoryFilter('')}
-            className={`px-3 py-2 rounded-xl text-xs font-black transition-all ${dk ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'}`}
-          >
-            Clear
-          </button>
-        )}
-      </div>
+          {categoryFilters.length > 0 && (
+            <div className="flex items-center gap-3">
+              <span className={`text-xs ${dk ? 'text-slate-500' : 'text-slate-400'}`}>
+                {filteredCompetitors.length} of {actualCompetitors.length} competitors
+              </span>
+              <button
+                onClick={() => setCategoryFilters([])}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-black transition-all ${dk ? 'text-red-400 bg-red-400/10 hover:bg-red-400/20' : 'text-red-500 bg-red-50 hover:bg-red-100'}`}
+              >
+                <X size={10} /> Clear
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── Stat grid ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">

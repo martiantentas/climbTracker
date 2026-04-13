@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Trophy, ChevronDown, Zap, Target } from 'lucide-react'
+import { Trophy, Zap, Target, X } from 'lucide-react'
 
 import type { Competition, Competitor, RankResult } from '../types'
 import type { Language } from '../translations'
@@ -8,54 +8,38 @@ import { translations } from '../translations'
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
 interface LeaderboardPageProps {
-  rankings:    RankResult[]
-  competitors?: Competitor[]   // live state — for accurate category filtering; optional for backwards compat
-  competition: Competition
-  theme:       'light' | 'dark'
-  lang:        Language
+  rankings:     RankResult[]
+  competitors?: Competitor[]
+  competition:  Competition
+  theme:        'light' | 'dark'
+  lang:         Language
 }
 
-// ─── FILTER DROPDOWN ─────────────────────────────────────────────────────────
+// ─── FILTER CHIP ─────────────────────────────────────────────────────────────
 
-interface FilterDropdownProps {
-  label:    string
-  value:    string
-  options:  { value: string; label: string }[]
-  theme:    'light' | 'dark'
-  onChange: (v: string) => void
-}
-
-function FilterDropdown({ label, value, options, theme, onChange }: FilterDropdownProps) {
+function FilterChip({ label, active, theme, onClick }: {
+  label: string; active: boolean; theme: 'light' | 'dark'; onClick: () => void
+}) {
   const dk = theme === 'dark'
-
   return (
-    <div className="relative">
-      <select
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        className={`
-          appearance-none pl-4 pr-9 py-2.5 rounded-xl text-sm font-black border cursor-pointer
-          outline-none transition-all
-          ${dk
-            ? 'bg-white/5 border-white/10 text-slate-200 hover:bg-white/10'
-            : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm'
-          }
-        `}
-      >
-        <option value="">{label}</option>
-        {options.map(o => (
-          <option key={o.value} value={o.value}>{o.label}</option>
-        ))}
-      </select>
-      <ChevronDown
-        size={14}
-        className={`absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none ${dk ? 'text-slate-400' : 'text-slate-500'}`}
-      />
-    </div>
+    <button
+      onClick={onClick}
+      className={`
+        px-3 py-1.5 rounded-xl text-xs font-black border transition-all
+        ${active
+          ? 'bg-sky-400/15 border-sky-400/40 text-sky-400'
+          : dk
+            ? 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/10'
+            : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700 shadow-sm'
+        }
+      `}
+    >
+      {label}
+    </button>
   )
 }
 
-// ─── RANK MEDAL ───────────────────────────────────────────────────────────────
+// ─── RANK BADGE ───────────────────────────────────────────────────────────────
 
 function RankBadge({ rank, theme }: { rank: number; theme: 'light' | 'dark' }) {
   if (rank === 1) return <span className="text-lg">🥇</span>
@@ -80,11 +64,17 @@ export default function LeaderboardPage({
   const t  = translations[lang]
   const dk = theme === 'dark'
 
-  // ── Filter state ────────────────────────────────────────────────────────────
-  const [categoryFilter, setCategoryFilter] = useState('')
-  const [genderFilter,   setGenderFilter]   = useState('')
+  // ── Multi-select filter state ─────────────────────────────────────────────
+  const [categoryFilters, setCategoryFilters] = useState<string[]>([])
+  const [genderFilters,   setGenderFilters]   = useState<string[]>([])
 
-  // ── Resolve categories from competition (traits or categories) ────────────
+  const toggleCategory = (name: string) =>
+    setCategoryFilters(prev => prev.includes(name) ? prev.filter(x => x !== name) : [...prev, name])
+
+  const toggleGender = (g: string) =>
+    setGenderFilters(prev => prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g])
+
+  // ── Resolve categories list ───────────────────────────────────────────────
   const allCategories = useMemo(() => {
     const comp = competition as any
     const cats: { id: string; name: string }[] =
@@ -93,39 +83,25 @@ export default function LeaderboardPage({
     return cats
   }, [competition])
 
-  // ── Build a lookup: competitorId → current category names ────────────────
-  // Handles all data combinations:
-  // - New source: competitor.traitIds with trait-1 IDs, competition.traits with trait-1 IDs ✓
-  // - Old source: competitor.categoryId with cat-1 IDs, competition.categories with cat-1 IDs ✓
-  // - Mixed (new constants + old competitors): categoryId='cat-1' vs traits with trait-1 IDs
-  //   → falls back to matching by name order (both lists share same names in same order)
+  // ── Build competitorId → category names map ───────────────────────────────
   const competitorCategoryMap = useMemo(() => {
-    const map = new Map<string, string[]>()
+    const map      = new Map<string, string[]>()
     const compById = new Map(competitors.map(c => [c.id, c]))
-
-    // Build two lookup maps: by id and by index (for cross-system fallback)
-    const comp = competition as any
+    const comp     = competition as any
     const oldCats: { id: string; name: string }[] = comp.categories ?? []
     const newCats: { id: string; name: string }[] = comp.traits ?? []
-    // All available categories — try both systems
     const allCatById = new Map([
       ...oldCats.map(c => [c.id, c.name] as [string, string]),
       ...newCats.map(c => [c.id, c.name] as [string, string]),
     ])
-    // Cross-system fallback: 'cat-1' → index 0 → newCats[0].name
     const oldCatIndexMap = new Map(oldCats.map((c, i) => [c.id, i]))
 
     function resolveIds(ids: string[]): string[] {
       return ids.map(id => {
-        // Direct lookup (works when IDs match)
         if (allCatById.has(id)) return allCatById.get(id)!
-        // Cross-system fallback: old cat-N id → same position in newCats
         const idx = oldCatIndexMap.get(id)
         if (idx !== undefined && newCats[idx]) return newCats[idx].name
-        // Last resort: old cat name by index in old list
-        const oldCat = oldCats.find(c => c.id === id)
-        if (oldCat) return oldCat.name
-        return null
+        return oldCats.find(c => c.id === id)?.name ?? null
       }).filter(Boolean) as string[]
     }
 
@@ -133,70 +109,57 @@ export default function LeaderboardPage({
       const live = compById.get(r.competitorId) as any
       const rr   = r as any
       let names: string[] = []
-
       if (live) {
-        if (Array.isArray(live.traitIds) && live.traitIds.length > 0) {
-          names = resolveIds(live.traitIds)
-        } else if (live.categoryId) {
-          names = resolveIds([live.categoryId])
-        }
+        if (Array.isArray(live.traitIds) && live.traitIds.length > 0) names = resolveIds(live.traitIds)
+        else if (live.categoryId) names = resolveIds([live.categoryId])
       }
-
-      // Fallback to RankResult embedded data if live lookup yielded nothing
       if (names.length === 0) {
-        if (Array.isArray(rr.traitIds) && rr.traitIds.length > 0) {
-          names = resolveIds(rr.traitIds)
-        } else if (rr.category && rr.category !== 'Unknown') {
-          names = [rr.category]
-        }
+        if (Array.isArray(rr.traitIds) && rr.traitIds.length > 0) names = resolveIds(rr.traitIds)
+        else if (rr.category && rr.category !== 'Unknown') names = [rr.category]
       }
-
       map.set(r.competitorId, names)
     }
     return map
   }, [rankings, competitors, competition])
 
-  // ── Category filter options — from competition definition ─────────────────
-  const categoryOptions = useMemo(() =>
-    allCategories.map(c => ({ value: c.name, label: c.name })),
-    [allCategories]
-  )
-
-  // ── Gender options — derived from live competitors ─────────────────────────
+  // ── Gender options — fixed set, only shown if at least one competitor has that gender
   const genderOptions = useMemo(() => {
-    const fromCompetitors = competitors.map(c => (c as any).gender)
-    const fromRankings    = rankings.map(r => (r as any).gender)
-    const genders = [...new Set([...fromCompetitors, ...fromRankings].filter(Boolean))] as string[]
-    return genders.map(g => ({ value: g, label: g }))
+    const GENDER_OPTIONS = ['Male', 'Female', 'Prefer not to say']
+    const present = new Set([
+      ...competitors.map(c => (c as any).gender),
+      ...rankings.map(r => (r as any).gender),
+    ].filter(Boolean))
+    // Keep canonical order, only show genders that exist in the data
+    return GENDER_OPTIONS.filter(g => present.has(g))
   }, [competitors, rankings])
 
-  // ── Filtered + re-ranked results ───────────────────────────────────────────
+  // ── Filtered results — OR logic within each filter group ─────────────────
   const visible = useMemo(() => {
     return rankings.filter(r => {
-      if (categoryFilter) {
+      if (categoryFilters.length > 0) {
         const cats = competitorCategoryMap.get(r.competitorId) ?? []
-        if (!cats.includes(categoryFilter)) return false
+        if (!categoryFilters.some(f => cats.includes(f))) return false
       }
-      if (genderFilter) {
-        const live = competitors.find(c => c.id === r.competitorId) as any
+      if (genderFilters.length > 0) {
+        const live   = competitors.find(c => c.id === r.competitorId) as any
         const gender = live?.gender ?? (r as any).gender
-        if (gender !== genderFilter) return false
+        if (!genderFilters.includes(gender)) return false
       }
       return true
     })
-  }, [rankings, categoryFilter, genderFilter, competitorCategoryMap, competitors])
+  }, [rankings, categoryFilters, genderFilters, competitorCategoryMap, competitors])
 
-  // ── Stats ───────────────────────────────────────────────────────────────────
-  const totalTops = rankings.reduce((s, r) => s + r.totalTops, 0)
-  const topFlasher = rankings.reduce<RankResult | null>((best, r) => {
-    if (!best || r.flashCount > best.flashCount) return r
-    return best
-  }, null)
+  const hasActiveFilters = categoryFilters.length > 0 || genderFilters.length > 0
+
+  // ── Stats ─────────────────────────────────────────────────────────────────
+  const totalTops  = rankings.reduce((s, r) => s + r.totalTops, 0)
+  const topFlasher = rankings.reduce<RankResult | null>((best, r) =>
+    !best || r.flashCount > best.flashCount ? r : best, null)
 
   return (
     <div className="max-w-5xl mx-auto">
 
-      {/* ── Header ── */}
+      {/* Header */}
       <div className="mb-6">
         <h1 className={`text-2xl font-black tracking-tight ${dk ? 'text-white' : 'text-slate-900'}`}>
           {t.leaderboard}
@@ -206,12 +169,12 @@ export default function LeaderboardPage({
         </p>
       </div>
 
-      {/* ── Summary chips ── */}
+      {/* Summary chips */}
       <div className="flex flex-wrap gap-3 mb-6">
         {[
-          { icon: <Trophy size={12} />,  label: `${rankings.length} climbers`,    color: 'text-sky-400'    },
-          { icon: <Target size={12} />,  label: `${totalTops} total tops`,        color: 'text-green-400'  },
-          { icon: <Zap size={12} />,     label: topFlasher ? `${topFlasher.flashCount} flashes — ${topFlasher.name}` : 'No flashes yet', color: 'text-amber-400' },
+          { icon: <Trophy size={12} />, label: `${rankings.length} climbers`,    color: 'text-sky-400'   },
+          { icon: <Target size={12} />, label: `${totalTops} total tops`,        color: 'text-green-400' },
+          { icon: <Zap size={12} />,    label: topFlasher ? `${topFlasher.flashCount} flashes — ${topFlasher.name}` : 'No flashes yet', color: 'text-amber-400' },
         ].map(s => (
           <div key={s.label} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black border ${dk ? 'bg-white/[0.03] border-white/10' : 'bg-white border-slate-200 shadow-sm'} ${s.color}`}>
             {s.icon}{s.label}
@@ -219,37 +182,61 @@ export default function LeaderboardPage({
         ))}
       </div>
 
-      {/* ── Filters ── */}
-      <div className="flex flex-wrap items-center gap-2 mb-5">
-        {categoryOptions.length > 0 && (
-          <FilterDropdown
-            label="All categories"
-            value={categoryFilter}
-            options={categoryOptions}
-            theme={theme}
-            onChange={setCategoryFilter}
-          />
-        )}
-        {genderOptions.length > 0 && (
-          <FilterDropdown
-            label="All genders"
-            value={genderFilter}
-            options={genderOptions}
-            theme={theme}
-            onChange={setGenderFilter}
-          />
-        )}
-        {(categoryFilter || genderFilter) && (
-          <button
-            onClick={() => { setCategoryFilter(''); setGenderFilter('') }}
-            className={`px-3 py-2 rounded-xl text-xs font-black transition-all ${dk ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'}`}
-          >
-            Clear filters
-          </button>
-        )}
-      </div>
+      {/* Multi-select filters */}
+      {(allCategories.length > 0 || genderOptions.length > 0) && (
+        <div className="mb-5 space-y-3">
 
-      {/* ── Table ── */}
+          {allCategories.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`text-[10px] font-black uppercase tracking-widest w-16 flex-shrink-0 ${dk ? 'text-slate-600' : 'text-slate-400'}`}>
+                Category
+              </span>
+              {allCategories.map(cat => (
+                <FilterChip
+                  key={cat.id}
+                  label={cat.name}
+                  active={categoryFilters.includes(cat.name)}
+                  theme={theme}
+                  onClick={() => toggleCategory(cat.name)}
+                />
+              ))}
+            </div>
+          )}
+
+          {genderOptions.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`text-[10px] font-black uppercase tracking-widest w-16 flex-shrink-0 ${dk ? 'text-slate-600' : 'text-slate-400'}`}>
+                Gender
+              </span>
+              {genderOptions.map(g => (
+                <FilterChip
+                  key={g}
+                  label={g}
+                  active={genderFilters.includes(g)}
+                  theme={theme}
+                  onClick={() => toggleGender(g)}
+                />
+              ))}
+            </div>
+          )}
+
+          {hasActiveFilters && (
+            <div className="flex items-center gap-3">
+              <span className={`text-xs ${dk ? 'text-slate-500' : 'text-slate-400'}`}>
+                {visible.length} of {rankings.length} climbers
+              </span>
+              <button
+                onClick={() => { setCategoryFilters([]); setGenderFilters([]) }}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-black transition-all ${dk ? 'text-red-400 bg-red-400/10 hover:bg-red-400/20' : 'text-red-500 bg-red-50 hover:bg-red-100'}`}
+              >
+                <X size={10} /> Clear all
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Table */}
       {visible.length === 0 ? (
         <div className={`text-center py-16 ${dk ? 'text-slate-600' : 'text-slate-400'}`}>
           <p className="text-4xl mb-3">🏆</p>
@@ -258,7 +245,7 @@ export default function LeaderboardPage({
         </div>
       ) : (
         <div className="space-y-2">
-          {visible.map((result, i) => {
+          {visible.map((result) => {
             const isTop3 = result.rank <= 3
             return (
               <div
@@ -271,20 +258,14 @@ export default function LeaderboardPage({
                   }
                 `}
               >
-                {/* Rank */}
                 <div className="flex-shrink-0 w-8 flex justify-center">
                   <RankBadge rank={result.rank} theme={theme} />
                 </div>
 
-                {/* Avatar */}
-                <div className={`
-                  w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-black
-                  ${dk ? 'bg-white/5 text-slate-400' : 'bg-slate-100 text-slate-500'}
-                `}>
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-black ${dk ? 'bg-white/5 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
                   {result.name.charAt(0).toUpperCase()}
                 </div>
 
-                {/* Info */}
                 <div className="flex-1 min-w-0">
                   <p className={`font-black text-sm truncate ${dk ? 'text-slate-100' : 'text-slate-900'}`}>
                     {result.name}
@@ -292,13 +273,13 @@ export default function LeaderboardPage({
                   <div className={`flex items-center gap-2 text-[10px] ${dk ? 'text-slate-500' : 'text-slate-400'}`}>
                     <span>BIB #{result.bib}</span>
                     {(() => {
-                      const cats = competitorCategoryMap.get(result.competitorId) ?? []
+                      const cats  = competitorCategoryMap.get(result.competitorId) ?? []
                       const label = cats.join(', ')
                       if (!label) return null
                       return (<><span>·</span><span className="font-black">{label}</span></>)
                     })()}
                     {(() => {
-                      const live = competitors.find(c => c.id === result.competitorId) as any
+                      const live   = competitors.find(c => c.id === result.competitorId) as any
                       const gender = live?.gender ?? (result as any).gender
                       if (!gender) return null
                       return (<><span>·</span><span>{gender}</span></>)
@@ -306,7 +287,6 @@ export default function LeaderboardPage({
                   </div>
                 </div>
 
-                {/* Stats — progressively reveal more on wider screens */}
                 <div className="flex items-center gap-5 flex-shrink-0">
                   <div className="text-center hidden md:block">
                     <p className={`text-sm font-black ${dk ? 'text-green-400' : 'text-green-600'}`}>{result.totalTops}</p>

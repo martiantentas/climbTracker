@@ -9,7 +9,7 @@ export interface PostRegistrationModalProps {
   theme:       'light' | 'dark'
 }
 
-const GENDERS = ['Male', 'Female', 'Non-binary', 'Prefer not to say']
+const GENDERS = ['Male', 'Female', 'Prefer not to say']
 
 export default function PostRegistrationModal({ user, competition, onComplete, theme }: PostRegistrationModalProps) {
   const dk = theme === 'dark'

@@ -36,6 +36,19 @@ function registerUser(user: Competitor, password: string): Competitor {
   return user
 }
 
+// Updates an existing user's record in the auth store (e.g. after profile edit).
+// If the email changed, migrates the password to the new email key.
+export function updateAuthUser(updated: Competitor, oldEmail: string): void {
+  const idx = REGISTERED_USERS.findIndex(u => u.email.toLowerCase() === oldEmail.toLowerCase())
+  if (idx !== -1) REGISTERED_USERS[idx] = updated
+  const newEmail = updated.email.toLowerCase()
+  const old = oldEmail.toLowerCase()
+  if (newEmail !== old && MOCK_PASSWORDS[old]) {
+    MOCK_PASSWORDS[newEmail] = MOCK_PASSWORDS[old]
+    delete MOCK_PASSWORDS[old]
+  }
+}
+
 import PostRegistrationModal from '../components/PostRegistrationModal'
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
@@ -139,15 +152,8 @@ export default function AuthPage({ onLogin, theme }: AuthPageProps) {
         }
         setSuccess(true)
         setTimeout(() => {
-          // Show post-registration modal for competitors who haven't set gender yet
-          const needsProfile = user.role === 'competitor' && !user.gender
-          if (needsProfile) {
-            setPendingUser(user)
-            setLoading(false)
-          } else {
-            onLogin(user)
-            navigate('/competitions', { replace: true })
-          }
+          onLogin(user)
+          navigate('/competitions', { replace: true })
         }, 600)
       } else {
         // Sign up
