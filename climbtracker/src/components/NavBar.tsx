@@ -17,6 +17,7 @@ interface NavBarProps {
   currentUser:       Competitor
   activeCompetition: Competition
   isOrganizer:       boolean
+  isJudge?:          boolean
   canAccessComp?:    boolean   // optional — old App versions don't pass this
   onOpenMenu:        () => void
   onLogout:          () => void
@@ -65,6 +66,7 @@ export default function NavBar({
   currentUser,
   activeCompetition,
   isOrganizer,
+  isJudge = false,
   onOpenMenu,
   onLogout,
 }: NavBarProps) {
@@ -118,7 +120,8 @@ export default function NavBar({
           <NavPill to="/"             label={t.boulders}       theme={theme} />
           <NavPill to="/leaderboard"  label={t.leaderboard}    theme={theme} />
           <NavPill to="/rules"        label="Rules"            theme={theme} />
-          {currentUser.role === 'competitor' && (
+          {/* Event Settings — competitors only, not judges */}
+          {!isOrganizer && !isJudge && (
             <NavPill to="/event-profile" label="Event Settings" theme={theme} />
           )}
           <div className="w-px h-4 bg-slate-500/20 mx-1 flex-shrink-0" />
@@ -126,6 +129,15 @@ export default function NavBar({
 
           {/* Organizer-only pills */}
           {isOrganizer && (
+            <>
+              <NavPill to="/users"     label={t.users}     theme={theme} />
+              <NavPill to="/analytics" label={t.analytics} theme={theme} />
+              <NavPill to="/judging"   label={t.judging}   theme={theme} />
+            </>
+          )}
+
+          {/* Judge pills — users, analytics (view), judging (full) */}
+          {isJudge && !isOrganizer && (
             <>
               <NavPill to="/users"     label={t.users}     theme={theme} />
               <NavPill to="/analytics" label={t.analytics} theme={theme} />

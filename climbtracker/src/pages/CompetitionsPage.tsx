@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Trophy, MapPin, Calendar, Key, Trash2, LogIn, Settings, X, Lock, Copy, Check } from 'lucide-react'
+import { Plus, Trophy, MapPin, Calendar, Key, Trash2, LogIn, Settings, X, Lock, Copy, Check, Shield } from 'lucide-react'
 import type { Competition, Competitor } from '../types'
 import { CompetitionStatus } from '../types'
 import { getStatusColor } from '../App'
@@ -21,7 +21,8 @@ interface CompetitionsPageProps {
   onLeave:        (compId: string) => void
   onJoinByCode:   (code: string, password?: string, traitIds?: string[]) => boolean
   isRegistered:   (compId: string) => boolean
-  onJoinSuccess?: (comp: Competition) => void  // called after join — used to redirect to event profile
+  onJoinSuccess?: (comp: Competition) => void
+  getCompRole?:   (compId: string) => string | null
 }
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
@@ -97,6 +98,7 @@ function CreateModal({ theme, lang, onSave, onClose }: {
 export default function CompetitionsPage({
   competitions, activeCompId, currentUser, theme, lang,
   onEnter, onManage, onCreate, onDelete, onLeave, onJoinByCode, isRegistered, onJoinSuccess,
+  getCompRole,
 }: CompetitionsPageProps) {
   const t = translations[lang]
 
@@ -204,6 +206,12 @@ export default function CompetitionsPage({
                 </span>
               )}
               <StatusBadge status={comp.status} theme={theme} />
+              {getCompRole && (() => {
+                const role = getCompRole(comp.id)
+                if (role === 'judge') return <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border bg-purple-400/10 text-purple-400 border-purple-400/20"><Shield size={8} /> Judge</span>
+                if (role === 'organizer' && !isMine) return <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border bg-amber-400/10 text-amber-400 border-amber-400/20"><Shield size={8} /> Co-organizer</span>
+                return null
+              })()}
               {comp.joinPassword && (
                 <span className={`inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${theme === 'dark' ? 'bg-amber-400/10 text-amber-400 border-amber-400/20' : 'bg-amber-50 text-amber-600 border-amber-200'}`}>
                   <Lock size={8} /> Password

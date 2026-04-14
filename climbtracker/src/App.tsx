@@ -115,17 +115,29 @@ function AppInner() {
   const activeCompletions = completionsMap[activeCompetition?.id] ?? []
   const activeCompetitors = competitorsMap[activeCompetition?.id] ?? []
 
-  const isOrganizer = useMemo(() =>
-    currentUser?.role === 'organizer' ||
-    currentUser?.id === activeCompetition?.ownerId,
-    [currentUser, activeCompetition]
-  )
+  const isOrganizer = useMemo(() => {
+    // Global account organizer OR owns this competition
+    if (currentUser?.role === 'organizer' || currentUser?.id === activeCompetition?.ownerId) return true
+    // Per-competition role: user joined this comp as organizer
+    const compEntry = (competitorsMap[activeCompetition?.id ?? ''] ?? []).find(c => c.id === currentUser?.id)
+    return compEntry?.role === 'organizer'
+  }, [currentUser, activeCompetition, competitorsMap])
+
+  // Per-competition role for current user in the active competition
+  const compRole = useMemo(() => {
+    if (!currentUser || !activeCompetition) return null
+    if (currentUser.id === activeCompetition.ownerId) return 'organizer'
+    const entry = (competitorsMap[activeCompetition.id] ?? []).find(c => c.id === currentUser.id)
+    return entry?.role ?? null
+  }, [currentUser, activeCompetition, competitorsMap])
+
+  const isJudge = compRole === 'judge'
 
   const canAccessActiveComp = useMemo(() =>
-    isOrganizer || (activeCompetition
+    isOrganizer || isJudge || (activeCompetition
       ? (competitorsMap[activeCompetition.id] ?? []).some(c => c.id === currentUser?.id)
       : false),
-    [isOrganizer, activeCompetition, competitorsMap, currentUser]
+    [isOrganizer, isJudge, activeCompetition, competitorsMap, currentUser]
   )
 
   const rankings = useMemo(() =>
@@ -396,7 +408,7 @@ function AppInner() {
         <NavBar
           theme={theme} setTheme={setTheme} lang={lang} setLang={setLang}
           currentUser={currentUser} activeCompetition={activeCompetition}
-          isOrganizer={isOrganizer} canAccessComp={canAccessActiveComp}
+          isOrganizer={isOrganizer} isJudge={isJudge} canAccessComp={canAccessActiveComp}
           onOpenMenu={() => setIsMenuOpen(true)}
           onLogout={() => { setCurrentUser(null); navigate('/competitions', { replace: true }) }}
         />
@@ -404,7 +416,7 @@ function AppInner() {
         <MobileMenu
           isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)}
           theme={theme} lang={lang} currentUser={currentUser}
-          competition={activeCompetition} isOrganizer={isOrganizer}
+          competition={activeCompetition} isOrganizer={isOrganizer} isJudge={isJudge}
           canAccessComp={canAccessActiveComp}
           onLogout={() => { setCurrentUser(null); navigate('/competitions', { replace: true }) }}
         />
@@ -436,9 +448,13 @@ function AppInner() {
                 onEnter={setActiveCompId} onCreate={handleCreateCompetition}
                 onDelete={handleDeleteCompetition} onLeave={handleLeaveCompetition}
                 onJoinByCode={handleJoinByCode} isRegistered={isUserRegistered}
+                getCompRole={(compId) => {
+                  if (!currentUser) return null
+                  const entry = (competitorsMap[compId] ?? []).find(c => c.id === currentUser.id)
+                  return entry?.role ?? null
+                }}
                 onManage={(compId) => { setActiveCompId(compId); setTimeout(() => navigate('/settings'), 0) }}
                 onJoinSuccess={(comp) => {
-                  // Always show profile modal for competitors after joining any competition
                   if (currentUser?.role === 'competitor') {
                     setJoinProfileComp(comp)
                   }
@@ -480,14 +496,15 @@ function AppInner() {
                   </Guard>
             } />
 
-            {/* ── Boulders — organizers always, competitors if registered ── */}
+            {/* ── Boulders — organizers always, judges read-only, competitors if registered ── */}
             <Route path="/" element={
-              (isOrganizer || canAccessActiveComp)
+              (isOrganizer || isJudge || canAccessActiveComp)
                 ? <BouldersPage
                     competition={activeCompetition} boulders={activeBoulders}
                     completions={activeCompletions} currentUser={currentUser}
-                    isOrganizer={isOrganizer} theme={theme} lang={lang}
-                    canSelfScore={activeCompetition.canSelfScore}
+                    isOrganizer={isOrganizer}
+                    theme={theme} lang={lang}
+                    canSelfScore={!isJudge && activeCompetition.canSelfScore}
                     onToggle={handleToggleCompletion} onUpdateBoulders={updateBoulders}
                   />
                 : <Navigate to="/competitions" replace />
@@ -510,36 +527,37 @@ function AppInner() {
 
             {/* ── Judges + organizers ── */}
             <Route path="/judging" element={
-              <Guard required="judge_or_organizer" currentUser={currentUser} isOrganizer={isOrganizer} canAccessComp={canAccessActiveComp} onAccessDenied={showToast}>
-                <JudgingPage
-                  competition={activeCompetition} boulders={activeBoulders}
-                  competitors={activeCompetitors} completions={activeCompletions}
-                  theme={theme} lang={lang} onLogScore={handleLogScore}
-                  currentUser={currentUser} showSuccess={showToast}
-                />
-              </Guard>
+              (isOrganizer || isJudge)
+                ? <JudgingPage
+                    competition={activeCompetition} boulders={activeBoulders}
+                    competitors={activeCompetitors} completions={activeCompletions}
+                    theme={theme} lang={lang} onLogScore={handleLogScore}
+                    currentUser={currentUser} showSuccess={showToast}
+                  />
+                : <Navigate to="/competitions" replace />
             } />
 
             {/* ── Organizers only ── */}
             <Route path="/users" element={
-              <Guard required="organizer" currentUser={currentUser} isOrganizer={isOrganizer} canAccessComp={canAccessActiveComp} onAccessDenied={showToast}>
-                <UsersPage
-                  competitors={activeCompetitors} competition={activeCompetition}
-                  currentUser={currentUser} theme={theme} lang={lang}
-                  onUpdateRole={handleUpdateRole} onUpdateBib={handleUpdateBib}
-                  onRemoveUser={handleRemoveUser}
-                />
-              </Guard>
+              (isOrganizer || isJudge)
+                ? <UsersPage
+                    competitors={activeCompetitors} competition={activeCompetition}
+                    currentUser={currentUser} theme={theme} lang={lang}
+                    viewOnly={isJudge}
+                    onUpdateRole={handleUpdateRole} onUpdateBib={handleUpdateBib}
+                    onRemoveUser={handleRemoveUser}
+                  />
+                : <Navigate to="/competitions" replace />
             } />
 
             <Route path="/analytics" element={
-              <Guard required="organizer" currentUser={currentUser} isOrganizer={isOrganizer} canAccessComp={canAccessActiveComp} onAccessDenied={showToast}>
-                <AnalyticsPage
-                  competition={activeCompetition} boulders={activeBoulders}
-                  competitors={activeCompetitors} completions={activeCompletions}
-                  theme={theme} lang={lang}
-                />
-              </Guard>
+              (isOrganizer || isJudge)
+                ? <AnalyticsPage
+                    competition={activeCompetition} boulders={activeBoulders}
+                    competitors={activeCompetitors} completions={activeCompletions}
+                    theme={theme} lang={lang}
+                  />
+                : <Navigate to="/competitions" replace />
             } />
 
             <Route path="/settings" element={

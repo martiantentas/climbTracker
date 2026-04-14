@@ -12,6 +12,7 @@ interface UsersPageProps {
   currentUser:  Competitor
   theme:        'light' | 'dark'
   lang:         Language
+  viewOnly?:    boolean   // true for judges — hides edit controls
   onUpdateRole: (competitorId: string, role: 'competitor' | 'judge' | 'organizer') => void
   onUpdateBib:  (competitorId: string, bib: number) => void
   onRemoveUser: (competitorId: string) => void
@@ -89,11 +90,12 @@ function RoleDropdown({ competitor, theme, onUpdateRole }: {
   )
 }
 
-function UserDetailModal({ competitor, allCompetitors, competition, isMe, theme, onUpdateRole, onUpdateBib, onRemove, onClose }: {
+function UserDetailModal({ competitor, allCompetitors, competition, isMe, viewOnly, theme, onUpdateRole, onUpdateBib, onRemove, onClose }: {
   competitor:     Competitor
   allCompetitors: Competitor[]
   competition:    Competition
   isMe:           boolean
+  viewOnly:       boolean
   theme:          'light' | 'dark'
   onUpdateRole:   (id: string, role: 'competitor' | 'judge' | 'organizer') => void
   onUpdateBib:    (id: string, bib: number) => void
@@ -140,6 +142,7 @@ function UserDetailModal({ competitor, allCompetitors, competition, isMe, theme,
 
         <div className="px-6 py-5 space-y-5">
           {/* Role */}
+          {!viewOnly && (
           <div>
             <label className={`block text-[10px] font-black uppercase tracking-widest mb-2 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>Role</label>
             <div className={`flex rounded-xl overflow-hidden border ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}>
@@ -170,6 +173,7 @@ function UserDetailModal({ competitor, allCompetitors, competition, isMe, theme,
             </div>
             {isMe && <p className={`text-[10px] mt-1.5 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>You cannot change your own role.</p>}
           </div>
+          )}
 
           {/* BIB */}
           <div>
@@ -228,7 +232,7 @@ function UserDetailModal({ competitor, allCompetitors, competition, isMe, theme,
           )}
         </div>
 
-        {!isMe && (
+        {!isMe && !viewOnly && (
           <div className={`px-6 py-4 border-t ${theme === 'dark' ? 'border-white/10' : 'border-slate-100'}`}>
             {confirmDelete ? (
               <div className="flex items-center gap-3">
@@ -248,7 +252,7 @@ function UserDetailModal({ competitor, allCompetitors, competition, isMe, theme,
   )
 }
 
-export default function UsersPage({ competitors, competition, currentUser, theme, lang, onUpdateRole, onUpdateBib, onRemoveUser }: UsersPageProps) {
+export default function UsersPage({ competitors, competition, currentUser, theme, lang, viewOnly = false, onUpdateRole, onUpdateBib, onRemoveUser }: UsersPageProps) {
   const t = translations[lang]
   const [search, setSearch] = useState('')
   const [selectedUser, setSelectedUser] = useState<Competitor | null>(null)
@@ -273,6 +277,12 @@ export default function UsersPage({ competitors, competition, currentUser, theme
 
   return (
     <div className="max-w-3xl mx-auto">
+      {viewOnly && (
+        <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border mb-5 ${theme === 'dark' ? 'bg-purple-400/5 border-purple-400/15 text-purple-300' : 'bg-purple-50 border-purple-100 text-purple-700'}`}>
+          <Shield size={14} className="flex-shrink-0" />
+          <p className="text-xs font-bold">View only — judges can see participants but cannot edit roles, BIBs or remove users.</p>
+        </div>
+      )}
       <div className="mb-6">
         <h1 className={`text-2xl font-black tracking-tight ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{t.users}</h1>
         <div className="flex items-center gap-4 mt-1 flex-wrap">
@@ -353,6 +363,7 @@ export default function UsersPage({ competitors, competition, currentUser, theme
           allCompetitors={competitors}
           competition={competition}
           isMe={selectedUser.id === currentUser.id}
+          viewOnly={viewOnly}
           theme={theme}
           onUpdateRole={(id, role) => { onUpdateRole(id, role); setSelectedUser(prev => prev ? { ...prev, role } : null) }}
           onUpdateBib={(id, bib)   => { onUpdateBib(id, bib);   setSelectedUser(prev => prev ? { ...prev, bibNumber: bib } : null) }}

@@ -31,6 +31,7 @@ interface MobileMenuProps {
   currentUser:   Competitor
   competition:   Competition
   isOrganizer:   boolean
+  isJudge?:      boolean
   canAccessComp?: boolean   // optional
   onLogout:      () => void
 }
@@ -85,6 +86,7 @@ export default function MobileMenu({
   currentUser,
   competition,
   isOrganizer,
+  isJudge = false,
   onLogout,
 }: MobileMenuProps) {
   const t = translations[lang]
@@ -142,7 +144,8 @@ export default function MobileMenu({
             <MenuLink to="/"              icon={<LayoutGrid size={20} />}   label={t.boulders}       theme={theme} onClick={onClose} />
             <MenuLink to="/leaderboard"   icon={<Trophy size={20} />}       label={t.leaderboard}    theme={theme} onClick={onClose} />
             <MenuLink to="/rules"         icon={<BookOpen size={20} />}     label={t.rules}          theme={theme} onClick={onClose} />
-            {currentUser.role === 'competitor' && (
+            {/* Event Settings — competitors only */}
+            {!isOrganizer && !isJudge && (
               <MenuLink to="/event-profile" icon={<CalendarDays size={20} />} label="Event Settings" theme={theme} onClick={onClose} />
             )}
 
@@ -158,6 +161,15 @@ export default function MobileMenu({
                 <MenuLink to="/analytics" icon={<BarChart2 size={20} />}     label={t.analytics} theme={theme} onClick={onClose} />
                 <MenuLink to="/judging"   icon={<ClipboardList size={20} />} label={t.judging}   theme={theme} onClick={onClose} />
                 <MenuLink to="/settings"  icon={<Settings size={20} />}      label={t.settings}  theme={theme} onClick={onClose} />
+              </>
+            )}
+
+            {/* Judge links — users+analytics view, judging full */}
+            {isJudge && !isOrganizer && (
+              <>
+                <MenuLink to="/users"     icon={<Users size={20} />}         label={t.users}     theme={theme} onClick={onClose} />
+                <MenuLink to="/analytics" icon={<BarChart2 size={20} />}     label={t.analytics} theme={theme} onClick={onClose} />
+                <MenuLink to="/judging"   icon={<ClipboardList size={20} />} label={t.judging}   theme={theme} onClick={onClose} />
               </>
             )}
           </nav>
