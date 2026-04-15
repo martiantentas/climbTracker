@@ -197,7 +197,7 @@ export default function MobileMenu({
                   {currentUser.displayName}
                 </p>
                 <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">
-                  {isOrganizer ? t.organizer : t.competitor}
+                  {isOrganizer ? t.organizer : isJudge ? 'Judge' : t.competitor}
                   {' · BIB #'}{currentUser.bibNumber}
                 </p>
               </div>

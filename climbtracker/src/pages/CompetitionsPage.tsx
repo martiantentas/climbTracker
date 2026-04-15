@@ -120,7 +120,8 @@ export default function CompetitionsPage({
   const joined    = competitions.filter(c => c.ownerId !== currentUser.id && isRegistered(c.id))
   const available = competitions.filter(c =>
     c.ownerId !== currentUser.id && !isRegistered(c.id) &&
-    (c.status === CompetitionStatus.LIVE || c.status === CompetitionStatus.FINISHED)
+    (c.status === CompetitionStatus.LIVE || c.status === CompetitionStatus.FINISHED) &&
+    ((c as any).visibility !== 'private')
   )
 
   // ── Helpers ───────────────────────────────────────────────────────────────

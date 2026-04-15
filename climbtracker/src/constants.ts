@@ -67,6 +67,7 @@ export const MOCK_COMPETITION: Competition = {
   minScorePerBoulder: 50,
   zoneScoring:        'adds_to_score',
   scoringMethod:      'self_scoring',
+  visibility:         'public',
   // Attempt tracking defaults
   attemptTracking:    'fixed_options',
   maxFixedAttempts:   4,

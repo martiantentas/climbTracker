@@ -121,6 +121,9 @@ export interface Competition {
   inviteCode:         string
   // Optional — when set, required in addition to the invite code or join link
   joinPassword?:      string
+
+  // Visibility — 'public' shows in the discover list; 'private' is invite-only
+  visibility:         'public' | 'private'
   penalizeAttempts:   boolean
   penaltyType:        'fixed' | 'percent'
   penaltyValue:       number

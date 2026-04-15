@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Mountain, Eye, EyeOff, ArrowLeft, CheckCircle2, Users, Settings, Check, ChevronRight, User } from 'lucide-react'
+import { Mountain, Eye, EyeOff, ArrowLeft, CheckCircle2, Check, ChevronRight, User } from 'lucide-react'
 import type { Competitor, Competition } from '../types'
 import { MOCK_COMPETITORS, MOCK_COMPETITION } from '../constants'
 
@@ -12,7 +12,6 @@ interface AuthPageProps {
 }
 
 type Tab  = 'signin' | 'signup'
-type Role = 'organizer' | 'competitor'
 
 // ─── MOCK USER STORE ──────────────────────────────────────────────────────────
 
@@ -105,7 +104,6 @@ export default function AuthPage({ onLogin, theme }: AuthPageProps) {
   const [params] = useSearchParams()
 
   const [tab,       setTab]       = useState<Tab>(params.get('tab') === 'signup' ? 'signup' : 'signin')
-  const [role,      setRole]      = useState<Role>('organizer')
   const [email,     setEmail]     = useState('')
   const [password,  setPassword]  = useState('')
   const [firstName, setFirstName] = useState('')
@@ -173,20 +171,14 @@ export default function AuthPage({ onLogin, theme }: AuthPageProps) {
           categoryId:  '',
           traitIds:    [],
           bibNumber:   0,
-          role:        role,
+          role:        'competitor',
         } as any
         registerUser(newUser, password)
         setSuccess(true)
         setTimeout(() => {
-          if (role === 'competitor') {
-            // Show post-registration modal to collect gender + traits
-            setPendingUser(newUser)
-            setLoading(false)
-          } else {
-            // Organizers go straight in
-            onLogin(newUser)
-            navigate('/competitions', { replace: true })
-          }
+          // Always show post-registration modal for new users
+          setPendingUser(newUser)
+          setLoading(false)
         }, 600)
       }
     }, 800)
@@ -294,21 +286,6 @@ export default function AuthPage({ onLogin, theme }: AuthPageProps) {
             : 'Create your account and run your first event'}
         </p>
 
-        {/* Role picker — signup only */}
-        {tab === 'signup' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 28 }}>
-            {([['organizer', 'Organizer', 'Create & manage events', Settings], ['competitor', 'Competitor', 'Join competitions', Users]] as const).map(([r, label, desc, Icon]) => (
-              <button key={r} onClick={() => setRole(r)} style={{
-                padding: '14px 16px', borderRadius: 14, cursor: 'pointer', textAlign: 'left', border: `1px solid ${role === r ? 'rgba(56,189,248,0.5)' : 'rgba(255,255,255,0.07)'}`,
-                background: role === r ? 'rgba(56,189,248,0.08)' : 'rgba(255,255,255,0.03)', transition: 'all 0.2s',
-              }}>
-                <Icon size={18} color={role === r ? '#38bdf8' : '#475569'} style={{ marginBottom: 8 }} />
-                <div style={{ fontSize: 13, fontWeight: 800, color: role === r ? '#38bdf8' : '#94a3b8', marginBottom: 2 }}>{label}</div>
-                <div style={{ fontSize: 11, color: '#475569' }}>{desc}</div>
-              </button>
-            ))}
-          </div>
-        )}
 
         {/* Success state */}
         {success ? (
@@ -358,12 +335,6 @@ export default function AuthPage({ onLogin, theme }: AuthPageProps) {
               }
             />
 
-            {/* Organizer note */}
-            {tab === 'signup' && role === 'organizer' && (
-              <div style={{ padding: '12px 16px', borderRadius: 10, background: 'rgba(56,189,248,0.07)', border: '1px solid rgba(56,189,248,0.15)', fontSize: 13, color: '#38bdf8', lineHeight: 1.5 }}>
-                <strong>Organizer account</strong> — you'll be able to create competitions in Draft mode immediately. A subscription is required to take a competition Live.
-              </div>
-            )}
 
             <button
               type="submit"

@@ -135,6 +135,39 @@ export default function SettingsPage({ competition, theme, lang, onUpdate }: Set
           </div>
         </div>
 
+        {/* ── Visibility ── */}
+        <div className="mt-4">
+          <label className={labelCls}>Visibility</label>
+          <p className={`text-[11px] mb-3 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
+            Public events appear in the discover list. Private events are invite-only — only accessible via invite code or direct link.
+          </p>
+          <div className={`flex rounded-xl overflow-hidden border ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}>
+            {(['public', 'private'] as const).map((v, i) => {
+              const active = (draft as any).visibility === v || (!( draft as any).visibility && v === 'private')
+              return (
+                <button
+                  key={v}
+                  onClick={() => set('visibility' as any, v)}
+                  className={`
+                    flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-black transition-all
+                    ${i > 0 ? theme === 'dark' ? 'border-l border-white/10' : 'border-l border-slate-200' : ''}
+                    ${active
+                      ? v === 'public'
+                        ? 'bg-sky-400/10 text-sky-400'
+                        : 'bg-amber-400/10 text-amber-400'
+                      : theme === 'dark'
+                        ? 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+                        : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+                    }
+                  `}
+                >
+                  {v === 'public' ? '🌐' : '🔒'} {v.charAt(0).toUpperCase() + v.slice(1)}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
         {/* ── Join Password (in General so it's always visible) ── */}
         <div className="mt-4">
           <label className={labelCls}>Join Password</label>

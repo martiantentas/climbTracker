@@ -116,8 +116,8 @@ function AppInner() {
   const activeCompetitors = competitorsMap[activeCompetition?.id] ?? []
 
   const isOrganizer = useMemo(() => {
-    // Global account organizer OR owns this competition
-    if (currentUser?.role === 'organizer' || currentUser?.id === activeCompetition?.ownerId) return true
+    // Owns this competition
+    if (currentUser?.id === activeCompetition?.ownerId) return true
     // Per-competition role: user joined this comp as organizer
     const compEntry = (competitorsMap[activeCompetition?.id ?? ''] ?? []).find(c => c.id === currentUser?.id)
     return compEntry?.role === 'organizer'
@@ -212,6 +212,7 @@ function AppInner() {
       penalizeAttempts: false, penaltyType: 'fixed', penaltyValue: 0, minScorePerBoulder: 0,
       rules: { en: '### Rules\n1. Use your common sense.', es: '### Reglas\n1. Usa el sentido común.', ca: '### Regles\n1. Fes servir el seny.' },
       zoneScoring: 'adds_to_score', scoringMethod: 'self_scoring',
+      visibility: 'private' as const,
       attemptTracking: 'fixed_options', maxFixedAttempts: 4,
     }
     setCompetitions(prev => [...prev, newComp])
@@ -455,9 +456,8 @@ function AppInner() {
                 }}
                 onManage={(compId) => { setActiveCompId(compId); setTimeout(() => navigate('/settings'), 0) }}
                 onJoinSuccess={(comp) => {
-                  if (currentUser?.role === 'competitor') {
-                    setJoinProfileComp(comp)
-                  }
+                  // Show profile modal after joining any competition
+                  setJoinProfileComp(comp)
                 }}
               />
             } />
@@ -473,9 +473,9 @@ function AppInner() {
               />
             } />
 
-            {/* ── Event profile — competitor role only ── */}
+            {/* ── Event profile — not shown to organizers or judges of this comp ── */}
             <Route path="/event-profile" element={
-              currentUser.role !== 'competitor'
+              (isOrganizer || isJudge)
                 ? <Navigate to="/competitions" replace />
                 : <Guard required="any" currentUser={currentUser} isOrganizer={isOrganizer} canAccessComp={canAccessActiveComp} onAccessDenied={showToast}>
                     <EventProfilePage
