@@ -345,7 +345,7 @@ function CompetitorCard({
           ${theme === 'dark' ? 'bg-white/5' : 'bg-slate-100'}
         `}>
           {competitor.avatar
-            ? <img src={competitor.avatar} alt="" className="w-full h-full object-cover" />
+            ? <span className="text-2xl">{competitor.avatar}</span>
             : <span className={`text-sm font-black ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
                 {competitor.displayName.charAt(0).toUpperCase()}
               </span>

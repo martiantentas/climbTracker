@@ -4,6 +4,7 @@ import { User, Mail, Edit3, Save, X, Key, Tag, Info } from 'lucide-react'
 import type { Competitor } from '../types'
 import type { Language } from '../translations'
 import { translations } from '../translations'
+import EmojiAvatarPicker from '../components/EmojiAvatarPicker'
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -74,13 +75,15 @@ export default function ProfilePage({
   onJoinByCode,
   onSave,
 }: ProfilePageProps) {
-  const t = translations[lang]
+  const t  = translations[lang]
+  const dk = theme === 'dark'
 
   // ── Edit state ───────────────────────────────────────────────────────────
   const [isEditing,   setIsEditing]   = useState(false)
   const [displayName, setDisplayName] = useState(currentUser.displayName)
   const [email,       setEmail]       = useState(currentUser.email)
   const [gender,      setGender]      = useState(currentUser.gender)
+  const [avatar,      setAvatar]      = useState(currentUser.avatar ?? '')
 
   // ── Join by code state ───────────────────────────────────────────────────
   const [joinCode,    setJoinCode]    = useState('')
@@ -94,6 +97,7 @@ export default function ProfilePage({
       displayName: displayName.trim() || currentUser.displayName,
       email:       email.trim()       || currentUser.email,
       gender,
+      avatar:      avatar || undefined,
     }
     onSave(updated)
     setIsEditing(false)
@@ -104,6 +108,7 @@ export default function ProfilePage({
     setDisplayName(currentUser.displayName)
     setEmail(currentUser.email)
     setGender(currentUser.gender)
+    setAvatar(currentUser.avatar ?? '')
     setIsEditing(false)
   }
 
@@ -198,17 +203,35 @@ export default function ProfilePage({
 
       {/* ── Avatar + name banner ── */}
       <div className={`${cardClass} p-6 flex items-center gap-5`}>
-        <div className="w-16 h-16 rounded-2xl bg-sky-400/20 flex items-center justify-center flex-shrink-0 overflow-hidden">
+        {/* Avatar display — clickable to open edit if in editing mode */}
+        <div
+          onClick={() => { if (!isEditing) setIsEditing(true) }}
+          className={`
+            w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 overflow-hidden text-3xl
+            transition-all relative group
+            ${currentUser.avatar
+              ? dk ? 'bg-white/5' : 'bg-slate-100'
+              : 'bg-sky-400/20'
+            }
+            ${!isEditing ? 'cursor-pointer hover:ring-2 hover:ring-sky-400/50' : ''}
+          `}
+        >
           {currentUser.avatar
-            ? <img src={currentUser.avatar} alt="" className="w-full h-full object-cover" />
+            ? <span>{currentUser.avatar}</span>
             : <User size={28} className="text-sky-400" />
           }
+          {/* Edit hint overlay */}
+          {!isEditing && (
+            <div className="absolute inset-0 rounded-2xl bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <span className="text-[9px] font-black text-white uppercase tracking-widest">Edit</span>
+            </div>
+          )}
         </div>
         <div className="flex-1 min-w-0">
-          <p className={`text-xl font-black tracking-tight truncate ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+          <p className={`text-xl font-black tracking-tight truncate ${dk ? 'text-white' : 'text-slate-900'}`}>
             {currentUser.displayName}
           </p>
-          <p className={`text-[11px] font-black uppercase tracking-widest mt-1 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+          <p className={`text-[11px] font-black uppercase tracking-widest mt-1 ${dk ? 'text-slate-500' : 'text-slate-400'}`}>
             {currentUser.gender}
           </p>
         </div>
@@ -258,6 +281,15 @@ export default function ProfilePage({
                   <option key={opt} value={opt}>{opt}</option>
                 ))}
               </select>
+            </div>
+
+            {/* ── Avatar picker ── */}
+            <div>
+              <EmojiAvatarPicker
+                selected={avatar || undefined}
+                theme={theme}
+                onSelect={emoji => setAvatar(emoji)}
+              />
             </div>
 
           </div>

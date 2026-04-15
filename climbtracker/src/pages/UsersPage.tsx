@@ -127,7 +127,7 @@ function UserDetailModal({ competitor, allCompetitors, competition, isMe, viewOn
         <div className={`flex items-center justify-between px-6 py-4 border-b ${theme === 'dark' ? 'border-white/10' : 'border-slate-100'}`}>
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0 ${theme === 'dark' ? 'bg-white/5' : 'bg-slate-100'}`}>
-              {competitor.avatar ? <img src={competitor.avatar} alt="" className="w-full h-full object-cover" /> : <User size={18} className={theme === 'dark' ? 'text-slate-500' : 'text-slate-400'} />}
+              {competitor.avatar ? <span className="text-xl">{competitor.avatar}</span> : <User size={18} className={theme === 'dark' ? 'text-slate-500' : 'text-slate-400'} />}
             </div>
             <div>
               <p className={`text-sm font-black ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
@@ -318,7 +318,7 @@ export default function UsersPage({ competitors, competition, currentUser, theme
               <div key={competitor.id} className={`grid grid-cols-[1fr_auto_auto_36px] gap-3 px-5 py-3.5 items-center border-t transition-colors ${theme === 'dark' ? `border-white/5 ${isEven ? 'bg-transparent' : 'bg-white/[0.02]'}` : `border-slate-100 ${isEven ? 'bg-white' : 'bg-slate-50/50'}`}`}>
                 <button onClick={() => setSelectedUser(competitor)} className="flex items-center gap-3 min-w-0 text-left hover:opacity-80 transition-opacity">
                   <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden ${theme === 'dark' ? 'bg-white/5' : 'bg-slate-100'}`}>
-                    {competitor.avatar ? <img src={competitor.avatar} alt="" className="w-full h-full object-cover" /> : <User size={15} className={theme === 'dark' ? 'text-slate-500' : 'text-slate-400'} />}
+                    {competitor.avatar ? <span className="text-xl">{competitor.avatar}</span> : <User size={15} className={theme === 'dark' ? 'text-slate-500' : 'text-slate-400'} />}
                   </div>
                   <div className="min-w-0">
                     <p className={`text-sm font-black leading-tight truncate ${theme === 'dark' ? 'text-slate-100' : 'text-slate-900'}`}>

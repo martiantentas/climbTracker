@@ -186,9 +186,9 @@ export default function MobileMenu({
                 ${theme === 'dark' ? 'hover:bg-white/5' : 'hover:bg-slate-100'}
               `}
             >
-              <div className="w-10 h-10 rounded-full bg-sky-400/10 flex items-center justify-center text-sky-400 overflow-hidden flex-shrink-0">
+              <div className="w-10 h-10 rounded-full bg-sky-400/10 flex items-center justify-center text-sky-400 overflow-hidden flex-shrink-0 text-xl">
                 {currentUser.avatar
-                  ? <img src={currentUser.avatar} alt="" className="w-full h-full object-cover" />
+                  ? <span>{currentUser.avatar}</span>
                   : <User size={20} />
                 }
               </div>
