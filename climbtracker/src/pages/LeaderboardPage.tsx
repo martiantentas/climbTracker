@@ -26,12 +26,12 @@ function FilterChip({ label, active, theme, onClick }: {
     <button
       onClick={onClick}
       className={`
-        px-3 py-1.5 rounded-xl text-xs font-black border transition-all
+        px-3 py-1.5 rounded text-xs font-medium border transition-colors duration-[330ms]
         ${active
-          ? 'bg-sky-400/15 border-sky-400/40 text-sky-400'
+          ? 'bg-[#3E6AE1]/10 border-[#3E6AE1]/30 text-[#3E6AE1]'
           : dk
-            ? 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/10'
-            : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700 shadow-sm'
+            ? 'bg-white/5 border-white/10 text-[#8E8E8E] hover:text-[#EEEEEE] hover:bg-white/10'
+            : 'bg-white border-[#EEEEEE] text-[#5C5E62] hover:text-[#171A20]'
         }
       `}
     >
@@ -47,7 +47,7 @@ function RankBadge({ rank, theme }: { rank: number; theme: 'light' | 'dark' }) {
   if (rank === 2) return <span className="text-lg">🥈</span>
   if (rank === 3) return <span className="text-lg">🥉</span>
   return (
-    <span className={`text-sm font-black tabular-nums w-7 text-center ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+    <span className={`text-sm font-medium tabular-nums w-7 text-center ${theme === 'dark' ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
       #{rank}
     </span>
   )
@@ -66,7 +66,6 @@ export default function LeaderboardPage({
   const t  = translations[lang]
   const dk = theme === 'dark'
 
-  // ── Multi-select filter state ─────────────────────────────────────────────
   const [categoryFilters, setCategoryFilters] = useState<string[]>([])
   const [genderFilters,   setGenderFilters]   = useState<string[]>([])
   const [showDownload,    setShowDownload]     = useState(false)
@@ -78,13 +77,12 @@ export default function LeaderboardPage({
   const toggleGender = (g: string) =>
     setGenderFilters(prev => prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g])
 
-  // ── Export helpers ────────────────────────────────────────────────────────
   function exportCSV() {
     const headers = ['Rank', 'Name', 'BIB', 'Category', 'Gender', 'Points', 'Tops', 'Zones', 'Attempts', 'Flashes']
     const rows = visible.map(r => {
-      const cats  = competitorCategoryMap.get(r.competitorId) ?? []
-      const live  = competitors.find(c => c.id === r.competitorId) as any
-      const gend  = live?.gender ?? (r as any).gender ?? ''
+      const cats = competitorCategoryMap.get(r.competitorId) ?? []
+      const live = competitors.find(c => c.id === r.competitorId) as any
+      const gend = live?.gender ?? (r as any).gender ?? ''
       return [r.rank, r.name, r.bib, cats.join('+'), gend, r.totalPoints, r.totalTops, r.totalZones ?? 0, r.totalAttempts, r.flashCount].join(',')
     })
     const csv  = [headers.join(','), ...rows].join('\n')
@@ -104,19 +102,19 @@ export default function LeaderboardPage({
       const live = competitors.find(c => c.id === r.competitorId) as any
       const gend = live?.gender ?? (r as any).gender ?? ''
       return `<tr>
-        <td style="padding:6px 10px;border-bottom:1px solid #eee;font-weight:700">#${r.rank}</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #eee;font-weight:600">#${r.rank}</td>
         <td style="padding:6px 10px;border-bottom:1px solid #eee">${r.name}</td>
         <td style="padding:6px 10px;border-bottom:1px solid #eee">${r.bib}</td>
         <td style="padding:6px 10px;border-bottom:1px solid #eee">${cats.join(', ')}</td>
         <td style="padding:6px 10px;border-bottom:1px solid #eee">${gend}</td>
-        <td style="padding:6px 10px;border-bottom:1px solid #eee;font-weight:800;color:#0ea5e9">${r.totalPoints}</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #eee;font-weight:600;color:#3E6AE1">${r.totalPoints}</td>
         <td style="padding:6px 10px;border-bottom:1px solid #eee">${r.totalTops}</td>
         <td style="padding:6px 10px;border-bottom:1px solid #eee">${r.totalAttempts}</td>
         <td style="padding:6px 10px;border-bottom:1px solid #eee">${r.flashCount}</td>
       </tr>`
     }).join('')
     const html = `<!DOCTYPE html><html><head><title>${competition.name} — Results</title>
-    <style>body{font-family:system-ui,sans-serif;padding:32px;color:#111}h1{font-size:24px;font-weight:900;margin-bottom:4px}p{color:#64748b;margin-bottom:24px}table{width:100%;border-collapse:collapse}th{text-align:left;padding:8px 10px;background:#f8fafc;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#64748b;border-bottom:2px solid #e2e8f0}</style>
+    <style>body{font-family:system-ui,sans-serif;padding:32px;color:#171A20}h1{font-size:24px;font-weight:500;margin-bottom:4px}p{color:#5C5E62;margin-bottom:24px}table{width:100%;border-collapse:collapse}th{text-align:left;padding:8px 10px;background:#F4F4F4;font-size:11px;color:#5C5E62;border-bottom:2px solid #EEEEEE}</style>
     </head><body>
     <h1>${competition.name}</h1>
     <p>${competition.location} · ${new Date(competition.startDate).toLocaleDateString()}</p>
@@ -130,7 +128,6 @@ export default function LeaderboardPage({
   }
 
   function shareLink() {
-    // Public results URL — works for anyone with the link
     const base = window.location.href.split('#')[0]
     const url  = `${base}#/results/${competition.id}`
     navigator.clipboard.writeText(url).then(() => {
@@ -142,7 +139,6 @@ export default function LeaderboardPage({
     })
   }
 
-  // ── Resolve categories list ───────────────────────────────────────────────
   const allCategories = useMemo(() => {
     const comp = competition as any
     const cats: { id: string; name: string }[] =
@@ -151,7 +147,6 @@ export default function LeaderboardPage({
     return cats
   }, [competition])
 
-  // ── Build competitorId → category names map ───────────────────────────────
   const competitorCategoryMap = useMemo(() => {
     const map      = new Map<string, string[]>()
     const compById = new Map(competitors.map(c => [c.id, c]))
@@ -190,18 +185,15 @@ export default function LeaderboardPage({
     return map
   }, [rankings, competitors, competition])
 
-  // ── Gender options — fixed set, only shown if at least one competitor has that gender
   const genderOptions = useMemo(() => {
     const GENDER_OPTIONS = ['Male', 'Female', 'Prefer not to say']
     const present = new Set([
       ...competitors.map(c => (c as any).gender),
       ...rankings.map(r => (r as any).gender),
     ].filter(Boolean))
-    // Keep canonical order, only show genders that exist in the data
     return GENDER_OPTIONS.filter(g => present.has(g))
   }, [competitors, rankings])
 
-  // ── Filtered results — OR logic within each filter group ─────────────────
   const visible = useMemo(() => {
     return rankings.filter(r => {
       if (categoryFilters.length > 0) {
@@ -218,8 +210,6 @@ export default function LeaderboardPage({
   }, [rankings, categoryFilters, genderFilters, competitorCategoryMap, competitors])
 
   const hasActiveFilters = categoryFilters.length > 0 || genderFilters.length > 0
-
-  // ── Stats ─────────────────────────────────────────────────────────────────
   const totalTops  = rankings.reduce((s, r) => s + r.totalTops, 0)
   const topFlasher = rankings.reduce<RankResult | null>((best, r) =>
     !best || r.flashCount > best.flashCount ? r : best, null)
@@ -230,41 +220,39 @@ export default function LeaderboardPage({
       {/* Header */}
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
-          <h1 className={`text-2xl font-black tracking-tight ${dk ? 'text-white' : 'text-slate-900'}`}>
+          <h1 className={`text-2xl font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
             {t.leaderboard}
           </h1>
-          <p className={`text-sm mt-1 ${dk ? 'text-slate-400' : 'text-slate-500'}`}>
+          <p className={`text-sm mt-1 ${dk ? 'text-[#5C5E62]' : 'text-[#5C5E62]'}`}>
             {competition.name} · {competition.status === 'LIVE' ? 'Live standings' : 'Final standings'}
           </p>
         </div>
 
-        {/* Download — organizer only */}
         {isOrganizer && (
           <div ref={downloadRef} className="relative flex-shrink-0">
             <button
               onClick={() => setShowDownload(v => !v)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-black border transition-all ${dk ? 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm'}`}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded text-sm font-medium border transition-colors duration-[330ms] ${dk ? 'bg-white/5 border-white/10 text-[#D0D1D2] hover:bg-white/10' : 'bg-white border-[#EEEEEE] text-[#393C41] hover:bg-[#F4F4F4]'}`}
             >
-              <Download size={15} />
+              <Download size={14} />
               Export
-              <ChevDown size={13} className={`transition-transform ${showDownload ? 'rotate-180' : ''}`} />
+              <ChevDown size={12} className={`transition-transform ${showDownload ? 'rotate-180' : ''}`} />
             </button>
 
             {showDownload && (
               <>
-                {/* Backdrop to close */}
                 <div className="fixed inset-0 z-10" onClick={() => setShowDownload(false)} />
-                <div className={`absolute right-0 top-full mt-2 z-20 w-52 rounded-2xl border shadow-xl overflow-hidden ${dk ? 'bg-slate-900 border-white/10' : 'bg-white border-slate-200'}`}>
-                  <button onClick={exportCSV} className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-left transition-all ${dk ? 'hover:bg-white/5 text-slate-200' : 'hover:bg-slate-50 text-slate-700'}`}>
-                    <Download size={15} className="text-sky-400" />
+                <div className={`absolute right-0 top-full mt-1 z-20 w-52 rounded border overflow-hidden ${dk ? 'bg-[#171A20] border-white/10' : 'bg-white border-[#EEEEEE]'}`}>
+                  <button onClick={exportCSV} className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-left transition-colors duration-[330ms] ${dk ? 'hover:bg-white/5 text-[#D0D1D2]' : 'hover:bg-[#F4F4F4] text-[#393C41]'}`}>
+                    <Download size={14} className="text-[#3E6AE1]" />
                     Download CSV
                   </button>
-                  <button onClick={exportPDF} className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-left transition-all border-t ${dk ? 'hover:bg-white/5 text-slate-200 border-white/5' : 'hover:bg-slate-50 text-slate-700 border-slate-100'}`}>
-                    <FileText size={15} className="text-sky-400" />
+                  <button onClick={exportPDF} className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-left transition-colors duration-[330ms] border-t ${dk ? 'hover:bg-white/5 text-[#D0D1D2] border-white/5' : 'hover:bg-[#F4F4F4] text-[#393C41] border-[#EEEEEE]'}`}>
+                    <FileText size={14} className="text-[#3E6AE1]" />
                     Download PDF
                   </button>
-                  <button onClick={shareLink} className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-left transition-all border-t ${dk ? 'hover:bg-white/5 text-slate-200 border-white/5' : 'hover:bg-slate-50 text-slate-700 border-slate-100'}`}>
-                    <Link2 size={15} className="text-sky-400" />
+                  <button onClick={shareLink} className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-left transition-colors duration-[330ms] border-t ${dk ? 'hover:bg-white/5 text-[#D0D1D2] border-white/5' : 'hover:bg-[#F4F4F4] text-[#393C41] border-[#EEEEEE]'}`}>
+                    <Link2 size={14} className="text-[#3E6AE1]" />
                     Copy public link
                   </button>
                 </div>
@@ -277,11 +265,11 @@ export default function LeaderboardPage({
       {/* Summary chips */}
       <div className="flex flex-wrap gap-3 mb-6">
         {[
-          { icon: <Trophy size={12} />, label: `${rankings.length} climbers`,    color: 'text-sky-400'   },
-          { icon: <Target size={12} />, label: `${totalTops} total tops`,        color: 'text-green-400' },
-          { icon: <Zap size={12} />,    label: topFlasher ? `${topFlasher.flashCount} flashes — ${topFlasher.name}` : 'No flashes yet', color: 'text-amber-400' },
+          { icon: <Trophy size={12} />, label: `${rankings.length} climbers`,    color: 'text-[#3E6AE1]'  },
+          { icon: <Target size={12} />, label: `${totalTops} total tops`,        color: 'text-green-500'  },
+          { icon: <Zap size={12} />,    label: topFlasher ? `${topFlasher.flashCount} flashes — ${topFlasher.name}` : 'No flashes yet', color: 'text-amber-500' },
         ].map(s => (
-          <div key={s.label} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black border ${dk ? 'bg-white/[0.03] border-white/10' : 'bg-white border-slate-200 shadow-sm'} ${s.color}`}>
+          <div key={s.label} className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium border ${dk ? 'bg-white/[0.03] border-white/10' : 'bg-white border-[#EEEEEE]'} ${s.color}`}>
             {s.icon}{s.label}
           </div>
         ))}
@@ -290,10 +278,9 @@ export default function LeaderboardPage({
       {/* Multi-select filters */}
       {(allCategories.length > 0 || genderOptions.length > 0) && (
         <div className="mb-5 space-y-3">
-
           {allCategories.length > 0 && (
             <div className="flex flex-wrap items-center gap-2">
-              <span className={`text-[10px] font-black uppercase tracking-widest w-16 flex-shrink-0 ${dk ? 'text-slate-600' : 'text-slate-400'}`}>
+              <span className={`text-xs font-medium w-16 flex-shrink-0 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
                 Category
               </span>
               {allCategories.map(cat => (
@@ -310,7 +297,7 @@ export default function LeaderboardPage({
 
           {genderOptions.length > 0 && (
             <div className="flex flex-wrap items-center gap-2">
-              <span className={`text-[10px] font-black uppercase tracking-widest w-16 flex-shrink-0 ${dk ? 'text-slate-600' : 'text-slate-400'}`}>
+              <span className={`text-xs font-medium w-16 flex-shrink-0 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
                 Gender
               </span>
               {genderOptions.map(g => (
@@ -327,12 +314,12 @@ export default function LeaderboardPage({
 
           {hasActiveFilters && (
             <div className="flex items-center gap-3">
-              <span className={`text-xs ${dk ? 'text-slate-500' : 'text-slate-400'}`}>
+              <span className={`text-xs ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
                 {visible.length} of {rankings.length} climbers
               </span>
               <button
                 onClick={() => { setCategoryFilters([]); setGenderFilters([]) }}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-black transition-all ${dk ? 'text-red-400 bg-red-400/10 hover:bg-red-400/20' : 'text-red-500 bg-red-50 hover:bg-red-100'}`}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium transition-colors duration-[330ms] ${dk ? 'text-red-400 bg-red-400/10 hover:bg-red-400/20' : 'text-red-500 bg-red-50 hover:bg-red-100'}`}
               >
                 <X size={10} /> Clear all
               </button>
@@ -343,23 +330,23 @@ export default function LeaderboardPage({
 
       {/* Table */}
       {visible.length === 0 ? (
-        <div className={`text-center py-16 ${dk ? 'text-slate-600' : 'text-slate-400'}`}>
+        <div className={`text-center py-16 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
           <p className="text-4xl mb-3">🏆</p>
-          <p className="font-black uppercase tracking-widest text-sm">No results</p>
+          <p className="font-medium text-sm">No results</p>
           <p className="text-xs mt-1">Try clearing your filters</p>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-1">
           {visible.map((result) => {
             const isTop3 = result.rank <= 3
             return (
               <div
                 key={result.competitorId}
                 className={`
-                  flex items-center gap-4 px-5 py-4 rounded-2xl border transition-all
+                  flex items-center gap-4 px-5 py-4 rounded border transition-colors duration-[330ms]
                   ${isTop3 && result.rank === 1
                     ? dk ? 'bg-amber-400/5 border-amber-400/20' : 'bg-amber-50 border-amber-200'
-                    : dk ? 'bg-white/[0.02] border-white/8 hover:bg-white/[0.04]' : 'bg-white border-slate-200 hover:border-slate-300 shadow-sm'
+                    : dk ? 'bg-white/[0.02] border-white/8 hover:bg-white/[0.04]' : 'bg-white border-[#EEEEEE] hover:border-[#D0D1D2]'
                   }
                 `}
               >
@@ -367,26 +354,26 @@ export default function LeaderboardPage({
                   <RankBadge rank={result.rank} theme={theme} />
                 </div>
 
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-xl ${dk ? 'bg-white/5' : 'bg-slate-100'}`}>
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-xl ${dk ? 'bg-white/5' : 'bg-[#F4F4F4]'}`}>
                   {(() => {
                     const live = competitors.find(c => c.id === result.competitorId) as any
                     return live?.avatar
                       ? <span>{live.avatar}</span>
-                      : <span className={`text-sm font-black ${dk ? 'text-slate-400' : 'text-slate-500'}`}>{result.name.charAt(0).toUpperCase()}</span>
+                      : <span className={`text-sm font-medium ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{result.name.charAt(0).toUpperCase()}</span>
                   })()}
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <p className={`font-black text-sm truncate ${dk ? 'text-slate-100' : 'text-slate-900'}`}>
+                  <p className={`font-medium text-sm truncate ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
                     {result.name}
                   </p>
-                  <div className={`flex items-center gap-2 text-[10px] ${dk ? 'text-slate-500' : 'text-slate-400'}`}>
+                  <div className={`flex items-center gap-2 text-xs ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
                     <span>BIB #{result.bib}</span>
                     {(() => {
                       const cats  = competitorCategoryMap.get(result.competitorId) ?? []
                       const label = cats.join(', ')
                       if (!label) return null
-                      return (<><span>·</span><span className="font-black">{label}</span></>)
+                      return (<><span>·</span><span className="font-medium">{label}</span></>)
                     })()}
                     {(() => {
                       const live   = competitors.find(c => c.id === result.competitorId) as any
@@ -399,24 +386,24 @@ export default function LeaderboardPage({
 
                 <div className="flex items-center gap-5 flex-shrink-0">
                   <div className="text-center hidden md:block">
-                    <p className={`text-sm font-black ${dk ? 'text-green-400' : 'text-green-600'}`}>{result.totalTops}</p>
-                    <p className={`text-[9px] uppercase tracking-widest ${dk ? 'text-slate-600' : 'text-slate-400'}`}>Tops</p>
+                    <p className={`text-sm font-medium ${dk ? 'text-green-400' : 'text-green-600'}`}>{result.totalTops}</p>
+                    <p className={`text-[9px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Tops</p>
                   </div>
                   <div className="text-center hidden lg:block">
-                    <p className={`text-sm font-black ${dk ? 'text-purple-400' : 'text-purple-600'}`}>{result.totalZones ?? 0}</p>
-                    <p className={`text-[9px] uppercase tracking-widest ${dk ? 'text-slate-600' : 'text-slate-400'}`}>Zones</p>
+                    <p className={`text-sm font-medium ${dk ? 'text-purple-400' : 'text-purple-600'}`}>{result.totalZones ?? 0}</p>
+                    <p className={`text-[9px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Zones</p>
                   </div>
                   <div className="text-center hidden lg:block">
-                    <p className={`text-sm font-black ${dk ? 'text-slate-400' : 'text-slate-500'}`}>{result.totalAttempts}</p>
-                    <p className={`text-[9px] uppercase tracking-widest ${dk ? 'text-slate-600' : 'text-slate-400'}`}>Tries</p>
+                    <p className={`text-sm font-medium ${dk ? 'text-[#8E8E8E]' : 'text-[#5C5E62]'}`}>{result.totalAttempts}</p>
+                    <p className={`text-[9px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Tries</p>
                   </div>
                   <div className="text-center hidden sm:block">
-                    <p className="text-sm font-black text-amber-400">{result.flashCount}</p>
-                    <p className={`text-[9px] uppercase tracking-widest ${dk ? 'text-slate-600' : 'text-slate-400'}`}>⚡</p>
+                    <p className="text-sm font-medium text-amber-500">{result.flashCount}</p>
+                    <p className={`text-[9px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>⚡</p>
                   </div>
                   <div className="text-right min-w-[56px]">
-                    <p className="text-xl font-black text-sky-400">{result.totalPoints}</p>
-                    <p className={`text-[9px] uppercase tracking-widest ${dk ? 'text-slate-600' : 'text-slate-400'}`}>pts</p>
+                    <p className="text-xl font-medium text-[#3E6AE1]">{result.totalPoints}</p>
+                    <p className={`text-[9px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>pts</p>
                   </div>
                 </div>
               </div>

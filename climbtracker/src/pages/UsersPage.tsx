@@ -12,36 +12,36 @@ interface UsersPageProps {
   currentUser:  Competitor
   theme:        'light' | 'dark'
   lang:         Language
-  viewOnly?:    boolean   // true for judges — hides edit controls
+  viewOnly?:    boolean
   onUpdateRole: (competitorId: string, role: 'competitor' | 'judge' | 'organizer') => void
   onUpdateBib:  (competitorId: string, bib: number) => void
   onRemoveUser: (competitorId: string) => void
 }
 
 function RoleBadge({ role, theme }: { role?: string; theme: 'light' | 'dark' }) {
-  if (role === 'judge')     return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border bg-purple-400/10 text-purple-400 border-purple-400/20"><Shield size={8} /> Judge</span>
-  if (role === 'organizer') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border bg-amber-400/10 text-amber-400 border-amber-400/20"><Shield size={8} /> Organizer</span>
-  return <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${theme === 'dark' ? 'bg-white/5 text-slate-400 border-white/10' : 'bg-slate-100 text-slate-500 border-slate-200'}`}><Shield size={8} /> Competitor</span>
+  const dk = theme === 'dark'
+  if (role === 'judge')     return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-medium border bg-purple-400/10 text-purple-400 border-purple-400/20"><Shield size={8} /> Judge</span>
+  if (role === 'organizer') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-medium border bg-amber-400/10 text-amber-400 border-amber-400/20"><Shield size={8} /> Organizer</span>
+  return <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-medium border ${dk ? 'bg-white/5 text-[#8E8E8E] border-white/10' : 'bg-[#F4F4F4] text-[#5C5E62] border-[#EEEEEE]'}`}><Shield size={8} /> Competitor</span>
 }
 
 function RoleDropdown({ competitor, theme, onUpdateRole }: {
   competitor: Competitor; theme: 'light' | 'dark'
   onUpdateRole: (id: string, role: 'competitor' | 'judge' | 'organizer') => void
 }) {
-  const [open, setOpen]     = useState(false)
+  const [open, setOpen]         = useState(false)
   const [menuStyle, setMenuStyle] = useState<{ top: number; left: number }>({ top: 0, left: 0 })
-  const btnRef = useRef<HTMLButtonElement>(null)
+  const btnRef      = useRef<HTMLButtonElement>(null)
   const currentRole = competitor.role ?? 'competitor'
+  const dk          = theme === 'dark'
   const labels: Record<string, string> = { competitor: 'Competitor', judge: 'Judge', organizer: 'Organizer' }
 
-  // Recompute position every time the menu opens
   useEffect(() => {
     if (!open || !btnRef.current) return
     const r = btnRef.current.getBoundingClientRect()
     setMenuStyle({ top: r.bottom + window.scrollY + 4, left: r.right + window.scrollX })
   }, [open])
 
-  // Close on scroll/resize so the menu doesn't drift
   useEffect(() => {
     if (!open) return
     const close = () => setOpen(false)
@@ -55,28 +55,26 @@ function RoleDropdown({ competitor, theme, onUpdateRole }: {
       <button
         ref={btnRef}
         onClick={() => setOpen(o => !o)}
-        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-black transition-all border whitespace-nowrap ${theme === 'dark' ? 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
+        className={`flex items-center gap-1 px-2.5 py-1.5 rounded text-xs font-medium transition-colors duration-[330ms] border whitespace-nowrap ${dk ? 'bg-white/5 border-white/10 text-[#D0D1D2] hover:bg-white/10' : 'bg-[#F4F4F4] border-[#EEEEEE] text-[#5C5E62] hover:bg-[#EEEEEE]'}`}
       >
         {labels[currentRole]}<ChevronDown size={10} className={`transition-transform flex-shrink-0 ${open ? 'rotate-180' : ''}`} />
       </button>
 
       {open && createPortal(
         <>
-          {/* Invisible backdrop to catch outside clicks */}
           <div className="fixed inset-0 z-[900]" onClick={() => setOpen(false)} />
-          {/* Menu — positioned via inline style, right-aligned to button */}
           <div
-            className={`fixed z-[901] rounded-xl border shadow-xl overflow-hidden min-w-[130px] ${theme === 'dark' ? 'bg-slate-800 border-white/10' : 'bg-white border-slate-200 shadow-slate-200/60'}`}
+            className={`fixed z-[901] rounded border overflow-hidden min-w-[130px] ${dk ? 'bg-[#171A20] border-white/10' : 'bg-white border-[#EEEEEE]'}`}
             style={{ top: menuStyle.top, left: menuStyle.left, transform: 'translateX(-100%)' }}
           >
             {(['competitor', 'judge', 'organizer'] as const).map(role => (
               <button
                 key={role}
                 onClick={() => { onUpdateRole(competitor.id, role); setOpen(false) }}
-                className={`w-full px-3 py-2 text-left text-xs font-black transition-all flex items-center gap-2 ${
+                className={`w-full px-3 py-2 text-left text-xs font-medium transition-colors duration-[330ms] flex items-center gap-2 ${
                   currentRole === role
-                    ? theme === 'dark' ? 'bg-sky-400/10 text-sky-400' : 'bg-sky-50 text-sky-600'
-                    : theme === 'dark' ? 'text-slate-300 hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50'
+                    ? dk ? 'bg-[#3E6AE1]/10 text-[#3E6AE1]' : 'bg-[#3E6AE1]/10 text-[#3E6AE1]'
+                    : dk ? 'text-[#D0D1D2] hover:bg-white/5' : 'text-[#5C5E62] hover:bg-[#F4F4F4]'
                 }`}
               >
                 <Shield size={10} />{labels[role]}
@@ -104,10 +102,10 @@ function UserDetailModal({ competitor, allCompetitors, competition, isMe, viewOn
 }) {
   const [bibInput,      setBibInput]      = useState(String(competitor.bibNumber))
   const [confirmDelete, setConfirmDelete] = useState(false)
-  const currentRole        = competitor.role ?? 'competitor'
-  const isJudgeOrOrganizer = currentRole === 'judge' || currentRole === 'organizer'
+  const dk                  = theme === 'dark'
+  const currentRole         = competitor.role ?? 'competitor'
+  const isJudgeOrOrganizer  = currentRole === 'judge' || currentRole === 'organizer'
 
-  // ── BIB uniqueness validation ─────────────────────────────────────────────
   const bibError = useMemo((): string | null => {
     const n = parseInt(bibInput)
     if (isNaN(n) || n < 0) return 'BIB must be a non-negative number.'
@@ -117,107 +115,109 @@ function UserDetailModal({ competitor, allCompetitors, competition, isMe, viewOn
 
   const canSaveBib = !isJudgeOrOrganizer && !bibError
 
-  const inputCls = `w-full px-4 py-3 rounded-xl border outline-none text-sm transition-all ${theme === 'dark' ? 'bg-white/5 border-white/10 text-white focus:border-sky-400/50' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-sky-400'}`
+  const inputCls = `w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms] ${dk ? 'bg-white/5 border-white/10 text-[#EEEEEE] focus:border-[#3E6AE1]/50' : 'bg-white border-[#EEEEEE] text-[#171A20] focus:border-[#3E6AE1]'}`
 
   return (
     <>
-      <div className="fixed inset-0 z-[400] bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className={`fixed inset-x-4 top-1/2 -translate-y-1/2 z-[500] max-w-md mx-auto rounded-2xl border shadow-2xl ${theme === 'dark' ? 'bg-slate-900 border-white/10' : 'bg-white border-slate-200'}`}>
+      <div className="fixed inset-0 z-[400] bg-black/60" onClick={onClose} />
+      <div className={`fixed inset-x-4 top-1/2 -translate-y-1/2 z-[500] max-w-md mx-auto rounded border ${dk ? 'bg-[#171A20] border-white/10' : 'bg-white border-[#EEEEEE]'}`}>
 
-        <div className={`flex items-center justify-between px-6 py-4 border-b ${theme === 'dark' ? 'border-white/10' : 'border-slate-100'}`}>
+        <div className={`flex items-center justify-between px-6 py-4 border-b ${dk ? 'border-white/10' : 'border-[#EEEEEE]'}`}>
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0 ${theme === 'dark' ? 'bg-white/5' : 'bg-slate-100'}`}>
-              {competitor.avatar ? <span className="text-xl">{competitor.avatar}</span> : <User size={18} className={theme === 'dark' ? 'text-slate-500' : 'text-slate-400'} />}
+            <div className={`w-10 h-10 rounded flex items-center justify-center overflow-hidden flex-shrink-0 ${dk ? 'bg-white/5' : 'bg-[#F4F4F4]'}`}>
+              {competitor.avatar ? <span className="text-xl">{competitor.avatar}</span> : <User size={18} className="text-[#8E8E8E]" />}
             </div>
             <div>
-              <p className={`text-sm font-black ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+              <p className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
                 {competitor.displayName}
-                {isMe && <span className="ml-2 text-[9px] font-black text-sky-400 bg-sky-400/10 px-1.5 py-0.5 rounded-full">You</span>}
+                {isMe && <span className="ml-2 text-[9px] font-medium text-[#3E6AE1] bg-[#3E6AE1]/10 px-1.5 py-0.5 rounded">You</span>}
               </p>
-              <p className={`text-[10px] mt-0.5 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>{competitor.email}</p>
+              <p className={`text-xs mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{competitor.email}</p>
             </div>
           </div>
-          <button onClick={onClose} className={`p-2 rounded-xl transition-all ${theme === 'dark' ? 'hover:bg-white/5 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}><X size={18} /></button>
+          <button onClick={onClose} className={`p-2 rounded transition-colors duration-[330ms] ${dk ? 'hover:bg-white/5 text-[#5C5E62]' : 'hover:bg-[#F4F4F4] text-[#8E8E8E]'}`}><X size={17} /></button>
         </div>
 
         <div className="px-6 py-5 space-y-5">
-          {/* Role */}
           {!viewOnly && (
-          <div>
-            <label className={`block text-[10px] font-black uppercase tracking-widest mb-2 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>Role</label>
-            <div className={`flex rounded-xl overflow-hidden border ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}>
-              {(['competitor', 'judge', 'organizer'] as const).map((role, i) => {
-                const active = currentRole === role
-                const activeColor = role === 'organizer'
-                  ? 'bg-amber-400/15 text-amber-400'
-                  : role === 'judge'
-                    ? 'bg-purple-400/15 text-purple-400'
-                    : 'bg-sky-400/15 text-sky-400'
-                return (
-                  <button
-                    key={role}
-                    onClick={() => !isMe && onUpdateRole(competitor.id, role)}
-                    disabled={isMe}
-                    className={`
-                      flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-black transition-all
-                      ${i > 0 ? theme === 'dark' ? 'border-l border-white/10' : 'border-l border-slate-200' : ''}
-                      ${active ? activeColor : theme === 'dark' ? 'text-slate-500 hover:text-slate-300 hover:bg-white/5' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}
-                      ${isMe ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
-                    `}
-                  >
-                    <Shield size={10} className="flex-shrink-0" />
-                    <span className="truncate">{role.charAt(0).toUpperCase() + role.slice(1)}</span>
-                  </button>
-                )
-              })}
+            <div>
+              <label className={`block text-xs font-medium mb-2 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Role</label>
+              <div className={`flex rounded border overflow-hidden ${dk ? 'border-white/10' : 'border-[#EEEEEE]'}`}>
+                {(['competitor', 'judge', 'organizer'] as const).map((role, i) => {
+                  const active = currentRole === role
+                  const activeColor = role === 'organizer'
+                    ? 'bg-amber-400/15 text-amber-500'
+                    : role === 'judge'
+                      ? 'bg-purple-400/15 text-purple-400'
+                      : 'bg-[#3E6AE1]/15 text-[#3E6AE1]'
+                  return (
+                    <button
+                      key={role}
+                      onClick={() => !isMe && onUpdateRole(competitor.id, role)}
+                      disabled={isMe}
+                      className={`
+                        flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-medium transition-colors duration-[330ms]
+                        ${i > 0 ? dk ? 'border-l border-white/10' : 'border-l border-[#EEEEEE]' : ''}
+                        ${active ? activeColor : dk ? 'text-[#5C5E62] hover:text-[#D0D1D2] hover:bg-white/5' : 'text-[#8E8E8E] hover:text-[#5C5E62] hover:bg-[#F4F4F4]'}
+                        ${isMe ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
+                      `}
+                    >
+                      <Shield size={10} className="flex-shrink-0" />
+                      <span className="truncate">{role.charAt(0).toUpperCase() + role.slice(1)}</span>
+                    </button>
+                  )
+                })}
+              </div>
+              {isMe && <p className={`text-xs mt-1.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>You cannot change your own role.</p>}
             </div>
-            {isMe && <p className={`text-[10px] mt-1.5 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>You cannot change your own role.</p>}
-          </div>
           )}
 
-          {/* BIB */}
           <div>
-            <label className={`block text-[10px] font-black uppercase tracking-widest mb-2 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+            <label className={`block text-xs font-medium mb-2 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
               BIB Number
-              {isJudgeOrOrganizer && <span className={`ml-2 normal-case tracking-normal font-normal ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>— not applicable for judges/organizers</span>}
+              {isJudgeOrOrganizer && <span className={`ml-2 font-normal ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>— not applicable for judges/organizers</span>}
             </label>
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <Hash size={14} className={`absolute left-3 top-1/2 -translate-y-1/2 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`} />
-                <input type="number" min={0} value={bibInput} onChange={e => setBibInput(e.target.value)} disabled={isJudgeOrOrganizer}
-                  className={`${inputCls} pl-9 ${isJudgeOrOrganizer ? 'opacity-40 cursor-not-allowed' : ''} ${bibError && !isJudgeOrOrganizer ? theme === 'dark' ? '!border-red-400/60' : '!border-red-400' : ''}`} />
+                <Hash size={14} className={`absolute left-3 top-1/2 -translate-y-1/2 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`} />
+                <input
+                  type="number" min={0} value={bibInput}
+                  onChange={e => setBibInput(e.target.value)}
+                  disabled={isJudgeOrOrganizer}
+                  className={`${inputCls} pl-9 ${isJudgeOrOrganizer ? 'opacity-40 cursor-not-allowed' : ''} ${bibError && !isJudgeOrOrganizer ? '!border-red-400/60' : ''}`}
+                />
               </div>
-              <button onClick={() => { if (canSaveBib) onUpdateBib(competitor.id, parseInt(bibInput)) }} disabled={!canSaveBib}
-                className={`flex items-center gap-1.5 px-4 py-3 rounded-xl text-xs font-black transition-all ${!canSaveBib ? 'opacity-40 cursor-not-allowed bg-white/5 text-slate-500' : 'bg-sky-400 text-sky-950 hover:bg-sky-300'}`}>
+              <button
+                onClick={() => { if (canSaveBib) onUpdateBib(competitor.id, parseInt(bibInput)) }}
+                disabled={!canSaveBib}
+                className={`flex items-center gap-1.5 px-4 py-3 rounded text-xs font-medium transition-colors duration-[330ms] ${!canSaveBib ? 'opacity-40 cursor-not-allowed bg-white/5 text-[#5C5E62]' : 'bg-[#3E6AE1] text-white hover:bg-[#3056C7]'}`}
+              >
                 <Save size={13} />Save
               </button>
             </div>
             {bibError && !isJudgeOrOrganizer && (
               <div className="flex items-start gap-1 mt-1.5">
                 <AlertCircle size={11} className="text-red-400 flex-shrink-0 mt-0.5" />
-                <p className="text-[10px] text-red-400 font-bold leading-tight">{bibError}</p>
+                <p className="text-xs text-red-400 leading-tight">{bibError}</p>
               </div>
             )}
           </div>
 
-          {/* Traits */}
           {(competition.traits?.length ?? 0) > 0 && (
             <div>
-              <label className={`block text-[10px] font-black uppercase tracking-widest mb-2 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
-                Traits
-              </label>
+              <label className={`block text-xs font-medium mb-2 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Traits</label>
               <div className="flex flex-wrap gap-1.5">
                 {(competition.traits ?? []).map(trait => {
                   const active = (competitor.traitIds ?? []).includes(trait.id)
                   return (
                     <span
                       key={trait.id}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-black border ${
+                      className={`px-2.5 py-1 rounded text-xs font-medium border ${
                         active
-                          ? 'bg-sky-400/10 text-sky-400 border-sky-400/20'
-                          : theme === 'dark'
-                            ? 'bg-white/[0.03] text-slate-600 border-white/5'
-                            : 'bg-slate-50 text-slate-300 border-slate-100'
+                          ? 'bg-[#3E6AE1]/10 text-[#3E6AE1] border-[#3E6AE1]/20'
+                          : dk
+                            ? 'bg-white/[0.03] text-[#5C5E62] border-white/5'
+                            : 'bg-[#F4F4F4] text-[#D0D1D2] border-[#EEEEEE]'
                       }`}
                     >
                       {trait.name}
@@ -225,7 +225,7 @@ function UserDetailModal({ competitor, allCompetitors, competition, isMe, viewOn
                   )
                 })}
                 {(competitor.traitIds ?? []).length === 0 && (
-                  <span className={`text-xs ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>No traits selected</span>
+                  <span className={`text-xs ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>No traits selected</span>
                 )}
               </div>
             </div>
@@ -233,15 +233,15 @@ function UserDetailModal({ competitor, allCompetitors, competition, isMe, viewOn
         </div>
 
         {!isMe && !viewOnly && (
-          <div className={`px-6 py-4 border-t ${theme === 'dark' ? 'border-white/10' : 'border-slate-100'}`}>
+          <div className={`px-6 py-4 border-t ${dk ? 'border-white/10' : 'border-[#EEEEEE]'}`}>
             {confirmDelete ? (
               <div className="flex items-center gap-3">
-                <p className={`text-xs font-black flex-1 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>Remove {competitor.displayName}?</p>
-                <button onClick={() => { onRemove(); onClose() }} className="px-4 py-2 rounded-xl text-xs font-black bg-red-400 text-white hover:bg-red-500 transition-all">Remove</button>
-                <button onClick={() => setConfirmDelete(false)} className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${theme === 'dark' ? 'bg-white/5 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>Cancel</button>
+                <p className={`text-xs font-medium flex-1 ${dk ? 'text-[#8E8E8E]' : 'text-[#5C5E62]'}`}>Remove {competitor.displayName}?</p>
+                <button onClick={() => { onRemove(); onClose() }} className="px-4 py-2 rounded text-xs font-medium bg-red-400 text-white hover:bg-red-500 transition-colors duration-[330ms]">Remove</button>
+                <button onClick={() => setConfirmDelete(false)} className={`px-4 py-2 rounded text-xs font-medium transition-colors duration-[330ms] ${dk ? 'bg-white/5 text-[#8E8E8E]' : 'bg-[#F4F4F4] text-[#5C5E62]'}`}>Cancel</button>
               </div>
             ) : (
-              <button onClick={() => setConfirmDelete(true)} className={`flex items-center gap-2 text-xs font-black transition-all ${theme === 'dark' ? 'text-slate-600 hover:text-red-400' : 'text-slate-400 hover:text-red-500'}`}>
+              <button onClick={() => setConfirmDelete(true)} className={`flex items-center gap-2 text-xs font-medium transition-colors duration-[330ms] ${dk ? 'text-[#5C5E62] hover:text-red-400' : 'text-[#8E8E8E] hover:text-red-500'}`}>
                 <Trash2 size={13} />Remove from competition
               </button>
             )}
@@ -253,8 +253,9 @@ function UserDetailModal({ competitor, allCompetitors, competition, isMe, viewOn
 }
 
 export default function UsersPage({ competitors, competition, currentUser, theme, lang, viewOnly = false, onUpdateRole, onUpdateBib, onRemoveUser }: UsersPageProps) {
-  const t = translations[lang]
-  const [search, setSearch] = useState('')
+  const t  = translations[lang]
+  const dk = theme === 'dark'
+  const [search,       setSearch]       = useState('')
   const [selectedUser, setSelectedUser] = useState<Competitor | null>(null)
   const [pendingRemove, setPendingRemove] = useState<Competitor | null>(null)
 
@@ -278,34 +279,41 @@ export default function UsersPage({ competitors, competition, currentUser, theme
   return (
     <div className="max-w-3xl mx-auto">
       {viewOnly && (
-        <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border mb-5 ${theme === 'dark' ? 'bg-purple-400/5 border-purple-400/15 text-purple-300' : 'bg-purple-50 border-purple-100 text-purple-700'}`}>
+        <div className={`flex items-center gap-3 px-4 py-3 rounded border mb-5 ${dk ? 'bg-purple-400/5 border-purple-400/15 text-purple-300' : 'bg-purple-50 border-purple-100 text-purple-700'}`}>
           <Shield size={14} className="flex-shrink-0" />
-          <p className="text-xs font-bold">View only — judges can see participants but cannot edit roles, BIBs or remove users.</p>
+          <p className="text-xs font-medium">View only — judges can see participants but cannot edit roles, BIBs or remove users.</p>
         </div>
       )}
+
       <div className="mb-6">
-        <h1 className={`text-2xl font-black tracking-tight ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{t.users}</h1>
+        <h1 className={`text-2xl font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>{t.users}</h1>
         <div className="flex items-center gap-4 mt-1 flex-wrap">
-          <span className={`text-sm ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}><span className="font-black text-sky-400">{competitorCount}</span> competitors</span>
-          <span className={`text-sm ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}><span className="font-black text-purple-400">{judgeCount}</span> judges</span>
-          <span className={`text-sm ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}><span className="font-black text-amber-400">{organizerCount}</span> organizers</span>
+          <span className={`text-sm ${dk ? 'text-[#5C5E62]' : 'text-[#5C5E62]'}`}><span className="font-medium text-[#3E6AE1]">{competitorCount}</span> competitors</span>
+          <span className={`text-sm ${dk ? 'text-[#5C5E62]' : 'text-[#5C5E62]'}`}><span className="font-medium text-purple-400">{judgeCount}</span> judges</span>
+          <span className={`text-sm ${dk ? 'text-[#5C5E62]' : 'text-[#5C5E62]'}`}><span className="font-medium text-amber-500">{organizerCount}</span> organizers</span>
         </div>
       </div>
 
-      <div className={`flex items-center gap-3 px-4 py-3 rounded-2xl border mb-6 ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-slate-200 shadow-sm'}`}>
-        <Search size={16} className={theme === 'dark' ? 'text-slate-500' : 'text-slate-400'} />
-        <input type="text" placeholder={t.searchUsers} value={search} onChange={e => setSearch(e.target.value)} className="flex-1 bg-transparent outline-none text-sm placeholder:text-slate-500" />
-        {search && <button onClick={() => setSearch('')} className={`text-xs font-black ${theme === 'dark' ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'}`}>Clear</button>}
+      <div className={`flex items-center gap-3 px-4 py-3 rounded border mb-6 ${dk ? 'bg-white/5 border-white/10' : 'bg-white border-[#EEEEEE]'}`}>
+        <Search size={15} className="text-[#8E8E8E]" />
+        <input
+          type="text" placeholder={t.searchUsers} value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="flex-1 bg-transparent outline-none text-sm placeholder:text-[#8E8E8E]"
+        />
+        {search && (
+          <button onClick={() => setSearch('')} className={`text-xs font-medium ${dk ? 'text-[#5C5E62] hover:text-[#EEEEEE]' : 'text-[#8E8E8E] hover:text-[#5C5E62]'}`}>Clear</button>
+        )}
       </div>
 
       {visible.length === 0 ? (
-        <div className={`text-center py-20 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
+        <div className={`text-center py-20 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
           <p className="text-4xl mb-4">👤</p>
-          <p className="font-black uppercase tracking-widest text-sm">No users found</p>
+          <p className="font-medium text-sm">No users found</p>
         </div>
       ) : (
-        <div className={`rounded-2xl border overflow-hidden ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}>
-          <div className={`grid grid-cols-[1fr_auto_auto_36px] gap-3 px-5 py-3 text-[10px] font-black uppercase tracking-widest ${theme === 'dark' ? 'bg-white/5 text-slate-500' : 'bg-slate-50 text-slate-400'}`}>
+        <div className={`rounded border overflow-hidden ${dk ? 'border-white/10' : 'border-[#EEEEEE]'}`}>
+          <div className={`grid grid-cols-[1fr_auto_auto_36px] gap-3 px-5 py-3 text-xs font-medium ${dk ? 'bg-white/5 text-[#5C5E62]' : 'bg-[#F4F4F4] text-[#8E8E8E]'}`}>
             <div>Competitor</div>
             <div className="hidden sm:block text-center">Role</div>
             <div className="hidden sm:block text-center">Change</div>
@@ -315,17 +323,20 @@ export default function UsersPage({ competitors, competition, currentUser, theme
             const isEven = index % 2 === 0
             const isMe   = competitor.id === currentUser.id
             return (
-              <div key={competitor.id} className={`grid grid-cols-[1fr_auto_auto_36px] gap-3 px-5 py-3.5 items-center border-t transition-colors ${theme === 'dark' ? `border-white/5 ${isEven ? 'bg-transparent' : 'bg-white/[0.02]'}` : `border-slate-100 ${isEven ? 'bg-white' : 'bg-slate-50/50'}`}`}>
+              <div
+                key={competitor.id}
+                className={`grid grid-cols-[1fr_auto_auto_36px] gap-3 px-5 py-3.5 items-center border-t transition-colors duration-[330ms] ${dk ? `border-white/5 ${isEven ? 'bg-transparent' : 'bg-white/[0.02]'}` : `border-[#EEEEEE] ${isEven ? 'bg-white' : 'bg-[#F4F4F4]/50'}`}`}
+              >
                 <button onClick={() => setSelectedUser(competitor)} className="flex items-center gap-3 min-w-0 text-left hover:opacity-80 transition-opacity">
-                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden ${theme === 'dark' ? 'bg-white/5' : 'bg-slate-100'}`}>
-                    {competitor.avatar ? <span className="text-xl">{competitor.avatar}</span> : <User size={15} className={theme === 'dark' ? 'text-slate-500' : 'text-slate-400'} />}
+                  <div className={`w-8 h-8 rounded flex items-center justify-center flex-shrink-0 overflow-hidden ${dk ? 'bg-white/5' : 'bg-[#F4F4F4]'}`}>
+                    {competitor.avatar ? <span className="text-xl">{competitor.avatar}</span> : <User size={15} className="text-[#8E8E8E]" />}
                   </div>
                   <div className="min-w-0">
-                    <p className={`text-sm font-black leading-tight truncate ${theme === 'dark' ? 'text-slate-100' : 'text-slate-900'}`}>
+                    <p className={`text-sm font-medium leading-tight truncate ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
                       {competitor.displayName}
-                      {isMe && <span className="ml-2 text-[9px] font-black text-sky-400 bg-sky-400/10 px-1.5 py-0.5 rounded-full">You</span>}
+                      {isMe && <span className="ml-2 text-[9px] font-medium text-[#3E6AE1] bg-[#3E6AE1]/10 px-1.5 py-0.5 rounded">You</span>}
                     </p>
-                    <p className={`text-[10px] truncate mt-0.5 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
+                    <p className={`text-xs truncate mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
                       {competitor.email}
                       {competitor.role !== 'judge' && competitor.role !== 'organizer' && <span className="ml-1">· BIB #{competitor.bibNumber}</span>}
                       {(competitor.traitIds ?? []).length > 0 && (
@@ -337,12 +348,15 @@ export default function UsersPage({ competitors, competition, currentUser, theme
                 <div className="hidden sm:flex justify-center"><RoleBadge role={competitor.role} theme={theme} /></div>
                 <div className="hidden sm:flex justify-center">
                   {isMe
-                    ? <span className={`text-[10px] font-black ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>—</span>
+                    ? <span className={`text-xs ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>—</span>
                     : <RoleDropdown competitor={competitor} theme={theme} onUpdateRole={onUpdateRole} />
                   }
                 </div>
                 <div className="flex justify-end">
-                  <button onClick={() => setSelectedUser(competitor)} className={`p-2 rounded-xl transition-all text-xs font-black ${theme === 'dark' ? 'text-slate-600 hover:text-slate-300 hover:bg-white/5' : 'text-slate-300 hover:text-slate-600 hover:bg-slate-100'}`}>···</button>
+                  <button
+                    onClick={() => setSelectedUser(competitor)}
+                    className={`p-2 rounded transition-colors duration-[330ms] text-xs font-medium ${dk ? 'text-[#5C5E62] hover:text-[#D0D1D2] hover:bg-white/5' : 'text-[#D0D1D2] hover:text-[#5C5E62] hover:bg-[#F4F4F4]'}`}
+                  >···</button>
                 </div>
               </div>
             )
@@ -350,9 +364,9 @@ export default function UsersPage({ competitors, competition, currentUser, theme
         </div>
       )}
 
-      <div className={`flex items-start gap-3 mt-6 p-4 rounded-2xl border ${theme === 'dark' ? 'bg-white/[0.02] border-white/5' : 'bg-slate-50 border-slate-100'}`}>
-        <Shield size={14} className={`flex-shrink-0 mt-0.5 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`} />
-        <p className={`text-[11px] leading-relaxed ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
+      <div className={`flex items-start gap-3 mt-6 p-4 rounded border ${dk ? 'bg-white/[0.02] border-white/5' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
+        <Shield size={14} className="flex-shrink-0 mt-0.5 text-[#8E8E8E]" />
+        <p className={`text-xs leading-relaxed ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
           Click any user row to open their detail panel. BIB numbers must be unique — the UI prevents saving a duplicate.
         </p>
       </div>

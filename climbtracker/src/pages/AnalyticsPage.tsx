@@ -29,10 +29,10 @@ function StatCard({
 }) {
   const dk = theme === 'dark'
   return (
-    <div className={`rounded-2xl border p-4 ${dk ? 'bg-white/[0.03] border-white/10' : 'bg-white border-slate-200 shadow-sm'}`}>
-      <p className={`text-[10px] font-black uppercase tracking-widest mb-1 ${dk ? 'text-slate-500' : 'text-slate-400'}`}>{label}</p>
-      <p className={`text-3xl font-black leading-none ${accent}`}>{value}</p>
-      {sub && <p className={`text-xs mt-1 ${dk ? 'text-slate-600' : 'text-slate-400'}`}>{sub}</p>}
+    <div className={`rounded border p-4 ${dk ? 'bg-white/[0.03] border-white/10' : 'bg-white border-[#EEEEEE]'}`}>
+      <p className={`text-[10px] font-medium mb-1 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{label}</p>
+      <p className={`text-3xl font-medium leading-none ${accent}`}>{value}</p>
+      {sub && <p className={`text-xs mt-1 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{sub}</p>}
     </div>
   )
 }
@@ -130,17 +130,16 @@ export default function AnalyticsPage({
   const avgTopsPerCompetitor = filteredCompetitors.length > 0
     ? (totalTops / filteredCompetitors.length).toFixed(1)
     : '0'
-  const hardestBoulder = boulderStats.find(b => b.rate < 30) ?? boulderStats[boulderStats.length - 1]
 
   return (
     <div className="max-w-5xl mx-auto">
 
       {/* ── Header ── */}
       <div className="mb-6">
-        <h1 className={`text-2xl font-black tracking-tight ${dk ? 'text-white' : 'text-slate-900'}`}>
+        <h1 className={`text-2xl font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
           Statistics
         </h1>
-        <p className={`text-sm mt-1 ${dk ? 'text-slate-400' : 'text-slate-500'}`}>
+        <p className={`text-sm mt-1 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
           {competition.name} · Live stats
         </p>
       </div>
@@ -149,7 +148,7 @@ export default function AnalyticsPage({
       {categoryOptions.length > 0 && (
         <div className="mb-6 space-y-3">
           <div className="flex flex-wrap items-center gap-2">
-            <span className={`text-[10px] font-black uppercase tracking-widest w-16 flex-shrink-0 ${dk ? 'text-slate-600' : 'text-slate-400'}`}>
+            <span className={`text-[10px] font-medium w-16 flex-shrink-0 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
               Category
             </span>
             {categoryOptions.map(c => {
@@ -159,12 +158,12 @@ export default function AnalyticsPage({
                   key={c.id}
                   onClick={() => toggleCategory(c.name)}
                   className={`
-                    px-3 py-1.5 rounded-xl text-xs font-black border transition-all
+                    px-3 py-1.5 rounded text-xs font-medium border transition-colors duration-[330ms]
                     ${active
-                      ? 'bg-sky-400/15 border-sky-400/40 text-sky-400'
+                      ? 'bg-[#3E6AE1]/10 border-[#3E6AE1]/30 text-[#3E6AE1]'
                       : dk
-                        ? 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/10'
-                        : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700 shadow-sm'
+                        ? 'bg-white/5 border-white/10 text-[#5C5E62] hover:text-[#D0D1D2] hover:bg-white/10'
+                        : 'bg-white border-[#EEEEEE] text-[#8E8E8E] hover:text-[#393C41]'
                     }
                   `}
                 >
@@ -175,12 +174,12 @@ export default function AnalyticsPage({
           </div>
           {categoryFilters.length > 0 && (
             <div className="flex items-center gap-3">
-              <span className={`text-xs ${dk ? 'text-slate-500' : 'text-slate-400'}`}>
+              <span className={`text-xs ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
                 {filteredCompetitors.length} of {actualCompetitors.length} competitors
               </span>
               <button
                 onClick={() => setCategoryFilters([])}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-black transition-all ${dk ? 'text-red-400 bg-red-400/10 hover:bg-red-400/20' : 'text-red-500 bg-red-50 hover:bg-red-100'}`}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium transition-colors duration-[330ms] ${dk ? 'text-red-400 bg-red-400/10 hover:bg-red-400/20' : 'text-red-500 bg-red-50 hover:bg-red-100'}`}
               >
                 <X size={10} /> Clear
               </button>
@@ -191,45 +190,45 @@ export default function AnalyticsPage({
 
       {/* ── Stat grid ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-        <StatCard label="Competitors"  value={filteredCompetitors.length}  accent="text-sky-400"    theme={theme} />
+        <StatCard label="Competitors"  value={filteredCompetitors.length}  accent="text-[#3E6AE1]"  theme={theme} />
         <StatCard label="Total tops"   value={totalTops}                   accent="text-green-400"  theme={theme} />
         <StatCard label="Flashes"      value={totalFlashes}                accent="text-amber-400"  theme={theme} />
-        <StatCard label="Avg tops"     value={avgTopsPerCompetitor}        accent="text-purple-400" theme={theme} sub="per climber" />
+        <StatCard label="Avg tops"     value={avgTopsPerCompetitor}        accent="text-[#3E6AE1]"  theme={theme} sub="per climber" />
       </div>
 
       {/* ── Completion rates chart ── */}
       {boulderStats.length > 0 && (
-        <div className={`rounded-2xl border p-5 mb-6 ${dk ? 'bg-white/[0.03] border-white/10' : 'bg-white border-slate-200 shadow-sm'}`}>
+        <div className={`rounded border p-5 mb-6 ${dk ? 'bg-white/[0.03] border-white/10' : 'bg-white border-[#EEEEEE]'}`}>
           <div className="flex items-center gap-2 mb-5">
-            <Mountain size={14} className={dk ? 'text-slate-400' : 'text-slate-500'} />
-            <h2 className={`text-sm font-black ${dk ? 'text-slate-200' : 'text-slate-800'}`}>Boulder completion rates</h2>
+            <Mountain size={14} className={dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'} />
+            <h2 className={`text-sm font-medium ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>Boulder completion rates</h2>
           </div>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={boulderStats} barSize={20}>
               <XAxis
                 dataKey="name"
-                tick={{ fontSize: 10, fontWeight: 700, fill: dk ? '#64748b' : '#94a3b8' }}
+                tick={{ fontSize: 10, fontWeight: 500, fill: dk ? '#5C5E62' : '#8E8E8E' }}
                 axisLine={false} tickLine={false}
               />
               <YAxis
                 tickFormatter={v => `${v}%`}
-                tick={{ fontSize: 10, fill: dk ? '#64748b' : '#94a3b8' }}
+                tick={{ fontSize: 10, fill: dk ? '#5C5E62' : '#8E8E8E' }}
                 axisLine={false} tickLine={false} width={32}
               />
               <Tooltip
                 contentStyle={{
-                  background: dk ? '#0f172a' : '#fff',
-                  border: dk ? '1px solid rgba(255,255,255,0.1)' : '1px solid #e2e8f0',
-                  borderRadius: 12,
+                  background: dk ? '#171A20' : '#fff',
+                  border: dk ? '1px solid rgba(255,255,255,0.1)' : '1px solid #EEEEEE',
+                  borderRadius: 4,
                   fontSize: 12,
-                  fontWeight: 700,
+                  fontWeight: 500,
                 }}
-                formatter={(v: number) => [`${v}%`, 'Completion']}
+                formatter={(v) => [`${v ?? 0}%`, 'Completion']}
                 cursor={{ fill: dk ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)' }}
               />
-              <Bar dataKey="rate" radius={[6, 6, 0, 0]}>
+              <Bar dataKey="rate" radius={[2, 2, 0, 0]}>
                 {boulderStats.map((entry, i) => (
-                  <Cell key={i} fill={entry.color || '#38bdf8'} opacity={0.85} />
+                  <Cell key={i} fill={entry.color || '#3E6AE1'} opacity={0.85} />
                 ))}
               </Bar>
             </BarChart>
@@ -238,47 +237,47 @@ export default function AnalyticsPage({
       )}
 
       {/* ── Boulder breakdown table ── */}
-      <div className={`rounded-2xl border overflow-hidden ${dk ? 'bg-white/[0.03] border-white/10' : 'bg-white border-slate-200 shadow-sm'}`}>
-        <div className={`px-5 py-4 border-b flex items-center gap-2 ${dk ? 'border-white/10' : 'border-slate-100'}`}>
-          <BarChart2 size={14} className={dk ? 'text-slate-400' : 'text-slate-500'} />
-          <h2 className={`text-sm font-black ${dk ? 'text-slate-200' : 'text-slate-800'}`}>Boulder breakdown</h2>
+      <div className={`rounded border overflow-hidden ${dk ? 'bg-white/[0.03] border-white/10' : 'bg-white border-[#EEEEEE]'}`}>
+        <div className={`px-5 py-4 border-b flex items-center gap-2 ${dk ? 'border-white/10' : 'border-[#EEEEEE]'}`}>
+          <BarChart2 size={14} className={dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'} />
+          <h2 className={`text-sm font-medium ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>Boulder breakdown</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className={dk ? 'text-slate-600' : 'text-slate-400'}>
+              <tr className={dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}>
                 {['Boulder', 'Tops', 'Zones', 'Flashes', 'Rate'].map(h => (
-                  <th key={h} className="text-[10px] font-black uppercase tracking-widest px-5 py-3 text-left">{h}</th>
+                  <th key={h} className="text-[10px] font-medium px-5 py-3 text-left">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {boulderStats.map((b, i) => (
-                <tr key={b.name} className={`border-t transition-colors ${dk ? 'border-white/5 hover:bg-white/[0.02]' : 'border-slate-50 hover:bg-slate-50'}`}>
+                <tr key={b.name} className={`border-t transition-colors duration-[330ms] ${dk ? 'border-white/5 hover:bg-white/[0.02]' : 'border-[#F4F4F4] hover:bg-[#F4F4F4]'}`}>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-2">
-                      <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: boulderStats[i].color || '#38bdf8' }} />
-                      <span className={`font-black ${dk ? 'text-slate-200' : 'text-slate-800'}`}>{b.name}</span>
+                      <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: boulderStats[i].color || '#3E6AE1' }} />
+                      <span className={`font-medium ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>{b.name}</span>
                     </div>
                   </td>
                   <td className="px-5 py-3">
-                    <span className="font-black text-green-400">{b.tops}</span>
+                    <span className="font-medium text-green-400">{b.tops}</span>
                   </td>
                   <td className="px-5 py-3">
-                    <span className={`font-black ${dk ? 'text-sky-400' : 'text-sky-600'}`}>{b.zones}</span>
+                    <span className={`font-medium text-[#3E6AE1]`}>{b.zones}</span>
                   </td>
                   <td className="px-5 py-3">
-                    <span className="font-black text-amber-400">{b.flashes}</span>
+                    <span className="font-medium text-amber-400">{b.flashes}</span>
                   </td>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-2">
-                      <div className={`h-1.5 w-16 rounded-full overflow-hidden ${dk ? 'bg-white/10' : 'bg-slate-100'}`}>
+                      <div className={`h-1.5 w-16 rounded-full overflow-hidden ${dk ? 'bg-white/10' : 'bg-[#EEEEEE]'}`}>
                         <div
-                          className="h-full rounded-full bg-sky-400"
+                          className="h-full rounded-full bg-[#3E6AE1]"
                           style={{ width: `${b.rate}%` }}
                         />
                       </div>
-                      <span className={`text-xs font-black ${dk ? 'text-slate-400' : 'text-slate-500'}`}>{b.rate}%</span>
+                      <span className={`text-xs font-medium ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{b.rate}%</span>
                     </div>
                   </td>
                 </tr>

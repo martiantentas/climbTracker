@@ -1,1 +1,22 @@
 @import "tailwindcss";
+
+/* ── Tesla Design System Tokens ─────────────────────────────────────────────── */
+:root {
+  /* Primary */
+  --ct-blue:       #3E6AE1;
+  --ct-blue-hover: #3056C7;
+
+  /* Surfaces */
+  --ct-carbon:  #171A20;
+  --ct-ash:     #F4F4F4;
+  --ct-white:   #FFFFFF;
+
+  /* Text hierarchy */
+  --ct-graphite: #393C41;
+  --ct-pewter:   #5C5E62;
+  --ct-silver:   #8E8E8E;
+
+  /* Borders */
+  --ct-cloud: #EEEEEE;
+  --ct-pale:  #D0D1D2;
+}

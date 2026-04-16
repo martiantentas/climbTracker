@@ -84,22 +84,31 @@ function BoulderJudgingRow({
   const totalZones  = boulder.zoneCount ?? 0
   const hasZone     = zonesReached > 0
   const hasActivity = attempts > 0 || hasZone || isTop
+  const dk = theme === 'dark'
 
-  const rowBg = theme === 'dark'
+  const rowBg = dk
     ? isTop     ? 'bg-green-400/5 border-green-400/20'
-      : hasZone ? 'bg-sky-400/5 border-sky-400/20'
+      : hasZone ? 'bg-[#3E6AE1]/5 border-[#3E6AE1]/20'
       : hasActivity ? 'bg-white/[0.03] border-white/10'
       : 'bg-white/[0.02] border-white/5'
     : isTop     ? 'bg-green-50 border-green-200'
-      : hasZone ? 'bg-sky-50 border-sky-200'
-      : 'bg-slate-50 border-slate-200'
+      : hasZone ? 'bg-[#3E6AE1]/5 border-[#3E6AE1]/20'
+      : 'bg-[#F4F4F4] border-[#EEEEEE]'
 
   function handleSave() {
     onLog(attempts, hasZone, zoneAttempts, isTop, zonesReached)
   }
 
+  const counterBtnCls = `
+    w-8 h-8 rounded flex items-center justify-center border transition-colors duration-[330ms]
+    ${dk
+      ? 'bg-white/5 border-white/10 text-[#5C5E62] hover:bg-white/10 disabled:opacity-30'
+      : 'bg-[#F4F4F4] border-[#EEEEEE] text-[#5C5E62] hover:bg-[#EEEEEE] disabled:opacity-30'
+    }
+  `
+
   return (
-    <div className={`rounded-xl border p-4 transition-all ${rowBg}`}>
+    <div className={`rounded border p-4 transition-colors duration-[330ms] ${rowBg}`}>
 
       {/* Boulder header */}
       <div className="flex items-center gap-3 mb-4">
@@ -107,22 +116,22 @@ function BoulderJudgingRow({
           className="w-3 h-3 rounded-full flex-shrink-0"
           style={{ backgroundColor: boulder.color }}
         />
-        <span className={`text-sm font-black ${theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}`}>
+        <span className={`text-sm font-medium ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>
           Boulder #{boulder.number}
           {boulder.name && (
-            <span className={`ml-1.5 font-normal ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+            <span className={`ml-1.5 font-normal ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
               — {boulder.name}
             </span>
           )}
         </span>
         <div className="ml-auto flex items-center gap-2">
           {isTop && (
-            <span className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full border border-green-400/20">
+            <span className="flex items-center gap-1 text-[9px] font-medium text-green-400 bg-green-400/10 px-2 py-0.5 rounded border border-green-400/20">
               <CheckCircle2 size={8} /> Topped
             </span>
           )}
           {!isTop && hasZone && (
-            <span className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-sky-400 bg-sky-400/10 px-2 py-0.5 rounded-full border border-sky-400/20">
+            <span className="flex items-center gap-1 text-[9px] font-medium text-[#3E6AE1] bg-[#3E6AE1]/10 px-2 py-0.5 rounded border border-[#3E6AE1]/20">
               <Target size={8} /> {zonesReached}/{totalZones} zone{totalZones !== 1 ? 's' : ''}
             </span>
           )}
@@ -132,7 +141,7 @@ function BoulderJudgingRow({
       {/* Zone buttons */}
       {totalZones > 0 && (
         <div className="mb-4">
-          <p className={`text-[10px] font-black uppercase tracking-widest mb-2 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
+          <p className={`text-[10px] font-medium mb-2 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
             Zones reached ({zonesReached}/{totalZones})
           </p>
           <div className="flex gap-2 flex-wrap">
@@ -152,13 +161,13 @@ function BoulderJudgingRow({
                     }
                   }}
                   className={`
-                    flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black
-                    border transition-all
+                    flex items-center gap-1.5 px-4 py-2 rounded text-xs font-medium
+                    border transition-colors duration-[330ms]
                     ${isReached
-                      ? 'bg-sky-400/10 text-sky-400 border-sky-400/30'
-                      : theme === 'dark'
-                        ? 'bg-white/5 text-slate-500 border-white/10 hover:bg-white/10'
-                        : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'
+                      ? 'bg-[#3E6AE1]/10 text-[#3E6AE1] border-[#3E6AE1]/30'
+                      : dk
+                        ? 'bg-white/5 text-[#5C5E62] border-white/10 hover:bg-white/10'
+                        : 'bg-[#F4F4F4] text-[#8E8E8E] border-[#EEEEEE] hover:bg-[#EEEEEE]'
                     }
                     ${isLocked ? 'opacity-40 cursor-not-allowed' : ''}
                   `}
@@ -172,23 +181,23 @@ function BoulderJudgingRow({
 
           {hasZone && (
             <div className="flex items-center gap-2 mt-2">
-              <p className={`text-[10px] font-black uppercase tracking-widest ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
+              <p className={`text-[10px] font-medium ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
                 Zone attempts:
               </p>
               <button
                 onClick={() => setZoneAttempts(z => Math.max(1, z - 1))}
                 disabled={isLocked}
-                className={`w-7 h-7 rounded-lg flex items-center justify-center border transition-all ${theme === 'dark' ? 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10' : 'bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-200'}`}
+                className={counterBtnCls}
               >
                 <Minus size={11} />
               </button>
-              <span className={`text-sm font-black w-6 text-center ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
+              <span className={`text-sm font-medium w-6 text-center ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>
                 {zoneAttempts}
               </span>
               <button
                 onClick={() => setZoneAttempts(z => z + 1)}
                 disabled={isLocked}
-                className={`w-7 h-7 rounded-lg flex items-center justify-center border transition-all ${theme === 'dark' ? 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10' : 'bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-200'}`}
+                className={counterBtnCls}
               >
                 <Plus size={11} />
               </button>
@@ -200,24 +209,26 @@ function BoulderJudgingRow({
       {/* Top attempts + Top toggle */}
       <div className="grid grid-cols-2 gap-3 mb-3">
         <div>
-          <p className={`text-[10px] font-black uppercase tracking-widest mb-2 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
+          <p className={`text-[10px] font-medium mb-2 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
             Top attempts
           </p>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setAttempts(a => Math.max(0, a - 1))}
               disabled={isLocked || attempts === 0}
-              className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-all ${theme === 'dark' ? 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 disabled:opacity-30' : 'bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-200 disabled:opacity-30'}`}
+              className={counterBtnCls}
             >
               <Minus size={12} />
             </button>
-            <span className={`text-lg font-black w-8 text-center ${attempts > 0 ? 'text-sky-400' : theme === 'dark' ? 'text-slate-700' : 'text-slate-300'}`}>
+            <span className={`text-lg font-medium w-8 text-center ${
+              attempts > 0 ? 'text-[#3E6AE1]' : dk ? 'text-[#5C5E62]' : 'text-[#D0D1D2]'
+            }`}>
               {attempts}
             </span>
             <button
               onClick={() => setAttempts(a => a + 1)}
               disabled={isLocked}
-              className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-all ${theme === 'dark' ? 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 disabled:opacity-30' : 'bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-200 disabled:opacity-30'}`}
+              className={counterBtnCls}
             >
               <Plus size={12} />
             </button>
@@ -229,13 +240,13 @@ function BoulderJudgingRow({
             onClick={() => setIsTop(t => !t)}
             disabled={isLocked}
             className={`
-              w-full flex items-center justify-center gap-2 py-2.5 rounded-xl
-              text-xs font-black border transition-all
+              w-full flex items-center justify-center gap-2 py-2.5 rounded
+              text-xs font-medium border transition-colors duration-[330ms]
               ${isTop
                 ? 'bg-green-400/10 text-green-400 border-green-400/30'
-                : theme === 'dark'
-                  ? 'bg-white/5 text-slate-500 border-white/10 hover:bg-white/10'
-                  : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'
+                : dk
+                  ? 'bg-white/5 text-[#5C5E62] border-white/10 hover:bg-white/10'
+                  : 'bg-[#F4F4F4] text-[#8E8E8E] border-[#EEEEEE] hover:bg-[#EEEEEE]'
               }
               ${isLocked ? 'opacity-40 cursor-not-allowed' : ''}
             `}
@@ -251,7 +262,7 @@ function BoulderJudgingRow({
         {!isLocked && (
           <button
             onClick={handleSave}
-            className="flex-1 py-2 rounded-lg text-xs font-black bg-sky-400 text-sky-950 hover:bg-sky-300 transition-all"
+            className="flex-1 py-2 rounded text-xs font-medium bg-[#3E6AE1] text-white hover:bg-[#3056C7] transition-colors duration-[330ms]"
           >
             Save score
           </button>
@@ -266,10 +277,10 @@ function BoulderJudgingRow({
               onClear()
             }}
             className={`
-              flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-black border transition-all
-              ${theme === 'dark'
-                ? 'text-slate-600 hover:text-red-400 hover:bg-red-400/10 border-white/5'
-                : 'text-slate-400 hover:text-red-500 hover:bg-red-50 border-slate-200'
+              flex items-center gap-1 px-3 py-2 rounded text-xs font-medium border transition-colors duration-[330ms]
+              ${dk
+                ? 'text-[#5C5E62] hover:text-red-400 hover:bg-red-400/10 border-white/5'
+                : 'text-[#8E8E8E] hover:text-red-500 hover:bg-red-50 border-[#EEEEEE]'
               }
             `}
           >
@@ -279,7 +290,7 @@ function BoulderJudgingRow({
       </div>
 
       {completion && (
-        <p className={`text-[10px] mt-2 text-center ${theme === 'dark' ? 'text-slate-700' : 'text-slate-400'}`}>
+        <p className={`text-[10px] mt-2 text-center ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
           Saved: {completion.attempts} top att. · {completion.zonesReached ?? 0}/{totalZones} zones · top: {completion.topValidated ? 'yes' : 'no'}
         </p>
       )}
@@ -317,6 +328,7 @@ function CompetitorCard({
   onClear,
 }: CompetitorCardProps) {
   const [expanded, setExpanded] = useState(false)
+  const dk = theme === 'dark'
 
   const myCompletions = completions.filter(c => c.competitorId === competitor.id)
   const toppedCount   = myCompletions.filter(c => c.topValidated).length
@@ -329,74 +341,73 @@ function CompetitorCard({
 
   return (
     <div className={`
-      rounded-2xl border overflow-hidden transition-all
-      ${theme === 'dark' ? 'border-white/10 bg-white/[0.02]' : 'border-slate-200 bg-white shadow-sm'}
+      rounded border overflow-hidden transition-colors duration-[330ms]
+      ${dk ? 'border-white/10 bg-white/[0.02]' : 'border-[#EEEEEE] bg-white'}
     `}>
 
       <button
         onClick={() => setExpanded(e => !e)}
         className={`
-          w-full flex items-center gap-4 px-5 py-4 text-left transition-colors
-          ${theme === 'dark' ? 'hover:bg-white/[0.03]' : 'hover:bg-slate-50'}
+          w-full flex items-center gap-4 px-5 py-4 text-left transition-colors duration-[330ms]
+          ${dk ? 'hover:bg-white/[0.03]' : 'hover:bg-[#F4F4F4]'}
         `}
       >
         <div className={`
-          w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden
-          ${theme === 'dark' ? 'bg-white/5' : 'bg-slate-100'}
+          w-10 h-10 rounded flex items-center justify-center flex-shrink-0 overflow-hidden
+          ${dk ? 'bg-white/5' : 'bg-[#F4F4F4]'}
         `}>
           {competitor.avatar
             ? <span className="text-2xl">{competitor.avatar}</span>
-            : <span className={`text-sm font-black ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+            : <span className={`text-sm font-medium ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
                 {competitor.displayName.charAt(0).toUpperCase()}
               </span>
           }
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className={`text-sm font-black truncate ${theme === 'dark' ? 'text-slate-100' : 'text-slate-900'}`}>
+          <p className={`text-sm font-medium truncate ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
             {competitor.displayName}
           </p>
-          <p className={`text-[10px] mt-0.5 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
+          <p className={`text-[10px] mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
             BIB #{competitor.bibNumber}
           </p>
         </div>
 
         <div className="flex items-center gap-3 flex-shrink-0">
-          {/* Score */}
-          <span className={`flex items-center gap-1 text-[9px] font-black px-2 py-1 rounded-full border ${
+          <span className={`flex items-center gap-1 text-[9px] font-medium px-2 py-1 rounded border ${
             score > 0
-              ? 'text-purple-400 bg-purple-400/10 border-purple-400/20'
-              : theme === 'dark'
-                ? 'text-slate-600 bg-white/5 border-white/10'
-                : 'text-slate-400 bg-slate-100 border-slate-200'
+              ? 'text-[#3E6AE1] bg-[#3E6AE1]/10 border-[#3E6AE1]/20'
+              : dk
+                ? 'text-[#5C5E62] bg-white/5 border-white/10'
+                : 'text-[#8E8E8E] bg-[#F4F4F4] border-[#EEEEEE]'
           }`}>
             <Star size={8} />
             {score} pts
           </span>
 
           {toppedCount > 0 && (
-            <span className="flex items-center gap-1 text-[9px] font-black text-green-400 bg-green-400/10 px-2 py-1 rounded-full border border-green-400/20">
+            <span className="flex items-center gap-1 text-[9px] font-medium text-green-400 bg-green-400/10 px-2 py-1 rounded border border-green-400/20">
               <CheckCircle2 size={9} /> {toppedCount} top{toppedCount !== 1 ? 's' : ''}
             </span>
           )}
           {zoneCount > 0 && (
-            <span className="flex items-center gap-1 text-[9px] font-black text-sky-400 bg-sky-400/10 px-2 py-1 rounded-full border border-sky-400/20">
+            <span className="flex items-center gap-1 text-[9px] font-medium text-[#3E6AE1] bg-[#3E6AE1]/10 px-2 py-1 rounded border border-[#3E6AE1]/20">
               <Target size={9} /> {zoneCount} zone{zoneCount !== 1 ? 's' : ''}
             </span>
           )}
-          <span className={`text-[10px] font-black ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+          <span className={`text-[10px] font-medium ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
             {toppedCount}/{puntuableBoulders.length}
           </span>
           {expanded
-            ? <ChevronUp size={16} className={theme === 'dark' ? 'text-slate-500' : 'text-slate-400'} />
-            : <ChevronDown size={16} className={theme === 'dark' ? 'text-slate-500' : 'text-slate-400'} />
+            ? <ChevronUp size={16} className={dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'} />
+            : <ChevronDown size={16} className={dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'} />
           }
         </div>
       </button>
 
       {expanded && (
-        <div className={`px-5 pb-5 border-t space-y-3 ${theme === 'dark' ? 'border-white/5' : 'border-slate-100'}`}>
-          <p className={`text-[10px] font-black uppercase tracking-widest pt-4 mb-3 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
+        <div className={`px-5 pb-5 border-t space-y-3 ${dk ? 'border-white/5' : 'border-[#EEEEEE]'}`}>
+          <p className={`text-[10px] font-medium pt-4 mb-3 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
             Judge-required boulders
           </p>
           {puntuableBoulders.map(boulder => (
@@ -431,7 +442,8 @@ export default function JudgingPage({
   currentUser,
   showSuccess,
 }: JudgingPageProps) {
-  const t = translations[lang]
+  const t  = translations[lang]
+  const dk = theme === 'dark'
   const [search, setSearch] = useState('')
 
   const puntuableBoulders = useMemo(() =>
@@ -475,20 +487,20 @@ export default function JudgingPage({
     <div className="max-w-3xl mx-auto">
 
       <div className="mb-6">
-        <h1 className={`text-2xl font-black tracking-tight ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+        <h1 className={`text-2xl font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
           {t.judging}
         </h1>
-        <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+        <p className={`text-sm mt-1 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
           {competition.name} · {puntuableBoulders.length} judge-required boulder{puntuableBoulders.length !== 1 ? 's' : ''}
         </p>
       </div>
 
       <div className={`
-        flex items-center gap-2 px-4 py-2.5 rounded-xl border mb-6 w-fit
-        ${theme === 'dark' ? 'bg-white/[0.03] border-white/10' : 'bg-white border-slate-200 shadow-sm'}
+        flex items-center gap-2 px-4 py-2.5 rounded border mb-6 w-fit
+        ${dk ? 'bg-white/[0.03] border-white/10' : 'bg-white border-[#EEEEEE]'}
       `}>
-        <ShieldCheck size={14} className="text-sky-400 flex-shrink-0" />
-        <span className={`text-xs font-black uppercase tracking-widest ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'}`}>
+        <ShieldCheck size={14} className="text-[#3E6AE1] flex-shrink-0" />
+        <span className={`text-xs font-medium ${dk ? 'text-[#5C5E62]' : 'text-[#5C5E62]'}`}>
           {competition.scoringMethod === 'self_scoring'
             ? 'Fully self-scoring — judging page not active'
             : competition.scoringMethod === 'self_with_approval'
@@ -501,38 +513,38 @@ export default function JudgingPage({
       <div className="grid grid-cols-3 gap-3 mb-6">
         {[
           { label: 'Topped',    value: toppedCount,              color: 'text-green-400' },
-          { label: 'Zone only', value: zoneCount,                color: 'text-sky-400'   },
+          { label: 'Zone only', value: zoneCount,                color: 'text-[#3E6AE1]' },
           { label: 'Pending',   value: Math.max(0, pendingCount), color: 'text-amber-400' },
         ].map(s => (
-          <div key={s.label} className={`rounded-2xl border p-4 text-center ${theme === 'dark' ? 'bg-white/[0.03] border-white/10' : 'bg-white border-slate-200 shadow-sm'}`}>
-            <p className={`text-2xl font-black ${s.color}`}>{s.value}</p>
-            <p className={`text-[10px] font-black uppercase tracking-widest mt-1 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>{s.label}</p>
+          <div key={s.label} className={`rounded border p-4 text-center ${dk ? 'bg-white/[0.03] border-white/10' : 'bg-white border-[#EEEEEE]'}`}>
+            <p className={`text-2xl font-medium ${s.color}`}>{s.value}</p>
+            <p className={`text-[10px] font-medium mt-1 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{s.label}</p>
           </div>
         ))}
       </div>
 
       {puntuableBoulders.length === 0 ? (
-        <div className={`text-center py-20 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
+        <div className={`text-center py-20 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
           <p className="text-4xl mb-4">🏔️</p>
-          <p className="font-black uppercase tracking-widest text-sm mb-2">No judge-required boulders</p>
+          <p className="font-medium text-sm mb-2">No judge-required boulders</p>
           <p className="text-xs">Toggle "Judge Required" when adding or editing a boulder to enable judging.</p>
         </div>
       ) : (
         <>
           <div className={`
-            flex items-center gap-3 px-4 py-3 rounded-2xl border mb-4
-            ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-slate-200 shadow-sm'}
+            flex items-center gap-3 px-4 py-3 rounded border mb-4
+            ${dk ? 'bg-white/5 border-white/10' : 'bg-white border-[#EEEEEE]'}
           `}>
-            <Search size={14} className={theme === 'dark' ? 'text-slate-500' : 'text-slate-400'} />
+            <Search size={14} className={dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'} />
             <input
               type="text"
               placeholder="Search competitor by name or BIB..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="flex-1 bg-transparent outline-none text-sm placeholder:text-slate-500"
+              className={`flex-1 bg-transparent outline-none text-sm ${dk ? 'placeholder:text-[#5C5E62] text-[#EEEEEE]' : 'placeholder:text-[#8E8E8E] text-[#171A20]'}`}
             />
             {search && (
-              <button onClick={() => setSearch('')} className={`text-xs font-black ${theme === 'dark' ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'}`}>
+              <button onClick={() => setSearch('')} className={`text-xs font-medium ${dk ? 'text-[#5C5E62] hover:text-[#D0D1D2]' : 'text-[#8E8E8E] hover:text-[#393C41]'}`}>
                 Clear
               </button>
             )}
@@ -557,10 +569,10 @@ export default function JudgingPage({
             ))}
           </div>
 
-          <div className={`flex items-start gap-3 mt-6 p-4 rounded-2xl border ${theme === 'dark' ? 'bg-white/[0.02] border-white/5' : 'bg-slate-50 border-slate-100'}`}>
-            <ShieldCheck size={14} className={`flex-shrink-0 mt-0.5 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`} />
-            <p className={`text-[11px] leading-relaxed ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
-              Click a competitor card to expand their judge-required boulders. Use <span className="font-black">+/−</span> to log attempts, toggle zone buttons and <span className="font-black">Top</span>, then hit <span className="font-black">Save score</span>.
+          <div className={`flex items-start gap-3 mt-6 p-4 rounded border ${dk ? 'bg-white/[0.02] border-white/5' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
+            <ShieldCheck size={14} className={`flex-shrink-0 mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`} />
+            <p className={`text-[11px] leading-relaxed ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
+              Click a competitor card to expand their judge-required boulders. Use <span className="font-medium">+/−</span> to log attempts, toggle zone buttons and <span className="font-medium">Top</span>, then hit <span className="font-medium">Save score</span>.
             </p>
           </div>
         </>

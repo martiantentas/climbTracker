@@ -88,7 +88,7 @@ export default function App() {
 function AppInner() {
   const navigate = useNavigate()
 
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark')
+  const [theme, setTheme] = useState<'light' | 'dark'>('light')
   const [lang,  setLang]  = useState<Language>('en')
   const t = translations[lang]
 
@@ -363,7 +363,7 @@ function AppInner() {
 
   if (!activeCompetition) {
     return (
-      <div style={{ minHeight: '100vh', background: '#121212' }} className="flex items-center justify-center">
+      <div style={{ minHeight: '100vh', background: '#171A20' }} className="flex items-center justify-center">
         <p className="text-slate-400">No competition found.</p>
       </div>
     )
@@ -372,7 +372,7 @@ function AppInner() {
   // ── Main app ──────────────────────────────────────────────────────────────
   return (
     <>
-      <div className={`min-h-screen ${theme === 'dark' ? 'text-slate-100' : 'bg-slate-50 text-slate-900'}`} style={theme === 'dark' ? { background: '#121212' } : {}}>
+      <div className={`min-h-screen ${theme === 'dark' ? 'text-[#EEEEEE]' : 'bg-white text-[#171A20]'}`} style={theme === 'dark' ? { background: '#171A20' } : {}}>
 
         <Toast message={toast.message} visible={toast.visible} theme={theme} />
 

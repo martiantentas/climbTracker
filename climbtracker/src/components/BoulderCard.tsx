@@ -4,28 +4,27 @@ import type { Boulder, Completion, DifficultyLevel, AttemptTracking } from '../t
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
 interface BoulderCardProps {
-  boulder:         Boulder
-  completion:      Completion | undefined
-  difficulty:      DifficultyLevel | undefined
-  points:          number
-  basePoints:      number   // un-penalised points — used to show penalty delta
+  boulder:          Boulder
+  completion:       Completion | undefined
+  difficulty:       DifficultyLevel | undefined
+  points:           number
+  basePoints:       number
   penalizeAttempts: boolean
-  penaltyLabel:    string   // e.g. "−40 pts" or "−20%" pre-formatted
-  isOrganizer:     boolean
-  isLocked:        boolean
-  theme:           'light' | 'dark'
-  attemptTracking: AttemptTracking
+  penaltyLabel:     string
+  isOrganizer:      boolean
+  isLocked:         boolean
+  theme:            'light' | 'dark'
+  attemptTracking:  AttemptTracking
   maxFixedAttempts: number
-  onToggle:        (boulderId: string, attempts: number, forceStatus: boolean) => void
-  onEdit?:         (boulder: Boulder) => void
+  onToggle:         (boulderId: string, attempts: number, forceStatus: boolean) => void
+  onEdit?:          (boulder: Boulder) => void
 }
 
 // ─── ATTEMPT UI: FIXED OPTIONS ────────────────────────────────────────────────
-// Pill buttons: 1, 2, …, N-1, N+
 
 interface FixedAttemptButtonsProps {
   current:  number
-  max:      number          // highest labelled number; ≥ max shown as "N+"
+  max:      number
   theme:    'light' | 'dark'
   onChange: (attempts: number) => void
 }
@@ -45,13 +44,13 @@ function FixedAttemptButtons({ current, max, theme, onChange }: FixedAttemptButt
             key={n}
             onClick={e => { e.stopPropagation(); onChange(n) }}
             className={`
-              flex-1 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider
-              transition-all duration-150
+              flex-1 py-1 rounded text-[10px] font-medium
+              transition-colors duration-[330ms]
               ${isActive
-                ? 'bg-sky-400 text-sky-950'
+                ? 'bg-[#3E6AE1] text-white'
                 : theme === 'dark'
-                  ? 'bg-white/10 text-slate-400 hover:bg-white/20'
-                  : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
+                  ? 'bg-white/10 text-[#8E8E8E] hover:bg-white/20'
+                  : 'bg-[#EEEEEE] text-[#5C5E62] hover:bg-[#D0D1D2]'
               }
             `}
           >
@@ -78,31 +77,31 @@ function AttemptStepper({ current, theme, onChange }: StepperProps) {
         onClick={() => onChange(Math.max(1, current - 1))}
         disabled={current <= 1}
         className={`
-          w-7 h-7 rounded-lg flex items-center justify-center border transition-all
+          w-7 h-7 rounded flex items-center justify-center border transition-colors duration-[330ms]
           ${theme === 'dark'
-            ? 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 disabled:opacity-30'
-            : 'bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-200 disabled:opacity-30'
+            ? 'bg-white/5 border-white/10 text-[#8E8E8E] hover:bg-white/10 disabled:opacity-30'
+            : 'bg-[#F4F4F4] border-[#EEEEEE] text-[#5C5E62] hover:bg-[#EEEEEE] disabled:opacity-30'
           }
         `}
       >
         <Minus size={11} />
       </button>
-      <span className={`text-sm font-black w-6 text-center ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
+      <span className={`text-sm font-medium w-6 text-center ${theme === 'dark' ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>
         {current}
       </span>
       <button
         onClick={() => onChange(current + 1)}
         className={`
-          w-7 h-7 rounded-lg flex items-center justify-center border transition-all
+          w-7 h-7 rounded flex items-center justify-center border transition-colors duration-[330ms]
           ${theme === 'dark'
-            ? 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
-            : 'bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-200'
+            ? 'bg-white/5 border-white/10 text-[#8E8E8E] hover:bg-white/10'
+            : 'bg-[#F4F4F4] border-[#EEEEEE] text-[#5C5E62] hover:bg-[#EEEEEE]'
           }
         `}
       >
         <Plus size={11} />
       </button>
-      <span className={`text-[10px] ml-1 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
+      <span className={`text-[10px] ml-1 ${theme === 'dark' ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
         tries
       </span>
     </div>
@@ -116,7 +115,7 @@ export default function BoulderCard({
   completion,
   difficulty,
   points,
-  basePoints,
+  basePoints: _basePoints,
   penalizeAttempts,
   penaltyLabel,
   isOrganizer,
@@ -131,7 +130,6 @@ export default function BoulderCard({
   const isFlash  = isTopped && completion.attempts === 1
   const holdColor = boulder.color ?? '#94a3b8'
 
-  // ── Handle card click ─────────────────────────────────────────────────────
   function handleClick() {
     if (isLocked) return
     if (boulder.isPuntuable && !isOrganizer) return
@@ -140,7 +138,6 @@ export default function BoulderCard({
     if (isTopped) {
       onToggle(boulder.id, completion.attempts, false)
     } else {
-      // When toggling on, default to 1 attempt regardless of tracking mode
       onToggle(boulder.id, 1, true)
     }
   }
@@ -150,9 +147,6 @@ export default function BoulderCard({
     onToggle(boulder.id, attempts, true)
   }
 
-  // ── Whether to show the attempt controls at all ───────────────────────────
-  // Only shown when: topped, not locked, not organizer, not puntuable,
-  // and tracking mode is not 'none'.
   const showAttemptControls =
     isTopped &&
     !isLocked &&
@@ -160,27 +154,26 @@ export default function BoulderCard({
     !boulder.isPuntuable &&
     attemptTracking !== 'none'
 
-  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div
       onClick={handleClick}
       className={`
-        relative rounded-2xl border cursor-pointer
-        transition-all duration-200 overflow-hidden
+        relative rounded border cursor-pointer
+        transition-colors duration-[330ms] overflow-hidden
         ${isTopped
           ? theme === 'dark'
-            ? 'bg-sky-400/10 border-sky-400/30 shadow-lg shadow-sky-400/10'
-            : 'bg-sky-50 border-sky-200 shadow-md shadow-sky-100'
+            ? 'bg-[#3E6AE1]/10 border-[#3E6AE1]/30'
+            : 'bg-[#3E6AE1]/5 border-[#3E6AE1]/20'
           : theme === 'dark'
             ? 'bg-white/5 border-white/10 hover:bg-white/8 hover:border-white/20'
-            : 'bg-white border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-sm'
+            : 'bg-white border-[#EEEEEE] hover:bg-[#F4F4F4] hover:border-[#D0D1D2]'
         }
         ${isLocked ? 'opacity-60 cursor-not-allowed' : ''}
       `}
     >
       {/* Colour accent bar */}
       <div
-        className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl"
+        className="absolute left-0 top-0 bottom-0 w-1"
         style={{ backgroundColor: holdColor }}
       />
 
@@ -190,20 +183,20 @@ export default function BoulderCard({
         <div className="flex items-start justify-between mb-2">
           <div className="flex items-center gap-2">
             <div
-              className="w-3 h-3 rounded-full flex-shrink-0 ring-2 ring-white/20"
+              className="w-2.5 h-2.5 rounded-full flex-shrink-0"
               style={{ backgroundColor: holdColor }}
             />
-            <span className={`text-lg font-black leading-none ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+            <span className={`text-lg font-medium leading-none ${theme === 'dark' ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
               #{boulder.number}
             </span>
           </div>
 
           {isTopped && (
             <div className={`
-              flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest
+              flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-medium
               ${isFlash
-                ? 'bg-amber-400/20 text-amber-400 border border-amber-400/30'
-                : 'bg-sky-400/20 text-sky-400 border border-sky-400/30'
+                ? 'bg-amber-400/15 text-amber-500 border border-amber-400/30'
+                : 'bg-[#3E6AE1]/15 text-[#3E6AE1] border border-[#3E6AE1]/30'
               }
             `}>
               <Check size={9} strokeWidth={3} />
@@ -214,7 +207,7 @@ export default function BoulderCard({
 
         {/* Name */}
         {boulder.name && (
-          <p className={`text-xs font-bold mb-1 truncate ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
+          <p className={`text-xs font-medium mb-1 truncate ${theme === 'dark' ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>
             {boulder.name}
           </p>
         )}
@@ -222,9 +215,9 @@ export default function BoulderCard({
         {/* Style tag */}
         {boulder.style && (
           <span className={`
-            inline-block text-[9px] font-black uppercase tracking-widest
-            px-2 py-0.5 rounded-md mb-2
-            ${theme === 'dark' ? 'bg-white/10 text-slate-400' : 'bg-slate-100 text-slate-500'}
+            inline-block text-[9px] font-medium
+            px-2 py-0.5 rounded mb-2
+            ${theme === 'dark' ? 'bg-white/10 text-[#8E8E8E]' : 'bg-[#F4F4F4] text-[#5C5E62]'}
           `}>
             {boulder.style}
           </span>
@@ -234,17 +227,16 @@ export default function BoulderCard({
         <div className="flex items-center justify-between mt-1">
           <div>
             <span className={`
-              text-xl font-black leading-none
-              ${isTopped ? 'text-sky-400' : theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}
+              text-xl font-medium leading-none
+              ${isTopped ? 'text-[#3E6AE1]' : theme === 'dark' ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}
             `}>
               {points}
             </span>
-            <span className={`text-[10px] ml-1 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
+            <span className={`text-[10px] ml-1 ${theme === 'dark' ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
               pts
             </span>
-            {/* Penalty indicator — only shown when topped with >1 attempt and penalty active */}
             {isTopped && penalizeAttempts && (completion?.attempts ?? 1) > 1 && penaltyLabel && (
-              <span className="ml-2 text-[10px] font-black text-red-400 bg-red-400/10 px-1.5 py-0.5 rounded-md">
+              <span className="ml-2 text-[10px] font-medium text-red-400 bg-red-400/10 px-1.5 py-0.5 rounded">
                 {penaltyLabel}
               </span>
             )}
@@ -252,10 +244,10 @@ export default function BoulderCard({
 
           {difficulty && (
             <span className={`
-              text-[10px] font-black px-2.5 py-1 rounded-lg border
+              text-[10px] font-medium px-2.5 py-1 rounded border
               ${theme === 'dark'
-                ? 'bg-white/10 text-slate-300 border-white/20'
-                : 'bg-slate-100 text-slate-600 border-slate-200'
+                ? 'bg-white/5 text-[#D0D1D2] border-white/10'
+                : 'bg-[#F4F4F4] text-[#5C5E62] border-[#EEEEEE]'
               }
             `}>
               L{difficulty.level}
@@ -264,20 +256,20 @@ export default function BoulderCard({
           )}
         </div>
 
-        {/* ── Judge-required notice ── */}
+        {/* Judge-required notice */}
         {boulder.isPuntuable && !isOrganizer && (
           <div className={`
-            flex items-center gap-1.5 mt-2 px-2 py-1.5 rounded-xl
+            flex items-center gap-1.5 mt-2 px-2 py-1.5 rounded
             ${theme === 'dark' ? 'bg-purple-400/10 border border-purple-400/20' : 'bg-purple-50 border border-purple-100'}
           `}>
             <ShieldCheck size={11} className="text-purple-400 flex-shrink-0" />
-            <span className="text-[9px] font-black uppercase tracking-widest text-purple-400">
+            <span className="text-[9px] font-medium text-purple-400">
               Judge required
             </span>
           </div>
         )}
 
-        {/* ── Attempt controls — mode-aware ── */}
+        {/* Attempt controls */}
         {showAttemptControls && (
           attemptTracking === 'fixed_options' ? (
             <FixedAttemptButtons
@@ -287,7 +279,6 @@ export default function BoulderCard({
               onChange={handleAttemptChange}
             />
           ) : (
-            // 'count' mode
             <AttemptStepper
               current={completion.attempts}
               theme={theme}
@@ -296,11 +287,11 @@ export default function BoulderCard({
           )
         )}
 
-        {/* ── Locked: show attempt summary ── */}
+        {/* Locked: show attempt summary */}
         {isLocked && isTopped && (
           <div className="flex items-center gap-1 mt-2">
-            <RotateCcw size={10} className="text-slate-500" />
-            <span className="text-[9px] text-slate-500 uppercase tracking-widest font-black">
+            <RotateCcw size={10} className="text-[#8E8E8E]" />
+            <span className="text-[9px] text-[#8E8E8E] font-medium">
               {attemptTracking === 'none'
                 ? 'Topped'
                 : `${completion.attempts} attempt${completion.attempts !== 1 ? 's' : ''}`
@@ -309,9 +300,9 @@ export default function BoulderCard({
           </div>
         )}
 
-        {/* ── Organizer edit hint ── */}
+        {/* Organizer edit hint */}
         {isOrganizer && (
-          <p className={`text-[9px] uppercase tracking-widest mt-2 font-black ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
+          <p className={`text-[9px] mt-2 font-medium ${theme === 'dark' ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
             Tap to edit
           </p>
         )}

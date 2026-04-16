@@ -18,7 +18,7 @@ interface NavBarProps {
   activeCompetition: Competition
   isOrganizer:       boolean
   isJudge?:          boolean
-  canAccessComp?:    boolean   // optional — old App versions don't pass this
+  canAccessComp?:    boolean
   onOpenMenu:        () => void
   onLogout:          () => void
 }
@@ -39,15 +39,13 @@ function NavPill({ to, label, theme }: NavPillProps) {
     <Link
       to={to}
       className={`
-        px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.12em]
-        transition-all duration-200 whitespace-nowrap
+        px-4 py-2 rounded text-sm font-medium
+        transition-colors duration-[330ms] whitespace-nowrap
         ${isActive
-          ? theme === 'dark'
-            ? 'bg-sky-400 text-sky-950 shadow-lg shadow-sky-400/20'
-            : 'bg-white text-slate-900 shadow-sm border border-slate-200'
+          ? 'bg-[#3E6AE1]/10 text-[#3E6AE1]'
           : theme === 'dark'
-            ? 'text-slate-500 hover:text-slate-200'
-            : 'text-slate-500 hover:text-slate-900'
+            ? 'text-[#8E8E8E] hover:text-[#EEEEEE]'
+            : 'text-[#5C5E62] hover:text-[#171A20]'
         }
       `}
     >
@@ -75,15 +73,14 @@ export default function NavBar({
   return (
     <header
       className={`
-        sticky top-0 z-[100] w-full border-b transition-all duration-300
+        sticky top-0 z-[100] w-full border-b transition-colors duration-[330ms]
         ${theme === 'dark'
-          ? 'backdrop-blur-xl border-white/5 shadow-lg shadow-black/30'
-          : 'bg-white/80 backdrop-blur-xl border-slate-200 shadow-sm'
+          ? 'bg-[#171A20] border-white/10'
+          : 'bg-white border-[#EEEEEE]'
         }
       `}
-      style={theme === 'dark' ? { backgroundColor: 'rgba(18, 18, 18, 0.85)' } : undefined}
     >
-      <div className="w-full px-4 md:px-6 py-2 flex items-center gap-4">
+      <div className="w-full px-4 md:px-6 py-2 flex items-center gap-3">
 
         {/* ── Logo ── */}
         <div className="flex-shrink-0">
@@ -95,39 +92,30 @@ export default function NavBar({
         </div>
 
         {/* ── Status dot + competition name ── */}
-        <div className={`
-          hidden md:flex items-center gap-2 flex-shrink-0
-          px-3 py-1.5 rounded-lg
-          ${theme === 'dark' ? 'bg-white/5' : 'bg-slate-100'}
-        `}>
+        <div className="hidden md:flex items-center gap-2 flex-shrink-0 px-3 py-1.5">
           <div
-            className="w-2 h-2 rounded-full animate-pulse flex-shrink-0"
+            className="w-2 h-2 rounded-full flex-shrink-0"
             style={{ backgroundColor: getStatusColor(activeCompetition.status) }}
           />
           <span className={`
-            text-[10px] font-black uppercase tracking-widest whitespace-nowrap max-w-[140px] truncate
-            ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'}
+            text-xs font-medium whitespace-nowrap max-w-[140px] truncate
+            ${theme === 'dark' ? 'text-[#5C5E62]' : 'text-[#5C5E62]'}
           `}>
             {activeCompetition.name}
           </span>
         </div>
 
         {/* ── Centre: Nav pills ── */}
-        <nav className={`
-          hidden lg:flex items-center gap-1 p-1.5 rounded-2xl overflow-x-auto
-          ${theme === 'dark' ? 'bg-white/5 border border-white/5' : 'bg-slate-200/50'}
-        `}>
+        <nav className="hidden lg:flex items-center gap-0.5 overflow-x-auto">
           <NavPill to="/"             label={t.boulders}       theme={theme} />
           <NavPill to="/leaderboard"  label={t.leaderboard}    theme={theme} />
           <NavPill to="/rules"        label="Rules"            theme={theme} />
-          {/* Event Settings — competitors only, not judges */}
           {!isOrganizer && !isJudge && (
             <NavPill to="/event-profile" label="Event Settings" theme={theme} />
           )}
-          <div className="w-px h-4 bg-slate-500/20 mx-1 flex-shrink-0" />
+          <div className={`w-px h-4 mx-2 flex-shrink-0 ${theme === 'dark' ? 'bg-white/10' : 'bg-[#EEEEEE]'}`} />
           <NavPill to="/competitions" label={t.myCompetitions} theme={theme} />
 
-          {/* Organizer-only pills */}
           {isOrganizer && (
             <>
               <NavPill to="/users"     label={t.users}     theme={theme} />
@@ -136,7 +124,6 @@ export default function NavBar({
             </>
           )}
 
-          {/* Judge pills — users, analytics (view), judging (full) */}
           {isJudge && !isOrganizer && (
             <>
               <NavPill to="/users"     label={t.users}     theme={theme} />
@@ -147,18 +134,18 @@ export default function NavBar({
         </nav>
 
         {/* ── Right: Controls ── */}
-        <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
+        <div className="flex items-center gap-1 flex-shrink-0 ml-auto">
 
           {/* Language selector */}
           <select
             value={lang}
             onChange={e => setLang(e.target.value as Language)}
             className={`
-              text-[11px] font-black bg-transparent border-none outline-none
-              cursor-pointer px-1 py-2 rounded-xl transition-all
+              text-xs font-medium bg-transparent border-none outline-none
+              cursor-pointer px-2 py-2 rounded transition-colors duration-[330ms]
               ${theme === 'dark'
-                ? 'text-slate-400 hover:bg-white/10'
-                : 'text-slate-600 hover:bg-slate-100'
+                ? 'text-[#5C5E62] hover:bg-white/5'
+                : 'text-[#5C5E62] hover:bg-[#F4F4F4]'
               }
             `}
           >
@@ -171,14 +158,14 @@ export default function NavBar({
           <button
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             className={`
-              p-2 rounded-xl transition-all
+              p-2 rounded transition-colors duration-[330ms]
               ${theme === 'dark'
-                ? 'bg-white/5 text-slate-400 hover:text-sky-300'
-                : 'bg-slate-100 text-slate-500 hover:text-sky-600'
+                ? 'text-[#5C5E62] hover:text-[#EEEEEE] hover:bg-white/5'
+                : 'text-[#5C5E62] hover:text-[#171A20] hover:bg-[#F4F4F4]'
               }
             `}
           >
-            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
           </button>
 
           {/* Settings icon — organizer only */}
@@ -186,14 +173,14 @@ export default function NavBar({
             <Link
               to="/settings"
               className={`
-                p-2.5 rounded-xl transition-all
+                p-2 rounded transition-colors duration-[330ms]
                 ${theme === 'dark'
-                  ? 'bg-white/5 text-slate-400 hover:text-sky-300 hover:bg-white/10'
-                  : 'bg-slate-100 text-slate-500 hover:text-sky-600 hover:bg-slate-200'
+                  ? 'text-[#5C5E62] hover:text-[#EEEEEE] hover:bg-white/5'
+                  : 'text-[#5C5E62] hover:text-[#171A20] hover:bg-[#F4F4F4]'
                 }
               `}
             >
-              <Settings size={18} />
+              <Settings size={17} />
             </Link>
           )}
 
@@ -201,31 +188,31 @@ export default function NavBar({
           <Link
             to="/profile"
             className={`
-              p-2.5 rounded-xl transition-all
+              p-2 rounded transition-colors duration-[330ms]
               ${theme === 'dark'
-                ? 'bg-white/5 text-slate-400 hover:text-sky-300 hover:bg-white/10'
-                : 'bg-slate-100 text-slate-500 hover:text-sky-600 hover:bg-slate-200'
+                ? 'text-[#5C5E62] hover:text-[#EEEEEE] hover:bg-white/5'
+                : 'text-[#5C5E62] hover:text-[#171A20] hover:bg-[#F4F4F4]'
               }
             `}
           >
-            <User size={18} />
+            <User size={17} />
           </Link>
 
           {/* Logout */}
           <button
             onClick={onLogout}
-            className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black uppercase tracking-widest text-red-400 hover:bg-red-400/10 transition-all"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded text-xs font-medium text-red-400 hover:bg-red-400/10 transition-colors duration-[330ms]"
           >
-            <LogOut size={15} />
+            <LogOut size={14} />
             {t.logout}
           </button>
 
           {/* Hamburger — mobile only */}
           <button
             onClick={onOpenMenu}
-            className="lg:hidden p-2 rounded-xl bg-sky-400 text-sky-950 shadow-lg shadow-sky-400/20"
+            className="lg:hidden p-2 rounded bg-[#3E6AE1] text-white hover:bg-[#3056C7] transition-colors duration-[330ms]"
           >
-            <Menu size={18} />
+            <Menu size={17} />
           </button>
 
         </div>

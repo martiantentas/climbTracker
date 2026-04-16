@@ -13,32 +13,32 @@ interface ProfilePageProps {
   theme:        'light' | 'dark'
   lang:         Language
   onJoinByCode: (code: string) => boolean
-  onSave:       (updated: Competitor) => void   // ← persists changes to App state
+  onSave:       (updated: Competitor) => void
 }
 
 // ─── INFO ROW ─────────────────────────────────────────────────────────────────
 
 interface InfoRowProps {
-  icon:    React.ReactNode
-  label:   string
-  value:   string | undefined
-  theme:   'light' | 'dark'
+  icon:  React.ReactNode
+  label: string
+  value: string | undefined
+  theme: 'light' | 'dark'
 }
 
 function InfoRow({ icon, label, value, theme }: InfoRowProps) {
   return (
     <div className="flex items-center gap-4 py-3">
       <div className={`
-        w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0
-        ${theme === 'dark' ? 'bg-white/5 text-slate-400' : 'bg-slate-100 text-slate-500'}
+        w-8 h-8 rounded flex items-center justify-center flex-shrink-0
+        ${theme === 'dark' ? 'bg-white/5 text-[#5C5E62]' : 'bg-[#F4F4F4] text-[#5C5E62]'}
       `}>
         {icon}
       </div>
       <div className="flex-1 min-w-0">
-        <p className={`text-[10px] font-black uppercase tracking-widest mb-0.5 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
+        <p className={`text-xs font-medium mb-0.5 ${theme === 'dark' ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
           {label}
         </p>
-        <p className={`text-sm font-bold truncate ${theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}`}>
+        <p className={`text-sm truncate ${theme === 'dark' ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>
           {value ?? '—'}
         </p>
       </div>
@@ -55,10 +55,10 @@ const GENDER_OPTIONS = ['Male', 'Female', 'Prefer not to say']
 function SectionLabel({ label, theme }: { label: string; theme: 'light' | 'dark' }) {
   return (
     <p className={`
-      text-[10px] font-black uppercase tracking-widest px-6 py-2 border-b
+      text-xs font-medium px-6 py-2 border-b
       ${theme === 'dark'
-        ? 'text-slate-600 border-white/5 bg-white/[0.02]'
-        : 'text-slate-400 border-slate-100 bg-slate-50'
+        ? 'text-[#5C5E62] border-white/10 bg-white/[0.02]'
+        : 'text-[#8E8E8E] border-[#EEEEEE] bg-[#F4F4F4]'
       }
     `}>
       {label}
@@ -78,20 +78,17 @@ export default function ProfilePage({
   const t  = translations[lang]
   const dk = theme === 'dark'
 
-  // ── Edit state ───────────────────────────────────────────────────────────
   const [isEditing,   setIsEditing]   = useState(false)
   const [displayName, setDisplayName] = useState(currentUser.displayName)
   const [email,       setEmail]       = useState(currentUser.email)
   const [gender,      setGender]      = useState(currentUser.gender)
   const [avatar,      setAvatar]      = useState(currentUser.avatar ?? '')
 
-  // ── Join by code state ───────────────────────────────────────────────────
   const [joinCode,    setJoinCode]    = useState('')
   const [codeError,   setCodeError]   = useState(false)
   const [codeSuccess, setCodeSuccess] = useState(false)
 
   function handleSave() {
-    // Build updated user and push it up to App so the change persists
     const updated: Competitor = {
       ...currentUser,
       displayName: displayName.trim() || currentUser.displayName,
@@ -104,7 +101,6 @@ export default function ProfilePage({
   }
 
   function handleCancel() {
-    // Reset local draft back to current persisted values
     setDisplayName(currentUser.displayName)
     setEmail(currentUser.email)
     setGender(currentUser.gender)
@@ -126,38 +122,36 @@ export default function ProfilePage({
     }
   }
 
-  // ── Shared styles ────────────────────────────────────────────────────────
   const inputClass = `
-    w-full px-4 py-3 rounded-xl border outline-none text-sm transition-all
-    ${theme === 'dark'
-      ? 'bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:border-sky-400/50'
-      : 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-sky-400'
+    w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms]
+    ${dk
+      ? 'bg-white/5 border-white/10 text-[#EEEEEE] placeholder:text-[#5C5E62] focus:border-[#3E6AE1]/50'
+      : 'bg-white border-[#EEEEEE] text-[#171A20] placeholder:text-[#8E8E8E] focus:border-[#3E6AE1]'
     }
   `
 
   const selectClass = `
-    w-full px-4 py-3 rounded-xl border outline-none text-sm transition-all cursor-pointer
-    ${theme === 'dark'
-      ? 'bg-white/5 border-white/10 text-white focus:border-sky-400/50'
-      : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-sky-400'
+    w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms] cursor-pointer
+    ${dk
+      ? 'bg-white/5 border-white/10 text-[#EEEEEE] focus:border-[#3E6AE1]/50'
+      : 'bg-white border-[#EEEEEE] text-[#171A20] focus:border-[#3E6AE1]'
     }
   `
 
   const cardClass = `
-    rounded-2xl border mb-4 overflow-hidden
-    ${theme === 'dark'
+    rounded border mb-4 overflow-hidden
+    ${dk
       ? 'bg-white/[0.03] border-white/10'
-      : 'bg-white border-slate-200 shadow-sm'
+      : 'bg-white border-[#EEEEEE]'
     }
   `
 
-  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="max-w-2xl mx-auto">
 
-      {/* ── Page header ── */}
+      {/* Page header */}
       <div className="flex items-center justify-between mb-8">
-        <h1 className={`text-2xl font-black tracking-tight ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+        <h1 className={`text-2xl font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
           {t.profile}
         </h1>
 
@@ -165,14 +159,14 @@ export default function ProfilePage({
           <button
             onClick={() => setIsEditing(true)}
             className={`
-              flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-black transition-all
-              ${theme === 'dark'
-                ? 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white border border-white/10'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200'
+              flex items-center gap-2 px-4 py-2 rounded text-sm font-medium transition-colors duration-[330ms]
+              ${dk
+                ? 'bg-white/5 text-[#8E8E8E] hover:bg-white/10 hover:text-[#EEEEEE] border border-white/10'
+                : 'bg-[#F4F4F4] text-[#5C5E62] hover:bg-[#EEEEEE] border border-[#EEEEEE]'
               }
             `}
           >
-            <Edit3 size={15} />
+            <Edit3 size={14} />
             Edit
           </button>
         ) : (
@@ -180,72 +174,69 @@ export default function ProfilePage({
             <button
               onClick={handleCancel}
               className={`
-                flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-black transition-all
-                ${theme === 'dark'
-                  ? 'bg-white/5 text-slate-400 hover:bg-white/10 border border-white/10'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200'
+                flex items-center gap-2 px-4 py-2 rounded text-sm font-medium transition-colors duration-[330ms]
+                ${dk
+                  ? 'bg-white/5 text-[#8E8E8E] hover:bg-white/10 border border-white/10'
+                  : 'bg-[#F4F4F4] text-[#5C5E62] hover:bg-[#EEEEEE] border border-[#EEEEEE]'
                 }
               `}
             >
-              <X size={15} />
+              <X size={14} />
               {t.cancel}
             </button>
             <button
               onClick={handleSave}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-black bg-sky-400 text-sky-950 hover:bg-sky-300 transition-all"
+              className="flex items-center gap-2 px-4 py-2 rounded text-sm font-medium bg-[#3E6AE1] text-white hover:bg-[#3056C7] transition-colors duration-[330ms]"
             >
-              <Save size={15} />
+              <Save size={14} />
               {t.save}
             </button>
           </div>
         )}
       </div>
 
-      {/* ── Avatar + name banner ── */}
+      {/* Avatar + name banner */}
       <div className={`${cardClass} p-6 flex items-center gap-5`}>
-        {/* Avatar display — clickable to open edit if in editing mode */}
         <div
           onClick={() => { if (!isEditing) setIsEditing(true) }}
           className={`
-            w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 overflow-hidden text-3xl
-            transition-all relative group
+            w-16 h-16 rounded flex items-center justify-center flex-shrink-0 overflow-hidden text-3xl
+            transition-colors duration-[330ms] relative group
             ${currentUser.avatar
-              ? dk ? 'bg-white/5' : 'bg-slate-100'
-              : 'bg-sky-400/20'
+              ? dk ? 'bg-white/5' : 'bg-[#F4F4F4]'
+              : 'bg-[#3E6AE1]/10'
             }
-            ${!isEditing ? 'cursor-pointer hover:ring-2 hover:ring-sky-400/50' : ''}
+            ${!isEditing ? 'cursor-pointer hover:ring-2 hover:ring-[#3E6AE1]/40' : ''}
           `}
         >
           {currentUser.avatar
             ? <span>{currentUser.avatar}</span>
-            : <User size={28} className="text-sky-400" />
+            : <User size={28} className="text-[#3E6AE1]" />
           }
-          {/* Edit hint overlay */}
           {!isEditing && (
-            <div className="absolute inset-0 rounded-2xl bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              <span className="text-[9px] font-black text-white uppercase tracking-widest">Edit</span>
+            <div className="absolute inset-0 rounded bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <span className="text-[9px] font-medium text-white">Edit</span>
             </div>
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <p className={`text-xl font-black tracking-tight truncate ${dk ? 'text-white' : 'text-slate-900'}`}>
+          <p className={`text-xl font-medium truncate ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
             {currentUser.displayName}
           </p>
-          <p className={`text-[11px] font-black uppercase tracking-widest mt-1 ${dk ? 'text-slate-500' : 'text-slate-400'}`}>
+          <p className={`text-xs mt-1 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
             {currentUser.gender}
           </p>
         </div>
       </div>
 
-      {/* ── Account-level fields ── */}
+      {/* Account-level fields */}
       <div className={cardClass}>
         <SectionLabel label="Account details — shared across all competitions" theme={theme} />
 
         {isEditing ? (
           <div className="p-6 space-y-4">
-
             <div>
-              <label className={`block text-[10px] font-black uppercase tracking-widest mb-2 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+              <label className={`block text-xs font-medium mb-2 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
                 {t.displayName}
               </label>
               <input
@@ -257,7 +248,7 @@ export default function ProfilePage({
             </div>
 
             <div>
-              <label className={`block text-[10px] font-black uppercase tracking-widest mb-2 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+              <label className={`block text-xs font-medium mb-2 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
                 {t.email}
               </label>
               <input
@@ -269,7 +260,7 @@ export default function ProfilePage({
             </div>
 
             <div>
-              <label className={`block text-[10px] font-black uppercase tracking-widest mb-2 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+              <label className={`block text-xs font-medium mb-2 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
                 {t.gender}
               </label>
               <select
@@ -283,7 +274,6 @@ export default function ProfilePage({
               </select>
             </div>
 
-            {/* ── Avatar picker ── */}
             <div>
               <EmojiAvatarPicker
                 selected={avatar || undefined}
@@ -291,10 +281,9 @@ export default function ProfilePage({
                 onSelect={emoji => setAvatar(emoji)}
               />
             </div>
-
           </div>
         ) : (
-          <div className="px-6 divide-y divide-white/5">
+          <div className={`px-6 divide-y ${dk ? 'divide-white/5' : 'divide-[#EEEEEE]'}`}>
             <InfoRow icon={<User size={15} />} label={t.displayName} value={currentUser.displayName} theme={theme} />
             <InfoRow icon={<Mail size={15} />} label={t.email}       value={currentUser.email}       theme={theme} />
             <InfoRow icon={<Tag  size={15} />} label={t.gender}      value={currentUser.gender}      theme={theme} />
@@ -302,59 +291,55 @@ export default function ProfilePage({
         )}
       </div>
 
-      {/* ── Competition registration ── */}
+      {/* Competition registration */}
       <div className={cardClass}>
         <SectionLabel label="Competition registration" theme={theme} />
         <div className="px-6 py-5">
-          <p className={`text-sm leading-relaxed ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+          <p className={`text-sm leading-relaxed ${dk ? 'text-[#5C5E62]' : 'text-[#5C5E62]'}`}>
             When you join a competition, you'll be asked to choose your category and gender for that event. These can differ across competitions — for example, you might compete in Open at one event and Masters at another.
           </p>
-          <p className={`text-xs mt-3 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
+          <p className={`text-xs mt-3 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
             BIB numbers are assigned automatically when you join. Judges and organizers don't have a BIB number.
           </p>
           <div className={`
-            flex items-start gap-3 mt-4 p-3 rounded-xl
-            ${theme === 'dark' ? 'bg-amber-400/5 border border-amber-400/10' : 'bg-amber-50 border border-amber-100'}
+            flex items-start gap-3 mt-4 p-3 rounded
+            ${dk ? 'bg-amber-400/5 border border-amber-400/10' : 'bg-amber-50 border border-amber-100'}
           `}>
             <Info size={14} className="text-amber-400 flex-shrink-0 mt-0.5" />
-            <p className={`text-[11px] leading-relaxed ${theme === 'dark' ? 'text-amber-300/70' : 'text-amber-700'}`}>
+            <p className={`text-xs leading-relaxed ${dk ? 'text-amber-300/70' : 'text-amber-700'}`}>
               BIB number and category are assigned per competition by the organizer and can differ across events you participate in.
             </p>
           </div>
         </div>
       </div>
 
-      {/* ── Join by code ── */}
+      {/* Join by code */}
       <div className={cardClass}>
         <SectionLabel label={t.joinWithCode} theme={theme} />
         <div className="p-6">
           <form onSubmit={handleJoinCode} className="flex gap-3">
             <div className="relative flex-1">
-              <Key size={15} className={`absolute left-3 top-1/2 -translate-y-1/2 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`} />
+              <Key size={14} className={`absolute left-3 top-1/2 -translate-y-1/2 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`} />
               <input
                 type="text"
                 value={joinCode}
                 onChange={e => { setJoinCode(e.target.value.toUpperCase()); setCodeError(false) }}
                 placeholder={t.enterInviteCode}
                 maxLength={8}
-                className={`${inputClass} pl-9 uppercase tracking-widest font-black`}
+                className={`${inputClass} pl-9 uppercase tracking-widest font-medium`}
               />
             </div>
             <button
               type="submit"
               disabled={joinCode.trim().length < 4}
-              className="px-5 py-3 bg-sky-400 text-sky-950 rounded-xl font-black text-sm hover:bg-sky-300 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-5 py-3 bg-[#3E6AE1] text-white rounded font-medium text-sm hover:bg-[#3056C7] transition-colors duration-[330ms] disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {t.joinByCodeAction}
             </button>
           </form>
 
-          {codeError && (
-            <p className="text-xs text-red-400 font-bold mt-2">{t.invalidCode}</p>
-          )}
-          {codeSuccess && (
-            <p className="text-xs text-sky-400 font-bold mt-2">{t.welcomeBack} 🎉</p>
-          )}
+          {codeError   && <p className="text-xs text-red-400 mt-2">{t.invalidCode}</p>}
+          {codeSuccess && <p className="text-xs text-[#3E6AE1] mt-2">{t.welcomeBack} 🎉</p>}
         </div>
       </div>
 
