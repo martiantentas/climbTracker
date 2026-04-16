@@ -367,8 +367,13 @@ export default function LeaderboardPage({
                   <RankBadge rank={result.rank} theme={theme} />
                 </div>
 
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-black ${dk ? 'bg-white/5 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
-                  {result.name.charAt(0).toUpperCase()}
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-xl ${dk ? 'bg-white/5' : 'bg-slate-100'}`}>
+                  {(() => {
+                    const live = competitors.find(c => c.id === result.competitorId) as any
+                    return live?.avatar
+                      ? <span>{live.avatar}</span>
+                      : <span className={`text-sm font-black ${dk ? 'text-slate-400' : 'text-slate-500'}`}>{result.name.charAt(0).toUpperCase()}</span>
+                  })()}
                 </div>
 
                 <div className="flex-1 min-w-0">

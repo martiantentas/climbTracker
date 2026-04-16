@@ -21,7 +21,7 @@ interface ProfilePageProps {
 interface InfoRowProps {
   icon:    React.ReactNode
   label:   string
-  value:   string
+  value:   string | undefined
   theme:   'light' | 'dark'
 }
 
@@ -39,7 +39,7 @@ function InfoRow({ icon, label, value, theme }: InfoRowProps) {
           {label}
         </p>
         <p className={`text-sm font-bold truncate ${theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}`}>
-          {value}
+          {value ?? '—'}
         </p>
       </div>
     </div>

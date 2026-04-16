@@ -469,6 +469,19 @@ function AppInner() {
                 onSave={updated => {
                   updateAuthUser(updated, currentUser.email)
                   setCurrentUser(updated)
+                  // Sync profile changes (avatar, displayName, email) into every
+                  // competition the user is registered in, so standings etc. stay fresh
+                  setCompetitorsMap(prev => {
+                    const next = { ...prev }
+                    for (const compId of Object.keys(next)) {
+                      next[compId] = next[compId].map(c =>
+                        c.id === updated.id
+                          ? { ...c, displayName: updated.displayName, email: updated.email, avatar: updated.avatar }
+                          : c
+                      )
+                    }
+                    return next
+                  })
                 }}
               />
             } />
