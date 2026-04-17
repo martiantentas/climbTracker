@@ -166,13 +166,18 @@ function AppInner() {
     // Always remove any previous injection
     document.getElementById('ct-brand-overrides')?.remove()
 
-    if (!isPrem || !b) {
-      // Reset CSS variables to defaults
+    // Reset CSS variables helper
+    const resetVars = () => {
       const r = document.documentElement.style
       r.removeProperty('--brand-accent')
       r.removeProperty('--brand-accent-hover')
       r.removeProperty('--brand-bg-light')
       r.removeProperty('--brand-bg-dark')
+    }
+
+    if (!currentUser || !isPrem || !b) {
+      // No user logged in, or no premium branding — reset to defaults
+      resetVars()
       return
     }
 
@@ -205,7 +210,8 @@ function AppInner() {
     }
 
     return () => { document.getElementById('ct-brand-overrides')?.remove() }
-  }, [activeCompetition])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeCompetition, currentUser])
 
   // ── Actions ──────────────────────────────────────────────────────────────────
 
