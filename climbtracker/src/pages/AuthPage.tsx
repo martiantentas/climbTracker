@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Mountain, Eye, EyeOff, ArrowLeft, CheckCircle2, Check, ChevronRight, User } from 'lucide-react'
+import { Mountain, Eye, EyeOff, ArrowLeft, CheckCircle2 } from 'lucide-react'
 import type { Competitor, Competition } from '../types'
 import { MOCK_COMPETITORS, MOCK_COMPETITION } from '../constants'
 
@@ -11,7 +11,7 @@ interface AuthPageProps {
   theme:   'light' | 'dark'
 }
 
-type Tab  = 'signin' | 'signup'
+type Tab = 'signin' | 'signup'
 
 // ─── MOCK USER STORE ──────────────────────────────────────────────────────────
 
@@ -35,8 +35,6 @@ function registerUser(user: Competitor, password: string): Competitor {
   return user
 }
 
-// Updates an existing user's record in the auth store (e.g. after profile edit).
-// If the email changed, migrates the password to the new email key.
 export function updateAuthUser(updated: Competitor, oldEmail: string): void {
   const idx = REGISTERED_USERS.findIndex(u => u.email.toLowerCase() === oldEmail.toLowerCase())
   if (idx !== -1) REGISTERED_USERS[idx] = updated
@@ -49,7 +47,8 @@ export function updateAuthUser(updated: Competitor, oldEmail: string): void {
 }
 
 import PostRegistrationModal from '../components/PostRegistrationModal'
-// ─── HELPERS ──────────────────────────────────────────────────────────────────
+
+// ─── FIELD ────────────────────────────────────────────────────────────────────
 
 function Field({ label, type, value, onChange, error, placeholder, right }: {
   label: string; type: string; value: string; onChange: (v: string) => void
@@ -58,41 +57,36 @@ function Field({ label, type, value, onChange, error, placeholder, right }: {
   const [show, setShow] = useState(false)
   const isPassword = type === 'password'
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <label style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#64748b' }}>{label}</label>
+    <div className="flex flex-col gap-1.5">
+      <div className="flex justify-between items-center">
+        <label className="text-[11px] font-medium text-[#5C5E62]">{label}</label>
         {right}
       </div>
-      <div style={{ position: 'relative' }}>
+      <div className="relative">
         <input
           type={isPassword && show ? 'text' : type}
           value={value}
           onChange={e => onChange(e.target.value)}
           placeholder={placeholder}
           autoComplete={isPassword ? 'current-password' : 'email'}
-          style={{
-            width: '100%', boxSizing: 'border-box',
-            padding: isPassword ? '14px 44px 14px 16px' : '14px 16px',
-            background: 'rgba(255,255,255,0.05)',
-            border: `1px solid ${error ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.1)'}`,
-            borderRadius: 12, fontSize: 15, color: '#f1f5f9',
-            outline: 'none', transition: 'border-color 0.2s',
-            fontFamily: "'DM Sans', system-ui, sans-serif",
-          }}
-          onFocus={e => (e.target.style.borderColor = '#38bdf8')}
-          onBlur={e => (e.target.style.borderColor = error ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.1)')}
+          className={`
+            w-full py-3.5 rounded border outline-none text-sm transition-colors duration-[330ms]
+            bg-white/5 text-[#EEEEEE] placeholder:text-[#5C5E62]
+            ${isPassword ? 'pl-4 pr-11' : 'px-4'}
+            ${error ? 'border-red-500/50 focus:border-red-500/70' : 'border-white/10 focus:border-[#3E6AE1]/50'}
+          `}
         />
         {isPassword && (
           <button
             type="button"
             onClick={() => setShow(s => !s)}
-            style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#475569', padding: 0, display: 'flex', alignItems: 'center' }}
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#5C5E62] hover:text-[#D0D1D2] transition-colors duration-[330ms]"
           >
             {show ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
         )}
       </div>
-      {error && <p style={{ fontSize: 12, color: '#ef4444', margin: 0 }}>{error}</p>}
+      {error && <p className="text-xs text-red-400">{error}</p>}
     </div>
   )
 }
@@ -103,17 +97,16 @@ export default function AuthPage({ onLogin, theme }: AuthPageProps) {
   const navigate = useNavigate()
   const [params] = useSearchParams()
 
-  const [tab,       setTab]       = useState<Tab>(params.get('tab') === 'signup' ? 'signup' : 'signin')
-  const [email,     setEmail]     = useState('')
-  const [password,  setPassword]  = useState('')
-  const [firstName, setFirstName] = useState('')
-  const [lastName,  setLastName]  = useState('')
-  const [errors,    setErrors]    = useState<Record<string, string>>({})
+  const [tab,        setTab]        = useState<Tab>(params.get('tab') === 'signup' ? 'signup' : 'signin')
+  const [email,      setEmail]      = useState('')
+  const [password,   setPassword]   = useState('')
+  const [firstName,  setFirstName]  = useState('')
+  const [lastName,   setLastName]   = useState('')
+  const [errors,     setErrors]     = useState<Record<string, string>>({})
   const [loading,    setLoading]    = useState(false)
   const [success,    setSuccess]    = useState(false)
-  const [pendingUser, setPendingUser] = useState<Competitor | null>(null) // triggers post-reg modal
+  const [pendingUser, setPendingUser] = useState<Competitor | null>(null)
 
-  // Sync tab from URL
   useEffect(() => {
     const t = params.get('tab')
     if (t === 'signup' || t === 'signin') setTab(t)
@@ -127,7 +120,7 @@ export default function AuthPage({ onLogin, theme }: AuthPageProps) {
     else if (password.length < 6) e.password = 'At least 6 characters'
     if (tab === 'signup') {
       if (!firstName.trim()) e.firstName = 'First name is required'
-      if (!lastName.trim()) e.lastName = 'Last name is required'
+      if (!lastName.trim())  e.lastName  = 'Last name is required'
     }
     setErrors(e)
     return Object.keys(e).length === 0
@@ -138,7 +131,6 @@ export default function AuthPage({ onLogin, theme }: AuthPageProps) {
     if (!validate()) return
     setLoading(true)
 
-    // Simulate async
     setTimeout(() => {
       if (tab === 'signin') {
         const user = findUser(email)
@@ -149,12 +141,8 @@ export default function AuthPage({ onLogin, theme }: AuthPageProps) {
           return
         }
         setSuccess(true)
-        setTimeout(() => {
-          onLogin(user)
-          navigate('/competitions', { replace: true })
-        }, 600)
+        setTimeout(() => { onLogin(user); navigate('/competitions', { replace: true }) }, 600)
       } else {
-        // Sign up
         const existing = findUser(email)
         if (existing) {
           setErrors({ email: 'An account with this email already exists.' })
@@ -175,18 +163,11 @@ export default function AuthPage({ onLogin, theme }: AuthPageProps) {
         } as any
         registerUser(newUser, password)
         setSuccess(true)
-        setTimeout(() => {
-          // Always show post-registration modal for new users
-          setPendingUser(newUser)
-          setLoading(false)
-        }, 600)
+        setTimeout(() => { setPendingUser(newUser); setLoading(false) }, 600)
       }
     }, 800)
   }
 
-  const BG = '#121212'
-
-  // Post-registration modal — shown after competitor signup to collect gender + traits
   if (pendingUser) {
     return (
       <PostRegistrationModal
@@ -203,124 +184,112 @@ export default function AuthPage({ onLogin, theme }: AuthPageProps) {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: BG, display: 'flex', fontFamily: "'DM Sans', system-ui, sans-serif" }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300..900&display=swap');
-        * { box-sizing: border-box; }
-        .auth-input::placeholder { color: #334155; }
-      `}</style>
+    <div className="min-h-screen bg-[#171A20] flex">
 
-      {/* Left panel — branding */}
-      <div style={{ flex: 1, display: 'none', flexDirection: 'column', justifyContent: 'space-between', padding: 56, position: 'relative', overflow: 'hidden', background: 'linear-gradient(135deg, #0f1a24 0%, #121212 60%)' }}
-        className="auth-left-panel"
-      >
-        {/* Grid bg */}
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(56,189,248,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(56,189,248,0.04) 1px, transparent 1px)', backgroundSize: '48px 48px', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', bottom: -80, left: -80, width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(56,189,248,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
+      {/* Left panel — branding (hidden on mobile) */}
+      <div className="auth-left-panel hidden flex-col justify-between p-14 relative overflow-hidden bg-[#0F1318]">
+        {/* Subtle grid */}
+        <div className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: 'linear-gradient(rgba(62,106,225,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(62,106,225,0.04) 1px, transparent 1px)',
+            backgroundSize: '48px 48px',
+          }}
+        />
+        <div className="absolute bottom-[-80px] left-[-80px] w-[400px] h-[400px] rounded-full pointer-events-none"
+          style={{ background: 'radial-gradient(circle, rgba(62,106,225,0.08) 0%, transparent 70%)' }}
+        />
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, position: 'relative' }}>
-          <Mountain size={24} color="#38bdf8" strokeWidth={2.5} />
-          <span style={{ fontWeight: 900, fontSize: 20, color: '#f1f5f9', letterSpacing: '-0.03em' }}>ClimbTracker</span>
+        <div className="flex items-center gap-2.5 relative">
+          <Mountain size={22} className="text-[#3E6AE1]" strokeWidth={2} />
+          <span className="font-medium text-lg text-[#EEEEEE]">ClimbTracker</span>
         </div>
 
-        <div style={{ position: 'relative' }}>
-          <h2 style={{ fontSize: 40, fontWeight: 200, lineHeight: 1.15, letterSpacing: '-0.04em', color: '#f1f5f9', margin: '0 0 20px' }}>
-            The competition<br /><span style={{ fontWeight: 900, color: '#38bdf8' }}>platform that climbs</span><br />with you.
+        <div className="relative">
+          <h2 className="text-4xl font-light leading-[1.15] text-[#EEEEEE] mb-5" style={{ letterSpacing: '-0.04em' }}>
+            The competition<br />
+            <span className="font-medium text-[#3E6AE1]">platform that climbs</span><br />
+            with you.
           </h2>
-          <p style={{ fontSize: 15, color: '#475569', lineHeight: 1.6, margin: '0 0 40px' }}>
+          <p className="text-sm text-[#5C5E62] leading-relaxed mb-10">
             Real-time scoring. Dynamic leaderboards. Self-log. Analytics. Everything you need, nothing you don't.
           </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div className="flex flex-col gap-3.5">
             {['Live leaderboard — zero refresh', 'Dynamic Pot & Traditional scoring', 'Self-log or judge-approval mode', 'Category & gender breakdowns'].map(f => (
-              <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: '#64748b' }}>
-                <CheckCircle2 size={16} color="#38bdf8" />
+              <div key={f} className="flex items-center gap-2.5 text-sm text-[#5C5E62]">
+                <CheckCircle2 size={15} className="text-[#3E6AE1] flex-shrink-0" />
                 {f}
               </div>
             ))}
           </div>
         </div>
 
-        <p style={{ fontSize: 12, color: '#1e3a4a', position: 'relative' }}>© 2024 ClimbTracker</p>
+        <p className="text-xs text-[#393C41] relative">© 2024 ClimbTracker</p>
       </div>
 
       {/* Right panel — form */}
-      <div style={{ flex: '0 0 100%', maxWidth: 480, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '40px 40px', overflowY: 'auto' }}
-        className="auth-right-panel"
-      >
-        {/* Back to landing */}
+      <div className="auth-right-panel flex-1 flex flex-col justify-center px-10 py-10 overflow-y-auto" style={{ maxWidth: 480 }}>
+
         <button
           onClick={() => navigate('/')}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: '#475569', fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: 0, marginBottom: 40, width: 'fit-content', transition: 'color 0.15s' }}
-          onMouseEnter={e => (e.currentTarget.style.color = '#38bdf8')}
-          onMouseLeave={e => (e.currentTarget.style.color = '#475569')}
+          className="flex items-center gap-1.5 text-[#5C5E62] text-sm font-medium mb-10 hover:text-[#D0D1D2] transition-colors duration-[330ms] w-fit"
         >
           <ArrowLeft size={14} /> Back to home
         </button>
 
-        {/* Logo (mobile) */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 36 }}>
-          <Mountain size={20} color="#38bdf8" strokeWidth={2.5} />
-          <span style={{ fontWeight: 900, fontSize: 18, color: '#f1f5f9', letterSpacing: '-0.03em' }}>ClimbTracker</span>
+        <div className="flex items-center gap-2 mb-9">
+          <Mountain size={20} className="text-[#3E6AE1]" strokeWidth={2} />
+          <span className="font-medium text-lg text-[#EEEEEE]">ClimbTracker</span>
         </div>
 
         {/* Tab toggle */}
-        <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: 4, marginBottom: 36 }}>
+        <div className="flex bg-white/5 rounded p-1 mb-9">
           {(['signin', 'signup'] as Tab[]).map(t => (
-            <button key={t} onClick={() => setTab(t)} style={{
-              flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer', border: 'none', transition: 'all 0.2s',
-              background: tab === t ? '#38bdf8' : 'transparent',
-              color: tab === t ? '#0c1a22' : '#475569',
-            }}>
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`
+                flex-1 py-2.5 rounded text-sm font-medium transition-colors duration-[330ms]
+                ${tab === t ? 'bg-[#3E6AE1] text-white' : 'text-[#5C5E62] hover:text-[#D0D1D2]'}
+              `}
+            >
               {t === 'signin' ? 'Sign In' : 'Create Account'}
             </button>
           ))}
         </div>
 
-        {/* Heading */}
-        <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.03em', color: '#f1f5f9', margin: '0 0 6px' }}>
+        <h1 className="text-2xl font-medium text-[#EEEEEE] mb-1.5">
           {tab === 'signin' ? 'Welcome back' : 'Get started'}
         </h1>
-        <p style={{ fontSize: 14, color: '#475569', margin: '0 0 32px' }}>
+        <p className="text-sm text-[#5C5E62] mb-8">
           {tab === 'signin'
             ? 'Sign in to manage your competitions'
             : 'Create your account and run your first event'}
         </p>
 
-
-        {/* Success state */}
         {success ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '40px 0' }}>
-            <CheckCircle2 size={48} color="#38bdf8" />
-            <p style={{ fontSize: 18, fontWeight: 700, color: '#f1f5f9' }}>
+          <div className="flex flex-col items-center gap-4 py-10">
+            <CheckCircle2 size={48} className="text-[#3E6AE1]" />
+            <p className="text-lg font-medium text-[#EEEEEE]">
               {tab === 'signin' ? 'Welcome back!' : 'Account created!'}
             </p>
-            <p style={{ fontSize: 14, color: '#475569' }}>Redirecting you now…</p>
+            <p className="text-sm text-[#5C5E62]">Redirecting you now…</p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-            {/* Global error */}
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             {errors._global && (
-              <div style={{ padding: '12px 16px', borderRadius: 10, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', fontSize: 14, color: '#ef4444' }}>
+              <div className="px-4 py-3 rounded border bg-red-500/10 border-red-500/30 text-sm text-red-400">
                 {errors._global}
               </div>
             )}
 
-            {/* Name fields — signup only */}
             {tab === 'signup' && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div className="grid grid-cols-2 gap-3">
                 <Field label="First name" type="text" value={firstName} onChange={setFirstName} error={errors.firstName} placeholder="Alex" />
-                <Field label="Last name" type="text" value={lastName} onChange={setLastName} error={errors.lastName} placeholder="Honnold" />
+                <Field label="Last name"  type="text" value={lastName}  onChange={setLastName}  error={errors.lastName}  placeholder="Honnold" />
               </div>
             )}
 
-            <Field
-              label="Email address"
-              type="email"
-              value={email}
-              onChange={setEmail}
-              error={errors.email}
-              placeholder="you@example.com"
-            />
+            <Field label="Email address" type="email"    value={email}    onChange={setEmail}    error={errors.email}    placeholder="you@example.com" />
             <Field
               label="Password"
               type="password"
@@ -330,64 +299,63 @@ export default function AuthPage({ onLogin, theme }: AuthPageProps) {
               placeholder="········"
               right={
                 tab === 'signin'
-                  ? <button type="button" style={{ fontSize: 11, fontWeight: 700, color: '#38bdf8', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.05em' }}>FORGOT?</button>
+                  ? <button type="button" className="text-[11px] font-medium text-[#3E6AE1] hover:text-[#3056C7] transition-colors duration-[330ms]">FORGOT?</button>
                   : undefined
               }
             />
 
-
             <button
               type="submit"
               disabled={loading}
-              style={{
-                marginTop: 8, padding: '15px 0', borderRadius: 12, fontSize: 15, fontWeight: 800, cursor: loading ? 'not-allowed' : 'pointer', border: 'none',
-                background: loading ? '#0e3a50' : '#38bdf8',
-                color: loading ? '#475569' : '#0c1a22',
-                transition: 'all 0.2s',
-              }}
+              className={`
+                mt-2 py-4 rounded text-sm font-medium transition-colors duration-[330ms]
+                ${loading
+                  ? 'bg-[#3E6AE1]/30 text-[#5C5E62] cursor-not-allowed'
+                  : 'bg-[#3E6AE1] text-white hover:bg-[#3056C7] cursor-pointer'
+                }
+              `}
             >
               {loading ? 'Please wait…' : tab === 'signin' ? 'Sign In' : 'Create Account'}
             </button>
 
-            {/* Divider */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#1e293b' }}>
-              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.07)' }} />
-              <span style={{ fontSize: 12, color: '#334155' }}>or continue with</span>
-              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.07)' }} />
+            <div className="flex items-center gap-3 text-[#393C41]">
+              <div className="flex-1 h-px bg-white/[0.07]" />
+              <span className="text-xs text-[#393C41]">or continue with</span>
+              <div className="flex-1 h-px bg-white/[0.07]" />
             </div>
 
-            {/* Social stubs */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div className="grid grid-cols-2 gap-3">
               {['Google', 'Apple'].map(provider => (
                 <button
                   key={provider}
                   type="button"
                   onClick={() => alert(`${provider} OAuth coming soon.`)}
-                  style={{ padding: '12px 0', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#94a3b8', transition: 'all 0.2s' }}
-                  onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(56,189,248,0.3)')}
-                  onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')}
+                  className="py-3 rounded text-sm font-medium border border-white/10 bg-white/[0.04] text-[#5C5E62] hover:border-[#3E6AE1]/30 hover:text-[#D0D1D2] transition-colors duration-[330ms]"
                 >
                   {provider}
                 </button>
               ))}
             </div>
 
-            {/* Switch tab hint */}
-            <p style={{ textAlign: 'center', fontSize: 13, color: '#475569', marginTop: 4 }}>
+            <p className="text-center text-sm text-[#5C5E62] mt-1">
               {tab === 'signin' ? "Don't have an account? " : 'Already have an account? '}
-              <button type="button" onClick={() => setTab(tab === 'signin' ? 'signup' : 'signin')} style={{ background: 'none', border: 'none', color: '#38bdf8', fontWeight: 700, cursor: 'pointer', fontSize: 13, padding: 0 }}>
+              <button
+                type="button"
+                onClick={() => setTab(tab === 'signin' ? 'signup' : 'signin')}
+                className="text-[#3E6AE1] font-medium hover:text-[#3056C7] transition-colors duration-[330ms]"
+              >
                 {tab === 'signin' ? 'Sign up' : 'Sign in'}
               </button>
             </p>
 
-            {/* Dev shortcuts — remove in production */}
-            <div style={{ marginTop: 16, padding: '16px', borderRadius: 12, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#334155', margin: '0 0 10px' }}>Dev shortcuts</p>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <button type="button" onClick={() => { setEmail('admin@climbtracker.com'); setPassword('admin123'); setTab('signin') }} style={{ fontSize: 11, padding: '5px 12px', borderRadius: 8, background: 'rgba(56,189,248,0.1)', border: '1px solid rgba(56,189,248,0.2)', color: '#38bdf8', cursor: 'pointer', fontWeight: 700 }}>
+            {/* Dev shortcuts */}
+            <div className="mt-4 p-4 rounded border bg-white/[0.03] border-white/[0.06]">
+              <p className="text-[11px] font-medium text-[#393C41] mb-2.5">Dev shortcuts</p>
+              <div className="flex gap-2 flex-wrap">
+                <button type="button" onClick={() => { setEmail('admin@climbtracker.com'); setPassword('admin123'); setTab('signin') }} className="text-[11px] px-3 py-1 rounded bg-[#3E6AE1]/10 border border-[#3E6AE1]/20 text-[#3E6AE1] font-medium hover:bg-[#3E6AE1]/20 transition-colors duration-[330ms]">
                   Admin
                 </button>
-                <button type="button" onClick={() => { setEmail('alex@example.com'); setPassword('alex123'); setTab('signin') }} style={{ fontSize: 11, padding: '5px 12px', borderRadius: 8, background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)', color: '#34d399', cursor: 'pointer', fontWeight: 700 }}>
+                <button type="button" onClick={() => { setEmail('alex@example.com'); setPassword('alex123'); setTab('signin') }} className="text-[11px] px-3 py-1 rounded bg-green-400/10 border border-green-400/20 text-green-400 font-medium hover:bg-green-400/20 transition-colors duration-[330ms]">
                   Competitor
                 </button>
               </div>
@@ -396,10 +364,9 @@ export default function AuthPage({ onLogin, theme }: AuthPageProps) {
         )}
       </div>
 
-      {/* Responsive CSS */}
       <style>{`
         @media (min-width: 900px) {
-          .auth-left-panel  { display: flex !important; }
+          .auth-left-panel  { display: flex !important; flex: 1; }
           .auth-right-panel { flex: 0 0 480px !important; max-width: 480px !important; }
         }
       `}</style>

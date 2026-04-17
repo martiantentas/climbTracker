@@ -16,92 +16,71 @@ interface RulesPageProps {
 }
 
 // ─── SIMPLE MARKDOWN RENDERER ─────────────────────────────────────────────────
-// Converts the basic markdown in rules text to HTML
-// Handles: ### headings, **bold**, bullet lists, numbered lists
 
 function renderMarkdown(text: string, theme: 'light' | 'dark'): React.ReactNode[] {
+  const dk    = theme === 'dark'
   const lines = text.split('\n')
 
   return lines.map((line, i) => {
-    // H3 heading
     if (line.startsWith('### ')) {
       return (
-        <h3
-          key={i}
-          className={`text-lg font-black tracking-tight mt-6 mb-2 first:mt-0 ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}
-        >
+        <h3 key={i} className={`text-lg font-medium mt-6 mb-2 first:mt-0 ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
           {line.replace('### ', '')}
         </h3>
       )
     }
 
-    // H2 heading
     if (line.startsWith('## ')) {
       return (
-        <h2
-          key={i}
-          className={`text-xl font-black tracking-tight mt-8 mb-3 first:mt-0 ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}
-        >
+        <h2 key={i} className={`text-xl font-medium mt-8 mb-3 first:mt-0 ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
           {line.replace('## ', '')}
         </h2>
       )
     }
 
-    // Bullet list item
     if (line.startsWith('- ') || line.startsWith('* ')) {
       const content = line.replace(/^[-*] /, '')
       return (
         <div key={i} className="flex items-start gap-2 my-1">
-          <span className="text-sky-400 mt-1 flex-shrink-0">•</span>
-          <span className={`text-sm leading-relaxed ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
+          <span className="text-[#3E6AE1] mt-1 flex-shrink-0">•</span>
+          <span className={`text-sm leading-relaxed ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>
             {renderInline(content)}
           </span>
         </div>
       )
     }
 
-    // Numbered list item
     const numberedMatch = line.match(/^(\d+)\. (.+)/)
     if (numberedMatch) {
       return (
         <div key={i} className="flex items-start gap-3 my-1">
-          <span className={`
-            text-[11px] font-black w-5 h-5 rounded-full flex items-center justify-center
-            flex-shrink-0 mt-0.5
-            bg-sky-400/20 text-sky-400
-          `}>
+          <span className="text-[11px] font-medium w-5 h-5 rounded flex items-center justify-center flex-shrink-0 mt-0.5 bg-[#3E6AE1]/10 text-[#3E6AE1]">
             {numberedMatch[1]}
           </span>
-          <span className={`text-sm leading-relaxed ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
+          <span className={`text-sm leading-relaxed ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>
             {renderInline(numberedMatch[2])}
           </span>
         </div>
       )
     }
 
-    // Empty line → spacer
     if (line.trim() === '') {
       return <div key={i} className="h-2" />
     }
 
-    // Regular paragraph
     return (
-      <p
-        key={i}
-        className={`text-sm leading-relaxed my-1 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}
-      >
+      <p key={i} className={`text-sm leading-relaxed my-1 ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>
         {renderInline(line)}
       </p>
     )
   })
 }
 
-// Handles **bold** inline formatting
 function renderInline(text: string): React.ReactNode {
   const parts = text.split(/(\*\*[^*]+\*\*)/)
   return parts.map((part, i) => {
     if (part.startsWith('**') && part.endsWith('**')) {
-      return <strong key={i} className="font-black">{part.slice(2, -2)}</strong>
+      return <strong key={i} className="font-medium">{part.slice(2, -2)}</strong>
     }
     return part
   })
@@ -116,23 +95,16 @@ export default function RulesPage({
   lang,
   onUpdate,
 }: RulesPageProps) {
-  const t = translations[lang]
+  const t  = translations[lang]
+  const dk = theme === 'dark'
 
-  // The rules content for the active language
   const rulesContent = competition.rules[lang] ?? competition.rules.en
 
-  // ── Edit state ───────────────────────────────────────────────────────────
-  const [isEditing,  setIsEditing]  = useState(false)
-  const [draftText,  setDraftText]  = useState(rulesContent)
+  const [isEditing, setIsEditing] = useState(false)
+  const [draftText, setDraftText] = useState(rulesContent)
 
   function handleSave() {
-    onUpdate({
-      ...competition,
-      rules: {
-        ...competition.rules,
-        [lang]: draftText,
-      },
-    })
+    onUpdate({ ...competition, rules: { ...competition.rules, [lang]: draftText } })
     setIsEditing(false)
   }
 
@@ -141,58 +113,44 @@ export default function RulesPage({
     setIsEditing(false)
   }
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  const btnSecondary = `
+    flex items-center gap-2 px-4 py-2 rounded text-sm font-medium transition-colors duration-[330ms]
+    ${dk
+      ? 'bg-white/5 text-[#8E8E8E] hover:bg-white/10 hover:text-[#EEEEEE] border border-white/10'
+      : 'bg-[#F4F4F4] text-[#5C5E62] hover:bg-[#EEEEEE] border border-[#EEEEEE]'
+    }
+  `
+
   return (
     <div className="max-w-3xl mx-auto">
 
       {/* ── Page header ── */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className={`text-2xl font-black tracking-tight ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+          <h1 className={`text-2xl font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
             {t.rules}
           </h1>
-          <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+          <p className={`text-sm mt-1 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
             {competition.name}
           </p>
         </div>
 
-        {/* Edit button — organizer only */}
         {isOrganizer && !isEditing && (
-          <button
-            onClick={() => { setDraftText(rulesContent); setIsEditing(true) }}
-            className={`
-              flex items-center gap-2 px-4 py-2 rounded-xl
-              text-sm font-black transition-all
-              ${theme === 'dark'
-                ? 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white border border-white/10'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200'
-              }
-            `}
-          >
+          <button onClick={() => { setDraftText(rulesContent); setIsEditing(true) }} className={btnSecondary}>
             <Edit3 size={15} />
             {t.editRules}
           </button>
         )}
 
-        {/* Save / Cancel buttons — shown while editing */}
         {isEditing && (
           <div className="flex items-center gap-2">
-            <button
-              onClick={handleCancel}
-              className={`
-                flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-black transition-all
-                ${theme === 'dark'
-                  ? 'bg-white/5 text-slate-400 hover:bg-white/10 border border-white/10'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200'
-                }
-              `}
-            >
+            <button onClick={handleCancel} className={btnSecondary}>
               <X size={15} />
               {t.cancel}
             </button>
             <button
               onClick={handleSave}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-black bg-sky-400 text-sky-950 hover:bg-sky-300 transition-all"
+              className="flex items-center gap-2 px-4 py-2 rounded text-sm font-medium bg-[#3E6AE1] text-white hover:bg-[#3056C7] transition-colors duration-[330ms]"
             >
               <Save size={15} />
               {t.save}
@@ -201,71 +159,44 @@ export default function RulesPage({
         )}
       </div>
 
-      {/* ── Editor — organizer editing mode ── */}
+      {/* ── Editor ── */}
       {isEditing ? (
-        <div className={`
-          rounded-2xl border overflow-hidden
-          ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}
-        `}>
+        <div className={`rounded border overflow-hidden ${dk ? 'border-white/10' : 'border-[#EEEEEE]'}`}>
 
-          {/* Toolbar hint */}
           <div className={`
-            px-4 py-2 text-[10px] font-black uppercase tracking-widest border-b
-            ${theme === 'dark'
-              ? 'bg-white/5 text-slate-500 border-white/10'
-              : 'bg-slate-50 text-slate-400 border-slate-200'
-            }
+            px-4 py-2 text-[10px] font-medium border-b
+            ${dk ? 'bg-white/5 text-[#5C5E62] border-white/10' : 'bg-[#F4F4F4] text-[#8E8E8E] border-[#EEEEEE]'}
           `}>
             Markdown supported · ### Heading · **bold** · - bullet · 1. numbered
           </div>
 
-          {/* Two-pane: editor + preview */}
-          <div className="grid grid-cols-2 divide-x divide-white/10">
-
-            {/* Editor pane */}
+          <div className={`grid grid-cols-2 divide-x ${dk ? 'divide-white/10' : 'divide-[#EEEEEE]'}`}>
             <textarea
               value={draftText}
               onChange={e => setDraftText(e.target.value)}
               className={`
-                w-full h-96 p-4 text-sm font-mono leading-relaxed
-                outline-none resize-none
-                ${theme === 'dark'
-                  ? 'bg-slate-900 text-slate-300 placeholder:text-slate-600'
-                  : 'bg-white text-slate-700 placeholder:text-slate-400'
+                w-full h-96 p-4 text-sm font-mono leading-relaxed outline-none resize-none
+                ${dk
+                  ? 'bg-[#171A20] text-[#D0D1D2] placeholder:text-[#5C5E62]'
+                  : 'bg-white text-[#393C41] placeholder:text-[#8E8E8E]'
                 }
               `}
               placeholder="Write rules here using markdown..."
               spellCheck={false}
             />
-
-            {/* Preview pane */}
-            <div className={`
-              h-96 p-4 overflow-y-auto
-              ${theme === 'dark' ? 'bg-slate-900/50' : 'bg-slate-50'}
-            `}>
-              <p className={`text-[9px] font-black uppercase tracking-widest mb-3 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
-                Preview
-              </p>
+            <div className={`h-96 p-4 overflow-y-auto ${dk ? 'bg-[#171A20]/50' : 'bg-[#F4F4F4]'}`}>
+              <p className={`text-[9px] font-medium mb-3 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Preview</p>
               {renderMarkdown(draftText, theme)}
             </div>
-
           </div>
         </div>
 
       ) : (
-
-        // ── Read-only view ────────────────────────────────────────────────
-        <div className={`
-          rounded-2xl border p-6 md:p-8
-          ${theme === 'dark'
-            ? 'bg-white/[0.03] border-white/10'
-            : 'bg-white border-slate-200 shadow-sm'
-          }
-        `}>
+        <div className={`rounded border p-6 md:p-8 ${dk ? 'bg-white/[0.03] border-white/10' : 'bg-white border-[#EEEEEE]'}`}>
           {rulesContent
             ? renderMarkdown(rulesContent, theme)
             : (
-              <p className={`text-sm text-center py-8 ${theme === 'dark' ? 'text-slate-600' : 'text-slate-400'}`}>
+              <p className={`text-sm text-center py-8 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
                 No rules have been set for this competition yet.
               </p>
             )
@@ -273,11 +204,9 @@ export default function RulesPage({
         </div>
       )}
 
-      {/* ── Language note ── */}
-      <p className={`text-[11px] text-center mt-6 ${theme === 'dark' ? 'text-slate-700' : 'text-slate-400'}`}>
+      <p className={`text-[11px] text-center mt-6 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
         Viewing rules in: {lang.toUpperCase()} · Changes save to the active language only
       </p>
-
     </div>
   )
 }

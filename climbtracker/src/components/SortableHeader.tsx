@@ -2,13 +2,13 @@ import { ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react'
 import type { SortDir } from '../hooks/useSortedData'
 
 interface SortableHeaderProps {
-  label:     string
-  sortKey:   string
+  label:         string
+  sortKey:       string
   activeSortKey: string
-  sortDir:   SortDir
-  onSort:    (key: string) => void
-  theme:     'light' | 'dark'
-  align?:    'left' | 'center' | 'right'
+  sortDir:       SortDir
+  onSort:        (key: string) => void
+  theme:         'light' | 'dark'
+  align?:        'left' | 'center' | 'right'
 }
 
 export default function SortableHeader({
@@ -26,23 +26,23 @@ export default function SortableHeader({
     <button
       onClick={() => onSort(sortKey)}
       className={`
-        flex items-center gap-1 text-[10px] font-black uppercase tracking-widest
-        transition-all group
+        flex items-center gap-1 text-[10px] font-medium
+        transition-colors duration-[330ms] group
         ${align === 'center' ? 'justify-center w-full' : ''}
         ${align === 'right'  ? 'justify-end w-full'   : ''}
         ${isActive
-          ? 'text-sky-400'
+          ? 'text-[#3E6AE1]'
           : theme === 'dark'
-            ? 'text-slate-500 hover:text-slate-300'
-            : 'text-slate-400 hover:text-slate-600'
+            ? 'text-[#5C5E62] hover:text-[#D0D1D2]'
+            : 'text-[#8E8E8E] hover:text-[#393C41]'
         }
       `}
     >
       {label}
       {isActive
         ? sortDir === 'asc'
-          ? <ArrowUp   size={11} className="text-sky-400" />
-          : <ArrowDown size={11} className="text-sky-400" />
+          ? <ArrowUp   size={11} className="text-[#3E6AE1]" />
+          : <ArrowDown size={11} className="text-[#3E6AE1]" />
         : <ArrowUpDown size={11} className="opacity-30 group-hover:opacity-60 transition-opacity" />
       }
     </button>

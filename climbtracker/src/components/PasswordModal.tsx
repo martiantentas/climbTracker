@@ -5,24 +5,16 @@ import type { Competition } from '../types'
 interface PasswordModalProps {
   competition:    Competition
   theme:          'light' | 'dark'
-  onConfirm:      (password: string) => void  // called with the entered password
+  onConfirm:      (password: string) => void
   onCancel:       () => void
-  // When JoinPage calls onJoin and gets false back, it sets this to true so the
-  // modal can show "incorrect password" even though submit happened externally.
   externalError?: boolean
 }
-
-// ── Helper: format a date nicely ─────────────────────────────────────────────
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-GB', {
     day: 'numeric', month: 'short', year: 'numeric',
   })
 }
-
-// ─── PASSWORD MODAL ───────────────────────────────────────────────────────────
-// Shown as an overlay when a code resolves to a password-protected competition.
-// Displays a brief summary of the competition and a single password field.
 
 export default function PasswordModal({
   competition,
@@ -31,15 +23,14 @@ export default function PasswordModal({
   onCancel,
   externalError = false,
 }: PasswordModalProps) {
-  const [password,   setPassword]  = useState('')
+  const [password,   setPassword]   = useState('')
   const [localError, setLocalError] = useState(false)
-  const error = localError || externalError
+  const error    = localError || externalError
   const inputRef = useRef<HTMLInputElement>(null)
+  const dk       = theme === 'dark'
 
-  // Focus the input when the modal mounts
   useEffect(() => { inputRef.current?.focus() }, [])
 
-  // Close on Escape
   useEffect(() => {
     function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onCancel() }
     window.addEventListener('keydown', onKey)
@@ -53,71 +44,63 @@ export default function PasswordModal({
   }
 
   const inputCls = `
-    w-full px-4 py-3 rounded-xl border outline-none text-sm transition-all pl-10
-    ${theme === 'dark'
-      ? `bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:border-sky-400/50 ${error ? '!border-red-400/60' : ''}`
-      : `bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-sky-400 ${error ? '!border-red-400' : ''}`
+    w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms] pl-10
+    ${dk
+      ? `bg-white/5 text-[#EEEEEE] placeholder:text-[#5C5E62] ${error ? 'border-red-400/60' : 'border-white/10 focus:border-[#3E6AE1]/50'}`
+      : `bg-[#F4F4F4] text-[#171A20] placeholder:text-[#8E8E8E] ${error ? 'border-red-400' : 'border-[#EEEEEE] focus:border-[#3E6AE1]'}`
     }
   `
 
   return (
     <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-[600] bg-black/70 backdrop-blur-sm"
-        onClick={onCancel}
-      />
+      <div className="fixed inset-0 z-[600] bg-black/70 backdrop-blur-sm" onClick={onCancel} />
 
-      {/* Modal panel */}
       <div className={`
         fixed inset-x-4 top-1/2 -translate-y-1/2 z-[700]
-        max-w-sm mx-auto rounded-2xl border shadow-2xl
-        ${theme === 'dark' ? 'bg-slate-900 border-white/10' : 'bg-white border-slate-200'}
+        max-w-sm mx-auto rounded border
+        ${dk ? 'bg-[#171A20] border-white/10' : 'bg-white border-[#EEEEEE]'}
       `}>
 
-        {/* Header */}
-        <div className={`flex items-center justify-between px-6 py-4 border-b ${theme === 'dark' ? 'border-white/10' : 'border-slate-100'}`}>
+        <div className={`flex items-center justify-between px-6 py-4 border-b ${dk ? 'border-white/10' : 'border-[#EEEEEE]'}`}>
           <div className="flex items-center gap-2">
             <Lock size={16} className="text-amber-400" />
-            <h2 className={`text-sm font-black ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+            <h2 className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
               Password Required
             </h2>
           </div>
           <button
             onClick={onCancel}
-            className={`p-1.5 rounded-lg transition-all ${theme === 'dark' ? 'hover:bg-white/5 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}
+            className={`p-1.5 rounded transition-colors duration-[330ms] ${dk ? 'hover:bg-white/5 text-[#5C5E62]' : 'hover:bg-[#F4F4F4] text-[#8E8E8E]'}`}
           >
             <X size={16} />
           </button>
         </div>
 
-        {/* Competition summary */}
-        <div className={`px-6 py-4 border-b ${theme === 'dark' ? 'border-white/5' : 'border-slate-100'}`}>
-          <p className={`text-base font-black leading-tight ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+        <div className={`px-6 py-4 border-b ${dk ? 'border-white/5' : 'border-[#EEEEEE]'}`}>
+          <p className={`text-base font-medium leading-tight ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
             {competition.name}
           </p>
           <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1.5">
             {competition.location && (
               <span className="flex items-center gap-1 text-[11px]">
-                <MapPin size={10} className={theme === 'dark' ? 'text-slate-600' : 'text-slate-400'} />
-                <span className={theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}>{competition.location}</span>
+                <MapPin size={10} className={dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'} />
+                <span className={dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}>{competition.location}</span>
               </span>
             )}
             <span className="flex items-center gap-1 text-[11px]">
-              <Calendar size={10} className={theme === 'dark' ? 'text-slate-600' : 'text-slate-400'} />
-              <span className={theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}>{formatDate(competition.startDate)}</span>
+              <Calendar size={10} className={dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'} />
+              <span className={dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}>{formatDate(competition.startDate)}</span>
             </span>
           </div>
         </div>
 
-        {/* Password form */}
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
           <div>
-            <label className={`block text-[10px] font-black uppercase tracking-widest mb-2 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+            <label className={`block text-[10px] font-medium mb-2 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
               Competition Password
             </label>
             <div className="relative">
-              <Lock size={14} className={`absolute left-3 top-1/2 -translate-y-1/2 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`} />
+              <Lock size={14} className={`absolute left-3 top-1/2 -translate-y-1/2 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`} />
               <input
                 ref={inputRef}
                 type="password"
@@ -130,7 +113,7 @@ export default function PasswordModal({
             {error && (
               <div className="flex items-center gap-1.5 mt-1.5">
                 <AlertCircle size={11} className="text-red-400 flex-shrink-0" />
-                <p className="text-[10px] text-red-400 font-bold">
+                <p className="text-[10px] text-red-400 font-medium">
                   {password.trim() ? 'Incorrect password. Please try again.' : 'Please enter the password.'}
                 </p>
               </div>
@@ -141,13 +124,13 @@ export default function PasswordModal({
             <button
               type="button"
               onClick={onCancel}
-              className={`flex-1 py-2.5 rounded-xl text-sm font-black border transition-all ${theme === 'dark' ? 'bg-white/5 text-slate-400 border-white/10 hover:bg-white/10' : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'}`}
+              className={`flex-1 py-2.5 rounded text-sm font-medium border transition-colors duration-[330ms] ${dk ? 'bg-white/5 text-[#5C5E62] border-white/10 hover:bg-white/10' : 'bg-[#F4F4F4] text-[#5C5E62] border-[#EEEEEE] hover:bg-[#EEEEEE]'}`}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-black bg-sky-400 text-sky-950 hover:bg-sky-300 transition-all"
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded text-sm font-medium bg-[#3E6AE1] text-white hover:bg-[#3056C7] transition-colors duration-[330ms]"
             >
               <LogIn size={14} />
               Join

@@ -9,18 +9,18 @@ interface ToastProps {
 export default function Toast({ message, visible, theme }: ToastProps) {
   return (
     <div
-      className="fixed top-8 left-1/2 -translate-x-1/2 z-[1000] pointer-events-none transition-all duration-500"
+      className="fixed top-8 left-1/2 -translate-x-1/2 z-[1000] pointer-events-none transition-all duration-[330ms]"
       style={{ transform: `translateX(-50%) translateY(${visible ? '0' : '-16px'})`, opacity: visible ? 1 : 0 }}
     >
       <div className={`
-        px-6 py-3 rounded-full flex items-center gap-3 shadow-2xl backdrop-blur-xl border
+        px-6 py-3 rounded border flex items-center gap-3 backdrop-blur
         ${theme === 'dark'
-          ? 'bg-sky-400/20 border-sky-400/30 text-sky-100'
-          : 'bg-white border-slate-200 text-slate-900'
+          ? 'bg-[#171A20]/90 border-white/10 text-[#EEEEEE]'
+          : 'bg-white border-[#EEEEEE] text-[#171A20]'
         }
       `}>
-        <CheckCircle2 size={16} className="text-sky-400 flex-shrink-0" />
-        <span className="text-sm font-bold tracking-tight whitespace-nowrap">
+        <CheckCircle2 size={16} className="text-[#3E6AE1] flex-shrink-0" />
+        <span className="text-sm font-medium whitespace-nowrap">
           {message}
         </span>
       </div>

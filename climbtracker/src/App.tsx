@@ -186,14 +186,22 @@ function AppInner() {
 
   function updateCompetition(updated: Competition) {
     const prev = competitions.find(c => c.id === updated.id)
+    // Always carry over billing fields from authoritative state — the SettingsPage
+    // draft is initialized once on mount and may be stale if PaymentModal set these
+    // fields after the draft was created.
+    const merged: Competition = {
+      ...updated,
+      subscription:       (prev as any)?.subscription       ?? updated.subscription,
+      additionalCapacity: (prev as any)?.additionalCapacity ?? (updated as any).additionalCapacity,
+    } as any
     // Gate: Draft → LIVE requires a subscription (payment or promo)
-    const goingLive = prev?.status === 'DRAFT' && updated.status === 'LIVE'
-    const hasSubscription = !!(updated as any).subscription
+    const goingLive      = prev?.status === 'DRAFT' && merged.status === 'LIVE'
+    const hasSubscription = !!merged.subscription
     if (goingLive && !hasSubscription) {
-      setPaymentComp(updated) // open payment modal instead
+      setPaymentComp(merged) // open payment modal instead
       return
     }
-    setCompetitions(p => p.map(c => c.id === updated.id ? updated : c))
+    setCompetitions(p => p.map(c => c.id === merged.id ? merged : c))
     showToast(t.successSaved)
   }
 
@@ -380,6 +388,7 @@ function AppInner() {
         {paymentComp && (
           <PaymentModal
             competition={paymentComp}
+            competitorCount={competitorsMap[paymentComp.id]?.length ?? 0}
             theme={theme}
             onClose={() => setPaymentComp(null)}
             onSuccess={published => {
@@ -575,7 +584,7 @@ function AppInner() {
 
             <Route path="/settings" element={
               <Guard required="organizer" currentUser={currentUser} isOrganizer={isOrganizer} canAccessComp={canAccessActiveComp} onAccessDenied={showToast}>
-                <SettingsPage competition={activeCompetition} theme={theme} lang={lang} onUpdate={updateCompetition} />
+                <SettingsPage competition={activeCompetition} theme={theme} lang={lang} onUpdate={updateCompetition} competitorCount={activeCompetitors.length} />
               </Guard>
             } />
 

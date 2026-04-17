@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   Save, Plus, Trash2, Globe,
-  ToggleLeft, ToggleRight, ChevronDown, ChevronUp, Lock
+  ToggleLeft, ToggleRight, ChevronDown, ChevronUp, Lock, Users, Package
 } from 'lucide-react'
 import type { Competition, DifficultyLevel } from '../types'
 import { CompetitionStatus, ScoringType } from '../types'
@@ -9,10 +9,11 @@ import type { Language } from '../translations'
 import { translations } from '../translations'
 
 interface SettingsPageProps {
-  competition: Competition
-  theme:       'light' | 'dark'
-  lang:        Language
-  onUpdate:    (updated: Competition) => void
+  competition:     Competition
+  theme:           'light' | 'dark'
+  lang:            Language
+  onUpdate:        (updated: Competition) => void
+  competitorCount?: number
 }
 
 function SectionCard({ title, children, theme, defaultOpen = true }: {
@@ -72,7 +73,128 @@ function InputField({ label, value, type = 'text', theme, onChange, hint, min, m
   )
 }
 
-export default function SettingsPage({ competition, theme, lang, onUpdate }: SettingsPageProps) {
+// ─── BUNDLE DEFINITIONS ───────────────────────────────────────────────────────
+
+const BUNDLES = [
+  { id: '150', label: '150 extra users', users: 150, price: 19.99 },
+  { id: '300', label: '300 extra users', users: 300, price: 34.99 },
+] as const
+
+const PLAN_LIMITS: Record<string, number> = {
+  one_shot: 150,
+  pro:      500,
+  platinum: 1000,
+}
+
+function BillingSection({ competition, competitorCount, theme, onUpdate }: {
+  competition:     Competition
+  competitorCount: number
+  theme:           'light' | 'dark'
+  onUpdate:        (updated: Competition) => void
+}) {
+  const dk              = theme === 'dark'
+  const comp            = competition as any
+  const plan: string    = comp.subscription ?? 'one_shot'
+  const planLabel       = plan === 'one_shot' ? 'One-Shot' : plan === 'pro' ? 'Pro' : 'Platinum'
+  const baseLimit       = PLAN_LIMITS[plan] ?? 150
+  const extraCapacity   = comp.additionalCapacity ?? 0
+  const totalCapacity   = baseLimit + extraCapacity
+  const [customQty,  setCustomQty]  = useState(500)
+  const [purchasing, setPurchasing] = useState<string | null>(null)
+
+  function purchase(users: number, bundleId: string) {
+    setPurchasing(bundleId)
+    setTimeout(() => {
+      onUpdate({ ...competition, additionalCapacity: extraCapacity + users } as any)
+      setPurchasing(null)
+    }, 900)
+  }
+
+  const inputCls = `px-3 py-2 rounded border outline-none text-sm transition-colors duration-[330ms] w-24 ${dk ? 'bg-white/5 border-white/10 text-[#EEEEEE] focus:border-[#3E6AE1]/50' : 'bg-white border-[#EEEEEE] text-[#171A20] focus:border-[#3E6AE1]'}`
+
+  return (
+    <SectionCard title="Billing & Capacity" theme={theme} defaultOpen={false}>
+      {/* Current usage */}
+      <div className="flex items-center gap-4 mb-5">
+        <div className={`flex items-center gap-2 px-4 py-3 rounded border flex-1 ${dk ? 'bg-white/[0.03] border-white/[0.07]' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
+          <Users size={14} className="text-[#3E6AE1] flex-shrink-0" />
+          <div>
+            <p className={`text-[10px] font-medium mb-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Participants</p>
+            <p className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
+              {competitorCount} <span className={`font-normal text-xs ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>/ {totalCapacity}</span>
+            </p>
+          </div>
+        </div>
+        <div className={`flex items-center gap-2 px-4 py-3 rounded border flex-1 ${dk ? 'bg-white/[0.03] border-white/[0.07]' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
+          <Package size={14} className="text-[#3E6AE1] flex-shrink-0" />
+          <div>
+            <p className={`text-[10px] font-medium mb-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Plan</p>
+            <p className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>{planLabel}</p>
+          </div>
+        </div>
+      </div>
+
+      <p className={`text-xs mb-4 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
+        Purchase additional capacity bundles to accommodate more participants. Bundles stack on top of your plan limit.
+      </p>
+
+      {/* Bundles */}
+      <div className="flex flex-col gap-2.5 mb-4">
+        {BUNDLES.map(b => (
+          <div key={b.id} className={`flex items-center justify-between px-4 py-3.5 rounded border ${dk ? 'bg-white/[0.02] border-white/[0.06]' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
+            <div>
+              <p className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>{b.label}</p>
+              <p className={`text-[11px] mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>${b.price.toFixed(2)} · one-time</p>
+            </div>
+            <button
+              onClick={() => purchase(b.users, b.id)}
+              disabled={purchasing !== null}
+              className="px-4 py-2 rounded text-xs font-medium bg-[#3E6AE1] text-white hover:bg-[#3056C7] transition-colors duration-[330ms] disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {purchasing === b.id ? 'Processing…' : `Add ${b.users}`}
+            </button>
+          </div>
+        ))}
+
+        {/* Custom 300+ */}
+        <div className={`flex items-center justify-between px-4 py-3.5 rounded border ${dk ? 'bg-white/[0.02] border-white/[0.06]' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
+          <div className="flex-1">
+            <p className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>Custom bundle</p>
+            <p className={`text-[11px] mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
+              $0.10/participant · min 500 · total ${(customQty * 0.10).toFixed(2)}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <input
+              type="number"
+              min={500}
+              value={customQty}
+              onChange={e => setCustomQty(Math.max(500, Number(e.target.value)))}
+              className={inputCls}
+            />
+            <button
+              onClick={() => purchase(customQty, 'custom')}
+              disabled={purchasing !== null}
+              className="px-4 py-2 rounded text-xs font-medium bg-[#3E6AE1] text-white hover:bg-[#3056C7] transition-colors duration-[330ms] disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {purchasing === 'custom' ? 'Processing…' : 'Add'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {extraCapacity > 0 && (
+        <p className={`text-xs ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
+          {extraCapacity} extra slots purchased · total capacity {totalCapacity}
+        </p>
+      )}
+    </SectionCard>
+  )
+}
+
+// ─── SETTINGS PAGE ────────────────────────────────────────────────────────────
+
+export default function SettingsPage({ competition, theme, lang, onUpdate, competitorCount = 0 }: SettingsPageProps) {
   const t  = translations[lang]
   const dk = theme === 'dark'
 
@@ -462,6 +584,14 @@ export default function SettingsPage({ competition, theme, lang, onUpdate }: Set
           <Plus size={14} />Add Difficulty Level
         </button>
       </SectionCard>
+
+      {/* Billing & Capacity — only shown once competition has a subscription */}
+      {(competition as any).subscription && <BillingSection
+        competition={competition}
+        competitorCount={competitorCount}
+        theme={theme}
+        onUpdate={onUpdate}
+      />}
 
       {/* Access Control */}
       <SectionCard title="Access Control" theme={theme}>
