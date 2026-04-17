@@ -39,7 +39,10 @@ export default function BoulderModal({
   const isEditing = !!boulder
   const dk        = theme === 'dark'
 
-  const [number,           setNumber]           = useState(boulder?.number           ?? 1)
+  const nextNumber = existingBoulders
+    .filter(b => b.status !== 'removed')
+    .reduce((max, b) => Math.max(max, b.number), 0) + 1
+  const [number,           setNumber]           = useState(boulder?.number           ?? nextNumber)
   const [name,             setName]             = useState(boulder?.name             ?? '')
   const [color,            setColor]            = useState(boulder?.color            ?? HOLD_COLORS[0].value)
   const [difficultyId,     setDifficultyId]     = useState(boulder?.difficultyId     ?? competition.difficultyLevels[0]?.id ?? '')

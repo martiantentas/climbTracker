@@ -12,7 +12,7 @@ interface ProfilePageProps {
   currentUser:  Competitor
   theme:        'light' | 'dark'
   lang:         Language
-  onJoinByCode: (code: string) => boolean
+  onJoinByCode: (code: string) => boolean | 'full'
   onSave:       (updated: Competitor) => void
 }
 
@@ -86,6 +86,7 @@ export default function ProfilePage({
 
   const [joinCode,    setJoinCode]    = useState('')
   const [codeError,   setCodeError]   = useState(false)
+  const [codeFull,    setCodeFull]    = useState(false)
   const [codeSuccess, setCodeSuccess] = useState(false)
 
   function handleSave() {
@@ -111,12 +112,15 @@ export default function ProfilePage({
   function handleJoinCode(e: React.FormEvent) {
     e.preventDefault()
     setCodeError(false)
+    setCodeFull(false)
     setCodeSuccess(false)
-    const success = onJoinByCode(joinCode.trim().toUpperCase())
-    if (success) {
+    const result = onJoinByCode(joinCode.trim().toUpperCase())
+    if (result === true) {
       setCodeSuccess(true)
       setJoinCode('')
       setTimeout(() => setCodeSuccess(false), 3000)
+    } else if (result === 'full') {
+      setCodeFull(true)
     } else {
       setCodeError(true)
     }
@@ -339,6 +343,7 @@ export default function ProfilePage({
           </form>
 
           {codeError   && <p className="text-xs text-red-400 mt-2">{t.invalidCode}</p>}
+          {codeFull    && <p className="text-xs text-red-400 mt-2">This event is full — no more spots available.</p>}
           {codeSuccess && <p className="text-xs text-[#3E6AE1] mt-2">{t.welcomeBack} 🎉</p>}
         </div>
       </div>

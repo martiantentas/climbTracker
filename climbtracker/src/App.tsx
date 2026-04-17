@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { HashRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 
 import type { Competition, Boulder, Competitor, Completion } from './types'
@@ -35,6 +35,14 @@ import PublicLeaderboardPage from './pages/PublicLeaderboardPage'
 
 function generateInviteCode(): string {
   return Math.random().toString(36).substring(2, 8).toUpperCase()
+}
+
+function darkenHex(hex: string, amount: number): string {
+  const n = parseInt(hex.replace('#', ''), 16)
+  const r = Math.max(0, (n >> 16) - amount)
+  const g = Math.max(0, ((n >> 8) & 0xff) - amount)
+  const b = Math.max(0, (n & 0xff) - amount)
+  return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')
 }
 
 export function getStatusColor(status: CompetitionStatus): string {
@@ -114,6 +122,8 @@ function AppInner() {
   const activeBoulders    = bouldersMap[activeCompetition?.id]    ?? []
   const activeCompletions = completionsMap[activeCompetition?.id] ?? []
   const activeCompetitors = competitorsMap[activeCompetition?.id] ?? []
+  // Only actual competitors count toward capacity (judges and organizers are exempt)
+  const activeCompetitorCount = activeCompetitors.filter(c => c.role !== 'judge' && c.role !== 'organizer').length
 
   const isOrganizer = useMemo(() => {
     // Owns this competition
@@ -146,6 +156,56 @@ function AppInner() {
       : [],
     [activeCompetition, activeBoulders, activeCompetitors, activeCompletions]
   )
+
+  // ── Premium branding — inject CSS overrides when active competition has branding ──
+  useEffect(() => {
+    const comp    = activeCompetition as any
+    const b       = comp?.branding
+    const isPrem  = comp?.tier === 'premium'
+
+    // Always remove any previous injection
+    document.getElementById('ct-brand-overrides')?.remove()
+
+    if (!isPrem || !b) {
+      // Reset CSS variables to defaults
+      const r = document.documentElement.style
+      r.removeProperty('--brand-accent')
+      r.removeProperty('--brand-accent-hover')
+      r.removeProperty('--brand-bg-light')
+      r.removeProperty('--brand-bg-dark')
+      return
+    }
+
+    const accent = b.accentColor ?? '#3E6AE1'
+    const hover  = b.accentHover ?? darkenHex(accent, 18)
+
+    // Update CSS variables (used by any element referencing var(--brand-*))
+    const r = document.documentElement.style
+    if (b.accentColor) { r.setProperty('--brand-accent', accent); r.setProperty('--brand-accent-hover', hover) }
+    if (b.lightBg)     r.setProperty('--brand-bg-light', b.lightBg)
+    if (b.darkBg)      r.setProperty('--brand-bg-dark',  b.darkBg)
+
+    // Override Tailwind arbitrary-value classes for accent colour
+    if (b.accentColor) {
+      const style = document.createElement('style')
+      style.id    = 'ct-brand-overrides'
+      style.textContent = `
+        .bg-\\[\\#3E6AE1\\]                   { background-color: ${accent} !important; }
+        .hover\\:bg-\\[\\#3E6AE1\\]:hover     { background-color: ${accent} !important; }
+        .bg-\\[\\#3056C7\\]                   { background-color: ${hover}  !important; }
+        .hover\\:bg-\\[\\#3056C7\\]:hover     { background-color: ${hover}  !important; }
+        .text-\\[\\#3E6AE1\\]                 { color: ${accent} !important; }
+        .border-\\[\\#3E6AE1\\]               { border-color: ${accent} !important; }
+        .bg-\\[\\#3E6AE1\\]\\/10              { background-color: color-mix(in srgb, ${accent} 10%, transparent) !important; }
+        .bg-\\[\\#3E6AE1\\]\\/\\[0\\.06\\]    { background-color: color-mix(in srgb, ${accent}  6%, transparent) !important; }
+        .bg-\\[\\#3E6AE1\\]\\/\\[0\\.03\\]    { background-color: color-mix(in srgb, ${accent}  3%, transparent) !important; }
+        .focus\\:border-\\[\\#3E6AE1\\]\\/50:focus { border-color: color-mix(in srgb, ${accent} 50%, transparent) !important; }
+      `
+      document.head.appendChild(style)
+    }
+
+    return () => { document.getElementById('ct-brand-overrides')?.remove() }
+  }, [activeCompetition])
 
   // ── Actions ──────────────────────────────────────────────────────────────────
 
@@ -186,13 +246,23 @@ function AppInner() {
 
   function updateCompetition(updated: Competition) {
     const prev = competitions.find(c => c.id === updated.id)
-    // Always carry over billing fields from authoritative state — the SettingsPage
-    // draft is initialized once on mount and may be stale if PaymentModal set these
-    // fields after the draft was created.
+    // Always carry over billing/tier/branding fields from the authoritative state.
+    // SettingsPage's draft is initialized once on mount and will be stale for any
+    // field set after mount by PaymentModal or BrandingSection (which both call
+    // onUpdate directly, bypassing the draft).
+    const p = prev as any
+    const u = updated as any
     const merged: Competition = {
       ...updated,
-      subscription:       (prev as any)?.subscription       ?? updated.subscription,
-      additionalCapacity: (prev as any)?.additionalCapacity ?? (updated as any).additionalCapacity,
+      // These fields are set by PaymentModal/BrandingSection which call onUpdate
+      // directly — the SettingsPage draft is initialized once and may be stale.
+      // Use ?? so: if the incoming update explicitly sets a value (not null/undefined),
+      // honour it (BrandingSection writes); otherwise keep what was in prev (draft save).
+      subscription:       u.subscription       ?? p?.subscription,
+      tier:               u.tier               ?? p?.tier,
+      participantLimit:   u.participantLimit    ?? p?.participantLimit,
+      additionalCapacity: u.additionalCapacity  ?? p?.additionalCapacity,
+      branding:           u.branding            ?? p?.branding,
     } as any
     // Gate: Draft → LIVE requires a subscription (payment or promo)
     const goingLive      = prev?.status === 'DRAFT' && merged.status === 'LIVE'
@@ -240,7 +310,18 @@ function AppInner() {
   }
 
   // ── Core join logic (shared) ──────────────────────────────────────────────
-  function joinCompetition(compId: string, user: Competitor, traitIds?: string[]) {
+  function joinCompetition(compId: string, user: Competitor, traitIds?: string[], gender?: string): boolean {
+    // Enforce participant capacity limit (organisers and judges are exempt)
+    const comp = competitions.find(c => c.id === compId) as any
+    if (comp?.participantLimit) {
+      const currentList     = competitorsMap[compId] ?? []
+      const competitorCount = currentList.filter(c => c.role === 'competitor' || !c.role).length
+      const totalCapacity   = comp.participantLimit + (comp.additionalCapacity ?? 0)
+      const isAlreadyIn     = currentList.some(c => c.id === user.id)
+      if (!isAlreadyIn && user.role !== 'judge' && user.role !== 'organizer' && competitorCount >= totalCapacity) {
+        return false
+      }
+    }
     setCompetitorsMap(prev => {
       const list = prev[compId] ?? []
       // Remove any existing duplicates for this user (defensive dedup)
@@ -248,40 +329,46 @@ function AppInner() {
         c.id !== user.id || idx === list.findIndex(x => x.id === user.id)
       )
       if (deduped.some(c => c.id === user.id)) {
-        // Already registered — just update their traitIds if provided
-        if (traitIds) {
-          return { ...prev, [compId]: deduped.map(c => c.id === user.id ? { ...c, traitIds } : c) }
+        // Already registered — update traits/gender if provided
+        const updates: Partial<Competitor> = {}
+        if (traitIds) updates.traitIds = traitIds
+        if (gender)   (updates as any).gender = gender
+        if (Object.keys(updates).length) {
+          return { ...prev, [compId]: deduped.map(c => c.id === user.id ? { ...c, ...updates } : c) }
         }
         return prev
       }
       const nextBib = deduped.filter(c => c.bibNumber > 0).length > 0
         ? Math.max(...deduped.map(c => c.bibNumber)) + 1
         : 101
-      return { ...prev, [compId]: [...deduped, { ...user, bibNumber: nextBib, traitIds: traitIds ?? user.traitIds ?? [] }] }
+      const entry = { ...user, bibNumber: nextBib, traitIds: traitIds ?? user.traitIds ?? [] } as any
+      if (gender) entry.gender = gender
+      return { ...prev, [compId]: [...deduped, entry] }
     })
     setActiveCompId(compId)
     showToast(t.welcomeBack)
+    return true
   }
 
   // ── handleJoinByCode — used by CompetitionsPage and ProfilePage ───────────
   // The code is the invite code string.
   // password is optional; if the competition has joinPassword set and the
   // supplied password doesn't match, returns false so the UI can show an error.
-  function handleJoinByCode(code: string, password?: string, traitIds?: string[]): boolean {
+  function handleJoinByCode(code: string, password?: string, traitIds?: string[], gender?: string): boolean | 'full' {
     const target = competitions.find(c => c.inviteCode === code.toUpperCase())
     if (!target || !currentUser) return false
     if (target.joinPassword && password !== target.joinPassword) return false
-    joinCompetition(target.id, currentUser, traitIds)
-    return true
+    const ok = joinCompetition(target.id, currentUser, traitIds, gender)
+    return ok ? true : 'full'
   }
 
   // ── handleJoinByCompId — used by JoinPage (code already resolved to ID) ──
-  function handleJoinByCompId(compId: string, password?: string, traitIds?: string[]): boolean {
+  function handleJoinByCompId(compId: string, password?: string, traitIds?: string[], gender?: string): boolean | 'full' {
     const target = competitions.find(c => c.id === compId)
     if (!target || !currentUser) return false
     if (target.joinPassword && password !== target.joinPassword) return false
-    joinCompetition(compId, currentUser, traitIds)
-    return true
+    const ok = joinCompetition(compId, currentUser, traitIds, gender)
+    return ok ? true : 'full'
   }
 
   function handleLeaveCompetition(compId: string) {
@@ -380,7 +467,17 @@ function AppInner() {
   // ── Main app ──────────────────────────────────────────────────────────────
   return (
     <>
-      <div className={`min-h-screen ${theme === 'dark' ? 'text-[#EEEEEE]' : 'bg-white text-[#171A20]'}`} style={theme === 'dark' ? { background: '#171A20' } : {}}>
+      <div
+        className={`min-h-screen ${theme === 'dark' ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}
+        style={{
+          background: (() => {
+            const b = (activeCompetition as any)?.branding
+            const isPrem = (activeCompetition as any)?.tier === 'premium'
+            if (isPrem && b) return theme === 'dark' ? (b.darkBg ?? '#171A20') : (b.lightBg ?? '#FFFFFF')
+            return theme === 'dark' ? '#171A20' : '#FFFFFF'
+          })(),
+        }}
+      >
 
         <Toast message={toast.message} visible={toast.visible} theme={theme} />
 
@@ -388,7 +485,7 @@ function AppInner() {
         {paymentComp && (
           <PaymentModal
             competition={paymentComp}
-            competitorCount={competitorsMap[paymentComp.id]?.length ?? 0}
+            competitorCount={(competitorsMap[paymentComp.id] ?? []).filter(c => c.role !== 'judge' && c.role !== 'organizer').length}
             theme={theme}
             onClose={() => setPaymentComp(null)}
             onSuccess={published => {
@@ -419,6 +516,7 @@ function AppInner() {
           theme={theme} setTheme={setTheme} lang={lang} setLang={setLang}
           currentUser={currentUser} activeCompetition={activeCompetition}
           isOrganizer={isOrganizer} isJudge={isJudge} canAccessComp={canAccessActiveComp}
+          branding={(activeCompetition as any)?.tier === 'premium' ? (activeCompetition as any)?.branding : undefined}
           onOpenMenu={() => setIsMenuOpen(true)}
           onLogout={() => { setCurrentUser(null); navigate('/competitions', { replace: true }) }}
         />
@@ -428,6 +526,7 @@ function AppInner() {
           theme={theme} lang={lang} currentUser={currentUser}
           competition={activeCompetition} isOrganizer={isOrganizer} isJudge={isJudge}
           canAccessComp={canAccessActiveComp}
+          branding={(activeCompetition as any)?.tier === 'premium' ? (activeCompetition as any)?.branding : undefined}
           onLogout={() => { setCurrentUser(null); navigate('/competitions', { replace: true }) }}
         />
 
@@ -584,7 +683,7 @@ function AppInner() {
 
             <Route path="/settings" element={
               <Guard required="organizer" currentUser={currentUser} isOrganizer={isOrganizer} canAccessComp={canAccessActiveComp} onAccessDenied={showToast}>
-                <SettingsPage competition={activeCompetition} theme={theme} lang={lang} onUpdate={updateCompetition} competitorCount={activeCompetitors.length} />
+                <SettingsPage competition={activeCompetition} theme={theme} lang={lang} onUpdate={updateCompetition} competitorCount={activeCompetitorCount} />
               </Guard>
             } />
 

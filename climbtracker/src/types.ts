@@ -132,7 +132,21 @@ export interface Competition {
   scoringMethod:      ScoringMethod
 
   // Subscription — set when organiser pays to publish; gates Draft → Live
-  subscription?:      'one_shot' | 'pro' | 'platinum'
+  subscription?:      'one_shot' | 'standard' | 'premium' | 'pro' | 'platinum'
+  tier?:              'standard' | 'premium'
+
+  // Capacity — set on publish
+  participantLimit?:   number
+  additionalCapacity?: number
+
+  // Branding — Premium tier only
+  branding?: {
+    logoDataUrl?:  string   // base64 data URL of a custom logo
+    accentColor?:  string   // hex e.g. '#FF5500'
+    lightBg?:      string   // hex for light-mode page background
+    darkBg?:       string   // hex for dark-mode page background
+  }
+
   attemptTracking:    AttemptTracking
   maxFixedAttempts:   number
 }

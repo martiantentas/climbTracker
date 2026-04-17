@@ -1,12 +1,14 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import {
-  Save, Plus, Trash2, Globe,
-  ToggleLeft, ToggleRight, ChevronDown, ChevronUp, Lock, Users, Package
+  Save, Plus, Trash2, Globe, Check,
+  ToggleLeft, ToggleRight, ChevronDown, ChevronUp, Lock, Users, Package,
+  Palette, Upload, Sparkles, RefreshCw,
 } from 'lucide-react'
 import type { Competition, DifficultyLevel } from '../types'
 import { CompetitionStatus, ScoringType } from '../types'
 import type { Language } from '../translations'
 import { translations } from '../translations'
+import CheckoutModal from '../components/CheckoutModal'
 
 interface SettingsPageProps {
   competition:     Competition
@@ -76,15 +78,11 @@ function InputField({ label, value, type = 'text', theme, onChange, hint, min, m
 // ─── BUNDLE DEFINITIONS ───────────────────────────────────────────────────────
 
 const BUNDLES = [
-  { id: '150', label: '150 extra users', users: 150, price: 19.99 },
-  { id: '300', label: '300 extra users', users: 300, price: 34.99 },
+  { id: '150', label: '150 extra participants', users: 150, price: 14.99 },
+  { id: '300', label: '300 extra participants', users: 300, price: 29.99 },
 ] as const
 
-const PLAN_LIMITS: Record<string, number> = {
-  one_shot: 150,
-  pro:      500,
-  platinum: 1000,
-}
+const PROMO_GRANT = 100 // free participants granted by a valid promo code
 
 function BillingSection({ competition, competitorCount, theme, onUpdate }: {
   competition:     Competition
@@ -94,74 +92,128 @@ function BillingSection({ competition, competitorCount, theme, onUpdate }: {
 }) {
   const dk              = theme === 'dark'
   const comp            = competition as any
-  const plan: string    = comp.subscription ?? 'one_shot'
-  const planLabel       = plan === 'one_shot' ? 'One-Shot' : plan === 'pro' ? 'Pro' : 'Platinum'
-  const baseLimit       = PLAN_LIMITS[plan] ?? 150
+  const baseLimit       = comp.participantLimit ?? 300
   const extraCapacity   = comp.additionalCapacity ?? 0
   const totalCapacity   = baseLimit + extraCapacity
-  const [customQty,  setCustomQty]  = useState(500)
-  const [purchasing, setPurchasing] = useState<string | null>(null)
+  const remaining       = Math.max(0, totalCapacity - competitorCount)
+  const isFull          = competitorCount >= totalCapacity
 
-  function purchase(users: number, bundleId: string) {
-    setPurchasing(bundleId)
-    setTimeout(() => {
-      onUpdate({ ...competition, additionalCapacity: extraCapacity + users } as any)
-      setPurchasing(null)
-    }, 900)
+  const [customQty,    setCustomQty]    = useState(500)
+  const [promoCode,    setPromoCode]    = useState('')
+  const [promoError,   setPromoError]   = useState('')
+  const [promoValid,   setPromoValid]   = useState(false)
+  const [promoApplied, setPromoApplied] = useState(false)
+
+  // Checkout state — null means closed
+  const [checkout, setCheckout] = useState<{
+    title:    string
+    subtitle: string
+    amount:   number
+    ctaLabel: string
+    users:    number
+  } | null>(null)
+
+  function openBundleCheckout(users: number, label: string, price: number) {
+    setCheckout({
+      title:    label,
+      subtitle: `One-time addition · applies immediately`,
+      amount:   price,
+      ctaLabel: `Add ${users} participants`,
+      users,
+    })
   }
 
-  const inputCls = `px-3 py-2 rounded border outline-none text-sm transition-colors duration-[330ms] w-24 ${dk ? 'bg-white/5 border-white/10 text-[#EEEEEE] focus:border-[#3E6AE1]/50' : 'bg-white border-[#EEEEEE] text-[#171A20] focus:border-[#3E6AE1]'}`
+  function onBundlePaid() {
+    if (!checkout) return
+    onUpdate({ ...competition, additionalCapacity: extraCapacity + checkout.users } as any)
+  }
+
+  function applyPromo() {
+    if (promoApplied) return
+    if (promoCode.trim().length >= 6) {
+      setPromoValid(true)
+      setPromoError('')
+    } else {
+      setPromoError('Invalid promo code. Codes are at least 6 characters.')
+    }
+  }
+
+  function redeemPromo() {
+    onUpdate({ ...competition, additionalCapacity: extraCapacity + PROMO_GRANT } as any)
+    setPromoApplied(true)
+    setPromoValid(false)
+    setPromoCode('')
+  }
+
+  const inputCls    = `px-3 py-2 rounded border outline-none text-sm transition-colors duration-[330ms] w-24 ${dk ? 'bg-white/5 border-white/10 text-[#EEEEEE] focus:border-[#3E6AE1]/50' : 'bg-white border-[#EEEEEE] text-[#171A20] focus:border-[#3E6AE1]'}`
+  const inputFullCls = `w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms] ${dk ? 'bg-white/5 border-white/10 text-[#EEEEEE] focus:border-[#3E6AE1]/50 placeholder:text-[#5C5E62]' : 'bg-white border-[#EEEEEE] text-[#171A20] focus:border-[#3E6AE1] placeholder:text-[#8E8E8E]'}`
 
   return (
     <SectionCard title="Billing & Capacity" theme={theme} defaultOpen={false}>
+
       {/* Current usage */}
-      <div className="flex items-center gap-4 mb-5">
-        <div className={`flex items-center gap-2 px-4 py-3 rounded border flex-1 ${dk ? 'bg-white/[0.03] border-white/[0.07]' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
+      <div className="flex items-center gap-3 mb-5">
+        <div className={`flex items-center gap-2.5 px-4 py-3 rounded border flex-1 ${dk ? 'bg-white/[0.03] border-white/[0.07]' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
           <Users size={14} className="text-[#3E6AE1] flex-shrink-0" />
           <div>
-            <p className={`text-[10px] font-medium mb-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Participants</p>
+            <p className={`text-[10px] font-medium mb-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Registered</p>
             <p className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
-              {competitorCount} <span className={`font-normal text-xs ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>/ {totalCapacity}</span>
+              {competitorCount}
+              <span className={`font-normal text-xs ml-1 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>/ {totalCapacity}</span>
             </p>
           </div>
         </div>
-        <div className={`flex items-center gap-2 px-4 py-3 rounded border flex-1 ${dk ? 'bg-white/[0.03] border-white/[0.07]' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
+        <div className={`flex items-center gap-2.5 px-4 py-3 rounded border flex-1 ${dk ? 'bg-white/[0.03] border-white/[0.07]' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
           <Package size={14} className="text-[#3E6AE1] flex-shrink-0" />
           <div>
-            <p className={`text-[10px] font-medium mb-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Plan</p>
-            <p className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>{planLabel}</p>
+            <p className={`text-[10px] font-medium mb-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Remaining</p>
+            <p className={`text-sm font-medium ${isFull ? 'text-red-400' : dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
+              {isFull ? 'Full' : remaining}
+            </p>
+          </div>
+        </div>
+        <div className={`flex items-center gap-2.5 px-4 py-3 rounded border flex-1 ${dk ? 'bg-white/[0.03] border-white/[0.07]' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
+          <Package size={14} className="text-[#3E6AE1] flex-shrink-0" />
+          <div>
+            <p className={`text-[10px] font-medium mb-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Limit</p>
+            <p className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>{totalCapacity}</p>
           </div>
         </div>
       </div>
 
+      {isFull && (
+        <div className={`px-4 py-3 rounded border mb-5 text-xs font-medium text-red-400 bg-red-400/10 border-red-400/20`}>
+          Participant limit reached — new registrations are blocked. Purchase a bundle below to expand capacity.
+        </div>
+      )}
+
       <p className={`text-xs mb-4 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-        Purchase additional capacity bundles to accommodate more participants. Bundles stack on top of your plan limit.
+        Bundles add on top of the confirmed limit. Purchases are one-time and apply immediately.
       </p>
 
       {/* Bundles */}
-      <div className="flex flex-col gap-2.5 mb-4">
+      <div className="flex flex-col gap-2.5 mb-6">
         {BUNDLES.map(b => (
           <div key={b.id} className={`flex items-center justify-between px-4 py-3.5 rounded border ${dk ? 'bg-white/[0.02] border-white/[0.06]' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
             <div>
               <p className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>{b.label}</p>
-              <p className={`text-[11px] mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>${b.price.toFixed(2)} · one-time</p>
+              <p className={`text-[11px] mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>€{b.price.toFixed(2)} · one-time</p>
             </div>
             <button
-              onClick={() => purchase(b.users, b.id)}
-              disabled={purchasing !== null}
-              className="px-4 py-2 rounded text-xs font-medium bg-[#3E6AE1] text-white hover:bg-[#3056C7] transition-colors duration-[330ms] disabled:opacity-40 disabled:cursor-not-allowed"
+              onClick={() => openBundleCheckout(b.users, b.label, b.price)}
+              className="px-4 py-2 rounded text-xs font-medium bg-[#3E6AE1] text-white hover:bg-[#3056C7] transition-colors duration-[330ms]"
             >
-              {purchasing === b.id ? 'Processing…' : `Add ${b.users}`}
+              Add {b.users}
             </button>
           </div>
         ))}
 
-        {/* Custom 300+ */}
+        {/* Custom 500+ */}
         <div className={`flex items-center justify-between px-4 py-3.5 rounded border ${dk ? 'bg-white/[0.02] border-white/[0.06]' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
           <div className="flex-1">
             <p className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>Custom bundle</p>
             <p className={`text-[11px] mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-              $0.10/participant · min 500 · total ${(customQty * 0.10).toFixed(2)}
+              €0.12/participant · min 500 · total €{(customQty * 0.12).toFixed(2)}
             </p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -173,21 +225,242 @@ function BillingSection({ competition, competitorCount, theme, onUpdate }: {
               className={inputCls}
             />
             <button
-              onClick={() => purchase(customQty, 'custom')}
-              disabled={purchasing !== null}
-              className="px-4 py-2 rounded text-xs font-medium bg-[#3E6AE1] text-white hover:bg-[#3056C7] transition-colors duration-[330ms] disabled:opacity-40 disabled:cursor-not-allowed"
+              onClick={() => openBundleCheckout(customQty, `Custom bundle — ${customQty} participants`, customQty * 0.12)}
+              className="px-4 py-2 rounded text-xs font-medium bg-[#3E6AE1] text-white hover:bg-[#3056C7] transition-colors duration-[330ms]"
             >
-              {purchasing === 'custom' ? 'Processing…' : 'Add'}
+              Add
             </button>
           </div>
         </div>
       </div>
 
-      {extraCapacity > 0 && (
-        <p className={`text-xs ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-          {extraCapacity} extra slots purchased · total capacity {totalCapacity}
+      {/* Divider */}
+      <div className={`h-px mb-6 ${dk ? 'bg-white/[0.06]' : 'bg-[#EEEEEE]'}`} />
+
+      {/* Promo code */}
+      <div>
+        <p className={`text-xs font-medium mb-3 ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>Promo Code</p>
+        <p className={`text-xs mb-3 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
+          Apply a promo code to receive {PROMO_GRANT} free extra participant slots.
         </p>
+        {promoApplied ? (
+          <div className={`px-4 py-3 rounded border text-xs font-medium text-green-400 bg-green-400/10 border-green-400/20 flex items-center gap-2`}>
+            <Check size={13} strokeWidth={3} /> Promo applied — {PROMO_GRANT} free slots added to your capacity.
+          </div>
+        ) : (
+          <>
+            <div className="flex gap-2 mb-2">
+              <input
+                value={promoCode}
+                onChange={e => { setPromoCode(e.target.value.toUpperCase()); setPromoError('') }}
+                placeholder="YOURCODE"
+                className={`${inputFullCls} font-mono tracking-widest flex-1`}
+              />
+              <button
+                onClick={applyPromo}
+                disabled={!promoCode.trim()}
+                className="px-4 py-2.5 rounded text-xs font-medium bg-[#3E6AE1] text-white hover:bg-[#3056C7] transition-colors duration-[330ms] flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Apply
+              </button>
+            </div>
+            {promoError && <p className="text-[11px] text-red-400 mb-3">{promoError}</p>}
+            {promoValid && (
+              <div className={`px-4 py-3 rounded border text-xs bg-green-400/10 border-green-400/20 text-green-400 mb-3 flex items-center justify-between`}>
+                <span className="flex items-center gap-2"><Check size={13} strokeWidth={3} /> Code valid — {PROMO_GRANT} free slots</span>
+                <button
+                  onClick={redeemPromo}
+                  className="font-medium underline hover:no-underline transition-all"
+                >
+                  Redeem
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Bundle checkout modal */}
+      {checkout && (
+        <CheckoutModal
+          title={checkout.title}
+          subtitle={checkout.subtitle}
+          amount={checkout.amount}
+          ctaLabel={checkout.ctaLabel}
+          onClose={() => setCheckout(null)}
+          onSuccess={() => { onBundlePaid(); setCheckout(null) }}
+        />
       )}
+    </SectionCard>
+  )
+}
+
+// ─── BRANDING SECTION (PREMIUM) ───────────────────────────────────────────────
+
+function BrandingSection({ competition, theme, onUpdate }: {
+  competition: Competition
+  theme:       'light' | 'dark'
+  onUpdate:    (updated: Competition) => void
+}) {
+  const dk      = theme === 'dark'
+  const comp    = competition as any
+  const isPremium = comp.tier === 'premium'
+
+  const branding = comp.branding ?? {}
+  const accent   = branding.accentColor ?? '#3E6AE1'
+  const lightBg  = branding.lightBg     ?? '#FFFFFF'
+  const darkBg   = branding.darkBg      ?? '#171A20'
+  const logoUrl  = branding.logoDataUrl  ?? ''
+
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  function handleLogoFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = ev => {
+      onUpdate({ ...competition, branding: { ...branding, logoDataUrl: ev.target?.result as string } } as any)
+      // Reset so the same file can be re-selected next time
+      e.target.value = ''
+    }
+    reader.readAsDataURL(file)
+  }
+
+  function updateBranding(patch: Record<string, string>) {
+    onUpdate({ ...competition, branding: { ...branding, ...patch } } as any)
+  }
+
+  function resetBranding() {
+    onUpdate({ ...competition, branding: {} } as any)
+  }
+
+  const colorRow = (label: string, value: string, key: string) => {
+    const inputId = `brand-color-${key}`
+    return (
+      <div className="flex items-center justify-between py-3">
+        <div>
+          <p className={`text-sm font-medium ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>{label}</p>
+          <p className={`text-xs mt-0.5 font-mono ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{value}</p>
+        </div>
+        <label
+          htmlFor={inputId}
+          className={`flex items-center gap-2 px-3 py-1.5 rounded text-xs font-medium cursor-pointer transition-colors duration-[330ms] ${dk ? 'bg-white/5 text-[#8E8E8E] hover:bg-white/10' : 'bg-[#EEEEEE] text-[#5C5E62] hover:bg-[#D0D1D2]'}`}
+        >
+          <span
+            className="w-4 h-4 rounded-sm border border-black/10 flex-shrink-0 inline-block"
+            style={{ backgroundColor: value }}
+          />
+          Change
+          <input
+            id={inputId}
+            type="color"
+            value={value}
+            onChange={e => updateBranding({ [key]: e.target.value })}
+            className="sr-only"
+          />
+        </label>
+      </div>
+    )
+  }
+
+  const [showUpgradeCheckout, setShowUpgradeCheckout] = useState(false)
+
+  if (!isPremium) {
+    return (
+      <>
+        <SectionCard title="Branding" theme={theme} defaultOpen={false}>
+          <div className={`flex flex-col items-center text-center py-6 px-4 rounded border border-dashed ${dk ? 'border-white/10' : 'border-[#EEEEEE]'}`}>
+            <div className="w-10 h-10 rounded bg-[#3E6AE1]/10 flex items-center justify-center mb-3">
+              <Sparkles size={18} className="text-[#3E6AE1]" />
+            </div>
+            <p className={`text-sm font-medium mb-1 ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>Premium feature</p>
+            <p className={`text-xs leading-relaxed mb-4 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
+              Replace the ClimbTracker logo with your own and customise the colour scheme.
+              Upgrade to <span className="text-[#3E6AE1] font-medium">Premium</span> to unlock white-label branding.
+            </p>
+            <button
+              onClick={() => setShowUpgradeCheckout(true)}
+              className="flex items-center gap-2 px-5 py-2.5 bg-[#3E6AE1] text-white rounded text-sm font-medium hover:bg-[#3056C7] transition-colors duration-[330ms]"
+            >
+              <Sparkles size={14} /> Upgrade to Premium — €50
+            </button>
+          </div>
+        </SectionCard>
+
+        {showUpgradeCheckout && (
+          <CheckoutModal
+            title="Upgrade to Premium"
+            subtitle="Unlocks white-label branding: custom logo & colour scheme"
+            amount={50}
+            ctaLabel="Upgrade"
+            showPromo
+            onClose={() => setShowUpgradeCheckout(false)}
+            onSuccess={() => {
+              onUpdate({ ...competition, tier: 'premium', subscription: 'premium' } as any)
+              setShowUpgradeCheckout(false)
+            }}
+          />
+        )}
+      </>
+    )
+  }
+
+  return (
+    <SectionCard title="Branding" theme={theme} defaultOpen>
+      <div className="flex items-center justify-between mb-4">
+        <p className={`text-xs ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
+          Customise the logo and colour scheme shown to all participants.
+        </p>
+        <button
+          onClick={resetBranding}
+          className={`flex items-center gap-1.5 text-xs font-medium transition-colors duration-[330ms] ${dk ? 'text-[#5C5E62] hover:text-[#D0D1D2]' : 'text-[#8E8E8E] hover:text-[#393C41]'}`}
+        >
+          <RefreshCw size={12} /> Reset defaults
+        </button>
+      </div>
+
+      {/* Logo */}
+      <div className={`mb-5 pb-5 border-b ${dk ? 'border-white/[0.06]' : 'border-[#EEEEEE]'}`}>
+        <p className={`text-xs font-medium mb-3 ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>Logo</p>
+        <div className="flex items-center gap-4">
+          <div className={`w-16 h-16 rounded border flex items-center justify-center flex-shrink-0 overflow-hidden ${dk ? 'bg-white/[0.03] border-white/10' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
+            {logoUrl
+              ? <img src={logoUrl} alt="Custom logo" className="w-full h-full object-contain p-1" />
+              : <Palette size={20} className={dk ? 'text-[#5C5E62]' : 'text-[#D0D1D2]'} />
+            }
+          </div>
+          <div className="flex-1">
+            <p className={`text-xs mb-2 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
+              SVG or PNG recommended · shown in the navigation bar
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => fileRef.current?.click()}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded text-xs font-medium transition-colors duration-[330ms] ${dk ? 'bg-white/5 text-[#8E8E8E] hover:bg-white/10 hover:text-[#EEEEEE]' : 'bg-[#F4F4F4] text-[#5C5E62] hover:bg-[#EEEEEE] hover:text-[#171A20]'}`}
+              >
+                <Upload size={12} /> Upload
+              </button>
+              {logoUrl && (
+                <button
+                  onClick={() => updateBranding({ logoDataUrl: '' })}
+                  className={`px-3 py-2 rounded text-xs font-medium transition-colors duration-[330ms] text-red-400 hover:bg-red-400/10`}
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+            <input ref={fileRef} type="file" accept="image/*" onChange={handleLogoFile} className="hidden" />
+          </div>
+        </div>
+      </div>
+
+      {/* Colors */}
+      <p className={`text-xs font-medium mb-2 ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>Colours</p>
+      <div className={`divide-y ${dk ? 'divide-white/[0.06]' : 'divide-[#F4F4F4]'}`}>
+        {colorRow('Accent colour',            accent,  'accentColor')}
+        {colorRow('Light mode background',    lightBg, 'lightBg')}
+        {colorRow('Dark mode background',     darkBg,  'darkBg')}
+      </div>
     </SectionCard>
   )
 }
@@ -203,6 +476,34 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
     difficultyLevels: competition.difficultyLevels ?? [],
     traits:           (competition as any).traits ?? [],
   })
+
+  // Full re-init when the user switches to a different competition.
+  // Without this, the draft retains the previous competition's branding/logo
+  // and can bleed it into the new competition on the first save.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    setDraft({
+      ...competition,
+      difficultyLevels: competition.difficultyLevels ?? [],
+      traits:           (competition as any).traits ?? [],
+    } as any)
+  }, [competition.id])
+
+  // Keep billing/tier/branding fields in sync with the competition prop.
+  // BrandingSection and PaymentModal call onUpdate directly (bypassing the draft),
+  // so without this effect the draft would be stale and clobber those fields on save.
+  const comp = competition as any
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    setDraft(prev => ({
+      ...prev,
+      subscription:       comp.subscription,
+      tier:               comp.tier,
+      participantLimit:   comp.participantLimit,
+      additionalCapacity: comp.additionalCapacity,
+      branding:           comp.branding,
+    } as any))
+  }, [comp.subscription, comp.tier, comp.participantLimit, comp.additionalCapacity, comp.branding])
 
   function set<K extends keyof Competition>(key: K, value: Competition[K]) {
     setDraft(prev => ({ ...prev, [key]: value }))
@@ -589,6 +890,13 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
       {(competition as any).subscription && <BillingSection
         competition={competition}
         competitorCount={competitorCount}
+        theme={theme}
+        onUpdate={onUpdate}
+      />}
+
+      {/* Branding — shown when subscription exists; premium gates the editor */}
+      {(competition as any).subscription && <BrandingSection
+        competition={competition}
         theme={theme}
         onUpdate={onUpdate}
       />}

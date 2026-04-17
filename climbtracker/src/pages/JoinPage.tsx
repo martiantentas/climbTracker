@@ -12,7 +12,7 @@ interface JoinPageProps {
   theme:        'light' | 'dark'
   lang:         Language
   isRegistered: (compId: string) => boolean
-  onJoin: (compId: string, password?: string, traitIds?: string[]) => boolean
+  onJoin: (compId: string, password?: string, traitIds?: string[], gender?: string) => boolean | 'full'
 }
 
 function formatDate(iso: string, lang: string): string {
@@ -36,8 +36,10 @@ export default function JoinPage({
 
   const [joined,            setJoined]            = useState(false)
   const [passwordError,     setPasswordError]     = useState(false)
+  const [eventFull,         setEventFull]         = useState(false)
   const [showPasswordModal, setShowPasswordModal] = useState(false)
   const [selectedTraitIds,  setSelectedTraitIds]  = useState<string[]>([])
+  const [gender,            setGender]            = useState('')
 
   useEffect(() => {
     if (comp && isRegistered(comp.id)) navigate('/', { replace: true })
@@ -73,11 +75,14 @@ export default function JoinPage({
   }
 
   function attemptJoin(password?: string) {
-    const success = onJoin(comp!.id, password, selectedTraitIds)
-    if (success) {
+    const result = onJoin(comp!.id, password, selectedTraitIds, gender || undefined)
+    if (result === true) {
       setJoined(true)
       setShowPasswordModal(false)
       setTimeout(() => navigate('/'), 1200)
+    } else if (result === 'full') {
+      setEventFull(true)
+      setShowPasswordModal(false)
     } else {
       setPasswordError(true)
     }
@@ -160,6 +165,32 @@ export default function JoinPage({
             </div>
           </div>
 
+          {/* Gender picker */}
+          <div>
+            <p className={`text-[10px] font-medium mb-2 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
+              Gender <span className={dk ? 'text-[#393C41]' : 'text-[#D0D1D2]'}>(optional)</span>
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {['Male', 'Female', 'Non-binary', 'Prefer not to say'].map(option => (
+                <button
+                  key={option}
+                  onClick={() => setGender(gender === option ? '' : option)}
+                  className={`
+                    px-3 py-2 rounded text-xs font-medium border transition-colors duration-[330ms]
+                    ${gender === option
+                      ? 'bg-[#3E6AE1]/10 text-[#3E6AE1] border-[#3E6AE1]/30'
+                      : dk
+                        ? 'bg-white/5 text-[#5C5E62] border-white/10 hover:bg-white/10 hover:text-[#D0D1D2]'
+                        : 'bg-[#F4F4F4] text-[#8E8E8E] border-[#EEEEEE] hover:bg-[#EEEEEE] hover:text-[#393C41]'
+                    }
+                  `}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Trait picker */}
           {hasTraits && (
             <div>
@@ -200,10 +231,17 @@ export default function JoinPage({
             </div>
           )}
 
+          {/* Event full error */}
+          {eventFull && (
+            <div className="px-4 py-3 rounded bg-red-400/10 border border-red-400/20 text-red-400 text-sm text-center">
+              This event is full — no more spots available.
+            </div>
+          )}
+
           {/* Join button */}
           <button
             onClick={handleJoinClick}
-            disabled={!canJoin}
+            disabled={!canJoin || eventFull}
             className="w-full flex items-center justify-center gap-2 py-3.5 rounded font-medium text-sm bg-[#3E6AE1] text-white hover:bg-[#3056C7] transition-colors duration-[330ms] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <LogIn size={16} />

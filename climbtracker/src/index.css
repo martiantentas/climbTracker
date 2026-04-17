@@ -19,4 +19,10 @@
   /* Borders */
   --ct-cloud: #EEEEEE;
   --ct-pale:  #D0D1D2;
+
+  /* Brand overrides — updated at runtime for Premium white-label */
+  --brand-accent:       #3E6AE1;
+  --brand-accent-hover: #3056C7;
+  --brand-bg-light:     #FFFFFF;
+  --brand-bg-dark:      #171A20;
 }

@@ -15,7 +15,7 @@ export const translations = {
     profile:      'Profile',
     judging:      'Judging',
     users:        'Users',
-    myCompetitions: 'My Events',
+    myCompetitions: 'Events',
 
     // Filters
     all:          'All',

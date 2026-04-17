@@ -19,7 +19,7 @@ interface CompetitionsPageProps {
   onCreate:       (name: string, location: string, description: string) => void
   onDelete:       (compId: string) => void
   onLeave:        (compId: string) => void
-  onJoinByCode:   (code: string, password?: string, traitIds?: string[]) => boolean
+  onJoinByCode:   (code: string, password?: string, traitIds?: string[], gender?: string) => boolean | 'full'
   isRegistered:   (compId: string) => boolean
   onJoinSuccess?: (comp: Competition) => void
   getCompRole?:   (compId: string) => string | null
@@ -110,6 +110,7 @@ export default function CompetitionsPage({
   const [showCreate,         setShowCreate]         = useState(false)
   const [joinCode,           setJoinCode]           = useState('')
   const [codeError,          setCodeError]          = useState(false)
+  const [joinFull,           setJoinFull]           = useState(false)
   const [confirmDelete,      setConfirmDelete]      = useState<string | null>(null)
   const [copiedId,           setCopiedId]           = useState<string | null>(null)
   const [justActivated,      setJustActivated]      = useState<string | null>(null)
@@ -139,13 +140,15 @@ export default function CompetitionsPage({
   function handleJoinCode(e: React.FormEvent) {
     e.preventDefault()
     setCodeError(false)
+    setJoinFull(false)
     const target = competitions.find(c => c.inviteCode === joinCode.trim().toUpperCase())
     if (!target) { setCodeError(true); return }
     if (target.joinPassword) {
       setPendingComp(target); setPasswordError(false)
     } else {
       const ok = onJoinByCode(joinCode.trim().toUpperCase())
-      if (ok) { setJoinCode(''); afterJoin(target) }
+      if (ok === true) { setJoinCode(''); afterJoin(target) }
+      else if (ok === 'full') setJoinFull(true)
       else setCodeError(true)
     }
   }
@@ -153,13 +156,15 @@ export default function CompetitionsPage({
   function handlePasswordConfirm(password: string) {
     if (!pendingComp) return
     const ok = onJoinByCode(pendingComp.inviteCode, password)
-    if (ok) { afterJoin(pendingComp); setPendingComp(null); setJoinCode(''); setPasswordError(false) }
+    if (ok === true) { afterJoin(pendingComp); setPendingComp(null); setJoinCode(''); setPasswordError(false) }
+    else if (ok === 'full') { setPendingComp(null); setJoinFull(true) }
     else setPasswordError(true)
   }
 
   function handleJoinAvailable(comp: Competition) {
+    setJoinFull(false)
     if (comp.joinPassword) { setPendingComp(comp); setPasswordError(false) }
-    else { const ok = onJoinByCode(comp.inviteCode); if (ok) afterJoin(comp) }
+    else { const ok = onJoinByCode(comp.inviteCode); if (ok === true) afterJoin(comp); else if (ok === 'full') setJoinFull(true) }
   }
 
   function copyLink(comp: Competition) {
@@ -352,7 +357,8 @@ export default function CompetitionsPage({
           <LogIn size={14} />{t.joinByCodeAction}
         </button>
       </form>
-      {codeError && <p className="text-xs text-red-400 mb-4 px-1">{t.invalidCode}</p>}
+      {codeError && <p className="text-xs text-red-400 mb-2 px-1">{t.invalidCode}</p>}
+      {joinFull && <p className="text-xs text-red-400 mb-2 px-1">This event is full — no more spots available.</p>}
       <div className="mb-6" />
 
       {myComps.length > 0 && (

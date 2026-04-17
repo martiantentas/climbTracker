@@ -452,7 +452,7 @@ export default function JudgingPage({
   )
 
   const actualCompetitors = useMemo(() =>
-    competitors.filter(c => c.id !== competition.ownerId && c.role !== 'judge'),
+    competitors.filter(c => c.id !== competition.ownerId && c.role !== 'judge' && c.role !== 'organizer'),
     [competitors, competition.ownerId]
   )
 

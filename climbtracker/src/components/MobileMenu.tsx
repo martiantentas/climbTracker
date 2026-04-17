@@ -32,6 +32,7 @@ interface MobileMenuProps {
   isOrganizer:    boolean
   isJudge?:       boolean
   canAccessComp?: boolean
+  branding?:      { logoDataUrl?: string; accentColor?: string; lightBg?: string; darkBg?: string }
   onLogout:       () => void
 }
 
@@ -86,6 +87,8 @@ export default function MobileMenu({
   competition,
   isOrganizer,
   isJudge = false,
+  canAccessComp = false,
+  branding,
   onLogout,
 }: MobileMenuProps) {
   const t = translations[lang]
@@ -119,12 +122,17 @@ export default function MobileMenu({
           {/* ── Header ── */}
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-[#3E6AE1]/10 rounded flex items-center justify-center">
-                <TrendingUp className="text-[#3E6AE1] w-4 h-4" />
-              </div>
-              <span className={`font-medium text-base ${theme === 'dark' ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
-                ClimbTracker
-              </span>
+              {branding?.logoDataUrl
+                ? <img src={branding.logoDataUrl} alt="logo" className="h-8 w-auto object-contain" />
+                : <>
+                    <div className="w-8 h-8 bg-[#3E6AE1]/10 rounded flex items-center justify-center">
+                      <TrendingUp className="text-[#3E6AE1] w-4 h-4" />
+                    </div>
+                    <span className={`font-medium text-base ${theme === 'dark' ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
+                      ClimbTracker
+                    </span>
+                  </>
+              }
             </div>
             <button
               onClick={onClose}
@@ -139,32 +147,30 @@ export default function MobileMenu({
 
           {/* ── Navigation links ── */}
           <nav className="flex flex-col gap-0.5 flex-1">
-            <MenuLink to="/"              icon={<LayoutGrid size={18} />}   label={t.boulders}       theme={theme} onClick={onClose} />
-            <MenuLink to="/leaderboard"   icon={<Trophy size={18} />}       label={t.leaderboard}    theme={theme} onClick={onClose} />
-            <MenuLink to="/rules"         icon={<BookOpen size={18} />}     label={t.rules}          theme={theme} onClick={onClose} />
-            {!isOrganizer && !isJudge && (
-              <MenuLink to="/event-profile" icon={<CalendarDays size={18} />} label="Event Settings" theme={theme} onClick={onClose} />
-            )}
-
-            {/* Divider */}
-            <div className={`h-px my-2 ${theme === 'dark' ? 'bg-white/10' : 'bg-[#EEEEEE]'}`} />
-
             <MenuLink to="/competitions" icon={<Layers size={18} />} label={t.myCompetitions} theme={theme} onClick={onClose} />
 
-            {isOrganizer && (
+            {canAccessComp && (
               <>
-                <MenuLink to="/users"     icon={<Users size={18} />}         label={t.users}     theme={theme} onClick={onClose} />
-                <MenuLink to="/analytics" icon={<BarChart2 size={18} />}     label={t.analytics} theme={theme} onClick={onClose} />
-                <MenuLink to="/judging"   icon={<ClipboardList size={18} />} label={t.judging}   theme={theme} onClick={onClose} />
-                <MenuLink to="/settings"  icon={<Settings size={18} />}      label={t.settings}  theme={theme} onClick={onClose} />
-              </>
-            )}
+                {/* Divider */}
+                <div className={`h-px my-2 ${theme === 'dark' ? 'bg-white/10' : 'bg-[#EEEEEE]'}`} />
 
-            {isJudge && !isOrganizer && (
-              <>
-                <MenuLink to="/users"     icon={<Users size={18} />}         label={t.users}     theme={theme} onClick={onClose} />
-                <MenuLink to="/analytics" icon={<BarChart2 size={18} />}     label={t.analytics} theme={theme} onClick={onClose} />
-                <MenuLink to="/judging"   icon={<ClipboardList size={18} />} label={t.judging}   theme={theme} onClick={onClose} />
+                <MenuLink to="/"            icon={<LayoutGrid size={18} />} label={t.boulders}    theme={theme} onClick={onClose} />
+                <MenuLink to="/leaderboard" icon={<Trophy size={18} />}     label={t.leaderboard} theme={theme} onClick={onClose} />
+                <MenuLink to="/rules"       icon={<BookOpen size={18} />}   label={t.rules}       theme={theme} onClick={onClose} />
+                {!isOrganizer && !isJudge && (
+                  <MenuLink to="/event-profile" icon={<CalendarDays size={18} />} label="Event Settings" theme={theme} onClick={onClose} />
+                )}
+
+                {(isOrganizer || isJudge) && (
+                  <>
+                    <MenuLink to="/users"     icon={<Users size={18} />}         label={t.users}     theme={theme} onClick={onClose} />
+                    <MenuLink to="/analytics" icon={<BarChart2 size={18} />}     label={t.analytics} theme={theme} onClick={onClose} />
+                    <MenuLink to="/judging"   icon={<ClipboardList size={18} />} label={t.judging}   theme={theme} onClick={onClose} />
+                    {isOrganizer && (
+                      <MenuLink to="/settings" icon={<Settings size={18} />} label={t.settings} theme={theme} onClick={onClose} />
+                    )}
+                  </>
+                )}
               </>
             )}
           </nav>

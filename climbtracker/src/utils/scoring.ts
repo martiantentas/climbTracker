@@ -28,10 +28,12 @@ function calcTraditionalPoints(
     let topPoints = difficulty.basePoints
 
     if (comp.penalizeAttempts && completion.attempts > 1) {
-      const extra = completion.attempts - 1
-      topPoints -= comp.penaltyType === 'fixed'
-        ? extra * comp.penaltyValue
-        : extra * (difficulty.basePoints * comp.penaltyValue / 100)
+      if (comp.penaltyType === 'fixed') {
+        topPoints -= (completion.attempts - 1) * comp.penaltyValue
+      } else {
+        // Compound decay: each extra attempt reduces by penaltyValue% of the running total
+        topPoints = difficulty.basePoints * Math.pow(1 - comp.penaltyValue / 100, completion.attempts - 1)
+      }
     }
 
     points += Math.max(topPoints, comp.minScorePerBoulder)
@@ -98,10 +100,12 @@ export function calcBoulderPoints(
 
     // Apply attempt penalty to the competitor's personal share if configured
     if (competition.penalizeAttempts && completion.attempts > 1) {
-      const extra = completion.attempts - 1
-      topPoints -= competition.penaltyType === 'fixed'
-        ? extra * competition.penaltyValue
-        : extra * (topPoints * competition.penaltyValue / 100)
+      if (competition.penaltyType === 'fixed') {
+        topPoints -= (completion.attempts - 1) * competition.penaltyValue
+      } else {
+        // Compound decay: each extra attempt reduces by penaltyValue% of the running total
+        topPoints = topPoints * Math.pow(1 - competition.penaltyValue / 100, completion.attempts - 1)
+      }
       topPoints = Math.max(topPoints, competition.minDynamicPoints ?? 0)
     }
 
@@ -146,7 +150,7 @@ export function calculateRankings(
   completions:  Completion[],
 ): RankResult[] {
   const actualCompetitors = competitors
-    .filter(c => c.id !== competition.ownerId && c.role !== 'judge')
+    .filter(c => c.id !== competition.ownerId && c.role !== 'judge' && c.role !== 'organizer')
     // Deduplicate: keep only the first entry per id (most up-to-date after trait edits)
     .filter((c, idx, arr) => arr.findIndex(x => x.id === c.id) === idx)
 

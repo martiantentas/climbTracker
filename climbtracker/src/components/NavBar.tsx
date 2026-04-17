@@ -19,6 +19,7 @@ interface NavBarProps {
   isOrganizer:       boolean
   isJudge?:          boolean
   canAccessComp?:    boolean
+  branding?:         { logoDataUrl?: string; accentColor?: string; lightBg?: string; darkBg?: string }
   onOpenMenu:        () => void
   onLogout:          () => void
 }
@@ -61,10 +62,11 @@ export default function NavBar({
   setTheme,
   lang,
   setLang,
-  currentUser,
   activeCompetition,
   isOrganizer,
   isJudge = false,
+  canAccessComp = false,
+  branding,
   onOpenMenu,
   onLogout,
 }: NavBarProps) {
@@ -84,51 +86,47 @@ export default function NavBar({
 
         {/* ── Logo ── */}
         <div className="flex-shrink-0">
-          <img
-            src={logo}
-            alt="climbTracker-logo"
-            className={`h-8 w-auto ${theme === 'dark' ? 'invert brightness-200' : ''}`}
-          />
+          {branding?.logoDataUrl
+            ? <img src={branding.logoDataUrl} alt="logo" className="h-8 w-auto object-contain" />
+            : <img src={logo} alt="climbTracker-logo" className={`h-8 w-auto ${theme === 'dark' ? 'invert brightness-200' : ''}`} />
+          }
         </div>
 
-        {/* ── Status dot + competition name ── */}
-        <div className="hidden md:flex items-center gap-2 flex-shrink-0 px-3 py-1.5">
-          <div
-            className="w-2 h-2 rounded-full flex-shrink-0"
-            style={{ backgroundColor: getStatusColor(activeCompetition.status) }}
-          />
-          <span className={`
-            text-xs font-medium whitespace-nowrap max-w-[140px] truncate
-            ${theme === 'dark' ? 'text-[#5C5E62]' : 'text-[#5C5E62]'}
-          `}>
-            {activeCompetition.name}
-          </span>
-        </div>
+        {/* ── Status dot + competition name — only when in a competition ── */}
+        {canAccessComp && (
+          <div className="hidden md:flex items-center gap-2 flex-shrink-0 px-3 py-1.5">
+            <div
+              className="w-2 h-2 rounded-full flex-shrink-0"
+              style={{ backgroundColor: getStatusColor(activeCompetition.status) }}
+            />
+            <span className={`
+              text-xs font-medium whitespace-nowrap max-w-[140px] truncate
+              ${theme === 'dark' ? 'text-[#5C5E62]' : 'text-[#5C5E62]'}
+            `}>
+              {activeCompetition.name}
+            </span>
+          </div>
+        )}
 
         {/* ── Centre: Nav pills ── */}
         <nav className="hidden lg:flex items-center gap-0.5 overflow-x-auto">
-          <NavPill to="/"             label={t.boulders}       theme={theme} />
-          <NavPill to="/leaderboard"  label={t.leaderboard}    theme={theme} />
-          <NavPill to="/rules"        label="Rules"            theme={theme} />
-          {!isOrganizer && !isJudge && (
-            <NavPill to="/event-profile" label="Event Settings" theme={theme} />
-          )}
-          <div className={`w-px h-4 mx-2 flex-shrink-0 ${theme === 'dark' ? 'bg-white/10' : 'bg-[#EEEEEE]'}`} />
           <NavPill to="/competitions" label={t.myCompetitions} theme={theme} />
 
-          {isOrganizer && (
+          {canAccessComp && (
             <>
-              <NavPill to="/users"     label={t.users}     theme={theme} />
-              <NavPill to="/analytics" label={t.analytics} theme={theme} />
-              <NavPill to="/judging"   label={t.judging}   theme={theme} />
-            </>
-          )}
-
-          {isJudge && !isOrganizer && (
-            <>
-              <NavPill to="/users"     label={t.users}     theme={theme} />
-              <NavPill to="/analytics" label={t.analytics} theme={theme} />
-              <NavPill to="/judging"   label={t.judging}   theme={theme} />
+              <NavPill to="/"            label={t.boulders}    theme={theme} />
+              <NavPill to="/leaderboard" label={t.leaderboard} theme={theme} />
+              <NavPill to="/rules"       label="Rules"         theme={theme} />
+              {!isOrganizer && !isJudge && (
+                <NavPill to="/event-profile" label="Event Settings" theme={theme} />
+              )}
+              {(isOrganizer || isJudge) && (
+                <>
+                  <NavPill to="/users"     label={t.users}     theme={theme} />
+                  <NavPill to="/analytics" label={t.analytics} theme={theme} />
+                  <NavPill to="/judging"   label={t.judging}   theme={theme} />
+                </>
+              )}
             </>
           )}
         </nav>

@@ -295,60 +295,64 @@ export default function LandingPage() {
       </section>
 
       {/* ══ PRICING ══════════════════════════════════════════════════════════ */}
-      <section id="pricing" style={{ padding: '120px 24px', maxWidth: 1200, margin: '0 auto' }}>
+      <section id="pricing" style={{ padding: '120px 24px', maxWidth: 900, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 72 }}>
           <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#38bdf8', marginBottom: 16 }}>Pricing</p>
           <h2 style={{ fontSize: 'clamp(32px, 5vw, 52px)', fontWeight: 300, letterSpacing: '-0.03em', color: '#f1f5f9', margin: 0 }}>
-            Flexible models for<br /><span style={{ fontWeight: 800 }}>serious organizers.</span>
+            Simple, transparent<br /><span style={{ fontWeight: 800 }}>pay per event.</span>
           </h2>
+          <p style={{ fontSize: 16, color: '#64748b', marginTop: 20, lineHeight: 1.6 }}>
+            No subscriptions. No hidden fees. One price, one event.
+          </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24, marginBottom: 32 }}>
-          {[
-            { name: 'One-Shot', price: '$99.99', sub: '/event', tag: 'Single Event', desc: 'Perfect for isolated competitions or single-gym festivals.', features: ['Up to 150 competitors', 'Extra: $0.05/participant', 'Live Leaderboard', 'Basic Analytics'], popular: false },
-            { name: 'Pro', price: '$14.99', sub: '/mo', tag: 'Most Popular', desc: 'Up to 500 yearly competitors. Full feature access.', features: ['500 competitors/year', 'Advanced Analytics', 'Judge Management', 'Priority Support'], popular: true },
-            { name: 'Platinum', price: '$19.99', sub: '/mo', tag: 'Scale', desc: 'Up to 1000 yearly competitors. For circuits and series.', features: ['1000 competitors/year', 'All Pro features', 'White-label options', 'API access'], popular: false },
-          ].map(tier => (
-            <div key={tier.name} className="ct-glass ct-card" style={{ borderRadius: 24, padding: 40, border: tier.popular ? '1px solid rgba(56,189,248,0.4)' : '1px solid rgba(255,255,255,0.07)', position: 'relative' }}>
-              {tier.popular && (
-                <div style={{ position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', background: '#38bdf8', color: '#0c1a22', fontSize: 10, fontWeight: 900, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '4px 14px', borderRadius: 999 }}>
-                  {tier.tag}
-                </div>
-              )}
-              {!tier.popular && <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#475569', marginBottom: 20 }}>{tier.tag}</p>}
-              <h3 style={{ fontSize: 22, fontWeight: 800, color: '#f1f5f9', margin: '0 0 8px' }}>{tier.name}</h3>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 12 }}>
-                <span style={{ fontSize: 44, fontWeight: 200, color: '#f1f5f9', fontFamily: "'DM Mono', monospace" }}>{tier.price}</span>
-                <span style={{ fontSize: 14, color: '#475569' }}>{tier.sub}</span>
-              </div>
-              <p style={{ fontSize: 14, color: '#64748b', lineHeight: 1.5, marginBottom: 28 }}>{tier.desc}</p>
-              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 32px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {tier.features.map(f => (
-                  <li key={f} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: '#cbd5e1' }}>
-                    <Check size={14} color="#38bdf8" strokeWidth={3} />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <button
-                onClick={() => goAuth('signup')}
-                className={tier.popular ? 'ct-btn-primary' : 'ct-btn-outline'}
-                style={{ width: '100%', padding: '14px 0', fontSize: 15, cursor: 'pointer', border: tier.popular ? 'none' : undefined }}
-              >
-                {tier.popular ? 'Get Started' : 'Subscribe'}
-              </button>
+        {/* Single plan card */}
+        <div className="ct-glass ct-card" style={{ borderRadius: 24, padding: '48px 56px', border: '1px solid rgba(56,189,248,0.3)', marginBottom: 32, display: 'flex', alignItems: 'center', gap: 56, flexWrap: 'wrap' }}>
+          <div style={{ flex: '0 0 auto' }}>
+            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#38bdf8', marginBottom: 12 }}>One-Shot</p>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 8 }}>
+              <span style={{ fontSize: 64, fontWeight: 200, color: '#f1f5f9', fontFamily: "'DM Mono', monospace", lineHeight: 1 }}>€99</span>
+              <span style={{ fontSize: 16, color: '#475569' }}>/event</span>
             </div>
-          ))}
+            <p style={{ fontSize: 13, color: '#475569', margin: 0 }}>+€0.12 per participant above 300</p>
+          </div>
+
+          <div style={{ flex: 1, minWidth: 220 }}>
+            <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 32px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '10px 24px' }}>
+              {[
+                'Up to 300 participants',
+                'Live leaderboard',
+                'Analytics & exports',
+                'Judge management',
+                'Category breakdowns',
+                'Extra capacity bundles',
+              ].map(f => (
+                <li key={f} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: '#cbd5e1' }}>
+                  <Check size={14} color="#38bdf8" strokeWidth={3} />
+                  {f}
+                </li>
+              ))}
+            </ul>
+            <button
+              onClick={() => goAuth('signup')}
+              className="ct-btn-primary"
+              style={{ padding: '14px 40px', fontSize: 15, cursor: 'pointer', border: 'none' }}
+            >
+              Get Started
+            </button>
+          </div>
         </div>
 
-        {/* Custom plan callout */}
-        <div className="ct-glass" style={{ borderRadius: 24, padding: '40px 48px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 24 }}>
+        {/* Extra capacity callout */}
+        <div className="ct-glass" style={{ borderRadius: 24, padding: '32px 48px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 24 }}>
           <div>
-            <h3 style={{ fontSize: 22, fontWeight: 700, color: '#f1f5f9', margin: '0 0 6px' }}>Need something bigger?</h3>
-            <p style={{ fontSize: 15, color: '#64748b', margin: 0 }}>Custom solutions for national series, white-label branding, and full API access.</p>
+            <h3 style={{ fontSize: 18, fontWeight: 700, color: '#f1f5f9', margin: '0 0 4px' }}>Need more participants?</h3>
+            <p style={{ fontSize: 14, color: '#64748b', margin: 0 }}>
+              Purchase extra capacity bundles at any time — 150, 300, or custom amounts starting at €0.12/participant.
+            </p>
           </div>
-          <button onClick={() => goAuth('signup')} className="ct-btn-outline" style={{ padding: '14px 32px', fontSize: 15, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-            Talk to Sales
+          <button onClick={() => goAuth('signup')} className="ct-btn-outline" style={{ padding: '12px 28px', fontSize: 14, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+            See bundles
           </button>
         </div>
       </section>
