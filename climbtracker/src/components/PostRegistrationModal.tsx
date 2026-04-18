@@ -32,7 +32,7 @@ export default function PostRegistrationModal({ user, competition, onComplete, t
 
   return (
     <div className="fixed inset-0 z-[1000] bg-black/85 backdrop-blur-sm flex items-center justify-center p-6">
-      <div className={`rounded border w-full max-w-[480px] overflow-hidden ${dk ? 'bg-[#171A20] border-white/[0.08]' : 'bg-white border-[#EEEEEE]'}`}>
+      <div className={`rounded border w-full max-w-[480px] overflow-hidden ${dk ? 'bg-[#121212] border-white/[0.08]' : 'bg-white border-[#EEEEEE]'}`}>
 
         {/* Progress bar */}
         <div className={`h-0.5 ${dk ? 'bg-white/[0.06]' : 'bg-[#F4F4F4]'}`}>
@@ -49,7 +49,7 @@ export default function PostRegistrationModal({ user, competition, onComplete, t
               <User size={20} className="text-[#3E6AE1]" />
             </div>
             <div>
-              <h2 className={`text-lg font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
+              <h2 className={`text-lg font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
                 {step === 1 ? 'Your profile' : 'Your categories'}
               </h2>
               <p className={`text-sm mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>

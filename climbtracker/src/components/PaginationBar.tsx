@@ -135,7 +135,7 @@ export default function PaginationBar({
                   w-14 px-2 py-1 rounded border text-[10px] font-medium outline-none
                   ${dk
                     ? 'bg-white/5 border-white/20 text-[#EEEEEE]'
-                    : 'bg-[#F4F4F4] border-[#D0D1D2] text-[#171A20]'
+                    : 'bg-[#F4F4F4] border-[#D0D1D2] text-[#121212]'
                   }
                 `}
               />

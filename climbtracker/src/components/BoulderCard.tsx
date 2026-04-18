@@ -1,4 +1,4 @@
-import { Check, RotateCcw, ShieldCheck, Plus, Minus } from 'lucide-react'
+import { Check, RotateCcw, ShieldCheck, Plus, Minus, Trash2 } from 'lucide-react'
 import type { Boulder, Completion, DifficultyLevel, AttemptTracking } from '../types'
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
@@ -18,6 +18,7 @@ interface BoulderCardProps {
   maxFixedAttempts: number
   onToggle:         (boulderId: string, attempts: number, forceStatus: boolean) => void
   onEdit?:          (boulder: Boulder) => void
+  onDelete?:        () => void
 }
 
 // ─── ATTEMPT UI: FIXED OPTIONS ────────────────────────────────────────────────
@@ -125,6 +126,7 @@ export default function BoulderCard({
   maxFixedAttempts,
   onToggle,
   onEdit,
+  onDelete,
 }: BoulderCardProps) {
   const isTopped = completion !== undefined
   const isFlash  = isTopped && completion.attempts === 1
@@ -186,7 +188,7 @@ export default function BoulderCard({
               className="w-2.5 h-2.5 rounded-full flex-shrink-0"
               style={{ backgroundColor: holdColor }}
             />
-            <span className={`text-lg font-medium leading-none ${theme === 'dark' ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
+            <span className={`text-lg font-medium leading-none ${theme === 'dark' ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
               #{boulder.number}
             </span>
           </div>
@@ -300,11 +302,28 @@ export default function BoulderCard({
           </div>
         )}
 
-        {/* Organizer edit hint */}
+        {/* Organizer controls */}
         {isOrganizer && (
-          <p className={`text-[9px] mt-2 font-medium ${theme === 'dark' ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-            Tap to edit
-          </p>
+          <div className="flex items-center justify-between mt-2">
+            <p className={`text-[9px] font-medium ${theme === 'dark' ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
+              Tap to edit
+            </p>
+            {onDelete && (
+              <button
+                onClick={e => { e.stopPropagation(); onDelete() }}
+                className={`
+                  p-1.5 rounded transition-colors duration-[330ms]
+                  ${theme === 'dark'
+                    ? 'text-[#5C5E62] hover:text-red-400 hover:bg-red-400/10'
+                    : 'text-[#D0D1D2] hover:text-red-500 hover:bg-red-50'
+                  }
+                `}
+                title="Delete boulder"
+              >
+                <Trash2 size={12} />
+              </button>
+            )}
+          </div>
         )}
 
       </div>

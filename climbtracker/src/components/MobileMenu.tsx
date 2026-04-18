@@ -11,10 +11,10 @@ import {
   User,
   LogOut,
   ChevronRight,
-  TrendingUp,
   Users,
   CalendarDays,
 } from 'lucide-react'
+import ascendiaLogo from '../assets/Ascendia.png'
 
 import type { Competitor, Competition } from '../types'
 import type { Language } from '../translations'
@@ -60,7 +60,7 @@ function MenuLink({ to, icon, label, theme, onClick }: MenuLinkProps) {
           ? 'bg-[#3E6AE1]/10 text-[#3E6AE1]'
           : theme === 'dark'
             ? 'text-[#5C5E62] hover:bg-white/5 hover:text-[#EEEEEE]'
-            : 'text-[#5C5E62] hover:bg-[#F4F4F4] hover:text-[#171A20]'
+            : 'text-[#5C5E62] hover:bg-[#F4F4F4] hover:text-[#121212]'
         }
       `}
     >
@@ -112,7 +112,7 @@ export default function MobileMenu({
           border-l transition-transform duration-[330ms] ease-in-out
           ${isOpen ? 'translate-x-0' : 'translate-x-full'}
           ${theme === 'dark'
-            ? 'bg-[#171A20] border-white/10'
+            ? 'bg-[#121212] border-white/10'
             : 'bg-white border-[#EEEEEE]'
           }
         `}
@@ -124,14 +124,7 @@ export default function MobileMenu({
             <div className="flex items-center gap-3">
               {branding?.logoDataUrl
                 ? <img src={branding.logoDataUrl} alt="logo" className="h-8 w-auto object-contain" />
-                : <>
-                    <div className="w-8 h-8 bg-[#3E6AE1]/10 rounded flex items-center justify-center">
-                      <TrendingUp className="text-[#3E6AE1] w-4 h-4" />
-                    </div>
-                    <span className={`font-medium text-base ${theme === 'dark' ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
-                      ClimbTracker
-                    </span>
-                  </>
+                : <img src={ascendiaLogo} alt="Ascendia" className="h-8 w-auto object-contain" />
               }
             </div>
             <button
@@ -194,7 +187,7 @@ export default function MobileMenu({
                 }
               </div>
               <div>
-                <p className={`text-sm font-medium ${theme === 'dark' ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
+                <p className={`text-sm font-medium ${theme === 'dark' ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
                   {currentUser.displayName}
                 </p>
                 <p className="text-xs text-[#5C5E62]">

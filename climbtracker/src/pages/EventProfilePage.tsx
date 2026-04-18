@@ -109,7 +109,7 @@ export default function EventProfilePage({
 
       {/* ── Header ── */}
       <div className="mb-8">
-        <h1 className={`text-2xl font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
+        <h1 className={`text-2xl font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
           Event Settings
         </h1>
         <p className={`text-sm mt-1 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
@@ -126,7 +126,7 @@ export default function EventProfilePage({
           }
         </div>
         <div className="flex-1 min-w-0">
-          <p className={`text-lg font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>{currentUser.displayName}</p>
+          <p className={`text-lg font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>{currentUser.displayName}</p>
           <p className={`text-sm ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{currentUser.email}</p>
         </div>
         <div className={`flex items-center gap-2 px-4 py-2.5 rounded border flex-shrink-0 ${dk ? 'bg-white/5 border-white/10' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>

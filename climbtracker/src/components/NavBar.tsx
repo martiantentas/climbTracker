@@ -5,7 +5,7 @@ import type { Competitor, Competition } from '../types'
 import { getStatusColor } from '../App'
 import type { Language } from '../translations'
 import { translations } from '../translations'
-import logo from '../assets/climbtracker-logo.svg'
+import logo from '../assets/Ascendia.png'
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -46,7 +46,7 @@ function NavPill({ to, label, theme }: NavPillProps) {
           ? 'bg-[#3E6AE1]/10 text-[#3E6AE1]'
           : theme === 'dark'
             ? 'text-[#8E8E8E] hover:text-[#EEEEEE]'
-            : 'text-[#5C5E62] hover:text-[#171A20]'
+            : 'text-[#5C5E62] hover:text-[#121212]'
         }
       `}
     >
@@ -77,7 +77,7 @@ export default function NavBar({
       className={`
         sticky top-0 z-[100] w-full border-b transition-colors duration-[330ms]
         ${theme === 'dark'
-          ? 'bg-[#171A20] border-white/10'
+          ? 'bg-[#121212] border-white/10'
           : 'bg-white border-[#EEEEEE]'
         }
       `}
@@ -88,7 +88,7 @@ export default function NavBar({
         <div className="flex-shrink-0">
           {branding?.logoDataUrl
             ? <img src={branding.logoDataUrl} alt="logo" className="h-8 w-auto object-contain" />
-            : <img src={logo} alt="climbTracker-logo" className={`h-8 w-auto ${theme === 'dark' ? 'invert brightness-200' : ''}`} />
+            : <img src={logo} alt="Ascendia" className="h-8 w-auto object-contain" />
           }
         </div>
 
@@ -159,7 +159,7 @@ export default function NavBar({
               p-2 rounded transition-colors duration-[330ms]
               ${theme === 'dark'
                 ? 'text-[#5C5E62] hover:text-[#EEEEEE] hover:bg-white/5'
-                : 'text-[#5C5E62] hover:text-[#171A20] hover:bg-[#F4F4F4]'
+                : 'text-[#5C5E62] hover:text-[#121212] hover:bg-[#F4F4F4]'
               }
             `}
           >
@@ -174,7 +174,7 @@ export default function NavBar({
                 p-2 rounded transition-colors duration-[330ms]
                 ${theme === 'dark'
                   ? 'text-[#5C5E62] hover:text-[#EEEEEE] hover:bg-white/5'
-                  : 'text-[#5C5E62] hover:text-[#171A20] hover:bg-[#F4F4F4]'
+                  : 'text-[#5C5E62] hover:text-[#121212] hover:bg-[#F4F4F4]'
                 }
               `}
             >
@@ -189,7 +189,7 @@ export default function NavBar({
               p-2 rounded transition-colors duration-[330ms]
               ${theme === 'dark'
                 ? 'text-[#5C5E62] hover:text-[#EEEEEE] hover:bg-white/5'
-                : 'text-[#5C5E62] hover:text-[#171A20] hover:bg-[#F4F4F4]'
+                : 'text-[#5C5E62] hover:text-[#121212] hover:bg-[#F4F4F4]'
               }
             `}
           >

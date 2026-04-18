@@ -51,7 +51,7 @@ export default function JoinPage({
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center max-w-sm mx-auto px-6">
           <p className="text-5xl mb-4">🔍</p>
-          <h2 className={`text-xl font-medium mb-2 ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
+          <h2 className={`text-xl font-medium mb-2 ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
             Competition not found
           </h2>
           <p className={`text-sm mb-6 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
@@ -104,7 +104,7 @@ export default function JoinPage({
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
           <CheckCircle2 size={56} className="text-green-400 mx-auto mb-4" />
-          <h2 className={`text-2xl font-medium mb-2 ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>You're in! 🎉</h2>
+          <h2 className={`text-2xl font-medium mb-2 ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>You're in! 🎉</h2>
           <p className={`text-sm ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Heading to the boulders…</p>
         </div>
       </div>
@@ -120,7 +120,7 @@ export default function JoinPage({
           <p className={`text-[10px] font-medium mb-2 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
             You've been invited to join
           </p>
-          <h1 className={`text-2xl font-medium mb-4 ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
+          <h1 className={`text-2xl font-medium mb-4 ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
             {comp.name}
           </h1>
 

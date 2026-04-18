@@ -122,7 +122,7 @@ export default function PaymentModal({
       className="fixed inset-0 z-[1000] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm"
       onClick={e => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-[#171A20] border border-white/[0.08] rounded w-full max-w-[520px] max-h-[90vh] overflow-y-auto">
+      <div className="bg-[#121212] border border-white/[0.08] rounded w-full max-w-[520px] max-h-[90vh] overflow-y-auto">
 
         {/* Header */}
         <div className="px-8 pt-7 pb-6 border-b border-white/[0.08] flex items-center justify-between">
@@ -307,7 +307,7 @@ export default function PaymentModal({
           {step === 'promo' && (
             <>
               <p className="text-sm text-[#5C5E62] mb-5 leading-relaxed">
-                Enter your promo code below. Valid codes are managed by ClimbTracker administrators.
+                Enter your promo code below. Valid codes are managed by Ascendia administrators.
               </p>
               <div className="flex gap-2.5 mb-4">
                 <input

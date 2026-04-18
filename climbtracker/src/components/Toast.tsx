@@ -15,8 +15,8 @@ export default function Toast({ message, visible, theme }: ToastProps) {
       <div className={`
         px-6 py-3 rounded border flex items-center gap-3 backdrop-blur
         ${theme === 'dark'
-          ? 'bg-[#171A20]/90 border-white/10 text-[#EEEEEE]'
-          : 'bg-white border-[#EEEEEE] text-[#171A20]'
+          ? 'bg-[#121212]/90 border-white/10 text-[#EEEEEE]'
+          : 'bg-white border-[#EEEEEE] text-[#121212]'
         }
       `}>
         <CheckCircle2 size={16} className="text-[#3E6AE1] flex-shrink-0" />

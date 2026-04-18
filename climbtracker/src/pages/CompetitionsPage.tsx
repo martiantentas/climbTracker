@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Trophy, MapPin, Calendar, Key, Trash2, LogIn, Settings, X, Lock, Copy, Check, Shield } from 'lucide-react'
+import { Plus, Trophy, MapPin, Calendar, Key, Trash2, LogIn, Settings, X, Lock, Copy, Check, Shield, Clock } from 'lucide-react'
 import type { Competition, Competitor } from '../types'
 import { CompetitionStatus } from '../types'
 import { getStatusColor } from '../App'
@@ -57,7 +57,7 @@ function CreateModal({ theme, lang, onSave, onClose }: {
   const [location, setLocation]     = useState('')
   const [description, setDescription] = useState('')
 
-  const inputClass = `w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms] ${dk ? 'bg-white/5 border-white/10 text-[#EEEEEE] placeholder:text-[#5C5E62] focus:border-[#3E6AE1]/50' : 'bg-white border-[#EEEEEE] text-[#171A20] placeholder:text-[#8E8E8E] focus:border-[#3E6AE1]'}`
+  const inputClass = `w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms] ${dk ? 'bg-white/5 border-white/10 text-[#EEEEEE] placeholder:text-[#5C5E62] focus:border-[#3E6AE1]/50' : 'bg-white border-[#EEEEEE] text-[#121212] placeholder:text-[#8E8E8E] focus:border-[#3E6AE1]'}`
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -69,9 +69,9 @@ function CreateModal({ theme, lang, onSave, onClose }: {
   return (
     <>
       <div className="fixed inset-0 z-[400] bg-black/60" onClick={onClose} />
-      <div className={`fixed inset-x-4 top-1/2 -translate-y-1/2 z-[500] max-w-md mx-auto rounded border ${dk ? 'bg-[#171A20] border-white/10' : 'bg-white border-[#EEEEEE]'}`}>
+      <div className={`fixed inset-x-4 top-1/2 -translate-y-1/2 z-[500] max-w-md mx-auto rounded border ${dk ? 'bg-[#121212] border-white/10' : 'bg-white border-[#EEEEEE]'}`}>
         <div className={`flex items-center justify-between p-6 border-b ${dk ? 'border-white/10' : 'border-[#EEEEEE]'}`}>
-          <h2 className={`text-lg font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>{t.newCompetition}</h2>
+          <h2 className={`text-lg font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>{t.newCompetition}</h2>
           <button onClick={onClose} className={`p-2 rounded transition-colors duration-[330ms] ${dk ? 'hover:bg-white/5 text-[#5C5E62]' : 'hover:bg-[#F4F4F4] text-[#5C5E62]'}`}><X size={17} /></button>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
@@ -174,7 +174,7 @@ export default function CompetitionsPage({
     setTimeout(() => setCopiedId(null), 2000)
   }
 
-  const inputClass = `w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms] ${dk ? 'bg-white/5 border-white/10 text-[#EEEEEE] placeholder:text-[#5C5E62] focus:border-[#3E6AE1]/50' : 'bg-white border-[#EEEEEE] text-[#171A20] placeholder:text-[#8E8E8E] focus:border-[#3E6AE1]'}`
+  const inputClass = `w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms] ${dk ? 'bg-white/5 border-white/10 text-[#EEEEEE] placeholder:text-[#5C5E62] focus:border-[#3E6AE1]/50' : 'bg-white border-[#EEEEEE] text-[#121212] placeholder:text-[#8E8E8E] focus:border-[#3E6AE1]'}`
 
   function SectionHeading({ label }: { label: string }) {
     return <h2 className={`text-xs font-medium mb-3 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{label}</h2>
@@ -221,9 +221,16 @@ export default function CompetitionsPage({
                 </span>
               )}
             </div>
-            <h3 className={`font-medium text-base leading-tight ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>{comp.name}</h3>
+            <h3 className={`font-medium text-base leading-tight ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>{comp.name}</h3>
           </div>
         </div>
+
+        {/* Description */}
+        {comp.description && (
+          <p className={`text-xs mb-3 leading-relaxed line-clamp-2 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
+            {comp.description}
+          </p>
+        )}
 
         {/* Meta row */}
         <div className="flex flex-wrap gap-x-4 gap-y-1 mb-4">
@@ -237,6 +244,14 @@ export default function CompetitionsPage({
             <Calendar size={11} className="text-[#8E8E8E]" />
             <span className="text-xs text-[#5C5E62]">
               {new Date(comp.startDate).toLocaleDateString(lang === 'en' ? 'en-GB' : lang, { day: 'numeric', month: 'short', year: 'numeric' })}
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Clock size={11} className="text-[#8E8E8E]" />
+            <span className="text-xs text-[#5C5E62]">
+              {new Date(comp.startDate).toLocaleTimeString(lang === 'en' ? 'en-GB' : lang, { hour: '2-digit', minute: '2-digit' })}
+              {' – '}
+              {new Date(comp.endDate).toLocaleTimeString(lang === 'en' ? 'en-GB' : lang, { hour: '2-digit', minute: '2-digit' })}
             </span>
           </div>
           <div className="flex items-center gap-1.5">
@@ -327,7 +342,7 @@ export default function CompetitionsPage({
     <div className="max-w-3xl mx-auto">
 
       <div className="flex items-center justify-between mb-8">
-        <h1 className={`text-2xl font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>{t.myCompetitions}</h1>
+        <h1 className={`text-2xl font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>{t.myCompetitions}</h1>
         <button
           onClick={() => setShowCreate(true)}
           className="flex items-center gap-2 px-4 py-2 bg-[#3E6AE1] text-white rounded font-medium text-sm hover:bg-[#3056C7] transition-colors duration-[330ms]"
@@ -383,7 +398,7 @@ export default function CompetitionsPage({
               <div key={comp.id} className={`rounded border p-5 flex items-center justify-between gap-4 transition-colors duration-[330ms] ${dk ? 'bg-white/[0.03] border-white/10 hover:bg-white/[0.05]' : 'bg-white border-[#EEEEEE] hover:border-[#D0D1D2]'}`}>
                 <div className="flex-1 min-w-0">
                   <StatusBadge status={comp.status} />
-                  <h3 className={`font-medium text-base mt-1 ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>{comp.name}</h3>
+                  <h3 className={`font-medium text-base mt-1 ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>{comp.name}</h3>
                   {comp.location && <p className={`text-xs mt-0.5 text-[#5C5E62]`}>{comp.location}</p>}
                   {comp.joinPassword && (
                     <span className="inline-flex items-center gap-1 mt-1 text-[9px] font-medium text-amber-400"><Lock size={8} /> Password required</span>

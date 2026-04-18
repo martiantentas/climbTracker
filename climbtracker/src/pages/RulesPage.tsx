@@ -24,7 +24,7 @@ function renderMarkdown(text: string, theme: 'light' | 'dark'): React.ReactNode[
   return lines.map((line, i) => {
     if (line.startsWith('### ')) {
       return (
-        <h3 key={i} className={`text-lg font-medium mt-6 mb-2 first:mt-0 ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
+        <h3 key={i} className={`text-lg font-medium mt-6 mb-2 first:mt-0 ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
           {line.replace('### ', '')}
         </h3>
       )
@@ -32,7 +32,7 @@ function renderMarkdown(text: string, theme: 'light' | 'dark'): React.ReactNode[
 
     if (line.startsWith('## ')) {
       return (
-        <h2 key={i} className={`text-xl font-medium mt-8 mb-3 first:mt-0 ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
+        <h2 key={i} className={`text-xl font-medium mt-8 mb-3 first:mt-0 ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
           {line.replace('## ', '')}
         </h2>
       )
@@ -127,7 +127,7 @@ export default function RulesPage({
       {/* ── Page header ── */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className={`text-2xl font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
+          <h1 className={`text-2xl font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
             {t.rules}
           </h1>
           <p className={`text-sm mt-1 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
@@ -177,14 +177,14 @@ export default function RulesPage({
               className={`
                 w-full h-96 p-4 text-sm font-mono leading-relaxed outline-none resize-none
                 ${dk
-                  ? 'bg-[#171A20] text-[#D0D1D2] placeholder:text-[#5C5E62]'
+                  ? 'bg-[#121212] text-[#D0D1D2] placeholder:text-[#5C5E62]'
                   : 'bg-white text-[#393C41] placeholder:text-[#8E8E8E]'
                 }
               `}
               placeholder="Write rules here using markdown..."
               spellCheck={false}
             />
-            <div className={`h-96 p-4 overflow-y-auto ${dk ? 'bg-[#171A20]/50' : 'bg-[#F4F4F4]'}`}>
+            <div className={`h-96 p-4 overflow-y-auto ${dk ? 'bg-[#121212]/50' : 'bg-[#F4F4F4]'}`}>
               <p className={`text-[9px] font-medium mb-3 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Preview</p>
               {renderMarkdown(draftText, theme)}
             </div>

@@ -65,7 +65,7 @@ function InputField({ label, value, type = 'text', theme, onChange, hint, min, m
   onChange: (v: string) => void; hint?: string; min?: number; max?: number
 }) {
   const dk  = theme === 'dark'
-  const cls = `w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms] ${dk ? 'bg-white/5 border-white/10 text-[#EEEEEE] focus:border-[#3E6AE1]/50' : 'bg-white border-[#EEEEEE] text-[#171A20] focus:border-[#3E6AE1]'}`
+  const cls = `w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms] ${dk ? 'bg-white/5 border-white/10 text-[#EEEEEE] focus:border-[#3E6AE1]/50' : 'bg-white border-[#EEEEEE] text-[#121212] focus:border-[#3E6AE1]'}`
   return (
     <div className="mb-4">
       <label className={`block text-xs font-medium mb-2 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{label}</label>
@@ -145,8 +145,8 @@ function BillingSection({ competition, competitorCount, theme, onUpdate }: {
     setPromoCode('')
   }
 
-  const inputCls    = `px-3 py-2 rounded border outline-none text-sm transition-colors duration-[330ms] w-24 ${dk ? 'bg-white/5 border-white/10 text-[#EEEEEE] focus:border-[#3E6AE1]/50' : 'bg-white border-[#EEEEEE] text-[#171A20] focus:border-[#3E6AE1]'}`
-  const inputFullCls = `w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms] ${dk ? 'bg-white/5 border-white/10 text-[#EEEEEE] focus:border-[#3E6AE1]/50 placeholder:text-[#5C5E62]' : 'bg-white border-[#EEEEEE] text-[#171A20] focus:border-[#3E6AE1] placeholder:text-[#8E8E8E]'}`
+  const inputCls    = `px-3 py-2 rounded border outline-none text-sm transition-colors duration-[330ms] w-24 ${dk ? 'bg-white/5 border-white/10 text-[#EEEEEE] focus:border-[#3E6AE1]/50' : 'bg-white border-[#EEEEEE] text-[#121212] focus:border-[#3E6AE1]'}`
+  const inputFullCls = `w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms] ${dk ? 'bg-white/5 border-white/10 text-[#EEEEEE] focus:border-[#3E6AE1]/50 placeholder:text-[#5C5E62]' : 'bg-white border-[#EEEEEE] text-[#121212] focus:border-[#3E6AE1] placeholder:text-[#8E8E8E]'}`
 
   return (
     <SectionCard title="Billing & Capacity" theme={theme} defaultOpen={false}>
@@ -157,7 +157,7 @@ function BillingSection({ competition, competitorCount, theme, onUpdate }: {
           <Users size={14} className="text-[#3E6AE1] flex-shrink-0" />
           <div>
             <p className={`text-[10px] font-medium mb-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Registered</p>
-            <p className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
+            <p className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
               {competitorCount}
               <span className={`font-normal text-xs ml-1 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>/ {totalCapacity}</span>
             </p>
@@ -167,7 +167,7 @@ function BillingSection({ competition, competitorCount, theme, onUpdate }: {
           <Package size={14} className="text-[#3E6AE1] flex-shrink-0" />
           <div>
             <p className={`text-[10px] font-medium mb-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Remaining</p>
-            <p className={`text-sm font-medium ${isFull ? 'text-red-400' : dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
+            <p className={`text-sm font-medium ${isFull ? 'text-red-400' : dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
               {isFull ? 'Full' : remaining}
             </p>
           </div>
@@ -176,7 +176,7 @@ function BillingSection({ competition, competitorCount, theme, onUpdate }: {
           <Package size={14} className="text-[#3E6AE1] flex-shrink-0" />
           <div>
             <p className={`text-[10px] font-medium mb-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Limit</p>
-            <p className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>{totalCapacity}</p>
+            <p className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>{totalCapacity}</p>
           </div>
         </div>
       </div>
@@ -196,7 +196,7 @@ function BillingSection({ competition, competitorCount, theme, onUpdate }: {
         {BUNDLES.map(b => (
           <div key={b.id} className={`flex items-center justify-between px-4 py-3.5 rounded border ${dk ? 'bg-white/[0.02] border-white/[0.06]' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
             <div>
-              <p className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>{b.label}</p>
+              <p className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>{b.label}</p>
               <p className={`text-[11px] mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>€{b.price.toFixed(2)} · one-time</p>
             </div>
             <button
@@ -211,7 +211,7 @@ function BillingSection({ competition, competitorCount, theme, onUpdate }: {
         {/* Custom 500+ */}
         <div className={`flex items-center justify-between px-4 py-3.5 rounded border ${dk ? 'bg-white/[0.02] border-white/[0.06]' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
           <div className="flex-1">
-            <p className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>Custom bundle</p>
+            <p className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>Custom bundle</p>
             <p className={`text-[11px] mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
               €0.12/participant · min 500 · total €{(customQty * 0.12).toFixed(2)}
             </p>
@@ -309,7 +309,7 @@ function BrandingSection({ competition, theme, onUpdate }: {
   const branding = comp.branding ?? {}
   const accent   = branding.accentColor ?? '#3E6AE1'
   const lightBg  = branding.lightBg     ?? '#FFFFFF'
-  const darkBg   = branding.darkBg      ?? '#171A20'
+  const darkBg   = branding.darkBg      ?? '#121212'
   const logoUrl  = branding.logoDataUrl  ?? ''
 
   const fileRef = useRef<HTMLInputElement>(null)
@@ -375,7 +375,7 @@ function BrandingSection({ competition, theme, onUpdate }: {
             </div>
             <p className={`text-sm font-medium mb-1 ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>Premium feature</p>
             <p className={`text-xs leading-relaxed mb-4 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-              Replace the ClimbTracker logo with your own and customise the colour scheme.
+              Replace the Ascendia logo with your own and customise the colour scheme.
               Upgrade to <span className="text-[#3E6AE1] font-medium">Premium</span> to unlock white-label branding.
             </p>
             <button
@@ -436,7 +436,7 @@ function BrandingSection({ competition, theme, onUpdate }: {
             <div className="flex gap-2">
               <button
                 onClick={() => fileRef.current?.click()}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded text-xs font-medium transition-colors duration-[330ms] ${dk ? 'bg-white/5 text-[#8E8E8E] hover:bg-white/10 hover:text-[#EEEEEE]' : 'bg-[#F4F4F4] text-[#5C5E62] hover:bg-[#EEEEEE] hover:text-[#171A20]'}`}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded text-xs font-medium transition-colors duration-[330ms] ${dk ? 'bg-white/5 text-[#8E8E8E] hover:bg-white/10 hover:text-[#EEEEEE]' : 'bg-[#F4F4F4] text-[#5C5E62] hover:bg-[#EEEEEE] hover:text-[#121212]'}`}
               >
                 <Upload size={12} /> Upload
               </button>
@@ -533,7 +533,7 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
     set('difficultyLevels', (draft.difficultyLevels ?? []).map(d => d.id === id ? { ...d, [field]: value } : d))
   }
 
-  const inputClass   = `w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms] ${dk ? 'bg-white/5 border-white/10 text-[#EEEEEE] focus:border-[#3E6AE1]/50' : 'bg-white border-[#EEEEEE] text-[#171A20] focus:border-[#3E6AE1]'}`
+  const inputClass   = `w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms] ${dk ? 'bg-white/5 border-white/10 text-[#EEEEEE] focus:border-[#3E6AE1]/50' : 'bg-white border-[#EEEEEE] text-[#121212] focus:border-[#3E6AE1]'}`
   const labelCls     = `block text-xs font-medium mb-2 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`
 
   const statusColors: Record<CompetitionStatus, string> = {
@@ -547,7 +547,7 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
     <div className="max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className={`text-2xl font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>{t.settings}</h1>
+          <h1 className={`text-2xl font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>{t.settings}</h1>
           <p className={`text-sm mt-1 ${dk ? 'text-[#5C5E62]' : 'text-[#5C5E62]'}`}>{competition.name}</p>
         </div>
         <button
@@ -569,11 +569,11 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
             <label className={labelCls}>Start Date</label>
-            <input type="datetime-local" value={draft.startDate.slice(0, 16)} onChange={e => set('startDate', new Date(e.target.value).toISOString())} className={inputClass} />
+            <input type="datetime-local" value={draft.startDate.slice(0, 16)} onChange={e => set('startDate', e.target.value + ':00')} className={inputClass} />
           </div>
           <div>
             <label className={labelCls}>End Date</label>
-            <input type="datetime-local" value={draft.endDate.slice(0, 16)} onChange={e => set('endDate', new Date(e.target.value).toISOString())} className={inputClass} />
+            <input type="datetime-local" value={draft.endDate.slice(0, 16)} onChange={e => set('endDate', e.target.value + ':00')} className={inputClass} />
           </div>
         </div>
 
@@ -858,23 +858,40 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
 
       {/* Difficulty Levels */}
       <SectionCard title="Difficulty Levels" theme={theme} defaultOpen={false}>
-        <div className={`grid grid-cols-[40px_1fr_120px_120px_44px] gap-2 px-3 py-2 mb-2 text-xs font-medium ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-          <div>Lvl</div><div>Label</div><div>Top pts</div><div>Zone pts</div><div></div>
-        </div>
         <div className="space-y-2 mb-4">
           {(draft.difficultyLevels ?? []).map(d => (
-            <div key={d.id} className="grid grid-cols-[40px_1fr_120px_120px_44px] gap-2 items-center">
-              <div className={`w-8 h-8 rounded flex items-center justify-center text-xs font-medium flex-shrink-0 ${dk ? 'bg-white/5 text-[#8E8E8E]' : 'bg-[#F4F4F4] text-[#5C5E62]'}`}>{d.level}</div>
-              <input type="text"   value={d.label}      onChange={e => updateDifficulty(d.id, 'label',      e.target.value)}        className={`${inputClass} py-2 text-sm`} />
-              <input type="number" value={d.basePoints} onChange={e => updateDifficulty(d.id, 'basePoints', Number(e.target.value))} className={`${inputClass} py-2`} />
-              <input type="number" value={d.zonePoints} onChange={e => updateDifficulty(d.id, 'zonePoints', Number(e.target.value))} className={`${inputClass} py-2`} />
-              <button
-                onClick={() => removeDifficulty(d.id)}
-                disabled={draft.difficultyLevels.length <= 1}
-                className={`p-2 rounded transition-colors duration-[330ms] flex-shrink-0 ${dk ? 'text-[#5C5E62] hover:text-red-400 hover:bg-red-400/10' : 'text-[#D0D1D2] hover:text-red-500 hover:bg-red-50'} disabled:opacity-20 disabled:cursor-not-allowed`}
-              >
-                <Trash2 size={14} />
-              </button>
+            <div key={d.id} className={`rounded border p-3 ${dk ? 'border-white/10 bg-white/[0.02]' : 'border-[#EEEEEE] bg-[#FAFAFA]'}`}>
+              {/* Row 1: Lvl badge + Label input */}
+              <div className="flex items-center gap-2 mb-2">
+                <div className={`w-8 h-8 rounded flex items-center justify-center text-xs font-medium flex-shrink-0 ${dk ? 'bg-white/10 text-[#8E8E8E]' : 'bg-[#F4F4F4] text-[#5C5E62]'}`}>
+                  {d.level}
+                </div>
+                <input
+                  type="text"
+                  value={d.label}
+                  onChange={e => updateDifficulty(d.id, 'label', e.target.value)}
+                  placeholder="Label (e.g. Easy)"
+                  className={`${inputClass} py-2 text-sm flex-1`}
+                />
+              </div>
+              {/* Row 2: Top pts + Zone pts + Delete */}
+              <div className="flex items-center gap-2">
+                <div className="flex-1">
+                  <label className={`text-[10px] font-medium mb-1 block ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Top pts</label>
+                  <input type="number" value={d.basePoints} onChange={e => updateDifficulty(d.id, 'basePoints', Number(e.target.value))} className={`${inputClass} py-2`} />
+                </div>
+                <div className="flex-1">
+                  <label className={`text-[10px] font-medium mb-1 block ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Zone pts</label>
+                  <input type="number" value={d.zonePoints} onChange={e => updateDifficulty(d.id, 'zonePoints', Number(e.target.value))} className={`${inputClass} py-2`} />
+                </div>
+                <button
+                  onClick={() => removeDifficulty(d.id)}
+                  disabled={draft.difficultyLevels.length <= 1}
+                  className={`p-2 rounded transition-colors duration-[330ms] flex-shrink-0 mt-5 ${dk ? 'text-[#5C5E62] hover:text-red-400 hover:bg-red-400/10' : 'text-[#D0D1D2] hover:text-red-500 hover:bg-red-50'} disabled:opacity-20 disabled:cursor-not-allowed`}
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             </div>
           ))}
         </div>

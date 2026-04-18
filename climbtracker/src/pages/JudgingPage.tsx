@@ -365,7 +365,7 @@ function CompetitorCard({
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className={`text-sm font-medium truncate ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
+          <p className={`text-sm font-medium truncate ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
             {competitor.displayName}
           </p>
           <p className={`text-[10px] mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
@@ -487,7 +487,7 @@ export default function JudgingPage({
     <div className="max-w-3xl mx-auto">
 
       <div className="mb-6">
-        <h1 className={`text-2xl font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
+        <h1 className={`text-2xl font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
           {t.judging}
         </h1>
         <p className={`text-sm mt-1 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
@@ -541,7 +541,7 @@ export default function JudgingPage({
               placeholder="Search competitor by name or BIB..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className={`flex-1 bg-transparent outline-none text-sm ${dk ? 'placeholder:text-[#5C5E62] text-[#EEEEEE]' : 'placeholder:text-[#8E8E8E] text-[#171A20]'}`}
+              className={`flex-1 bg-transparent outline-none text-sm ${dk ? 'placeholder:text-[#5C5E62] text-[#EEEEEE]' : 'placeholder:text-[#8E8E8E] text-[#121212]'}`}
             />
             {search && (
               <button onClick={() => setSearch('')} className={`text-xs font-medium ${dk ? 'text-[#5C5E62] hover:text-[#D0D1D2]' : 'text-[#8E8E8E] hover:text-[#393C41]'}`}>

@@ -47,7 +47,7 @@ export default function PasswordModal({
     w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms] pl-10
     ${dk
       ? `bg-white/5 text-[#EEEEEE] placeholder:text-[#5C5E62] ${error ? 'border-red-400/60' : 'border-white/10 focus:border-[#3E6AE1]/50'}`
-      : `bg-[#F4F4F4] text-[#171A20] placeholder:text-[#8E8E8E] ${error ? 'border-red-400' : 'border-[#EEEEEE] focus:border-[#3E6AE1]'}`
+      : `bg-[#F4F4F4] text-[#121212] placeholder:text-[#8E8E8E] ${error ? 'border-red-400' : 'border-[#EEEEEE] focus:border-[#3E6AE1]'}`
     }
   `
 
@@ -58,13 +58,13 @@ export default function PasswordModal({
       <div className={`
         fixed inset-x-4 top-1/2 -translate-y-1/2 z-[700]
         max-w-sm mx-auto rounded border
-        ${dk ? 'bg-[#171A20] border-white/10' : 'bg-white border-[#EEEEEE]'}
+        ${dk ? 'bg-[#121212] border-white/10' : 'bg-white border-[#EEEEEE]'}
       `}>
 
         <div className={`flex items-center justify-between px-6 py-4 border-b ${dk ? 'border-white/10' : 'border-[#EEEEEE]'}`}>
           <div className="flex items-center gap-2">
             <Lock size={16} className="text-amber-400" />
-            <h2 className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
+            <h2 className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
               Password Required
             </h2>
           </div>
@@ -77,7 +77,7 @@ export default function PasswordModal({
         </div>
 
         <div className={`px-6 py-4 border-b ${dk ? 'border-white/5' : 'border-[#EEEEEE]'}`}>
-          <p className={`text-base font-medium leading-tight ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
+          <p className={`text-base font-medium leading-tight ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
             {competition.name}
           </p>
           <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1.5">

@@ -81,7 +81,7 @@ export default function CheckoutModal({
       className="fixed inset-0 z-[1000] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm"
       onClick={e => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-[#171A20] border border-white/[0.08] rounded w-full max-w-[460px]">
+      <div className="bg-[#121212] border border-white/[0.08] rounded w-full max-w-[460px]">
 
         {/* Header */}
         <div className="px-7 pt-6 pb-5 border-b border-white/[0.08] flex items-start justify-between gap-4">

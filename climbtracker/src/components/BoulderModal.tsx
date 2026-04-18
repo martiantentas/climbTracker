@@ -13,15 +13,16 @@ interface BoulderModalProps {
 }
 
 const HOLD_COLORS = [
-  { label: 'Blue',   value: '#38bdf8' },
-  { label: 'Yellow', value: '#fbbf24' },
-  { label: 'Red',    value: '#f87171' },
-  { label: 'Green',  value: '#4ade80' },
-  { label: 'Purple', value: '#c084fc' },
-  { label: 'White',  value: '#f8fafc' },
-  { label: 'Black',  value: '#1e293b' },
-  { label: 'Orange', value: '#fb923c' },
-  { label: 'Pink',   value: '#f472b6' },
+  { label: 'Red',        value: '#ff0000' },
+  { label: 'Pink',       value: '#ff3fc3' },
+  { label: 'Dark Blue',  value: '#2e61f0' },
+  { label: 'Green',      value: '#3eb700' },
+  { label: 'Lilac',      value: '#6700b3' },
+  { label: 'Orange',     value: '#ff9e1c' },
+  { label: 'Black',      value: '#000000' },
+  { label: 'White',      value: '#ffffff' },
+  { label: 'Light Blue', value: '#80ffff' },
+  { label: 'Yellow',     value: '#f7f300' },
 ]
 
 const STYLES = ['Slab', 'Overhang', 'Dyno', 'Crimp', 'Volume', 'Cave', 'Vertical', 'Other']
@@ -95,7 +96,7 @@ export default function BoulderModal({
     w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms]
     ${dk
       ? 'bg-white/5 border-white/10 text-[#EEEEEE] placeholder:text-[#5C5E62] focus:border-[#3E6AE1]/50'
-      : 'bg-[#F4F4F4] border-[#EEEEEE] text-[#171A20] placeholder:text-[#8E8E8E] focus:border-[#3E6AE1]'
+      : 'bg-[#F4F4F4] border-[#EEEEEE] text-[#121212] placeholder:text-[#8E8E8E] focus:border-[#3E6AE1]'
     }
   `
   const labelCls = `block text-[10px] font-medium mb-2 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`
@@ -118,12 +119,12 @@ export default function BoulderModal({
       <div className={`
         fixed inset-x-4 top-1/2 -translate-y-1/2 z-[500] max-w-lg mx-auto
         rounded border max-h-[90vh] overflow-y-auto
-        ${dk ? 'bg-[#171A20] border-white/10' : 'bg-white border-[#EEEEEE]'}
+        ${dk ? 'bg-[#121212] border-white/10' : 'bg-white border-[#EEEEEE]'}
       `}>
 
         {/* Header */}
-        <div className={`sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b ${dk ? 'bg-[#171A20] border-white/10' : 'bg-white border-[#EEEEEE]'}`}>
-          <h2 className={`text-base font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
+        <div className={`sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b ${dk ? 'bg-[#121212] border-white/10' : 'bg-white border-[#EEEEEE]'}`}>
+          <h2 className={`text-base font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
             {isEditing ? `Edit Boulder #${boulder.number}` : 'Add Boulder'}
           </h2>
           <button
@@ -285,7 +286,7 @@ export default function BoulderModal({
         </div>
 
         {/* Footer */}
-        <div className={`sticky bottom-0 flex items-center justify-between gap-3 px-6 py-4 border-t ${dk ? 'bg-[#171A20] border-white/10' : 'bg-white border-[#EEEEEE]'}`}>
+        <div className={`sticky bottom-0 flex items-center justify-between gap-3 px-6 py-4 border-t ${dk ? 'bg-[#121212] border-white/10' : 'bg-white border-[#EEEEEE]'}`}>
           {isEditing && onDelete && (
             confirmDelete ? (
               <div className="flex items-center gap-2">

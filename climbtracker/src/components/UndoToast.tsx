@@ -60,7 +60,7 @@ export default function UndoToast({ message, theme, onUndo, onCommit, onDismiss 
       rounded border overflow-hidden
       ${dk
         ? 'bg-[#1C1F24] border-white/15 text-[#EEEEEE]'
-        : 'bg-white border-[#EEEEEE] text-[#171A20]'
+        : 'bg-white border-[#EEEEEE] text-[#121212]'
       }
     `}>
       <div className="flex items-center gap-3 px-4 py-3.5">

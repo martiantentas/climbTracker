@@ -31,7 +31,7 @@ function FilterChip({ label, active, theme, onClick }: {
           ? 'bg-[#3E6AE1]/10 border-[#3E6AE1]/30 text-[#3E6AE1]'
           : dk
             ? 'bg-white/5 border-white/10 text-[#8E8E8E] hover:text-[#EEEEEE] hover:bg-white/10'
-            : 'bg-white border-[#EEEEEE] text-[#5C5E62] hover:text-[#171A20]'
+            : 'bg-white border-[#EEEEEE] text-[#5C5E62] hover:text-[#121212]'
         }
       `}
     >
@@ -114,7 +114,7 @@ export default function LeaderboardPage({
       </tr>`
     }).join('')
     const html = `<!DOCTYPE html><html><head><title>${competition.name} — Results</title>
-    <style>body{font-family:system-ui,sans-serif;padding:32px;color:#171A20}h1{font-size:24px;font-weight:500;margin-bottom:4px}p{color:#5C5E62;margin-bottom:24px}table{width:100%;border-collapse:collapse}th{text-align:left;padding:8px 10px;background:#F4F4F4;font-size:11px;color:#5C5E62;border-bottom:2px solid #EEEEEE}</style>
+    <style>body{font-family:system-ui,sans-serif;padding:32px;color:#121212}h1{font-size:24px;font-weight:500;margin-bottom:4px}p{color:#5C5E62;margin-bottom:24px}table{width:100%;border-collapse:collapse}th{text-align:left;padding:8px 10px;background:#F4F4F4;font-size:11px;color:#5C5E62;border-bottom:2px solid #EEEEEE}</style>
     </head><body>
     <h1>${competition.name}</h1>
     <p>${competition.location} · ${new Date(competition.startDate).toLocaleDateString()}</p>
@@ -220,7 +220,7 @@ export default function LeaderboardPage({
       {/* Header */}
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
-          <h1 className={`text-2xl font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
+          <h1 className={`text-2xl font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
             {t.leaderboard}
           </h1>
           <p className={`text-sm mt-1 ${dk ? 'text-[#5C5E62]' : 'text-[#5C5E62]'}`}>
@@ -242,7 +242,7 @@ export default function LeaderboardPage({
             {showDownload && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setShowDownload(false)} />
-                <div className={`absolute right-0 top-full mt-1 z-20 w-52 rounded border overflow-hidden ${dk ? 'bg-[#171A20] border-white/10' : 'bg-white border-[#EEEEEE]'}`}>
+                <div className={`absolute right-0 top-full mt-1 z-20 w-52 rounded border overflow-hidden ${dk ? 'bg-[#121212] border-white/10' : 'bg-white border-[#EEEEEE]'}`}>
                   <button onClick={exportCSV} className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-left transition-colors duration-[330ms] ${dk ? 'hover:bg-white/5 text-[#D0D1D2]' : 'hover:bg-[#F4F4F4] text-[#393C41]'}`}>
                     <Download size={14} className="text-[#3E6AE1]" />
                     Download CSV
@@ -364,7 +364,7 @@ export default function LeaderboardPage({
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <p className={`font-medium text-sm truncate ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
+                  <p className={`font-medium text-sm truncate ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
                     {result.name}
                   </p>
                   <div className={`flex items-center gap-2 text-xs ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>

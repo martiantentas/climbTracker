@@ -130,7 +130,7 @@ export default function ProfilePage({
     w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms]
     ${dk
       ? 'bg-white/5 border-white/10 text-[#EEEEEE] placeholder:text-[#5C5E62] focus:border-[#3E6AE1]/50'
-      : 'bg-white border-[#EEEEEE] text-[#171A20] placeholder:text-[#8E8E8E] focus:border-[#3E6AE1]'
+      : 'bg-white border-[#EEEEEE] text-[#121212] placeholder:text-[#8E8E8E] focus:border-[#3E6AE1]'
     }
   `
 
@@ -138,7 +138,7 @@ export default function ProfilePage({
     w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms] cursor-pointer
     ${dk
       ? 'bg-white/5 border-white/10 text-[#EEEEEE] focus:border-[#3E6AE1]/50'
-      : 'bg-white border-[#EEEEEE] text-[#171A20] focus:border-[#3E6AE1]'
+      : 'bg-white border-[#EEEEEE] text-[#121212] focus:border-[#3E6AE1]'
     }
   `
 
@@ -155,7 +155,7 @@ export default function ProfilePage({
 
       {/* Page header */}
       <div className="flex items-center justify-between mb-8">
-        <h1 className={`text-2xl font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
+        <h1 className={`text-2xl font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
           {t.profile}
         </h1>
 
@@ -224,7 +224,7 @@ export default function ProfilePage({
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <p className={`text-xl font-medium truncate ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
+          <p className={`text-xl font-medium truncate ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
             {currentUser.displayName}
           </p>
           <p className={`text-xs mt-1 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { BarChart2, Users, Mountain, CheckCircle2, Zap, X } from 'lucide-react'
+import { BarChart2, Users, TrendingUp, X } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 
 import type { Competition, Boulder, Competitor, Completion } from '../types'
@@ -136,7 +136,7 @@ export default function AnalyticsPage({
 
       {/* ── Header ── */}
       <div className="mb-6">
-        <h1 className={`text-2xl font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
+        <h1 className={`text-2xl font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
           Statistics
         </h1>
         <p className={`text-sm mt-1 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
@@ -200,7 +200,7 @@ export default function AnalyticsPage({
       {boulderStats.length > 0 && (
         <div className={`rounded border p-5 mb-6 ${dk ? 'bg-white/[0.03] border-white/10' : 'bg-white border-[#EEEEEE]'}`}>
           <div className="flex items-center gap-2 mb-5">
-            <Mountain size={14} className={dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'} />
+            <TrendingUp size={14} className={dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'} />
             <h2 className={`text-sm font-medium ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>Boulder completion rates</h2>
           </div>
           <ResponsiveContainer width="100%" height={220}>
@@ -217,7 +217,7 @@ export default function AnalyticsPage({
               />
               <Tooltip
                 contentStyle={{
-                  background: dk ? '#171A20' : '#fff',
+                  background: dk ? '#121212' : '#fff',
                   border: dk ? '1px solid rgba(255,255,255,0.1)' : '1px solid #EEEEEE',
                   borderRadius: 4,
                   fontSize: 12,

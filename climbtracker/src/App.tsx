@@ -97,7 +97,9 @@ function AppInner() {
   const navigate = useNavigate()
 
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
-  const [lang,  setLang]  = useState<Language>('en')
+  const [lang,  setLang]  = useState<Language>(() => (localStorage.getItem('ct-lang') as Language) ?? 'en')
+
+  function handleSetLang(l: Language) { setLang(l); localStorage.setItem('ct-lang', l) }
   const t = translations[lang]
 
   const [currentUser, setCurrentUser] = useState<Competitor | null>(null)
@@ -175,8 +177,11 @@ function AppInner() {
       r.removeProperty('--brand-bg-dark')
     }
 
-    if (!currentUser || !isPrem || !b) {
-      // No user logged in, or no premium branding — reset to defaults
+    const isRegistered = activeCompetitors.some(c => c.id === currentUser?.id)
+    const isOwner      = activeCompetition?.ownerId === currentUser?.id
+
+    if (!currentUser || !isPrem || !b || (!isRegistered && !isOwner)) {
+      // No user logged in, not registered in this competition, or no premium branding — reset to defaults
       resetVars()
       return
     }
@@ -211,7 +216,7 @@ function AppInner() {
 
     return () => { document.getElementById('ct-brand-overrides')?.remove() }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeCompetition, currentUser])
+  }, [activeCompetition, currentUser, activeCompetitors])
 
   // ── Actions ──────────────────────────────────────────────────────────────────
 
@@ -454,8 +459,8 @@ function AppInner() {
   if (!currentUser) {
     return (
       <Routes>
-        <Route path="/"                element={<LandingPage />} />
-        <Route path="/auth"            element={<AuthPage onLogin={u => { setCurrentUser(u); navigate('/competitions', { replace: true }) }} theme={theme} />} />
+        <Route path="/"                element={<LandingPage lang={lang} setLang={handleSetLang} />} />
+        <Route path="/auth"            element={<AuthPage onLogin={u => { setCurrentUser(u); navigate('/competitions', { replace: true }) }} theme={theme} lang={lang} setLang={handleSetLang} />} />
         <Route path="/results/:compId" element={<PublicLeaderboardPage competitions={competitions} competitorsMap={competitorsMap} bouldersMap={bouldersMap} completionsMap={completionsMap} />} />
         <Route path="*"                element={<Navigate to="/" replace />} />
       </Routes>
@@ -464,7 +469,7 @@ function AppInner() {
 
   if (!activeCompetition) {
     return (
-      <div style={{ minHeight: '100vh', background: '#171A20' }} className="flex items-center justify-center">
+      <div style={{ minHeight: '100vh', background: '#121212' }} className="flex items-center justify-center">
         <p className="text-slate-400">No competition found.</p>
       </div>
     )
@@ -474,13 +479,16 @@ function AppInner() {
   return (
     <>
       <div
-        className={`min-h-screen ${theme === 'dark' ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}
+        className={`min-h-screen ${theme === 'dark' ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}
         style={{
           background: (() => {
-            const b = (activeCompetition as any)?.branding
-            const isPrem = (activeCompetition as any)?.tier === 'premium'
-            if (isPrem && b) return theme === 'dark' ? (b.darkBg ?? '#171A20') : (b.lightBg ?? '#FFFFFF')
-            return theme === 'dark' ? '#171A20' : '#FFFFFF'
+            const comp = activeCompetition as any
+            const b = comp?.branding
+            const isPrem = comp?.tier === 'premium'
+            const isReg = activeCompetitors.some(c => c.id === currentUser?.id)
+            const isOwn = comp?.ownerId === currentUser?.id
+            if (isPrem && b && (isReg || isOwn)) return theme === 'dark' ? (b.darkBg ?? '#121212') : (b.lightBg ?? '#FFFFFF')
+            return theme === 'dark' ? '#121212' : '#FFFFFF'
           })(),
         }}
       >
@@ -519,10 +527,16 @@ function AppInner() {
         )}
 
         <NavBar
-          theme={theme} setTheme={setTheme} lang={lang} setLang={setLang}
+          theme={theme} setTheme={setTheme} lang={lang} setLang={handleSetLang}
           currentUser={currentUser} activeCompetition={activeCompetition}
           isOrganizer={isOrganizer} isJudge={isJudge} canAccessComp={canAccessActiveComp}
-          branding={(activeCompetition as any)?.tier === 'premium' ? (activeCompetition as any)?.branding : undefined}
+          branding={(() => {
+              const comp = activeCompetition as any
+              if (comp?.tier !== 'premium' || !comp?.branding) return undefined
+              const isReg = activeCompetitors.some(c => c.id === currentUser?.id)
+              const isOwn = comp?.ownerId === currentUser?.id
+              return (isReg || isOwn) ? comp.branding : undefined
+            })()}
           onOpenMenu={() => setIsMenuOpen(true)}
           onLogout={() => { setCurrentUser(null); navigate('/competitions', { replace: true }) }}
         />
@@ -532,7 +546,13 @@ function AppInner() {
           theme={theme} lang={lang} currentUser={currentUser}
           competition={activeCompetition} isOrganizer={isOrganizer} isJudge={isJudge}
           canAccessComp={canAccessActiveComp}
-          branding={(activeCompetition as any)?.tier === 'premium' ? (activeCompetition as any)?.branding : undefined}
+          branding={(() => {
+              const comp = activeCompetition as any
+              if (comp?.tier !== 'premium' || !comp?.branding) return undefined
+              const isReg = activeCompetitors.some(c => c.id === currentUser?.id)
+              const isOwn = comp?.ownerId === currentUser?.id
+              return (isReg || isOwn) ? comp.branding : undefined
+            })()}
           onLogout={() => { setCurrentUser(null); navigate('/competitions', { replace: true }) }}
         />
 

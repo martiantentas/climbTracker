@@ -168,7 +168,7 @@ export default function BouldersPage({
         ? 'bg-[#3E6AE1] text-white'
         : dk
           ? 'bg-white/5 text-[#8E8E8E] hover:bg-white/10 hover:text-[#EEEEEE]'
-          : 'bg-[#F4F4F4] text-[#5C5E62] hover:bg-[#EEEEEE] hover:text-[#171A20]'
+          : 'bg-[#F4F4F4] text-[#5C5E62] hover:bg-[#EEEEEE] hover:text-[#121212]'
     }`
   }
 
@@ -177,7 +177,7 @@ export default function BouldersPage({
       {/* ── Header ── */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className={`text-2xl font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
+          <h1 className={`text-2xl font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
             {t.boulders}
           </h1>
           <div className="flex items-center gap-3 mt-1">
@@ -222,7 +222,7 @@ export default function BouldersPage({
             <div className={`w-px h-8 ${dk ? 'bg-white/10' : 'bg-[#EEEEEE]'}`} />
             <div>
               <p className={`text-xs font-medium mb-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Tops</p>
-              <p className={`text-2xl font-medium leading-none ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
+              <p className={`text-2xl font-medium leading-none ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
                 {toppedCount}
                 <span className={`text-sm font-normal ml-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>/{totalBoulders}</span>
               </p>
@@ -326,6 +326,7 @@ export default function BouldersPage({
               maxFixedAttempts={competition.maxFixedAttempts}
               onToggle={handleToggle}
               onEdit={isOrganizer ? b => setModalBoulder(b) : undefined}
+              onDelete={isOrganizer ? () => handleDeleteBoulder(boulder.id) : undefined}
             />
           ))}
         </div>

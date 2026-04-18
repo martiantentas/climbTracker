@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Mountain, Trophy, Target, Zap, ArrowLeft } from 'lucide-react'
+import { Trophy, Target, Zap, ArrowLeft } from 'lucide-react'
+import ascendiaLogo from '../assets/Ascendia.png'
 
 import type { Competition, Competitor, Boulder, Completion } from '../types'
 import { calculateRankings } from '../utils/scoring'
@@ -67,7 +68,7 @@ export default function PublicLeaderboardPage({
   // Not found state
   if (!competition) {
     return (
-      <div className="min-h-screen bg-[#171A20] flex flex-col items-center justify-center font-sans text-[#EEEEEE]">
+      <div className="min-h-screen bg-[#121212] flex flex-col items-center justify-center font-sans text-[#EEEEEE]">
         <p className="text-5xl mb-4">🏔️</p>
         <h1 className="text-xl font-medium mb-2">Competition not found</h1>
         <p className="text-[#5C5E62] mb-6">This results page doesn't exist or the link is incorrect.</p>
@@ -88,14 +89,13 @@ export default function PublicLeaderboardPage({
   const isLive = competition.status === 'LIVE'
 
   return (
-    <div className="min-h-screen bg-[#171A20] text-[#EEEEEE]">
+    <div className="min-h-screen bg-[#121212] text-[#EEEEEE]">
 
       {/* Nav */}
-      <nav className="border-b border-white/[0.06] bg-[#171A20]/90 backdrop-blur sticky top-0 z-50">
+      <nav className="border-b border-white/[0.06] bg-[#121212]/90 backdrop-blur sticky top-0 z-50">
         <div className="max-w-3xl mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Mountain size={18} className="text-[#3E6AE1]" />
-            <span className="font-medium text-base text-[#EEEEEE]">ClimbTracker</span>
+            <img src={ascendiaLogo} alt="Ascendia" className="h-7 w-auto object-contain" />
           </div>
           <button
             onClick={() => navigate(-1)}
@@ -209,8 +209,8 @@ export default function PublicLeaderboardPage({
         {/* Footer */}
         <div className="mt-12 text-center text-[#393C41] text-xs">
           <div className="flex items-center justify-center gap-1.5 mb-1">
-            <Mountain size={14} className="text-[#393C41]" />
-            <span className="font-medium">Powered by ClimbTracker</span>
+            <img src={ascendiaLogo} alt="Ascendia" className="h-4 w-auto object-contain opacity-40" />
+            <span className="font-medium">Powered by Ascendia</span>
           </div>
           <span>Results are updated in real time</span>
         </div>

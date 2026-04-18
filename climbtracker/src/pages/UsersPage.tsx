@@ -64,7 +64,7 @@ function RoleDropdown({ competitor, theme, onUpdateRole }: {
         <>
           <div className="fixed inset-0 z-[900]" onClick={() => setOpen(false)} />
           <div
-            className={`fixed z-[901] rounded border overflow-hidden min-w-[130px] ${dk ? 'bg-[#171A20] border-white/10' : 'bg-white border-[#EEEEEE]'}`}
+            className={`fixed z-[901] rounded border overflow-hidden min-w-[130px] ${dk ? 'bg-[#121212] border-white/10' : 'bg-white border-[#EEEEEE]'}`}
             style={{ top: menuStyle.top, left: menuStyle.left, transform: 'translateX(-100%)' }}
           >
             {(['competitor', 'judge', 'organizer'] as const).map(role => (
@@ -115,12 +115,12 @@ function UserDetailModal({ competitor, allCompetitors, competition, isMe, viewOn
 
   const canSaveBib = !isJudgeOrOrganizer && !bibError
 
-  const inputCls = `w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms] ${dk ? 'bg-white/5 border-white/10 text-[#EEEEEE] focus:border-[#3E6AE1]/50' : 'bg-white border-[#EEEEEE] text-[#171A20] focus:border-[#3E6AE1]'}`
+  const inputCls = `w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms] ${dk ? 'bg-white/5 border-white/10 text-[#EEEEEE] focus:border-[#3E6AE1]/50' : 'bg-white border-[#EEEEEE] text-[#121212] focus:border-[#3E6AE1]'}`
 
   return (
     <>
       <div className="fixed inset-0 z-[400] bg-black/60" onClick={onClose} />
-      <div className={`fixed inset-x-4 top-1/2 -translate-y-1/2 z-[500] max-w-md mx-auto rounded border ${dk ? 'bg-[#171A20] border-white/10' : 'bg-white border-[#EEEEEE]'}`}>
+      <div className={`fixed inset-x-4 top-1/2 -translate-y-1/2 z-[500] max-w-md mx-auto rounded border ${dk ? 'bg-[#121212] border-white/10' : 'bg-white border-[#EEEEEE]'}`}>
 
         <div className={`flex items-center justify-between px-6 py-4 border-b ${dk ? 'border-white/10' : 'border-[#EEEEEE]'}`}>
           <div className="flex items-center gap-3">
@@ -128,7 +128,7 @@ function UserDetailModal({ competitor, allCompetitors, competition, isMe, viewOn
               {competitor.avatar ? <span className="text-xl">{competitor.avatar}</span> : <User size={18} className="text-[#8E8E8E]" />}
             </div>
             <div>
-              <p className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
+              <p className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
                 {competitor.displayName}
                 {isMe && <span className="ml-2 text-[9px] font-medium text-[#3E6AE1] bg-[#3E6AE1]/10 px-1.5 py-0.5 rounded">You</span>}
               </p>
@@ -286,7 +286,7 @@ export default function UsersPage({ competitors, competition, currentUser, theme
       )}
 
       <div className="mb-6">
-        <h1 className={`text-2xl font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>{t.users}</h1>
+        <h1 className={`text-2xl font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>{t.users}</h1>
         <div className="flex items-center gap-4 mt-1 flex-wrap">
           <span className={`text-sm ${dk ? 'text-[#5C5E62]' : 'text-[#5C5E62]'}`}><span className="font-medium text-[#3E6AE1]">{competitorCount}</span> competitors</span>
           <span className={`text-sm ${dk ? 'text-[#5C5E62]' : 'text-[#5C5E62]'}`}><span className="font-medium text-purple-400">{judgeCount}</span> judges</span>
@@ -332,7 +332,7 @@ export default function UsersPage({ competitors, competition, currentUser, theme
                     {competitor.avatar ? <span className="text-xl">{competitor.avatar}</span> : <User size={15} className="text-[#8E8E8E]" />}
                   </div>
                   <div className="min-w-0">
-                    <p className={`text-sm font-medium leading-tight truncate ${dk ? 'text-[#EEEEEE]' : 'text-[#171A20]'}`}>
+                    <p className={`text-sm font-medium leading-tight truncate ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
                       {competitor.displayName}
                       {isMe && <span className="ml-2 text-[9px] font-medium text-[#3E6AE1] bg-[#3E6AE1]/10 px-1.5 py-0.5 rounded">You</span>}
                     </p>
