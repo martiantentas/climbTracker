@@ -74,7 +74,7 @@ export default function UndoToast({ message, theme, onUndo, onCommit, onDismiss 
 
         <button
           onClick={handleUndo}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors duration-[330ms] bg-[#3E6AE1] text-white hover:bg-[#3056C7] flex-shrink-0"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors duration-[330ms] bg-[#7F8BAD] text-white hover:bg-[#6D799B] flex-shrink-0"
         >
           <Undo2 size={11} /> Undo
         </button>
@@ -89,7 +89,7 @@ export default function UndoToast({ message, theme, onUndo, onCommit, onDismiss 
 
       <div className={`h-0.5 ${dk ? 'bg-white/5' : 'bg-[#EEEEEE]'}`}>
         <div
-          className="h-full bg-[#3E6AE1] transition-none"
+          className="h-full bg-[#7F8BAD] transition-none"
           style={{ width: `${progress}%` }}
         />
       </div>

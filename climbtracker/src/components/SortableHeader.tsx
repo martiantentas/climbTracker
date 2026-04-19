@@ -31,7 +31,7 @@ export default function SortableHeader({
         ${align === 'center' ? 'justify-center w-full' : ''}
         ${align === 'right'  ? 'justify-end w-full'   : ''}
         ${isActive
-          ? 'text-[#3E6AE1]'
+          ? 'text-[#7F8BAD]'
           : theme === 'dark'
             ? 'text-[#5C5E62] hover:text-[#D0D1D2]'
             : 'text-[#8E8E8E] hover:text-[#393C41]'
@@ -41,8 +41,8 @@ export default function SortableHeader({
       {label}
       {isActive
         ? sortDir === 'asc'
-          ? <ArrowUp   size={11} className="text-[#3E6AE1]" />
-          : <ArrowDown size={11} className="text-[#3E6AE1]" />
+          ? <ArrowUp   size={11} className="text-[#7F8BAD]" />
+          : <ArrowDown size={11} className="text-[#7F8BAD]" />
         : <ArrowUpDown size={11} className="opacity-30 group-hover:opacity-60 transition-opacity" />
       }
     </button>

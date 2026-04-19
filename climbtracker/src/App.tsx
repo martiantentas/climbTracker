@@ -189,7 +189,7 @@ function AppInner() {
       return
     }
 
-    const accent = b.accentColor ?? '#3E6AE1'
+    const accent = b.accentColor ?? '#7F8BAD'
     const hover  = b.accentHover ?? darkenHex(accent, 18)
 
     // Update CSS variables (used by any element referencing var(--brand-*))
@@ -203,16 +203,16 @@ function AppInner() {
       const style = document.createElement('style')
       style.id    = 'ct-brand-overrides'
       style.textContent = `
-        .bg-\\[\\#3E6AE1\\]                   { background-color: ${accent} !important; }
-        .hover\\:bg-\\[\\#3E6AE1\\]:hover     { background-color: ${accent} !important; }
-        .bg-\\[\\#3056C7\\]                   { background-color: ${hover}  !important; }
-        .hover\\:bg-\\[\\#3056C7\\]:hover     { background-color: ${hover}  !important; }
-        .text-\\[\\#3E6AE1\\]                 { color: ${accent} !important; }
-        .border-\\[\\#3E6AE1\\]               { border-color: ${accent} !important; }
-        .bg-\\[\\#3E6AE1\\]\\/10              { background-color: color-mix(in srgb, ${accent} 10%, transparent) !important; }
-        .bg-\\[\\#3E6AE1\\]\\/\\[0\\.06\\]    { background-color: color-mix(in srgb, ${accent}  6%, transparent) !important; }
-        .bg-\\[\\#3E6AE1\\]\\/\\[0\\.03\\]    { background-color: color-mix(in srgb, ${accent}  3%, transparent) !important; }
-        .focus\\:border-\\[\\#3E6AE1\\]\\/50:focus { border-color: color-mix(in srgb, ${accent} 50%, transparent) !important; }
+        .bg-\\[\\#7F8BAD\\]                   { background-color: ${accent} !important; }
+        .hover\\:bg-\\[\\#7F8BAD\\]:hover     { background-color: ${accent} !important; }
+        .bg-\\[\\#6D799B\\]                   { background-color: ${hover}  !important; }
+        .hover\\:bg-\\[\\#6D799B\\]:hover     { background-color: ${hover}  !important; }
+        .text-\\[\\#7F8BAD\\]                 { color: ${accent} !important; }
+        .border-\\[\\#7F8BAD\\]               { border-color: ${accent} !important; }
+        .bg-\\[\\#7F8BAD\\]\\/10              { background-color: color-mix(in srgb, ${accent} 10%, transparent) !important; }
+        .bg-\\[\\#7F8BAD\\]\\/\\[0\\.06\\]    { background-color: color-mix(in srgb, ${accent}  6%, transparent) !important; }
+        .bg-\\[\\#7F8BAD\\]\\/\\[0\\.03\\]    { background-color: color-mix(in srgb, ${accent}  3%, transparent) !important; }
+        .focus\\:border-\\[\\#7F8BAD\\]\\/50:focus { border-color: color-mix(in srgb, ${accent} 50%, transparent) !important; }
       `
       document.head.appendChild(style)
     }

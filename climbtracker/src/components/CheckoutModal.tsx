@@ -73,7 +73,7 @@ export default function CheckoutModal({
 
   const inputCls = `
     w-full px-4 py-3.5 rounded border outline-none text-sm transition-colors duration-[330ms]
-    bg-white/5 border-white/10 text-[#EEEEEE] placeholder:text-[#5C5E62] focus:border-[#3E6AE1]/50
+    bg-white/5 border-white/10 text-[#EEEEEE] placeholder:text-[#5C5E62] focus:border-[#7F8BAD]/50
   `
 
   return (
@@ -116,9 +116,9 @@ export default function CheckoutModal({
           ) : (
             <>
               {/* Order summary */}
-              <div className="px-4 py-3 rounded border bg-[#3E6AE1]/[0.06] border-[#3E6AE1]/15 mb-5 flex items-center justify-between">
+              <div className="px-4 py-3 rounded border bg-[#7F8BAD]/[0.06] border-[#7F8BAD]/15 mb-5 flex items-center justify-between">
                 <span className="text-xs text-[#5C5E62]">{title}</span>
-                <span className={`text-sm font-medium font-mono ${isFree ? 'line-through text-[#5C5E62]' : 'text-[#3E6AE1]'}`}>
+                <span className={`text-sm font-medium font-mono ${isFree ? 'line-through text-[#5C5E62]' : 'text-[#7F8BAD]'}`}>
                   €{amount.toFixed(2)}
                 </span>
               </div>
@@ -146,7 +146,7 @@ export default function CheckoutModal({
                         <button
                           onClick={applyPromo}
                           disabled={!promoCode.trim()}
-                          className="px-4 py-3 rounded text-xs font-medium bg-[#3E6AE1] text-white hover:bg-[#3056C7] transition-colors duration-[330ms] flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                          className="px-4 py-3 rounded text-xs font-medium bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms] flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                           Apply
                         </button>
@@ -217,8 +217,8 @@ export default function CheckoutModal({
                 className={`
                   w-full py-3.5 rounded text-sm font-medium transition-colors duration-[330ms]
                   ${loading
-                    ? 'bg-[#3E6AE1]/30 text-[#5C5E62] cursor-not-allowed'
-                    : 'bg-[#3E6AE1] text-white hover:bg-[#3056C7] cursor-pointer'
+                    ? 'bg-[#7F8BAD]/30 text-[#5C5E62] cursor-not-allowed'
+                    : 'bg-[#7F8BAD] text-white hover:bg-[#6D799B] cursor-pointer'
                   }
                 `}
               >

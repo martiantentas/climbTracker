@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { Search, Shield, User, Trash2, ChevronDown, X, Save, Hash, AlertCircle } from 'lucide-react'
+import { Search, Shield, User, Trash2, ChevronDown, X, Save, Hash, AlertCircle, MoreHorizontal } from 'lucide-react'
 import type { Competitor, Competition } from '../types'
 import type { Language } from '../translations'
 import { translations } from '../translations'
@@ -73,7 +73,7 @@ function RoleDropdown({ competitor, theme, onUpdateRole }: {
                 onClick={() => { onUpdateRole(competitor.id, role); setOpen(false) }}
                 className={`w-full px-3 py-2 text-left text-xs font-medium transition-colors duration-[330ms] flex items-center gap-2 ${
                   currentRole === role
-                    ? dk ? 'bg-[#3E6AE1]/10 text-[#3E6AE1]' : 'bg-[#3E6AE1]/10 text-[#3E6AE1]'
+                    ? dk ? 'bg-[#7F8BAD]/10 text-[#7F8BAD]' : 'bg-[#7F8BAD]/10 text-[#7F8BAD]'
                     : dk ? 'text-[#D0D1D2] hover:bg-white/5' : 'text-[#5C5E62] hover:bg-[#F4F4F4]'
                 }`}
               >
@@ -115,7 +115,7 @@ function UserDetailModal({ competitor, allCompetitors, competition, isMe, viewOn
 
   const canSaveBib = !isJudgeOrOrganizer && !bibError
 
-  const inputCls = `w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms] ${dk ? 'bg-white/5 border-white/10 text-[#EEEEEE] focus:border-[#3E6AE1]/50' : 'bg-white border-[#EEEEEE] text-[#121212] focus:border-[#3E6AE1]'}`
+  const inputCls = `w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms] ${dk ? 'bg-white/5 border-white/10 text-[#EEEEEE] focus:border-[#7F8BAD]/50' : 'bg-white border-[#EEEEEE] text-[#121212] focus:border-[#7F8BAD]'}`
 
   return (
     <>
@@ -130,7 +130,7 @@ function UserDetailModal({ competitor, allCompetitors, competition, isMe, viewOn
             <div>
               <p className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
                 {competitor.displayName}
-                {isMe && <span className="ml-2 text-[9px] font-medium text-[#3E6AE1] bg-[#3E6AE1]/10 px-1.5 py-0.5 rounded">You</span>}
+                {isMe && <span className="ml-2 text-[9px] font-medium text-[#7F8BAD] bg-[#7F8BAD]/10 px-1.5 py-0.5 rounded">You</span>}
               </p>
               <p className={`text-xs mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{competitor.email}</p>
             </div>
@@ -149,7 +149,7 @@ function UserDetailModal({ competitor, allCompetitors, competition, isMe, viewOn
                     ? 'bg-amber-400/15 text-amber-500'
                     : role === 'judge'
                       ? 'bg-purple-400/15 text-purple-400'
-                      : 'bg-[#3E6AE1]/15 text-[#3E6AE1]'
+                      : 'bg-[#7F8BAD]/15 text-[#7F8BAD]'
                   return (
                     <button
                       key={role}
@@ -190,7 +190,7 @@ function UserDetailModal({ competitor, allCompetitors, competition, isMe, viewOn
               <button
                 onClick={() => { if (canSaveBib) onUpdateBib(competitor.id, parseInt(bibInput)) }}
                 disabled={!canSaveBib}
-                className={`flex items-center gap-1.5 px-4 py-3 rounded text-xs font-medium transition-colors duration-[330ms] ${!canSaveBib ? 'opacity-40 cursor-not-allowed bg-white/5 text-[#5C5E62]' : 'bg-[#3E6AE1] text-white hover:bg-[#3056C7]'}`}
+                className={`flex items-center gap-1.5 px-4 py-3 rounded text-xs font-medium transition-colors duration-[330ms] ${!canSaveBib ? 'opacity-40 cursor-not-allowed bg-white/5 text-[#5C5E62]' : 'bg-[#7F8BAD] text-white hover:bg-[#6D799B]'}`}
               >
                 <Save size={13} />Save
               </button>
@@ -214,7 +214,7 @@ function UserDetailModal({ competitor, allCompetitors, competition, isMe, viewOn
                       key={trait.id}
                       className={`px-2.5 py-1 rounded text-xs font-medium border ${
                         active
-                          ? 'bg-[#3E6AE1]/10 text-[#3E6AE1] border-[#3E6AE1]/20'
+                          ? 'bg-[#7F8BAD]/10 text-[#7F8BAD] border-[#7F8BAD]/20'
                           : dk
                             ? 'bg-white/[0.03] text-[#5C5E62] border-white/5'
                             : 'bg-[#F4F4F4] text-[#D0D1D2] border-[#EEEEEE]'
@@ -288,7 +288,7 @@ export default function UsersPage({ competitors, competition, currentUser, theme
       <div className="mb-6">
         <h1 className={`text-2xl font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>{t.users}</h1>
         <div className="flex items-center gap-4 mt-1 flex-wrap">
-          <span className={`text-sm ${dk ? 'text-[#5C5E62]' : 'text-[#5C5E62]'}`}><span className="font-medium text-[#3E6AE1]">{competitorCount}</span> competitors</span>
+          <span className={`text-sm ${dk ? 'text-[#5C5E62]' : 'text-[#5C5E62]'}`}><span className="font-medium text-[#7F8BAD]">{competitorCount}</span> competitors</span>
           <span className={`text-sm ${dk ? 'text-[#5C5E62]' : 'text-[#5C5E62]'}`}><span className="font-medium text-purple-400">{judgeCount}</span> judges</span>
           <span className={`text-sm ${dk ? 'text-[#5C5E62]' : 'text-[#5C5E62]'}`}><span className="font-medium text-amber-500">{organizerCount}</span> organizers</span>
         </div>
@@ -308,7 +308,7 @@ export default function UsersPage({ competitors, competition, currentUser, theme
 
       {visible.length === 0 ? (
         <div className={`text-center py-20 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-          <p className="text-4xl mb-4">👤</p>
+          <User size={40} className="mx-auto mb-4 opacity-40" />
           <p className="font-medium text-sm">No users found</p>
         </div>
       ) : (
@@ -334,7 +334,7 @@ export default function UsersPage({ competitors, competition, currentUser, theme
                   <div className="min-w-0">
                     <p className={`text-sm font-medium leading-tight truncate ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
                       {competitor.displayName}
-                      {isMe && <span className="ml-2 text-[9px] font-medium text-[#3E6AE1] bg-[#3E6AE1]/10 px-1.5 py-0.5 rounded">You</span>}
+                      {isMe && <span className="ml-2 text-[9px] font-medium text-[#7F8BAD] bg-[#7F8BAD]/10 px-1.5 py-0.5 rounded">You</span>}
                     </p>
                     <p className={`text-xs truncate mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
                       {competitor.email}
@@ -356,7 +356,7 @@ export default function UsersPage({ competitors, competition, currentUser, theme
                   <button
                     onClick={() => setSelectedUser(competitor)}
                     className={`p-2 rounded transition-colors duration-[330ms] text-xs font-medium ${dk ? 'text-[#5C5E62] hover:text-[#D0D1D2] hover:bg-white/5' : 'text-[#D0D1D2] hover:text-[#5C5E62] hover:bg-[#F4F4F4]'}`}
-                  >···</button>
+                  ><MoreHorizontal size={15} /></button>
                 </div>
               </div>
             )

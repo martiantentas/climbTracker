@@ -8,7 +8,7 @@ const C = {
   bg:     '#121212',
   bgAlt:  '#13161B',
   border: 'rgba(255,255,255,0.08)',
-  accent: '#3E6AE1',
+  accent: '#7F8BAD',
   txt:    '#EEEEEE',
   txtMid: '#8E8E8E',
   txtLow: '#5C5E62',

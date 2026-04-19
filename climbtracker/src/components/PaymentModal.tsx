@@ -109,7 +109,7 @@ export default function PaymentModal({
 
   const inputCls = `
     w-full px-4 py-3.5 rounded border outline-none text-sm transition-colors duration-[330ms]
-    bg-white/5 border-white/10 text-[#EEEEEE] placeholder:text-[#5C5E62] focus:border-[#3E6AE1]/50
+    bg-white/5 border-white/10 text-[#EEEEEE] placeholder:text-[#5C5E62] focus:border-[#7F8BAD]/50
   `
 
   const btnBack = `
@@ -128,8 +128,8 @@ export default function PaymentModal({
         <div className="px-8 pt-7 pb-6 border-b border-white/[0.08] flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <Zap size={15} className="text-[#3E6AE1]" />
-              <span className="text-[11px] font-medium text-[#3E6AE1]">Go Live</span>
+              <Zap size={15} className="text-[#7F8BAD]" />
+              <span className="text-[11px] font-medium text-[#7F8BAD]">Go Live</span>
             </div>
             <h2 className="text-xl font-medium text-[#EEEEEE]">Publish Competition</h2>
             <p className="text-sm text-[#5C5E62] mt-1">
@@ -159,13 +159,13 @@ export default function PaymentModal({
                   onClick={() => setTier('standard')}
                   className={`text-left px-5 py-4 rounded border transition-colors duration-[330ms] ${
                     tier === 'standard'
-                      ? 'bg-[#3E6AE1]/[0.06] border-[#3E6AE1]/50'
+                      ? 'bg-[#7F8BAD]/[0.06] border-[#7F8BAD]/50'
                       : 'bg-white/[0.02] border-white/[0.06] hover:border-white/20'
                   }`}
                 >
                   <div className="flex items-start gap-4">
-                    <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center mt-0.5 ${tier === 'standard' ? 'border-[#3E6AE1]' : 'border-white/20'}`}>
-                      {tier === 'standard' && <div className="w-2.5 h-2.5 rounded-full bg-[#3E6AE1]" />}
+                    <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center mt-0.5 ${tier === 'standard' ? 'border-[#7F8BAD]' : 'border-white/20'}`}>
+                      {tier === 'standard' && <div className="w-2.5 h-2.5 rounded-full bg-[#7F8BAD]" />}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-baseline justify-between mb-1.5">
@@ -179,7 +179,7 @@ export default function PaymentModal({
                       <div className="flex flex-wrap gap-x-3 gap-y-0.5">
                         {TIERS.standard.features.map(f => (
                           <span key={f} className="text-[11px] text-[#5C5E62] flex items-center gap-1">
-                            <Check size={10} className="text-[#3E6AE1]" strokeWidth={3} />{f}
+                            <Check size={10} className="text-[#7F8BAD]" strokeWidth={3} />{f}
                           </span>
                         ))}
                       </div>
@@ -192,19 +192,19 @@ export default function PaymentModal({
                   onClick={() => setTier('premium')}
                   className={`text-left px-5 py-4 rounded border transition-colors duration-[330ms] ${
                     tier === 'premium'
-                      ? 'bg-[#3E6AE1]/[0.06] border-[#3E6AE1]/50'
+                      ? 'bg-[#7F8BAD]/[0.06] border-[#7F8BAD]/50'
                       : 'bg-white/[0.02] border-white/[0.06] hover:border-white/20'
                   }`}
                 >
                   <div className="flex items-start gap-4">
-                    <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center mt-0.5 ${tier === 'premium' ? 'border-[#3E6AE1]' : 'border-white/20'}`}>
-                      {tier === 'premium' && <div className="w-2.5 h-2.5 rounded-full bg-[#3E6AE1]" />}
+                    <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center mt-0.5 ${tier === 'premium' ? 'border-[#7F8BAD]' : 'border-white/20'}`}>
+                      {tier === 'premium' && <div className="w-2.5 h-2.5 rounded-full bg-[#7F8BAD]" />}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-baseline justify-between mb-1.5">
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium text-[#EEEEEE]">Premium</span>
-                          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-[#3E6AE1]/20 text-[#3E6AE1] flex items-center gap-1">
+                          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-[#7F8BAD]/20 text-[#7F8BAD] flex items-center gap-1">
                             <Sparkles size={9} /> White-label
                           </span>
                         </div>
@@ -216,8 +216,8 @@ export default function PaymentModal({
                       <p className="text-[11px] text-[#5C5E62] mb-2">500 participants included · €0.10/extra</p>
                       <div className="flex flex-wrap gap-x-3 gap-y-0.5">
                         {TIERS.premium.features.map(f => (
-                          <span key={f} className={`text-[11px] flex items-center gap-1 ${f.includes('White') || f.includes('Custom') ? 'text-[#3E6AE1]' : 'text-[#5C5E62]'}`}>
-                            <Check size={10} className="text-[#3E6AE1]" strokeWidth={3} />{f}
+                          <span key={f} className={`text-[11px] flex items-center gap-1 ${f.includes('White') || f.includes('Custom') ? 'text-[#7F8BAD]' : 'text-[#5C5E62]'}`}>
+                            <Check size={10} className="text-[#7F8BAD]" strokeWidth={3} />{f}
                           </span>
                         ))}
                       </div>
@@ -232,7 +232,7 @@ export default function PaymentModal({
                 </button>
                 <button
                   onClick={() => setStep('confirm')}
-                  className="flex-[2] py-3.5 rounded text-sm font-medium bg-[#3E6AE1] text-white hover:bg-[#3056C7] transition-colors duration-[330ms]"
+                  className="flex-[2] py-3.5 rounded text-sm font-medium bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms]"
                 >
                   Continue with {tierConfig.label}
                 </button>
@@ -256,7 +256,7 @@ export default function PaymentModal({
                     min={1}
                     value={confirmedCount}
                     onChange={e => setConfirmedCount(Math.max(1, Number(e.target.value) || 1))}
-                    className="flex-1 px-4 py-3 rounded border outline-none text-lg bg-white/5 border-white/10 text-[#EEEEEE] focus:border-[#3E6AE1]/50 transition-colors duration-[330ms] font-mono"
+                    className="flex-1 px-4 py-3 rounded border outline-none text-lg bg-white/5 border-white/10 text-[#EEEEEE] focus:border-[#7F8BAD]/50 transition-colors duration-[330ms] font-mono"
                   />
                   {competitorCount > 0 && confirmedCount !== competitorCount && (
                     <button
@@ -295,7 +295,7 @@ export default function PaymentModal({
                 </button>
                 <button
                   onClick={() => setStep('payment')}
-                  className="flex-[2] py-3.5 rounded text-sm font-medium bg-[#3E6AE1] text-white hover:bg-[#3056C7] transition-colors duration-[330ms]"
+                  className="flex-[2] py-3.5 rounded text-sm font-medium bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms]"
                 >
                   Continue — €{total.toFixed(2)}
                 </button>
@@ -318,7 +318,7 @@ export default function PaymentModal({
                 />
                 <button
                   onClick={applyPromo}
-                  className="px-5 py-3.5 rounded text-sm font-medium bg-[#3E6AE1] text-white hover:bg-[#3056C7] transition-colors duration-[330ms] flex-shrink-0"
+                  className="px-5 py-3.5 rounded text-sm font-medium bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms] flex-shrink-0"
                 >
                   Apply
                 </button>
@@ -337,7 +337,7 @@ export default function PaymentModal({
                   <button
                     onClick={handlePublish}
                     disabled={loading}
-                    className="flex-[2] py-3.5 rounded text-sm font-medium bg-[#3E6AE1] text-white hover:bg-[#3056C7] transition-colors duration-[330ms] disabled:opacity-40"
+                    className="flex-[2] py-3.5 rounded text-sm font-medium bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms] disabled:opacity-40"
                   >
                     {loading ? 'Publishing…' : 'Publish for Free'}
                   </button>
@@ -349,19 +349,19 @@ export default function PaymentModal({
           {/* STEP: Payment */}
           {step === 'payment' && (
             <>
-              <div className="px-4 py-3 rounded border bg-[#3E6AE1]/[0.06] border-[#3E6AE1]/15 mb-6 flex justify-between items-center">
+              <div className="px-4 py-3 rounded border bg-[#7F8BAD]/[0.06] border-[#7F8BAD]/15 mb-6 flex justify-between items-center">
                 <div>
                   <span className="text-xs text-[#5C5E62] block mb-0.5">{tierConfig.label} · {confirmedCount} participants</span>
                   {overage > 0 && (
                     <span className="text-[10px] text-amber-400">incl. {overage} × €{tierConfig.overageRate.toFixed(2)} overage</span>
                   )}
                   {tier === 'premium' && (
-                    <span className="text-[10px] text-[#3E6AE1] flex items-center gap-1 mt-0.5">
+                    <span className="text-[10px] text-[#7F8BAD] flex items-center gap-1 mt-0.5">
                       <Palette size={9} /> White-label branding included
                     </span>
                   )}
                 </div>
-                <span className="text-lg font-medium text-[#3E6AE1] font-mono">€{total.toFixed(2)}</span>
+                <span className="text-lg font-medium text-[#7F8BAD] font-mono">€{total.toFixed(2)}</span>
               </div>
 
               <div className="flex flex-col gap-4 mb-6">
@@ -395,7 +395,7 @@ export default function PaymentModal({
 
               <button
                 onClick={() => setStep('promo')}
-                className="flex items-center gap-2 text-[#3E6AE1] text-sm font-medium mb-5 hover:text-[#3056C7] transition-colors duration-[330ms]"
+                className="flex items-center gap-2 text-[#7F8BAD] text-sm font-medium mb-5 hover:text-[#6D799B] transition-colors duration-[330ms]"
               >
                 <Tag size={14} /> Have a promo code?
               </button>
@@ -414,8 +414,8 @@ export default function PaymentModal({
                   className={`
                     flex-[2] py-3.5 rounded text-sm font-medium transition-colors duration-[330ms]
                     ${loading
-                      ? 'bg-[#3E6AE1]/30 text-[#5C5E62] cursor-not-allowed'
-                      : 'bg-[#3E6AE1] text-white hover:bg-[#3056C7] cursor-pointer'
+                      ? 'bg-[#7F8BAD]/30 text-[#5C5E62] cursor-not-allowed'
+                      : 'bg-[#7F8BAD] text-white hover:bg-[#6D799B] cursor-pointer'
                     }
                   `}
                 >

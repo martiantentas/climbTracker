@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Plus, SlidersHorizontal, Lock } from 'lucide-react'
+import { Plus, SlidersHorizontal, Lock, Mountain } from 'lucide-react'
 
 import type { Boulder, Competition, Competitor, Completion, AttemptTracking } from '../types'
 import { translations } from '../translations'
@@ -165,7 +165,7 @@ export default function BouldersPage({
   function pillCls(active: boolean) {
     return `px-4 py-1.5 rounded text-xs font-medium transition-colors duration-[330ms] ${
       active
-        ? 'bg-[#3E6AE1] text-white'
+        ? 'bg-[#7F8BAD] text-white'
         : dk
           ? 'bg-white/5 text-[#8E8E8E] hover:bg-white/10 hover:text-[#EEEEEE]'
           : 'bg-[#F4F4F4] text-[#5C5E62] hover:bg-[#EEEEEE] hover:text-[#121212]'
@@ -183,12 +183,12 @@ export default function BouldersPage({
           <div className="flex items-center gap-3 mt-1">
             {isOrganizer ? (
               <span className={`text-sm ${dk ? 'text-[#5C5E62]' : 'text-[#5C5E62]'}`}>
-                <span className="font-medium text-[#3E6AE1]">{totalBoulders}</span> active boulders
+                <span className="font-medium text-[#7F8BAD]">{totalBoulders}</span> active boulders
               </span>
             ) : (
               <>
                 <span className={`text-sm ${dk ? 'text-[#5C5E62]' : 'text-[#5C5E62]'}`}>
-                  <span className="font-medium text-[#3E6AE1]">{toppedCount}</span>/{totalBoulders} topped
+                  <span className="font-medium text-[#7F8BAD]">{toppedCount}</span>/{totalBoulders} topped
                 </span>
                 {flashCount > 0 && (
                   <span className="text-sm font-medium text-amber-500">⚡ {flashCount} flash{flashCount !== 1 ? 'es' : ''}</span>
@@ -200,7 +200,7 @@ export default function BouldersPage({
         {isOrganizer && (
           <button
             onClick={() => setModalBoulder('new')}
-            className="flex items-center gap-2 px-4 py-2 bg-[#3E6AE1] text-white rounded text-sm font-medium hover:bg-[#3056C7] transition-colors duration-[330ms]"
+            className="flex items-center gap-2 px-4 py-2 bg-[#7F8BAD] text-white rounded text-sm font-medium hover:bg-[#6D799B] transition-colors duration-[330ms]"
           >
             <Plus size={15} />
             {t.addBoulder}
@@ -214,7 +214,7 @@ export default function BouldersPage({
           <div className="flex items-center gap-6">
             <div>
               <p className={`text-xs font-medium mb-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>My Score</p>
-              <p className="text-2xl font-medium text-[#3E6AE1] leading-none">
+              <p className="text-2xl font-medium text-[#7F8BAD] leading-none">
                 {myTotalScore}
                 <span className={`text-xs ml-1 font-normal ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>pts</span>
               </p>
@@ -294,14 +294,14 @@ export default function BouldersPage({
       {/* ── Grid ── */}
       {visibleBoulders.length === 0 ? (
         <div className={`text-center py-20 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-          <p className="text-4xl mb-4">🪨</p>
+          <Mountain size={40} className="mx-auto mb-4 opacity-40" />
           <p className="font-medium text-sm mb-2">
             {isOrganizer ? 'No boulders yet' : 'No boulders found'}
           </p>
           {isOrganizer && (
             <button
               onClick={() => setModalBoulder('new')}
-              className="mt-4 px-6 py-3 bg-[#3E6AE1] text-white rounded font-medium text-sm hover:bg-[#3056C7] transition-colors duration-[330ms]"
+              className="mt-4 px-6 py-3 bg-[#7F8BAD] text-white rounded font-medium text-sm hover:bg-[#6D799B] transition-colors duration-[330ms]"
             >
               Add your first boulder
             </button>

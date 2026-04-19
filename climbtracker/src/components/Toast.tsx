@@ -19,7 +19,7 @@ export default function Toast({ message, visible, theme }: ToastProps) {
           : 'bg-white border-[#EEEEEE] text-[#121212]'
         }
       `}>
-        <CheckCircle2 size={16} className="text-[#3E6AE1] flex-shrink-0" />
+        <CheckCircle2 size={16} className="text-[#7F8BAD] flex-shrink-0" />
         <span className="text-sm font-medium whitespace-nowrap">
           {message}
         </span>

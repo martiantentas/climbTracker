@@ -43,7 +43,7 @@ function NavPill({ to, label, theme }: NavPillProps) {
         px-4 py-2 rounded text-sm font-medium
         transition-colors duration-[330ms] whitespace-nowrap
         ${isActive
-          ? 'bg-[#3E6AE1]/10 text-[#3E6AE1]'
+          ? 'bg-[#7F8BAD]/10 text-[#7F8BAD]'
           : theme === 'dark'
             ? 'text-[#8E8E8E] hover:text-[#EEEEEE]'
             : 'text-[#5C5E62] hover:text-[#121212]'
@@ -208,7 +208,7 @@ export default function NavBar({
           {/* Hamburger — mobile only */}
           <button
             onClick={onOpenMenu}
-            className="lg:hidden p-2 rounded bg-[#3E6AE1] text-white hover:bg-[#3056C7] transition-colors duration-[330ms]"
+            className="lg:hidden p-2 rounded bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms]"
           >
             <Menu size={17} />
           </button>

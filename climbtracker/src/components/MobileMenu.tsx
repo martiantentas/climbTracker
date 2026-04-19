@@ -57,7 +57,7 @@ function MenuLink({ to, icon, label, theme, onClick }: MenuLinkProps) {
       className={`
         flex items-center justify-between px-4 py-3 rounded transition-colors duration-[330ms]
         ${isActive
-          ? 'bg-[#3E6AE1]/10 text-[#3E6AE1]'
+          ? 'bg-[#7F8BAD]/10 text-[#7F8BAD]'
           : theme === 'dark'
             ? 'text-[#5C5E62] hover:bg-white/5 hover:text-[#EEEEEE]'
             : 'text-[#5C5E62] hover:bg-[#F4F4F4] hover:text-[#121212]'
@@ -180,7 +180,7 @@ export default function MobileMenu({
                 ${theme === 'dark' ? 'hover:bg-white/5' : 'hover:bg-[#F4F4F4]'}
               `}
             >
-              <div className="w-9 h-9 rounded-full bg-[#3E6AE1]/10 flex items-center justify-center text-[#3E6AE1] overflow-hidden flex-shrink-0 text-lg">
+              <div className="w-9 h-9 rounded-full bg-[#7F8BAD]/10 flex items-center justify-center text-[#7F8BAD] overflow-hidden flex-shrink-0 text-lg">
                 {currentUser.avatar
                   ? <span>{currentUser.avatar}</span>
                   : <User size={18} />

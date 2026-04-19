@@ -46,8 +46,8 @@ export default function PasswordModal({
   const inputCls = `
     w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms] pl-10
     ${dk
-      ? `bg-white/5 text-[#EEEEEE] placeholder:text-[#5C5E62] ${error ? 'border-red-400/60' : 'border-white/10 focus:border-[#3E6AE1]/50'}`
-      : `bg-[#F4F4F4] text-[#121212] placeholder:text-[#8E8E8E] ${error ? 'border-red-400' : 'border-[#EEEEEE] focus:border-[#3E6AE1]'}`
+      ? `bg-white/5 text-[#EEEEEE] placeholder:text-[#5C5E62] ${error ? 'border-red-400/60' : 'border-white/10 focus:border-[#7F8BAD]/50'}`
+      : `bg-[#F4F4F4] text-[#121212] placeholder:text-[#8E8E8E] ${error ? 'border-red-400' : 'border-[#EEEEEE] focus:border-[#7F8BAD]'}`
     }
   `
 
@@ -130,7 +130,7 @@ export default function PasswordModal({
             </button>
             <button
               type="submit"
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded text-sm font-medium bg-[#3E6AE1] text-white hover:bg-[#3056C7] transition-colors duration-[330ms]"
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded text-sm font-medium bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms]"
             >
               <LogIn size={14} />
               Join

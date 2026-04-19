@@ -55,11 +55,11 @@ export default function JoinPage({
             Competition not found
           </h2>
           <p className={`text-sm mb-6 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-            The invite code <span className="font-medium text-[#3E6AE1]">{code}</span> doesn't match any competition.
+            The invite code <span className="font-medium text-[#7F8BAD]">{code}</span> doesn't match any competition.
           </p>
           <button
             onClick={() => navigate('/competitions')}
-            className="px-6 py-3 bg-[#3E6AE1] text-white rounded font-medium text-sm hover:bg-[#3056C7] transition-colors duration-[330ms]"
+            className="px-6 py-3 bg-[#7F8BAD] text-white rounded font-medium text-sm hover:bg-[#6D799B] transition-colors duration-[330ms]"
           >
             Browse my events
           </button>
@@ -154,8 +154,8 @@ export default function JoinPage({
 
           {/* Joining as */}
           <div className={`flex items-center gap-3 px-4 py-3 rounded border ${dk ? 'bg-white/[0.02] border-white/10' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
-            <div className={`w-9 h-9 rounded flex items-center justify-center flex-shrink-0 ${dk ? 'bg-[#3E6AE1]/10' : 'bg-[#3E6AE1]/10'}`}>
-              <Users size={15} className="text-[#3E6AE1]" />
+            <div className={`w-9 h-9 rounded flex items-center justify-center flex-shrink-0 ${dk ? 'bg-[#7F8BAD]/10' : 'bg-[#7F8BAD]/10'}`}>
+              <Users size={15} className="text-[#7F8BAD]" />
             </div>
             <div className="min-w-0">
               <p className={`text-xs font-medium truncate ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>
@@ -178,7 +178,7 @@ export default function JoinPage({
                   className={`
                     px-3 py-2 rounded text-xs font-medium border transition-colors duration-[330ms]
                     ${gender === option
-                      ? 'bg-[#3E6AE1]/10 text-[#3E6AE1] border-[#3E6AE1]/30'
+                      ? 'bg-[#7F8BAD]/10 text-[#7F8BAD] border-[#7F8BAD]/30'
                       : dk
                         ? 'bg-white/5 text-[#5C5E62] border-white/10 hover:bg-white/10 hover:text-[#D0D1D2]'
                         : 'bg-[#F4F4F4] text-[#8E8E8E] border-[#EEEEEE] hover:bg-[#EEEEEE] hover:text-[#393C41]'
@@ -210,7 +210,7 @@ export default function JoinPage({
                       className={`
                         flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium border transition-colors duration-[330ms]
                         ${active
-                          ? 'bg-[#3E6AE1]/10 text-[#3E6AE1] border-[#3E6AE1]/30'
+                          ? 'bg-[#7F8BAD]/10 text-[#7F8BAD] border-[#7F8BAD]/30'
                           : dk
                             ? 'bg-white/5 text-[#5C5E62] border-white/10 hover:bg-white/10 hover:text-[#D0D1D2]'
                             : 'bg-[#F4F4F4] text-[#8E8E8E] border-[#EEEEEE] hover:bg-[#EEEEEE] hover:text-[#393C41]'
@@ -242,7 +242,7 @@ export default function JoinPage({
           <button
             onClick={handleJoinClick}
             disabled={!canJoin || eventFull}
-            className="w-full flex items-center justify-center gap-2 py-3.5 rounded font-medium text-sm bg-[#3E6AE1] text-white hover:bg-[#3056C7] transition-colors duration-[330ms] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center gap-2 py-3.5 rounded font-medium text-sm bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <LogIn size={16} />
             {needsPassword ? 'Join — Enter Password' : t.joinByCodeAction}

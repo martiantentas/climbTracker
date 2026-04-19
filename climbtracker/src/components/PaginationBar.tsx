@@ -31,7 +31,7 @@ export default function PaginationBar({
 
   const btnBase = `flex items-center justify-center w-8 h-8 rounded text-xs font-medium transition-colors duration-[330ms] border`
 
-  const btnActive   = 'bg-[#3E6AE1] text-white border-[#3E6AE1]'
+  const btnActive   = 'bg-[#7F8BAD] text-white border-[#7F8BAD]'
   const btnInactive = dk
     ? 'bg-white/5 text-[#5C5E62] border-white/10 hover:bg-white/10 hover:text-[#D0D1D2]'
     : 'bg-white text-[#5C5E62] border-[#EEEEEE] hover:bg-[#F4F4F4]'
@@ -139,7 +139,7 @@ export default function PaginationBar({
                   }
                 `}
               />
-              <button type="submit" className="px-2 py-1 rounded text-[10px] font-medium bg-[#3E6AE1] text-white hover:bg-[#3056C7] transition-colors duration-[330ms]">
+              <button type="submit" className="px-2 py-1 rounded text-[10px] font-medium bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms]">
                 OK
               </button>
               <button

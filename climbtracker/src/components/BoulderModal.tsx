@@ -95,8 +95,8 @@ export default function BoulderModal({
   const inputCls = `
     w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms]
     ${dk
-      ? 'bg-white/5 border-white/10 text-[#EEEEEE] placeholder:text-[#5C5E62] focus:border-[#3E6AE1]/50'
-      : 'bg-[#F4F4F4] border-[#EEEEEE] text-[#121212] placeholder:text-[#8E8E8E] focus:border-[#3E6AE1]'
+      ? 'bg-white/5 border-white/10 text-[#EEEEEE] placeholder:text-[#5C5E62] focus:border-[#7F8BAD]/50'
+      : 'bg-[#F4F4F4] border-[#EEEEEE] text-[#121212] placeholder:text-[#8E8E8E] focus:border-[#7F8BAD]'
     }
   `
   const labelCls = `block text-[10px] font-medium mb-2 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`
@@ -106,7 +106,7 @@ export default function BoulderModal({
     ${active
       ? danger
         ? 'bg-red-400/10 text-red-400 border-red-400/30'
-        : 'bg-[#3E6AE1]/10 text-[#3E6AE1] border-[#3E6AE1]/30'
+        : 'bg-[#7F8BAD]/10 text-[#7F8BAD] border-[#7F8BAD]/30'
       : dk
         ? 'bg-white/5 text-[#5C5E62] border-white/10 hover:bg-white/10'
         : 'bg-[#F4F4F4] text-[#8E8E8E] border-[#EEEEEE] hover:bg-[#EEEEEE]'
@@ -165,7 +165,7 @@ export default function BoulderModal({
             <div className="flex flex-wrap gap-2">
               {HOLD_COLORS.map(c => (
                 <button key={c.value} onClick={() => setColor(c.value)} title={c.label}
-                  className={`w-9 h-9 rounded transition-all border-2 ${color === c.value ? 'border-[#3E6AE1] scale-110' : 'border-transparent hover:scale-105'}`}
+                  className={`w-9 h-9 rounded transition-all border-2 ${color === c.value ? 'border-[#7F8BAD] scale-110' : 'border-transparent hover:scale-105'}`}
                   style={{ backgroundColor: c.value }} />
               ))}
               <input type="color" value={color} onChange={e => setColor(e.target.value)}
@@ -211,13 +211,13 @@ export default function BoulderModal({
             <div className="flex flex-col gap-2">
               {TRACKING_OPTIONS.map(opt => (
                 <button key={opt.value} onClick={() => setTrackingOverride(opt.value)}
-                  className={`text-left px-4 py-3 rounded border transition-colors duration-[330ms] ${trackingOverride === opt.value ? 'bg-[#3E6AE1]/10 border-[#3E6AE1]/30' : dk ? 'bg-white/5 border-white/10 hover:bg-white/8' : 'bg-[#F4F4F4] border-[#EEEEEE] hover:bg-[#EEEEEE]'}`}>
+                  className={`text-left px-4 py-3 rounded border transition-colors duration-[330ms] ${trackingOverride === opt.value ? 'bg-[#7F8BAD]/10 border-[#7F8BAD]/30' : dk ? 'bg-white/5 border-white/10 hover:bg-white/8' : 'bg-[#F4F4F4] border-[#EEEEEE] hover:bg-[#EEEEEE]'}`}>
                   <div className="flex items-center gap-3">
-                    <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${trackingOverride === opt.value ? 'border-[#3E6AE1] bg-[#3E6AE1]' : dk ? 'border-[#5C5E62]' : 'border-[#D0D1D2]'}`}>
+                    <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${trackingOverride === opt.value ? 'border-[#7F8BAD] bg-[#7F8BAD]' : dk ? 'border-[#5C5E62]' : 'border-[#D0D1D2]'}`}>
                       {trackingOverride === opt.value && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                     </div>
                     <div>
-                      <p className={`text-xs font-medium ${trackingOverride === opt.value ? 'text-[#3E6AE1]' : dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>{opt.label}</p>
+                      <p className={`text-xs font-medium ${trackingOverride === opt.value ? 'text-[#7F8BAD]' : dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>{opt.label}</p>
                       <p className={`text-[10px] mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{opt.desc}</p>
                     </div>
                   </div>
@@ -233,7 +233,7 @@ export default function BoulderModal({
               <p className={`text-xs mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Only judges can log attempts and validate this boulder</p>
             </div>
             <button onClick={() => setIsPuntuable(p => !p)}>
-              <div className={`w-12 h-6 rounded-full transition-colors duration-[330ms] relative ${isPuntuable ? 'bg-[#3E6AE1]' : dk ? 'bg-white/10' : 'bg-[#D0D1D2]'}`}>
+              <div className={`w-12 h-6 rounded-full transition-colors duration-[330ms] relative ${isPuntuable ? 'bg-[#7F8BAD]' : dk ? 'bg-white/10' : 'bg-[#D0D1D2]'}`}>
                 <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-[330ms] ${isPuntuable ? 'left-7' : 'left-1'}`} />
               </div>
             </button>
@@ -245,7 +245,7 @@ export default function BoulderModal({
               <label className={labelCls}>Number of Zones</label>
               <div className="flex gap-2">
                 {[0, 1, 2, 3, 4].map(n => (
-                  <button key={n} onClick={() => setZoneCount(n)} className={`flex-1 py-2.5 rounded text-sm font-medium border transition-colors duration-[330ms] ${zoneCount === n ? 'bg-[#3E6AE1]/10 text-[#3E6AE1] border-[#3E6AE1]/30' : dk ? 'bg-white/5 text-[#5C5E62] border-white/10 hover:bg-white/10' : 'bg-[#F4F4F4] text-[#8E8E8E] border-[#EEEEEE] hover:bg-[#EEEEEE]'}`}>
+                  <button key={n} onClick={() => setZoneCount(n)} className={`flex-1 py-2.5 rounded text-sm font-medium border transition-colors duration-[330ms] ${zoneCount === n ? 'bg-[#7F8BAD]/10 text-[#7F8BAD] border-[#7F8BAD]/30' : dk ? 'bg-white/5 text-[#5C5E62] border-white/10 hover:bg-white/10' : 'bg-[#F4F4F4] text-[#8E8E8E] border-[#EEEEEE] hover:bg-[#EEEEEE]'}`}>
                     {n === 0 ? 'None' : n}
                   </button>
                 ))}
@@ -310,7 +310,7 @@ export default function BoulderModal({
             <button
               onClick={handleSave}
               disabled={!canSave}
-              className="flex items-center gap-2 px-5 py-2.5 rounded text-sm font-medium bg-[#3E6AE1] text-white hover:bg-[#3056C7] transition-colors duration-[330ms] disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-5 py-2.5 rounded text-sm font-medium bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms] disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Save size={15} />
               {isEditing ? 'Save changes' : 'Add boulder'}

@@ -40,9 +40,9 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
     bgAlt:    '#13161B',
     bgCard:   'rgba(255,255,255,0.03)',
     border:   'rgba(255,255,255,0.08)',
-    accent:   '#3E6AE1',
-    accentHi: '#5580E8',
-    accentLo: 'rgba(62,106,225,0.12)',
+    accent:   '#7F8BAD',
+    accentHi: '#939FC1',
+    accentLo: 'rgba(127,139,173,0.12)',
     txt:      '#EEEEEE',
     txtMid:   '#8E8E8E',
     txtLow:   '#5C5E62',
@@ -90,8 +90,8 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
         .anim-4 { animation: fadeUp 0.6s 0.32s ease both; }
         .chevron-pulse { animation: pulse-slow 3s ease-in-out infinite; }
         .lp-card { transition: border-color 0.33s, transform 0.33s; }
-        .lp-card:hover { border-color: rgba(62,106,225,0.35) !important; transform: translateY(-2px); }
-        .btn-primary:hover { background: #3056C7 !important; }
+        .lp-card:hover { border-color: rgba(127,139,173,0.35) !important; transform: translateY(-2px); }
+        .btn-primary:hover { background: #6D799B !important; }
         .btn-outline:hover { background: rgba(255,255,255,0.05) !important; color: #EEEEEE !important; }
         .lp-lang { background: transparent; border: 1px solid rgba(255,255,255,0.12); color: #8E8E8E; font-size: 12px; font-weight: 600; padding: 5px 8px; border-radius: 5px; cursor: pointer; outline: none; }
         .lp-lang:hover { border-color: rgba(255,255,255,0.25); color: #EEEEEE; }
@@ -149,8 +149,8 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
 
       {/* ══ HERO ═════════════════════════════════════════════════════════════ */}
       <section ref={heroRef} style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '100px 24px 80px', position: 'relative', overflow: 'hidden' }}>
-        <div id="orb1" style={{ position: 'absolute', top: '12%', left: '8%', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(62,106,225,0.09) 0%, transparent 70%)', pointerEvents: 'none' }} />
-        <div id="orb2" style={{ position: 'absolute', bottom: '8%', right: '4%',  width: 380, height: 380, borderRadius: '50%', background: 'radial-gradient(circle, rgba(62,106,225,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div id="orb1" style={{ position: 'absolute', top: '12%', left: '8%', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(127,139,173,0.09) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div id="orb2" style={{ position: 'absolute', bottom: '8%', right: '4%',  width: 380, height: 380, borderRadius: '50%', background: 'radial-gradient(circle, rgba(127,139,173,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', inset: 0, backgroundImage: `radial-gradient(${C.border} 1px, transparent 1px)`, backgroundSize: '40px 40px', pointerEvents: 'none', opacity: 0.5 }} />
 
         <div style={{ maxWidth: 720, textAlign: 'center', position: 'relative', zIndex: 1 }}>

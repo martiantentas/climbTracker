@@ -28,7 +28,7 @@ function FilterChip({ label, active, theme, onClick }: {
       className={`
         px-3 py-1.5 rounded text-xs font-medium border transition-colors duration-[330ms]
         ${active
-          ? 'bg-[#3E6AE1]/10 border-[#3E6AE1]/30 text-[#3E6AE1]'
+          ? 'bg-[#7F8BAD]/10 border-[#7F8BAD]/30 text-[#7F8BAD]'
           : dk
             ? 'bg-white/5 border-white/10 text-[#8E8E8E] hover:text-[#EEEEEE] hover:bg-white/10'
             : 'bg-white border-[#EEEEEE] text-[#5C5E62] hover:text-[#121212]'
@@ -107,7 +107,7 @@ export default function LeaderboardPage({
         <td style="padding:6px 10px;border-bottom:1px solid #eee">${r.bib}</td>
         <td style="padding:6px 10px;border-bottom:1px solid #eee">${cats.join(', ')}</td>
         <td style="padding:6px 10px;border-bottom:1px solid #eee">${gend}</td>
-        <td style="padding:6px 10px;border-bottom:1px solid #eee;font-weight:600;color:#3E6AE1">${r.totalPoints}</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #eee;font-weight:600;color:#7F8BAD">${r.totalPoints}</td>
         <td style="padding:6px 10px;border-bottom:1px solid #eee">${r.totalTops}</td>
         <td style="padding:6px 10px;border-bottom:1px solid #eee">${r.totalAttempts}</td>
         <td style="padding:6px 10px;border-bottom:1px solid #eee">${r.flashCount}</td>
@@ -244,15 +244,15 @@ export default function LeaderboardPage({
                 <div className="fixed inset-0 z-10" onClick={() => setShowDownload(false)} />
                 <div className={`absolute right-0 top-full mt-1 z-20 w-52 rounded border overflow-hidden ${dk ? 'bg-[#121212] border-white/10' : 'bg-white border-[#EEEEEE]'}`}>
                   <button onClick={exportCSV} className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-left transition-colors duration-[330ms] ${dk ? 'hover:bg-white/5 text-[#D0D1D2]' : 'hover:bg-[#F4F4F4] text-[#393C41]'}`}>
-                    <Download size={14} className="text-[#3E6AE1]" />
+                    <Download size={14} className="text-[#7F8BAD]" />
                     Download CSV
                   </button>
                   <button onClick={exportPDF} className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-left transition-colors duration-[330ms] border-t ${dk ? 'hover:bg-white/5 text-[#D0D1D2] border-white/5' : 'hover:bg-[#F4F4F4] text-[#393C41] border-[#EEEEEE]'}`}>
-                    <FileText size={14} className="text-[#3E6AE1]" />
+                    <FileText size={14} className="text-[#7F8BAD]" />
                     Download PDF
                   </button>
                   <button onClick={shareLink} className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-left transition-colors duration-[330ms] border-t ${dk ? 'hover:bg-white/5 text-[#D0D1D2] border-white/5' : 'hover:bg-[#F4F4F4] text-[#393C41] border-[#EEEEEE]'}`}>
-                    <Link2 size={14} className="text-[#3E6AE1]" />
+                    <Link2 size={14} className="text-[#7F8BAD]" />
                     Copy public link
                   </button>
                 </div>
@@ -265,7 +265,7 @@ export default function LeaderboardPage({
       {/* Summary chips */}
       <div className="flex flex-wrap gap-3 mb-6">
         {[
-          { icon: <Trophy size={12} />, label: `${rankings.length} climbers`,    color: 'text-[#3E6AE1]'  },
+          { icon: <Trophy size={12} />, label: `${rankings.length} climbers`,    color: 'text-[#7F8BAD]'  },
           { icon: <Target size={12} />, label: `${totalTops} total tops`,        color: 'text-green-500'  },
           { icon: <Zap size={12} />,    label: topFlasher ? `${topFlasher.flashCount} flashes — ${topFlasher.name}` : 'No flashes yet', color: 'text-amber-500' },
         ].map(s => (
@@ -331,7 +331,7 @@ export default function LeaderboardPage({
       {/* Table */}
       {visible.length === 0 ? (
         <div className={`text-center py-16 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-          <p className="text-4xl mb-3">🏆</p>
+          <Trophy size={40} className="mx-auto mb-3 opacity-40" />
           <p className="font-medium text-sm">No results</p>
           <p className="text-xs mt-1">Try clearing your filters</p>
         </div>
@@ -402,7 +402,7 @@ export default function LeaderboardPage({
                     <p className={`text-[9px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>⚡</p>
                   </div>
                   <div className="text-right min-w-[56px]">
-                    <p className="text-xl font-medium text-[#3E6AE1]">{result.totalPoints}</p>
+                    <p className="text-xl font-medium text-[#7F8BAD]">{result.totalPoints}</p>
                     <p className={`text-[9px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>pts</p>
                   </div>
                 </div>

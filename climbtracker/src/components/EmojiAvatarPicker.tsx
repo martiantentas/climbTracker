@@ -33,7 +33,7 @@ export default function EmojiAvatarPicker({ selected, theme, onSelect }: EmojiAv
                 w-full aspect-square rounded text-xl flex items-center justify-center
                 transition-all duration-[330ms] border-2
                 ${isSelected
-                  ? 'border-[#3E6AE1] bg-[#3E6AE1]/10 scale-110'
+                  ? 'border-[#7F8BAD] bg-[#7F8BAD]/10 scale-110'
                   : dk
                     ? 'border-transparent bg-white/5 hover:bg-white/10 hover:scale-105'
                     : 'border-transparent bg-[#F4F4F4] hover:bg-[#EEEEEE] hover:scale-105'

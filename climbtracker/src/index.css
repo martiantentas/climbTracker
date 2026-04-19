@@ -3,8 +3,8 @@
 /* ── Tesla Design System Tokens ─────────────────────────────────────────────── */
 :root {
   /* Primary */
-  --ct-blue:       #3E6AE1;
-  --ct-blue-hover: #3056C7;
+  --ct-blue:       #7F8BAD;
+  --ct-blue-hover: #6D799B;
 
   /* Surfaces */
   --ct-carbon:  #121212;
@@ -21,8 +21,8 @@
   --ct-pale:  #D0D1D2;
 
   /* Brand overrides — updated at runtime for Premium white-label */
-  --brand-accent:       #3E6AE1;
-  --brand-accent-hover: #3056C7;
+  --brand-accent:       #7F8BAD;
+  --brand-accent-hover: #6D799B;
   --brand-bg-light:     #FFFFFF;
   --brand-bg-dark:      #121212;
 }

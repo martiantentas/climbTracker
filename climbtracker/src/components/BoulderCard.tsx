@@ -48,7 +48,7 @@ function FixedAttemptButtons({ current, max, theme, onChange }: FixedAttemptButt
               flex-1 py-1 rounded text-[10px] font-medium
               transition-colors duration-[330ms]
               ${isActive
-                ? 'bg-[#3E6AE1] text-white'
+                ? 'bg-[#7F8BAD] text-white'
                 : theme === 'dark'
                   ? 'bg-white/10 text-[#8E8E8E] hover:bg-white/20'
                   : 'bg-[#EEEEEE] text-[#5C5E62] hover:bg-[#D0D1D2]'
@@ -164,8 +164,8 @@ export default function BoulderCard({
         transition-colors duration-[330ms] overflow-hidden
         ${isTopped
           ? theme === 'dark'
-            ? 'bg-[#3E6AE1]/10 border-[#3E6AE1]/30'
-            : 'bg-[#3E6AE1]/5 border-[#3E6AE1]/20'
+            ? 'bg-[#7F8BAD]/10 border-[#7F8BAD]/30'
+            : 'bg-[#7F8BAD]/5 border-[#7F8BAD]/20'
           : theme === 'dark'
             ? 'bg-white/5 border-white/10 hover:bg-white/8 hover:border-white/20'
             : 'bg-white border-[#EEEEEE] hover:bg-[#F4F4F4] hover:border-[#D0D1D2]'
@@ -198,7 +198,7 @@ export default function BoulderCard({
               flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-medium
               ${isFlash
                 ? 'bg-amber-400/15 text-amber-500 border border-amber-400/30'
-                : 'bg-[#3E6AE1]/15 text-[#3E6AE1] border border-[#3E6AE1]/30'
+                : 'bg-[#7F8BAD]/15 text-[#7F8BAD] border border-[#7F8BAD]/30'
               }
             `}>
               <Check size={9} strokeWidth={3} />
@@ -230,7 +230,7 @@ export default function BoulderCard({
           <div>
             <span className={`
               text-xl font-medium leading-none
-              ${isTopped ? 'text-[#3E6AE1]' : theme === 'dark' ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}
+              ${isTopped ? 'text-[#7F8BAD]' : theme === 'dark' ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}
             `}>
               {points}
             </span>

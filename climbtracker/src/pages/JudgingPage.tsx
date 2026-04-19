@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Search, ChevronDown, ChevronUp, Target, CheckCircle2, XCircle, ShieldCheck, Plus, Minus, Star } from 'lucide-react'
+import { Search, ChevronDown, ChevronUp, Target, CheckCircle2, XCircle, ShieldCheck, Plus, Minus, Star, Mountain } from 'lucide-react'
 
 import type { Boulder, Competitor, Completion, Competition } from '../types'
 import type { Language } from '../translations'
@@ -88,11 +88,11 @@ function BoulderJudgingRow({
 
   const rowBg = dk
     ? isTop     ? 'bg-green-400/5 border-green-400/20'
-      : hasZone ? 'bg-[#3E6AE1]/5 border-[#3E6AE1]/20'
+      : hasZone ? 'bg-[#7F8BAD]/5 border-[#7F8BAD]/20'
       : hasActivity ? 'bg-white/[0.03] border-white/10'
       : 'bg-white/[0.02] border-white/5'
     : isTop     ? 'bg-green-50 border-green-200'
-      : hasZone ? 'bg-[#3E6AE1]/5 border-[#3E6AE1]/20'
+      : hasZone ? 'bg-[#7F8BAD]/5 border-[#7F8BAD]/20'
       : 'bg-[#F4F4F4] border-[#EEEEEE]'
 
   function handleSave() {
@@ -131,7 +131,7 @@ function BoulderJudgingRow({
             </span>
           )}
           {!isTop && hasZone && (
-            <span className="flex items-center gap-1 text-[9px] font-medium text-[#3E6AE1] bg-[#3E6AE1]/10 px-2 py-0.5 rounded border border-[#3E6AE1]/20">
+            <span className="flex items-center gap-1 text-[9px] font-medium text-[#7F8BAD] bg-[#7F8BAD]/10 px-2 py-0.5 rounded border border-[#7F8BAD]/20">
               <Target size={8} /> {zonesReached}/{totalZones} zone{totalZones !== 1 ? 's' : ''}
             </span>
           )}
@@ -164,7 +164,7 @@ function BoulderJudgingRow({
                     flex items-center gap-1.5 px-4 py-2 rounded text-xs font-medium
                     border transition-colors duration-[330ms]
                     ${isReached
-                      ? 'bg-[#3E6AE1]/10 text-[#3E6AE1] border-[#3E6AE1]/30'
+                      ? 'bg-[#7F8BAD]/10 text-[#7F8BAD] border-[#7F8BAD]/30'
                       : dk
                         ? 'bg-white/5 text-[#5C5E62] border-white/10 hover:bg-white/10'
                         : 'bg-[#F4F4F4] text-[#8E8E8E] border-[#EEEEEE] hover:bg-[#EEEEEE]'
@@ -221,7 +221,7 @@ function BoulderJudgingRow({
               <Minus size={12} />
             </button>
             <span className={`text-lg font-medium w-8 text-center ${
-              attempts > 0 ? 'text-[#3E6AE1]' : dk ? 'text-[#5C5E62]' : 'text-[#D0D1D2]'
+              attempts > 0 ? 'text-[#7F8BAD]' : dk ? 'text-[#5C5E62]' : 'text-[#D0D1D2]'
             }`}>
               {attempts}
             </span>
@@ -262,7 +262,7 @@ function BoulderJudgingRow({
         {!isLocked && (
           <button
             onClick={handleSave}
-            className="flex-1 py-2 rounded text-xs font-medium bg-[#3E6AE1] text-white hover:bg-[#3056C7] transition-colors duration-[330ms]"
+            className="flex-1 py-2 rounded text-xs font-medium bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms]"
           >
             Save score
           </button>
@@ -376,7 +376,7 @@ function CompetitorCard({
         <div className="flex items-center gap-3 flex-shrink-0">
           <span className={`flex items-center gap-1 text-[9px] font-medium px-2 py-1 rounded border ${
             score > 0
-              ? 'text-[#3E6AE1] bg-[#3E6AE1]/10 border-[#3E6AE1]/20'
+              ? 'text-[#7F8BAD] bg-[#7F8BAD]/10 border-[#7F8BAD]/20'
               : dk
                 ? 'text-[#5C5E62] bg-white/5 border-white/10'
                 : 'text-[#8E8E8E] bg-[#F4F4F4] border-[#EEEEEE]'
@@ -391,7 +391,7 @@ function CompetitorCard({
             </span>
           )}
           {zoneCount > 0 && (
-            <span className="flex items-center gap-1 text-[9px] font-medium text-[#3E6AE1] bg-[#3E6AE1]/10 px-2 py-1 rounded border border-[#3E6AE1]/20">
+            <span className="flex items-center gap-1 text-[9px] font-medium text-[#7F8BAD] bg-[#7F8BAD]/10 px-2 py-1 rounded border border-[#7F8BAD]/20">
               <Target size={9} /> {zoneCount} zone{zoneCount !== 1 ? 's' : ''}
             </span>
           )}
@@ -499,7 +499,7 @@ export default function JudgingPage({
         flex items-center gap-2 px-4 py-2.5 rounded border mb-6 w-fit
         ${dk ? 'bg-white/[0.03] border-white/10' : 'bg-white border-[#EEEEEE]'}
       `}>
-        <ShieldCheck size={14} className="text-[#3E6AE1] flex-shrink-0" />
+        <ShieldCheck size={14} className="text-[#7F8BAD] flex-shrink-0" />
         <span className={`text-xs font-medium ${dk ? 'text-[#5C5E62]' : 'text-[#5C5E62]'}`}>
           {competition.scoringMethod === 'self_scoring'
             ? 'Fully self-scoring — judging page not active'
@@ -513,7 +513,7 @@ export default function JudgingPage({
       <div className="grid grid-cols-3 gap-3 mb-6">
         {[
           { label: 'Topped',    value: toppedCount,              color: 'text-green-400' },
-          { label: 'Zone only', value: zoneCount,                color: 'text-[#3E6AE1]' },
+          { label: 'Zone only', value: zoneCount,                color: 'text-[#7F8BAD]' },
           { label: 'Pending',   value: Math.max(0, pendingCount), color: 'text-amber-400' },
         ].map(s => (
           <div key={s.label} className={`rounded border p-4 text-center ${dk ? 'bg-white/[0.03] border-white/10' : 'bg-white border-[#EEEEEE]'}`}>
@@ -525,7 +525,7 @@ export default function JudgingPage({
 
       {puntuableBoulders.length === 0 ? (
         <div className={`text-center py-20 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-          <p className="text-4xl mb-4">🏔️</p>
+          <Mountain size={40} className="mx-auto mb-4 opacity-40" />
           <p className="font-medium text-sm mb-2">No judge-required boulders</p>
           <p className="text-xs">Toggle "Judge Required" when adding or editing a boulder to enable judging.</p>
         </div>

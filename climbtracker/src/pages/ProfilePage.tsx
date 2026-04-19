@@ -129,16 +129,16 @@ export default function ProfilePage({
   const inputClass = `
     w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms]
     ${dk
-      ? 'bg-white/5 border-white/10 text-[#EEEEEE] placeholder:text-[#5C5E62] focus:border-[#3E6AE1]/50'
-      : 'bg-white border-[#EEEEEE] text-[#121212] placeholder:text-[#8E8E8E] focus:border-[#3E6AE1]'
+      ? 'bg-white/5 border-white/10 text-[#EEEEEE] placeholder:text-[#5C5E62] focus:border-[#7F8BAD]/50'
+      : 'bg-white border-[#EEEEEE] text-[#121212] placeholder:text-[#8E8E8E] focus:border-[#7F8BAD]'
     }
   `
 
   const selectClass = `
     w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms] cursor-pointer
     ${dk
-      ? 'bg-white/5 border-white/10 text-[#EEEEEE] focus:border-[#3E6AE1]/50'
-      : 'bg-white border-[#EEEEEE] text-[#121212] focus:border-[#3E6AE1]'
+      ? 'bg-white/5 border-white/10 text-[#EEEEEE] focus:border-[#7F8BAD]/50'
+      : 'bg-white border-[#EEEEEE] text-[#121212] focus:border-[#7F8BAD]'
     }
   `
 
@@ -190,7 +190,7 @@ export default function ProfilePage({
             </button>
             <button
               onClick={handleSave}
-              className="flex items-center gap-2 px-4 py-2 rounded text-sm font-medium bg-[#3E6AE1] text-white hover:bg-[#3056C7] transition-colors duration-[330ms]"
+              className="flex items-center gap-2 px-4 py-2 rounded text-sm font-medium bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms]"
             >
               <Save size={14} />
               {t.save}
@@ -208,14 +208,14 @@ export default function ProfilePage({
             transition-colors duration-[330ms] relative group
             ${currentUser.avatar
               ? dk ? 'bg-white/5' : 'bg-[#F4F4F4]'
-              : 'bg-[#3E6AE1]/10'
+              : 'bg-[#7F8BAD]/10'
             }
-            ${!isEditing ? 'cursor-pointer hover:ring-2 hover:ring-[#3E6AE1]/40' : ''}
+            ${!isEditing ? 'cursor-pointer hover:ring-2 hover:ring-[#7F8BAD]/40' : ''}
           `}
         >
           {currentUser.avatar
             ? <span>{currentUser.avatar}</span>
-            : <User size={28} className="text-[#3E6AE1]" />
+            : <User size={28} className="text-[#7F8BAD]" />
           }
           {!isEditing && (
             <div className="absolute inset-0 rounded bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -336,7 +336,7 @@ export default function ProfilePage({
             <button
               type="submit"
               disabled={joinCode.trim().length < 4}
-              className="px-5 py-3 bg-[#3E6AE1] text-white rounded font-medium text-sm hover:bg-[#3056C7] transition-colors duration-[330ms] disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-5 py-3 bg-[#7F8BAD] text-white rounded font-medium text-sm hover:bg-[#6D799B] transition-colors duration-[330ms] disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {t.joinByCodeAction}
             </button>
@@ -344,7 +344,7 @@ export default function ProfilePage({
 
           {codeError   && <p className="text-xs text-red-400 mt-2">{t.invalidCode}</p>}
           {codeFull    && <p className="text-xs text-red-400 mt-2">This event is full — no more spots available.</p>}
-          {codeSuccess && <p className="text-xs text-[#3E6AE1] mt-2">{t.welcomeBack} 🎉</p>}
+          {codeSuccess && <p className="text-xs text-[#7F8BAD] mt-2">{t.welcomeBack} 🎉</p>}
         </div>
       </div>
 

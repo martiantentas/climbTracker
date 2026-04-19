@@ -160,7 +160,7 @@ export default function AnalyticsPage({
                   className={`
                     px-3 py-1.5 rounded text-xs font-medium border transition-colors duration-[330ms]
                     ${active
-                      ? 'bg-[#3E6AE1]/10 border-[#3E6AE1]/30 text-[#3E6AE1]'
+                      ? 'bg-[#7F8BAD]/10 border-[#7F8BAD]/30 text-[#7F8BAD]'
                       : dk
                         ? 'bg-white/5 border-white/10 text-[#5C5E62] hover:text-[#D0D1D2] hover:bg-white/10'
                         : 'bg-white border-[#EEEEEE] text-[#8E8E8E] hover:text-[#393C41]'
@@ -190,10 +190,10 @@ export default function AnalyticsPage({
 
       {/* ── Stat grid ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-        <StatCard label="Competitors"  value={filteredCompetitors.length}  accent="text-[#3E6AE1]"  theme={theme} />
+        <StatCard label="Competitors"  value={filteredCompetitors.length}  accent="text-[#7F8BAD]"  theme={theme} />
         <StatCard label="Total tops"   value={totalTops}                   accent="text-green-400"  theme={theme} />
         <StatCard label="Flashes"      value={totalFlashes}                accent="text-amber-400"  theme={theme} />
-        <StatCard label="Avg tops"     value={avgTopsPerCompetitor}        accent="text-[#3E6AE1]"  theme={theme} sub="per climber" />
+        <StatCard label="Avg tops"     value={avgTopsPerCompetitor}        accent="text-[#7F8BAD]"  theme={theme} sub="per climber" />
       </div>
 
       {/* ── Completion rates chart ── */}
@@ -228,7 +228,7 @@ export default function AnalyticsPage({
               />
               <Bar dataKey="rate" radius={[2, 2, 0, 0]}>
                 {boulderStats.map((entry, i) => (
-                  <Cell key={i} fill={entry.color || '#3E6AE1'} opacity={0.85} />
+                  <Cell key={i} fill={entry.color || '#7F8BAD'} opacity={0.85} />
                 ))}
               </Bar>
             </BarChart>
@@ -256,7 +256,7 @@ export default function AnalyticsPage({
                 <tr key={b.name} className={`border-t transition-colors duration-[330ms] ${dk ? 'border-white/5 hover:bg-white/[0.02]' : 'border-[#F4F4F4] hover:bg-[#F4F4F4]'}`}>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-2">
-                      <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: boulderStats[i].color || '#3E6AE1' }} />
+                      <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: boulderStats[i].color || '#7F8BAD' }} />
                       <span className={`font-medium ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>{b.name}</span>
                     </div>
                   </td>
@@ -264,7 +264,7 @@ export default function AnalyticsPage({
                     <span className="font-medium text-green-400">{b.tops}</span>
                   </td>
                   <td className="px-5 py-3">
-                    <span className={`font-medium text-[#3E6AE1]`}>{b.zones}</span>
+                    <span className={`font-medium text-[#7F8BAD]`}>{b.zones}</span>
                   </td>
                   <td className="px-5 py-3">
                     <span className="font-medium text-amber-400">{b.flashes}</span>
@@ -273,7 +273,7 @@ export default function AnalyticsPage({
                     <div className="flex items-center gap-2">
                       <div className={`h-1.5 w-16 rounded-full overflow-hidden ${dk ? 'bg-white/10' : 'bg-[#EEEEEE]'}`}>
                         <div
-                          className="h-full rounded-full bg-[#3E6AE1]"
+                          className="h-full rounded-full bg-[#7F8BAD]"
                           style={{ width: `${b.rate}%` }}
                         />
                       </div>

@@ -52,7 +52,7 @@ function ToggleRow({ label, desc, value, theme, onChange }: {
       </div>
       <button onClick={() => onChange(!value)} className="flex-shrink-0">
         {value
-          ? <ToggleRight size={32} className="text-[#3E6AE1]" />
+          ? <ToggleRight size={32} className="text-[#7F8BAD]" />
           : <ToggleLeft  size={32} className={dk ? 'text-[#5C5E62]' : 'text-[#D0D1D2]'} />
         }
       </button>
@@ -65,7 +65,7 @@ function InputField({ label, value, type = 'text', theme, onChange, hint, min, m
   onChange: (v: string) => void; hint?: string; min?: number; max?: number
 }) {
   const dk  = theme === 'dark'
-  const cls = `w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms] ${dk ? 'bg-white/5 border-white/10 text-[#EEEEEE] focus:border-[#3E6AE1]/50' : 'bg-white border-[#EEEEEE] text-[#121212] focus:border-[#3E6AE1]'}`
+  const cls = `w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms] ${dk ? 'bg-white/5 border-white/10 text-[#EEEEEE] focus:border-[#7F8BAD]/50' : 'bg-white border-[#EEEEEE] text-[#121212] focus:border-[#7F8BAD]'}`
   return (
     <div className="mb-4">
       <label className={`block text-xs font-medium mb-2 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{label}</label>
@@ -145,8 +145,8 @@ function BillingSection({ competition, competitorCount, theme, onUpdate }: {
     setPromoCode('')
   }
 
-  const inputCls    = `px-3 py-2 rounded border outline-none text-sm transition-colors duration-[330ms] w-24 ${dk ? 'bg-white/5 border-white/10 text-[#EEEEEE] focus:border-[#3E6AE1]/50' : 'bg-white border-[#EEEEEE] text-[#121212] focus:border-[#3E6AE1]'}`
-  const inputFullCls = `w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms] ${dk ? 'bg-white/5 border-white/10 text-[#EEEEEE] focus:border-[#3E6AE1]/50 placeholder:text-[#5C5E62]' : 'bg-white border-[#EEEEEE] text-[#121212] focus:border-[#3E6AE1] placeholder:text-[#8E8E8E]'}`
+  const inputCls    = `px-3 py-2 rounded border outline-none text-sm transition-colors duration-[330ms] w-24 ${dk ? 'bg-white/5 border-white/10 text-[#EEEEEE] focus:border-[#7F8BAD]/50' : 'bg-white border-[#EEEEEE] text-[#121212] focus:border-[#7F8BAD]'}`
+  const inputFullCls = `w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms] ${dk ? 'bg-white/5 border-white/10 text-[#EEEEEE] focus:border-[#7F8BAD]/50 placeholder:text-[#5C5E62]' : 'bg-white border-[#EEEEEE] text-[#121212] focus:border-[#7F8BAD] placeholder:text-[#8E8E8E]'}`
 
   return (
     <SectionCard title="Billing & Capacity" theme={theme} defaultOpen={false}>
@@ -154,7 +154,7 @@ function BillingSection({ competition, competitorCount, theme, onUpdate }: {
       {/* Current usage */}
       <div className="flex items-center gap-3 mb-5">
         <div className={`flex items-center gap-2.5 px-4 py-3 rounded border flex-1 ${dk ? 'bg-white/[0.03] border-white/[0.07]' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
-          <Users size={14} className="text-[#3E6AE1] flex-shrink-0" />
+          <Users size={14} className="text-[#7F8BAD] flex-shrink-0" />
           <div>
             <p className={`text-[10px] font-medium mb-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Registered</p>
             <p className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
@@ -164,7 +164,7 @@ function BillingSection({ competition, competitorCount, theme, onUpdate }: {
           </div>
         </div>
         <div className={`flex items-center gap-2.5 px-4 py-3 rounded border flex-1 ${dk ? 'bg-white/[0.03] border-white/[0.07]' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
-          <Package size={14} className="text-[#3E6AE1] flex-shrink-0" />
+          <Package size={14} className="text-[#7F8BAD] flex-shrink-0" />
           <div>
             <p className={`text-[10px] font-medium mb-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Remaining</p>
             <p className={`text-sm font-medium ${isFull ? 'text-red-400' : dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
@@ -173,7 +173,7 @@ function BillingSection({ competition, competitorCount, theme, onUpdate }: {
           </div>
         </div>
         <div className={`flex items-center gap-2.5 px-4 py-3 rounded border flex-1 ${dk ? 'bg-white/[0.03] border-white/[0.07]' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
-          <Package size={14} className="text-[#3E6AE1] flex-shrink-0" />
+          <Package size={14} className="text-[#7F8BAD] flex-shrink-0" />
           <div>
             <p className={`text-[10px] font-medium mb-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Limit</p>
             <p className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>{totalCapacity}</p>
@@ -201,7 +201,7 @@ function BillingSection({ competition, competitorCount, theme, onUpdate }: {
             </div>
             <button
               onClick={() => openBundleCheckout(b.users, b.label, b.price)}
-              className="px-4 py-2 rounded text-xs font-medium bg-[#3E6AE1] text-white hover:bg-[#3056C7] transition-colors duration-[330ms]"
+              className="px-4 py-2 rounded text-xs font-medium bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms]"
             >
               Add {b.users}
             </button>
@@ -226,7 +226,7 @@ function BillingSection({ competition, competitorCount, theme, onUpdate }: {
             />
             <button
               onClick={() => openBundleCheckout(customQty, `Custom bundle — ${customQty} participants`, customQty * 0.12)}
-              className="px-4 py-2 rounded text-xs font-medium bg-[#3E6AE1] text-white hover:bg-[#3056C7] transition-colors duration-[330ms]"
+              className="px-4 py-2 rounded text-xs font-medium bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms]"
             >
               Add
             </button>
@@ -259,7 +259,7 @@ function BillingSection({ competition, competitorCount, theme, onUpdate }: {
               <button
                 onClick={applyPromo}
                 disabled={!promoCode.trim()}
-                className="px-4 py-2.5 rounded text-xs font-medium bg-[#3E6AE1] text-white hover:bg-[#3056C7] transition-colors duration-[330ms] flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-4 py-2.5 rounded text-xs font-medium bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms] flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Apply
               </button>
@@ -307,7 +307,7 @@ function BrandingSection({ competition, theme, onUpdate }: {
   const isPremium = comp.tier === 'premium'
 
   const branding = comp.branding ?? {}
-  const accent   = branding.accentColor ?? '#3E6AE1'
+  const accent   = branding.accentColor ?? '#7F8BAD'
   const lightBg  = branding.lightBg     ?? '#FFFFFF'
   const darkBg   = branding.darkBg      ?? '#121212'
   const logoUrl  = branding.logoDataUrl  ?? ''
@@ -370,17 +370,17 @@ function BrandingSection({ competition, theme, onUpdate }: {
       <>
         <SectionCard title="Branding" theme={theme} defaultOpen={false}>
           <div className={`flex flex-col items-center text-center py-6 px-4 rounded border border-dashed ${dk ? 'border-white/10' : 'border-[#EEEEEE]'}`}>
-            <div className="w-10 h-10 rounded bg-[#3E6AE1]/10 flex items-center justify-center mb-3">
-              <Sparkles size={18} className="text-[#3E6AE1]" />
+            <div className="w-10 h-10 rounded bg-[#7F8BAD]/10 flex items-center justify-center mb-3">
+              <Sparkles size={18} className="text-[#7F8BAD]" />
             </div>
             <p className={`text-sm font-medium mb-1 ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>Premium feature</p>
             <p className={`text-xs leading-relaxed mb-4 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
               Replace the Ascendia logo with your own and customise the colour scheme.
-              Upgrade to <span className="text-[#3E6AE1] font-medium">Premium</span> to unlock white-label branding.
+              Upgrade to <span className="text-[#7F8BAD] font-medium">Premium</span> to unlock white-label branding.
             </p>
             <button
               onClick={() => setShowUpgradeCheckout(true)}
-              className="flex items-center gap-2 px-5 py-2.5 bg-[#3E6AE1] text-white rounded text-sm font-medium hover:bg-[#3056C7] transition-colors duration-[330ms]"
+              className="flex items-center gap-2 px-5 py-2.5 bg-[#7F8BAD] text-white rounded text-sm font-medium hover:bg-[#6D799B] transition-colors duration-[330ms]"
             >
               <Sparkles size={14} /> Upgrade to Premium — €50
             </button>
@@ -533,7 +533,7 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
     set('difficultyLevels', (draft.difficultyLevels ?? []).map(d => d.id === id ? { ...d, [field]: value } : d))
   }
 
-  const inputClass   = `w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms] ${dk ? 'bg-white/5 border-white/10 text-[#EEEEEE] focus:border-[#3E6AE1]/50' : 'bg-white border-[#EEEEEE] text-[#121212] focus:border-[#3E6AE1]'}`
+  const inputClass   = `w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms] ${dk ? 'bg-white/5 border-white/10 text-[#EEEEEE] focus:border-[#7F8BAD]/50' : 'bg-white border-[#EEEEEE] text-[#121212] focus:border-[#7F8BAD]'}`
   const labelCls     = `block text-xs font-medium mb-2 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`
 
   const statusColors: Record<CompetitionStatus, string> = {
@@ -552,7 +552,7 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
         </div>
         <button
           onClick={() => onUpdate(draft)}
-          className="flex items-center gap-2 px-5 py-2.5 bg-[#3E6AE1] text-white rounded font-medium text-sm hover:bg-[#3056C7] transition-colors duration-[330ms]"
+          className="flex items-center gap-2 px-5 py-2.5 bg-[#7F8BAD] text-white rounded font-medium text-sm hover:bg-[#6D799B] transition-colors duration-[330ms]"
         >
           <Save size={15} />{t.save}
         </button>
@@ -598,7 +598,7 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
           <label className={labelCls}>Invite Code</label>
           <div className={`flex items-center gap-3 px-4 py-3 rounded border ${dk ? 'bg-white/5 border-white/10' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
             <Globe size={14} className="text-[#8E8E8E]" />
-            <span className="font-medium text-[#3E6AE1] text-sm tracking-widest">{draft.inviteCode}</span>
+            <span className="font-medium text-[#7F8BAD] text-sm tracking-widest">{draft.inviteCode}</span>
             <button
               onClick={() => navigator.clipboard.writeText(draft.inviteCode)}
               className={`ml-auto text-xs font-medium px-3 py-1.5 rounded transition-colors duration-[330ms] ${dk ? 'bg-white/5 text-[#8E8E8E] hover:bg-white/10' : 'bg-[#EEEEEE] text-[#5C5E62] hover:bg-[#D0D1D2]'}`}
@@ -626,7 +626,7 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
                     ${i > 0 ? dk ? 'border-l border-white/10' : 'border-l border-[#EEEEEE]' : ''}
                     ${active
                       ? v === 'public'
-                        ? 'bg-[#3E6AE1]/10 text-[#3E6AE1]'
+                        ? 'bg-[#7F8BAD]/10 text-[#7F8BAD]'
                         : 'bg-amber-400/10 text-amber-500'
                       : dk
                         ? 'text-[#5C5E62] hover:text-[#D0D1D2] hover:bg-white/5'
@@ -672,7 +672,7 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
               <button
                 key={s}
                 onClick={() => set('scoringType', s)}
-                className={`flex-1 py-3 rounded text-xs font-medium border transition-colors duration-[330ms] ${draft.scoringType === s ? 'bg-[#3E6AE1]/10 text-[#3E6AE1] border-[#3E6AE1]/30' : dk ? 'bg-white/5 text-[#5C5E62] border-white/10 hover:bg-white/10' : 'bg-[#F4F4F4] text-[#8E8E8E] border-[#EEEEEE] hover:bg-[#EEEEEE]'}`}
+                className={`flex-1 py-3 rounded text-xs font-medium border transition-colors duration-[330ms] ${draft.scoringType === s ? 'bg-[#7F8BAD]/10 text-[#7F8BAD] border-[#7F8BAD]/30' : dk ? 'bg-white/5 text-[#5C5E62] border-white/10 hover:bg-white/10' : 'bg-[#F4F4F4] text-[#8E8E8E] border-[#EEEEEE] hover:bg-[#EEEEEE]'}`}
               >
                 {s === ScoringType.TRADITIONAL ? t.traditional : t.dynamic}
               </button>
@@ -702,14 +702,14 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
               <button
                 key={opt.value}
                 onClick={() => set('attemptTracking', opt.value)}
-                className={`text-left px-4 py-3 rounded border transition-colors duration-[330ms] ${draft.attemptTracking === opt.value ? 'bg-[#3E6AE1]/10 border-[#3E6AE1]/30' : dk ? 'bg-white/5 border-white/10 hover:bg-white/8' : 'bg-[#F4F4F4] border-[#EEEEEE] hover:bg-[#EEEEEE]'}`}
+                className={`text-left px-4 py-3 rounded border transition-colors duration-[330ms] ${draft.attemptTracking === opt.value ? 'bg-[#7F8BAD]/10 border-[#7F8BAD]/30' : dk ? 'bg-white/5 border-white/10 hover:bg-white/8' : 'bg-[#F4F4F4] border-[#EEEEEE] hover:bg-[#EEEEEE]'}`}
               >
                 <div className="flex items-center gap-3">
-                  <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${draft.attemptTracking === opt.value ? 'border-[#3E6AE1] bg-[#3E6AE1]' : dk ? 'border-[#5C5E62]' : 'border-[#D0D1D2]'}`}>
+                  <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${draft.attemptTracking === opt.value ? 'border-[#7F8BAD] bg-[#7F8BAD]' : dk ? 'border-[#5C5E62]' : 'border-[#D0D1D2]'}`}>
                     {draft.attemptTracking === opt.value && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                   </div>
                   <div>
-                    <p className={`text-xs font-medium ${draft.attemptTracking === opt.value ? 'text-[#3E6AE1]' : dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>{opt.label}</p>
+                    <p className={`text-xs font-medium ${draft.attemptTracking === opt.value ? 'text-[#7F8BAD]' : dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>{opt.label}</p>
                     <p className={`text-[10px] mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{opt.desc}</p>
                   </div>
                 </div>
@@ -739,10 +739,10 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
               <button
                 key={opt.value}
                 onClick={() => set('zoneScoring', opt.value)}
-                className={`flex-1 py-3 px-4 rounded text-xs font-medium border transition-colors duration-[330ms] text-left ${draft.zoneScoring === opt.value ? 'bg-[#3E6AE1]/10 text-[#3E6AE1] border-[#3E6AE1]/30' : dk ? 'bg-white/5 text-[#5C5E62] border-white/10 hover:bg-white/10' : 'bg-[#F4F4F4] text-[#8E8E8E] border-[#EEEEEE] hover:bg-[#EEEEEE]'}`}
+                className={`flex-1 py-3 px-4 rounded text-xs font-medium border transition-colors duration-[330ms] text-left ${draft.zoneScoring === opt.value ? 'bg-[#7F8BAD]/10 text-[#7F8BAD] border-[#7F8BAD]/30' : dk ? 'bg-white/5 text-[#5C5E62] border-white/10 hover:bg-white/10' : 'bg-[#F4F4F4] text-[#8E8E8E] border-[#EEEEEE] hover:bg-[#EEEEEE]'}`}
               >
                 <div className="font-medium mb-1">{opt.label}</div>
-                <div className={`text-[10px] font-normal ${draft.zoneScoring === opt.value ? 'text-[#3E6AE1]/70' : dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{opt.desc}</div>
+                <div className={`text-[10px] font-normal ${draft.zoneScoring === opt.value ? 'text-[#7F8BAD]/70' : dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{opt.desc}</div>
               </button>
             ))}
           </div>
@@ -760,14 +760,14 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
               <button
                 key={opt.value}
                 onClick={() => set('scoringMethod', opt.value)}
-                className={`text-left px-4 py-4 rounded border transition-colors duration-[330ms] ${draft.scoringMethod === opt.value ? 'bg-[#3E6AE1]/10 border-[#3E6AE1]/30' : dk ? 'bg-white/5 border-white/10 hover:bg-white/8' : 'bg-[#F4F4F4] border-[#EEEEEE] hover:bg-[#EEEEEE]'}`}
+                className={`text-left px-4 py-4 rounded border transition-colors duration-[330ms] ${draft.scoringMethod === opt.value ? 'bg-[#7F8BAD]/10 border-[#7F8BAD]/30' : dk ? 'bg-white/5 border-white/10 hover:bg-white/8' : 'bg-[#F4F4F4] border-[#EEEEEE] hover:bg-[#EEEEEE]'}`}
               >
                 <div className="flex items-center gap-3">
-                  <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${draft.scoringMethod === opt.value ? 'border-[#3E6AE1] bg-[#3E6AE1]' : dk ? 'border-[#5C5E62]' : 'border-[#D0D1D2]'}`}>
+                  <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${draft.scoringMethod === opt.value ? 'border-[#7F8BAD] bg-[#7F8BAD]' : dk ? 'border-[#5C5E62]' : 'border-[#D0D1D2]'}`}>
                     {draft.scoringMethod === opt.value && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                   </div>
                   <div>
-                    <p className={`text-sm font-medium ${draft.scoringMethod === opt.value ? 'text-[#3E6AE1]' : dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>{opt.title}</p>
+                    <p className={`text-sm font-medium ${draft.scoringMethod === opt.value ? 'text-[#7F8BAD]' : dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>{opt.title}</p>
                     <p className={`text-xs mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{opt.desc}</p>
                   </div>
                 </div>
@@ -788,7 +788,7 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
                     <button
                       key={pt}
                       onClick={() => set('penaltyType', pt)}
-                      className={`flex-1 py-2 rounded text-xs font-medium border transition-colors duration-[330ms] ${draft.penaltyType === pt ? 'bg-[#3E6AE1]/10 text-[#3E6AE1] border-[#3E6AE1]/30' : dk ? 'bg-white/5 text-[#5C5E62] border-white/10' : 'bg-[#F4F4F4] text-[#8E8E8E] border-[#EEEEEE]'}`}
+                      className={`flex-1 py-2 rounded text-xs font-medium border transition-colors duration-[330ms] ${draft.penaltyType === pt ? 'bg-[#7F8BAD]/10 text-[#7F8BAD] border-[#7F8BAD]/30' : dk ? 'bg-white/5 text-[#5C5E62] border-white/10' : 'bg-[#F4F4F4] text-[#8E8E8E] border-[#EEEEEE]'}`}
                     >
                       {pt}
                     </button>
@@ -849,7 +849,7 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
           <button
             onClick={addTrait}
             disabled={!newTraitName.trim()}
-            className="flex items-center gap-2 px-4 py-3 bg-[#3E6AE1] text-white rounded font-medium text-sm hover:bg-[#3056C7] transition-colors duration-[330ms] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-4 py-3 bg-[#7F8BAD] text-white rounded font-medium text-sm hover:bg-[#6D799B] transition-colors duration-[330ms] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Plus size={14} />Add
           </button>
@@ -897,7 +897,7 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
         </div>
         <button
           onClick={addDifficulty}
-          className={`w-full py-3 rounded border-2 border-dashed text-sm font-medium flex items-center justify-center gap-2 transition-colors duration-[330ms] ${dk ? 'border-white/10 text-[#5C5E62] hover:border-[#3E6AE1]/30 hover:text-[#3E6AE1]' : 'border-[#EEEEEE] text-[#8E8E8E] hover:border-[#3E6AE1]/40 hover:text-[#3E6AE1]'}`}
+          className={`w-full py-3 rounded border-2 border-dashed text-sm font-medium flex items-center justify-center gap-2 transition-colors duration-[330ms] ${dk ? 'border-white/10 text-[#5C5E62] hover:border-[#7F8BAD]/30 hover:text-[#7F8BAD]' : 'border-[#EEEEEE] text-[#8E8E8E] hover:border-[#7F8BAD]/40 hover:text-[#7F8BAD]'}`}
         >
           <Plus size={14} />Add Difficulty Level
         </button>
@@ -928,7 +928,7 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
       <div className="flex justify-end mt-6">
         <button
           onClick={() => onUpdate(draft)}
-          className="flex items-center gap-2 px-6 py-3 bg-[#3E6AE1] text-white rounded font-medium text-sm hover:bg-[#3056C7] transition-colors duration-[330ms]"
+          className="flex items-center gap-2 px-6 py-3 bg-[#7F8BAD] text-white rounded font-medium text-sm hover:bg-[#6D799B] transition-colors duration-[330ms]"
         >
           <Save size={15} />{t.save}
         </button>

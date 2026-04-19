@@ -57,7 +57,7 @@ function CreateModal({ theme, lang, onSave, onClose }: {
   const [location, setLocation]     = useState('')
   const [description, setDescription] = useState('')
 
-  const inputClass = `w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms] ${dk ? 'bg-white/5 border-white/10 text-[#EEEEEE] placeholder:text-[#5C5E62] focus:border-[#3E6AE1]/50' : 'bg-white border-[#EEEEEE] text-[#121212] placeholder:text-[#8E8E8E] focus:border-[#3E6AE1]'}`
+  const inputClass = `w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms] ${dk ? 'bg-white/5 border-white/10 text-[#EEEEEE] placeholder:text-[#5C5E62] focus:border-[#7F8BAD]/50' : 'bg-white border-[#EEEEEE] text-[#121212] placeholder:text-[#8E8E8E] focus:border-[#7F8BAD]'}`
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -89,7 +89,7 @@ function CreateModal({ theme, lang, onSave, onClose }: {
           </div>
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose} className={`flex-1 py-3 rounded font-medium text-sm transition-colors duration-[330ms] ${dk ? 'bg-white/5 text-[#8E8E8E] hover:bg-white/10 border border-white/10' : 'bg-[#F4F4F4] text-[#5C5E62] hover:bg-[#EEEEEE]'}`}>{t.cancel}</button>
-            <button type="submit" disabled={!name.trim()} className="flex-1 py-3 rounded font-medium text-sm bg-[#3E6AE1] text-white hover:bg-[#3056C7] transition-colors duration-[330ms] disabled:opacity-40 disabled:cursor-not-allowed">{t.createCompetition}</button>
+            <button type="submit" disabled={!name.trim()} className="flex-1 py-3 rounded font-medium text-sm bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms] disabled:opacity-40 disabled:cursor-not-allowed">{t.createCompetition}</button>
           </div>
         </form>
       </div>
@@ -174,7 +174,7 @@ export default function CompetitionsPage({
     setTimeout(() => setCopiedId(null), 2000)
   }
 
-  const inputClass = `w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms] ${dk ? 'bg-white/5 border-white/10 text-[#EEEEEE] placeholder:text-[#5C5E62] focus:border-[#3E6AE1]/50' : 'bg-white border-[#EEEEEE] text-[#121212] placeholder:text-[#8E8E8E] focus:border-[#3E6AE1]'}`
+  const inputClass = `w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms] ${dk ? 'bg-white/5 border-white/10 text-[#EEEEEE] placeholder:text-[#5C5E62] focus:border-[#7F8BAD]/50' : 'bg-white border-[#EEEEEE] text-[#121212] placeholder:text-[#8E8E8E] focus:border-[#7F8BAD]'}`
 
   function SectionHeading({ label }: { label: string }) {
     return <h2 className={`text-xs font-medium mb-3 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{label}</h2>
@@ -191,8 +191,8 @@ export default function CompetitionsPage({
         rounded border p-5 transition-all duration-[330ms]
         ${active
           ? dk
-            ? 'border-[#3E6AE1]/30 bg-[#3E6AE1]/5'
-            : 'border-[#3E6AE1]/30 bg-[#3E6AE1]/5'
+            ? 'border-[#7F8BAD]/30 bg-[#7F8BAD]/5'
+            : 'border-[#7F8BAD]/30 bg-[#7F8BAD]/5'
           : dk
             ? 'bg-white/[0.03] border-white/10 hover:bg-white/[0.05] hover:border-white/20'
             : 'bg-white border-[#EEEEEE] hover:border-[#D0D1D2]'
@@ -204,7 +204,7 @@ export default function CompetitionsPage({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1 flex-wrap">
               {active && (
-                <span className="text-[9px] font-medium text-[#3E6AE1] bg-[#3E6AE1]/10 px-2 py-0.5 rounded border border-[#3E6AE1]/20">
+                <span className="text-[9px] font-medium text-[#7F8BAD] bg-[#7F8BAD]/10 px-2 py-0.5 rounded border border-[#7F8BAD]/20">
                   ● Active
                 </span>
               )}
@@ -267,7 +267,7 @@ export default function CompetitionsPage({
               onClick={() => activate(comp.id)}
               className={`flex items-center gap-1.5 px-4 py-2 rounded text-xs font-medium transition-colors duration-[330ms] ${
                 active
-                  ? 'bg-[#3E6AE1] text-white hover:bg-[#3056C7]'
+                  ? 'bg-[#7F8BAD] text-white hover:bg-[#6D799B]'
                   : dk
                     ? 'bg-white/10 text-[#D0D1D2] hover:bg-white/20'
                     : 'bg-[#F4F4F4] text-[#393C41] hover:bg-[#EEEEEE]'
@@ -330,7 +330,7 @@ export default function CompetitionsPage({
 
         {/* Activation strip */}
         {activated && (
-          <div className={`mt-3 pt-3 border-t flex items-center gap-1.5 text-xs font-medium text-[#3E6AE1] ${dk ? 'border-[#3E6AE1]/20' : 'border-[#3E6AE1]/20'}`}>
+          <div className={`mt-3 pt-3 border-t flex items-center gap-1.5 text-xs font-medium text-[#7F8BAD] ${dk ? 'border-[#7F8BAD]/20' : 'border-[#7F8BAD]/20'}`}>
             <Check size={12} strokeWidth={3} /> Active — all pages now show this competition
           </div>
         )}
@@ -345,7 +345,7 @@ export default function CompetitionsPage({
         <h1 className={`text-2xl font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>{t.myCompetitions}</h1>
         <button
           onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-[#3E6AE1] text-white rounded font-medium text-sm hover:bg-[#3056C7] transition-colors duration-[330ms]"
+          className="flex items-center gap-2 px-4 py-2 bg-[#7F8BAD] text-white rounded font-medium text-sm hover:bg-[#6D799B] transition-colors duration-[330ms]"
         >
           <Plus size={15} />{t.newCompetition}
         </button>
@@ -367,7 +367,7 @@ export default function CompetitionsPage({
         <button
           type="submit"
           disabled={joinCode.trim().length < 4}
-          className="flex items-center gap-2 px-4 py-2.5 bg-[#3E6AE1] text-white rounded font-medium text-sm hover:bg-[#3056C7] transition-colors duration-[330ms] disabled:opacity-40 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-4 py-2.5 bg-[#7F8BAD] text-white rounded font-medium text-sm hover:bg-[#6D799B] transition-colors duration-[330ms] disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <LogIn size={14} />{t.joinByCodeAction}
         </button>
@@ -406,7 +406,7 @@ export default function CompetitionsPage({
                 </div>
                 <button
                   onClick={() => handleJoinAvailable(comp)}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-[#3E6AE1] text-white rounded font-medium text-xs hover:bg-[#3056C7] transition-colors duration-[330ms] flex-shrink-0"
+                  className="flex items-center gap-1.5 px-4 py-2 bg-[#7F8BAD] text-white rounded font-medium text-xs hover:bg-[#6D799B] transition-colors duration-[330ms] flex-shrink-0"
                 >
                   <LogIn size={13} />{t.joinByCodeAction}
                 </button>
@@ -422,7 +422,7 @@ export default function CompetitionsPage({
           <p className="font-medium text-sm mb-2">{t.noCompetitions}</p>
           <button
             onClick={() => setShowCreate(true)}
-            className="mt-4 px-6 py-3 bg-[#3E6AE1] text-white rounded font-medium text-sm hover:bg-[#3056C7] transition-colors duration-[330ms]"
+            className="mt-4 px-6 py-3 bg-[#7F8BAD] text-white rounded font-medium text-sm hover:bg-[#6D799B] transition-colors duration-[330ms]"
           >
             {t.createCompetition}
           </button>

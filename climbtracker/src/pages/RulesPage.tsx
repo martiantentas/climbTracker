@@ -42,7 +42,7 @@ function renderMarkdown(text: string, theme: 'light' | 'dark'): React.ReactNode[
       const content = line.replace(/^[-*] /, '')
       return (
         <div key={i} className="flex items-start gap-2 my-1">
-          <span className="text-[#3E6AE1] mt-1 flex-shrink-0">•</span>
+          <span className="text-[#7F8BAD] mt-1 flex-shrink-0">•</span>
           <span className={`text-sm leading-relaxed ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>
             {renderInline(content)}
           </span>
@@ -54,7 +54,7 @@ function renderMarkdown(text: string, theme: 'light' | 'dark'): React.ReactNode[
     if (numberedMatch) {
       return (
         <div key={i} className="flex items-start gap-3 my-1">
-          <span className="text-[11px] font-medium w-5 h-5 rounded flex items-center justify-center flex-shrink-0 mt-0.5 bg-[#3E6AE1]/10 text-[#3E6AE1]">
+          <span className="text-[11px] font-medium w-5 h-5 rounded flex items-center justify-center flex-shrink-0 mt-0.5 bg-[#7F8BAD]/10 text-[#7F8BAD]">
             {numberedMatch[1]}
           </span>
           <span className={`text-sm leading-relaxed ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>
@@ -150,7 +150,7 @@ export default function RulesPage({
             </button>
             <button
               onClick={handleSave}
-              className="flex items-center gap-2 px-4 py-2 rounded text-sm font-medium bg-[#3E6AE1] text-white hover:bg-[#3056C7] transition-colors duration-[330ms]"
+              className="flex items-center gap-2 px-4 py-2 rounded text-sm font-medium bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms]"
             >
               <Save size={15} />
               {t.save}

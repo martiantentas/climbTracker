@@ -119,7 +119,7 @@ export default function EventProfilePage({
 
       {/* ── Identity card ── */}
       <div className={`${cardCls} mb-6 flex items-center gap-5`}>
-        <div className={`w-14 h-14 rounded flex items-center justify-center flex-shrink-0 text-xl font-medium ${dk ? 'bg-[#3E6AE1]/10 text-[#3E6AE1]' : 'bg-[#3E6AE1]/10 text-[#3E6AE1]'}`}>
+        <div className={`w-14 h-14 rounded flex items-center justify-center flex-shrink-0 text-xl font-medium ${dk ? 'bg-[#7F8BAD]/10 text-[#7F8BAD]' : 'bg-[#7F8BAD]/10 text-[#7F8BAD]'}`}>
           {currentUser.avatar
             ? <span className="text-3xl">{currentUser.avatar}</span>
             : currentUser.displayName.charAt(0).toUpperCase()
@@ -130,10 +130,10 @@ export default function EventProfilePage({
           <p className={`text-sm ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{currentUser.email}</p>
         </div>
         <div className={`flex items-center gap-2 px-4 py-2.5 rounded border flex-shrink-0 ${dk ? 'bg-white/5 border-white/10' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
-          <Hash size={14} className="text-[#3E6AE1]" />
+          <Hash size={14} className="text-[#7F8BAD]" />
           <div>
             <p className={`text-[10px] font-medium ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>BIB</p>
-            <p className="text-xl font-medium text-[#3E6AE1] leading-none">{currentUser.bibNumber}</p>
+            <p className="text-xl font-medium text-[#7F8BAD] leading-none">{currentUser.bibNumber}</p>
           </div>
         </div>
       </div>
@@ -176,7 +176,7 @@ export default function EventProfilePage({
                   className={`
                     flex items-center gap-1.5 px-4 py-2.5 rounded text-sm font-medium border transition-colors duration-[330ms]
                     ${active
-                      ? 'bg-[#3E6AE1]/10 text-[#3E6AE1] border-[#3E6AE1]/30'
+                      ? 'bg-[#7F8BAD]/10 text-[#7F8BAD] border-[#7F8BAD]/30'
                       : dk
                         ? 'bg-white/5 text-[#D0D1D2] border-white/10 hover:bg-white/10 hover:border-white/20'
                         : 'bg-white text-[#393C41] border-[#EEEEEE] hover:bg-[#F4F4F4] hover:border-[#D0D1D2]'
@@ -199,19 +199,19 @@ export default function EventProfilePage({
 
       {/* ── Stats grid ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-        {statCard(<Star size={11} />,   'Score',   myScore,                  'text-[#3E6AE1]')}
+        {statCard(<Star size={11} />,   'Score',   myScore,                  'text-[#7F8BAD]')}
         {statCard(<Trophy size={11} />, 'Tops',    `${tops}/${totalActive}`, 'text-green-400')}
-        {statCard(<Target size={11} />, 'Zones',   zones,                    'text-[#3E6AE1]')}
+        {statCard(<Target size={11} />, 'Zones',   zones,                    'text-[#7F8BAD]')}
         {statCard(<Zap size={11} />,    'Flashes', flashes,                  'text-amber-400')}
       </div>
 
       {/* Rank banner */}
       {myRank !== null && (
-        <div className={`rounded border p-4 mb-6 flex items-center gap-3 ${dk ? 'bg-[#3E6AE1]/5 border-[#3E6AE1]/20' : 'bg-[#3E6AE1]/5 border-[#3E6AE1]/20'}`}>
-          <Trophy size={18} className="text-[#3E6AE1] flex-shrink-0" />
+        <div className={`rounded border p-4 mb-6 flex items-center gap-3 ${dk ? 'bg-[#7F8BAD]/5 border-[#7F8BAD]/20' : 'bg-[#7F8BAD]/5 border-[#7F8BAD]/20'}`}>
+          <Trophy size={18} className="text-[#7F8BAD] flex-shrink-0" />
           <div>
-            <p className={`text-xs font-medium ${dk ? 'text-[#3E6AE1]/80' : 'text-[#3E6AE1]/80'}`}>Current ranking</p>
-            <p className="text-2xl font-medium text-[#3E6AE1] leading-tight">#{myRank}</p>
+            <p className={`text-xs font-medium ${dk ? 'text-[#7F8BAD]/80' : 'text-[#7F8BAD]/80'}`}>Current ranking</p>
+            <p className="text-2xl font-medium text-[#7F8BAD] leading-tight">#{myRank}</p>
           </div>
           <p className={`text-xs ml-auto ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{myScore} pts total</p>
         </div>
@@ -250,7 +250,7 @@ export default function EventProfilePage({
                         ⚡ Flash
                       </span>
                     )}
-                    <span className="text-sm font-medium text-[#3E6AE1]">
+                    <span className="text-sm font-medium text-[#7F8BAD]">
                       {points}<span className={`text-[10px] ml-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>pts</span>
                     </span>
                   </div>

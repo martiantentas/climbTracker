@@ -37,7 +37,7 @@ export default function PostRegistrationModal({ user, competition, onComplete, t
         {/* Progress bar */}
         <div className={`h-0.5 ${dk ? 'bg-white/[0.06]' : 'bg-[#F4F4F4]'}`}>
           <div
-            className="h-full bg-[#3E6AE1] transition-all duration-[330ms]"
+            className="h-full bg-[#7F8BAD] transition-all duration-[330ms]"
             style={{ width: step === 1 ? '50%' : '100%' }}
           />
         </div>
@@ -45,8 +45,8 @@ export default function PostRegistrationModal({ user, competition, onComplete, t
         <div className="p-9">
           {/* Header */}
           <div className="flex items-center gap-3 mb-7">
-            <div className={`w-11 h-11 rounded flex items-center justify-center border ${dk ? 'bg-[#3E6AE1]/10 border-[#3E6AE1]/20' : 'bg-[#3E6AE1]/10 border-[#3E6AE1]/20'}`}>
-              <User size={20} className="text-[#3E6AE1]" />
+            <div className={`w-11 h-11 rounded flex items-center justify-center border ${dk ? 'bg-[#7F8BAD]/10 border-[#7F8BAD]/20' : 'bg-[#7F8BAD]/10 border-[#7F8BAD]/20'}`}>
+              <User size={20} className="text-[#7F8BAD]" />
             </div>
             <div>
               <h2 className={`text-lg font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
@@ -72,18 +72,18 @@ export default function PostRegistrationModal({ user, competition, onComplete, t
                     className={`
                       flex items-center justify-between px-4 py-3.5 rounded border cursor-pointer transition-colors duration-[330ms] text-left
                       ${gender === g
-                        ? 'bg-[#3E6AE1]/[0.08] border-[#3E6AE1]/50'
+                        ? 'bg-[#7F8BAD]/[0.08] border-[#7F8BAD]/50'
                         : dk
                           ? 'bg-white/[0.03] border-white/[0.08] hover:border-white/15'
                           : 'bg-[#F4F4F4] border-[#EEEEEE] hover:border-[#D0D1D2]'
                       }
                     `}
                   >
-                    <span className={`text-sm font-medium ${gender === g ? 'text-[#3E6AE1]' : dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>
+                    <span className={`text-sm font-medium ${gender === g ? 'text-[#7F8BAD]' : dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>
                       {g}
                     </span>
                     {gender === g && (
-                      <div className="w-5 h-5 rounded-full bg-[#3E6AE1] flex items-center justify-center flex-shrink-0">
+                      <div className="w-5 h-5 rounded-full bg-[#7F8BAD] flex items-center justify-center flex-shrink-0">
                         <Check size={11} className="text-white" strokeWidth={3} />
                       </div>
                     )}
@@ -97,7 +97,7 @@ export default function PostRegistrationModal({ user, competition, onComplete, t
                   mt-6 w-full py-3.5 rounded text-sm font-medium transition-colors duration-[330ms]
                   flex items-center justify-center gap-2
                   ${canProceed1
-                    ? 'bg-[#3E6AE1] text-white hover:bg-[#3056C7] cursor-pointer'
+                    ? 'bg-[#7F8BAD] text-white hover:bg-[#6D799B] cursor-pointer'
                     : dk ? 'bg-white/[0.06] text-[#5C5E62] cursor-not-allowed' : 'bg-[#F4F4F4] text-[#8E8E8E] cursor-not-allowed'
                   }
                 `}
@@ -126,7 +126,7 @@ export default function PostRegistrationModal({ user, competition, onComplete, t
                             px-4 py-2.5 rounded border cursor-pointer text-sm font-medium transition-colors duration-[330ms]
                             flex items-center gap-2
                             ${active
-                              ? 'bg-[#3E6AE1]/10 border-[#3E6AE1]/50 text-[#3E6AE1]'
+                              ? 'bg-[#7F8BAD]/10 border-[#7F8BAD]/50 text-[#7F8BAD]'
                               : dk
                                 ? 'bg-white/[0.03] border-white/[0.08] text-[#D0D1D2] hover:border-white/15'
                                 : 'bg-[#F4F4F4] border-[#EEEEEE] text-[#393C41] hover:border-[#D0D1D2]'
@@ -157,7 +157,7 @@ export default function PostRegistrationModal({ user, competition, onComplete, t
                   className={`
                     flex-[2] py-3.5 rounded text-sm font-medium transition-colors duration-[330ms]
                     ${canProceed2
-                      ? 'bg-[#3E6AE1] text-white hover:bg-[#3056C7] cursor-pointer'
+                      ? 'bg-[#7F8BAD] text-white hover:bg-[#6D799B] cursor-pointer'
                       : dk ? 'bg-white/[0.06] text-[#5C5E62] cursor-not-allowed' : 'bg-[#F4F4F4] text-[#8E8E8E] cursor-not-allowed'
                     }
                   `}

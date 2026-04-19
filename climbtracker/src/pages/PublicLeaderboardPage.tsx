@@ -74,7 +74,7 @@ export default function PublicLeaderboardPage({
         <p className="text-[#5C5E62] mb-6">This results page doesn't exist or the link is incorrect.</p>
         <button
           onClick={() => navigate('/')}
-          className="px-6 py-2.5 rounded bg-[#3E6AE1] text-white font-medium hover:bg-[#3056C7] transition-colors duration-[330ms]"
+          className="px-6 py-2.5 rounded bg-[#7F8BAD] text-white font-medium hover:bg-[#6D799B] transition-colors duration-[330ms]"
         >
           Go home
         </button>
@@ -133,7 +133,7 @@ export default function PublicLeaderboardPage({
         {/* Stats row */}
         <div className="flex gap-3 flex-wrap mb-7">
           {[
-            { icon: <Trophy size={13} />, label: `${rankings.length} climbers`,    color: 'text-[#3E6AE1]' },
+            { icon: <Trophy size={13} />, label: `${rankings.length} climbers`,    color: 'text-[#7F8BAD]' },
             { icon: <Target size={13} />, label: `${totalTops} total tops`,        color: 'text-green-400' },
             { icon: <Zap size={13} />,    label: topFlasher ? `${topFlasher.flashCount} flashes — ${topFlasher.name}` : 'No flashes yet', color: 'text-amber-400' },
           ].map(s => (
@@ -196,7 +196,7 @@ export default function PublicLeaderboardPage({
                       <p className="text-[9px] text-[#5C5E62]">⚡</p>
                     </div>
                     <div className="text-right min-w-[52px]">
-                      <p className="text-xl font-medium text-[#3E6AE1]">{result.totalPoints}</p>
+                      <p className="text-xl font-medium text-[#7F8BAD]">{result.totalPoints}</p>
                       <p className="text-[9px] text-[#5C5E62]">pts</p>
                     </div>
                   </div>

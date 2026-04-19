@@ -78,7 +78,7 @@ function Field({ label, type, value, onChange, error, placeholder, right }: {
             w-full py-3.5 rounded border outline-none text-sm transition-colors duration-[330ms]
             bg-white/5 text-[#EEEEEE] placeholder:text-[#5C5E62]
             ${isPassword ? 'pl-4 pr-11' : 'px-4'}
-            ${error ? 'border-red-500/50 focus:border-red-500/70' : 'border-white/10 focus:border-[#3E6AE1]/50'}
+            ${error ? 'border-red-500/50 focus:border-red-500/70' : 'border-white/10 focus:border-[#7F8BAD]/50'}
           `}
         />
         {isPassword && (
@@ -197,12 +197,12 @@ export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProp
         {/* Subtle grid */}
         <div className="absolute inset-0 pointer-events-none"
           style={{
-            backgroundImage: 'linear-gradient(rgba(62,106,225,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(62,106,225,0.04) 1px, transparent 1px)',
+            backgroundImage: 'linear-gradient(rgba(127,139,173,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(127,139,173,0.04) 1px, transparent 1px)',
             backgroundSize: '48px 48px',
           }}
         />
         <div className="absolute bottom-[-80px] left-[-80px] w-[400px] h-[400px] rounded-full pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(62,106,225,0.08) 0%, transparent 70%)' }}
+          style={{ background: 'radial-gradient(circle, rgba(127,139,173,0.08) 0%, transparent 70%)' }}
         />
 
         <div className="flex items-center gap-2.5 relative">
@@ -212,7 +212,7 @@ export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProp
         <div className="relative">
           <h2 className="text-4xl font-light leading-[1.15] text-[#EEEEEE] mb-5" style={{ letterSpacing: '-0.04em' }}>
             {tr.authTagline1}<br />
-            <span className="font-medium text-[#3E6AE1]">{tr.authTagline2}</span><br />
+            <span className="font-medium text-[#7F8BAD]">{tr.authTagline2}</span><br />
             {tr.authTagline3}
           </h2>
           <p className="text-sm text-[#5C5E62] leading-relaxed mb-10">
@@ -221,7 +221,7 @@ export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProp
           <div className="flex flex-col gap-3.5">
             {([tr.authFeat1, tr.authFeat2, tr.authFeat3, tr.authFeat4] as string[]).map(f => (
               <div key={f} className="flex items-center gap-2.5 text-sm text-[#5C5E62]">
-                <CheckCircle2 size={15} className="text-[#3E6AE1] flex-shrink-0" />
+                <CheckCircle2 size={15} className="text-[#7F8BAD] flex-shrink-0" />
                 {f}
               </div>
             ))}
@@ -265,7 +265,7 @@ export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProp
               onClick={() => setTab(tab_)}
               className={`
                 flex-1 py-2.5 rounded text-sm font-medium transition-colors duration-[330ms]
-                ${tab === tab_ ? 'bg-[#3E6AE1] text-white' : 'text-[#5C5E62] hover:text-[#D0D1D2]'}
+                ${tab === tab_ ? 'bg-[#7F8BAD] text-white' : 'text-[#5C5E62] hover:text-[#D0D1D2]'}
               `}
             >
               {tab_ === 'signin' ? tr.authSignIn : tr.authCreateAccount}
@@ -282,7 +282,7 @@ export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProp
 
         {success ? (
           <div className="flex flex-col items-center gap-4 py-10">
-            <CheckCircle2 size={48} className="text-[#3E6AE1]" />
+            <CheckCircle2 size={48} className="text-[#7F8BAD]" />
             <p className="text-lg font-medium text-[#EEEEEE]">
               {tab === 'signin' ? tr.welcomeBack : tr.authAccountCreated}
             </p>
@@ -313,7 +313,7 @@ export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProp
               placeholder="········"
               right={
                 tab === 'signin'
-                  ? <button type="button" className="text-[11px] font-medium text-[#3E6AE1] hover:text-[#3056C7] transition-colors duration-[330ms]">{tr.authForgot}</button>
+                  ? <button type="button" className="text-[11px] font-medium text-[#7F8BAD] hover:text-[#6D799B] transition-colors duration-[330ms]">{tr.authForgot}</button>
                   : undefined
               }
             />
@@ -324,8 +324,8 @@ export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProp
               className={`
                 mt-2 py-4 rounded text-sm font-medium transition-colors duration-[330ms]
                 ${loading
-                  ? 'bg-[#3E6AE1]/30 text-[#5C5E62] cursor-not-allowed'
-                  : 'bg-[#3E6AE1] text-white hover:bg-[#3056C7] cursor-pointer'
+                  ? 'bg-[#7F8BAD]/30 text-[#5C5E62] cursor-not-allowed'
+                  : 'bg-[#7F8BAD] text-white hover:bg-[#6D799B] cursor-pointer'
                 }
               `}
             >
@@ -344,7 +344,7 @@ export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProp
                   key={provider}
                   type="button"
                   onClick={() => alert(`${provider} ${tr.authForgotComing}`)}
-                  className="py-3 rounded text-sm font-medium border border-white/10 bg-white/[0.04] text-[#5C5E62] hover:border-[#3E6AE1]/30 hover:text-[#D0D1D2] transition-colors duration-[330ms]"
+                  className="py-3 rounded text-sm font-medium border border-white/10 bg-white/[0.04] text-[#5C5E62] hover:border-[#7F8BAD]/30 hover:text-[#D0D1D2] transition-colors duration-[330ms]"
                 >
                   {provider}
                 </button>
@@ -356,7 +356,7 @@ export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProp
               <button
                 type="button"
                 onClick={() => setTab(tab === 'signin' ? 'signup' : 'signin')}
-                className="text-[#3E6AE1] font-medium hover:text-[#3056C7] transition-colors duration-[330ms]"
+                className="text-[#7F8BAD] font-medium hover:text-[#6D799B] transition-colors duration-[330ms]"
               >
                 {tab === 'signin' ? tr.authSignUp : tr.authSignIn}
               </button>
@@ -366,7 +366,7 @@ export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProp
             <div className="mt-4 p-4 rounded border bg-white/[0.03] border-white/[0.06]">
               <p className="text-[11px] font-medium text-[#393C41] mb-2.5">{tr.authDevShortcuts}</p>
               <div className="flex gap-2 flex-wrap">
-                <button type="button" onClick={() => { setEmail('admin@climbtracker.com'); setPassword('admin123'); setTab('signin') }} className="text-[11px] px-3 py-1 rounded bg-[#3E6AE1]/10 border border-[#3E6AE1]/20 text-[#3E6AE1] font-medium hover:bg-[#3E6AE1]/20 transition-colors duration-[330ms]">
+                <button type="button" onClick={() => { setEmail('admin@climbtracker.com'); setPassword('admin123'); setTab('signin') }} className="text-[11px] px-3 py-1 rounded bg-[#7F8BAD]/10 border border-[#7F8BAD]/20 text-[#7F8BAD] font-medium hover:bg-[#7F8BAD]/20 transition-colors duration-[330ms]">
                   Admin
                 </button>
                 <button type="button" onClick={() => { setEmail('alex@example.com'); setPassword('alex123'); setTab('signin') }} className="text-[11px] px-3 py-1 rounded bg-green-400/10 border border-green-400/20 text-green-400 font-medium hover:bg-green-400/20 transition-colors duration-[330ms]">
