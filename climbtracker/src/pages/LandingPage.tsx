@@ -437,14 +437,21 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
           <img src={ascendiaLogo} alt="Ascendia" style={{ height: 26, width: 'auto', objectFit: 'contain' }} />
           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-            {([t.privacy, t.terms, t.contact] as string[]).map(link => (
-              <a key={link} href="#" style={{ fontSize: 12, color: C.txtLow, textDecoration: 'none', padding: '4px 10px', borderRadius: 5, transition: 'color 0.33s, background 0.33s' }}
+            {([
+              ['Legal Notice', '/legal'],
+              [t.privacy,     '/privacy'],
+              [t.terms,       '/terms'],
+            ] as [string, string][]).map(([label, path]) => (
+              <button
+                key={path}
+                onClick={() => navigate(path)}
+                style={{ fontSize: 12, color: C.txtLow, background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 10px', borderRadius: 5, transition: 'color 0.33s, background 0.33s', fontFamily: C.font }}
                 onMouseEnter={e => { e.currentTarget.style.color = C.txt; e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
                 onMouseLeave={e => { e.currentTarget.style.color = C.txtLow; e.currentTarget.style.background = 'transparent' }}
-              >{link}</a>
+              >{label}</button>
             ))}
           </div>
-          <p style={{ fontSize: 12, color: C.txtLow, margin: 0 }}>© 2025 Ascendia</p>
+          <p style={{ fontSize: 12, color: C.txtLow, margin: 0 }}>© 2026 Ascendia</p>
         </div>
       </footer>
     </div>

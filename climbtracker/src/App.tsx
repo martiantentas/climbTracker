@@ -30,6 +30,9 @@ import AuthPage, { updateAuthUser } from './pages/AuthPage'
 import PaymentModal          from './components/PaymentModal'
 import PostRegistrationModal from './components/PostRegistrationModal'
 import PublicLeaderboardPage from './pages/PublicLeaderboardPage'
+import LegalNoticePage       from './pages/LegalNoticePage'
+import PrivacyPolicyPage     from './pages/PrivacyPolicyPage'
+import TermsPage             from './pages/TermsPage'
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
@@ -462,6 +465,9 @@ function AppInner() {
         <Route path="/"                element={<LandingPage lang={lang} setLang={handleSetLang} />} />
         <Route path="/auth"            element={<AuthPage onLogin={u => { setCurrentUser(u); navigate('/competitions', { replace: true }) }} theme={theme} lang={lang} setLang={handleSetLang} />} />
         <Route path="/results/:compId" element={<PublicLeaderboardPage competitions={competitions} competitorsMap={competitorsMap} bouldersMap={bouldersMap} completionsMap={completionsMap} />} />
+        <Route path="/legal"           element={<LegalNoticePage />} />
+        <Route path="/privacy"         element={<PrivacyPolicyPage />} />
+        <Route path="/terms"           element={<TermsPage />} />
         <Route path="*"                element={<Navigate to="/" replace />} />
       </Routes>
     )
@@ -712,6 +718,11 @@ function AppInner() {
                 <SettingsPage competition={activeCompetition} theme={theme} lang={lang} onUpdate={updateCompetition} competitorCount={activeCompetitorCount} />
               </Guard>
             } />
+
+            {/* Policy pages — accessible while logged in too */}
+            <Route path="/legal"   element={<LegalNoticePage />} />
+            <Route path="/privacy" element={<PrivacyPolicyPage />} />
+            <Route path="/terms"   element={<TermsPage />} />
 
             {/* Catch-all → /competitions is always safe for any logged-in user */}
             <Route path="*" element={<Navigate to="/competitions" replace />} />
