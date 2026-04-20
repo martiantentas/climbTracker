@@ -149,6 +149,9 @@ export interface Competition {
 
   attemptTracking:    AttemptTracking
   maxFixedAttempts:   number
+
+  // Moderation — emails blocked from (re)joining
+  bannedEmails?:      string[]
 }
 
 // ─── LEADERBOARD ROW ──────────────────────────────────────────────────────────

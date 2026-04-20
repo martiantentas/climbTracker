@@ -426,9 +426,17 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
             {t.ctaTitle}<br /><span style={{ fontWeight: 700 }}>{t.ctaTitle2}</span>
           </h2>
           <p style={{ fontSize: 15, color: C.txtLow, lineHeight: 1.65, marginBottom: 36 }}>{t.ctaDesc}</p>
-          <button onClick={() => goAuth('signup')} style={{ ...btnPrimary, fontSize: 15, padding: '13px 32px' }} className="btn-primary">
-            {t.landingStart} <ArrowRight size={16} />
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <button onClick={() => goAuth('signup')} style={{ ...btnPrimary, fontSize: 15, padding: '13px 32px' }} className="btn-primary">
+              {t.landingStart} <ArrowRight size={16} />
+            </button>
+            <button onClick={() => navigate('/demo')} style={{ ...btnOutline, fontSize: 15, padding: '13px 32px' }}
+              onMouseEnter={e => { e.currentTarget.style.color = C.txt; e.currentTarget.style.borderColor = C.accent }}
+              onMouseLeave={e => { e.currentTarget.style.color = C.txtMid; e.currentTarget.style.borderColor = C.border }}
+            >
+              {t.bookDemo}
+            </button>
+          </div>
         </div>
       </section>
 
@@ -438,6 +446,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
           <img src={ascendiaLogo} alt="Ascendia" style={{ height: 26, width: 'auto', objectFit: 'contain' }} />
           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
             {([
+              [t.bookDemo,    '/demo'],
               ['Legal Notice', '/legal'],
               [t.privacy,     '/privacy'],
               [t.terms,       '/terms'],

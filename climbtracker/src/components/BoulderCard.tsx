@@ -1,5 +1,7 @@
 import { Check, RotateCcw, ShieldCheck, Plus, Minus, Trash2 } from 'lucide-react'
 import type { Boulder, Completion, DifficultyLevel, AttemptTracking } from '../types'
+import type { Language } from '../translations'
+import { translations } from '../translations'
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -14,6 +16,7 @@ interface BoulderCardProps {
   isOrganizer:      boolean
   isLocked:         boolean
   theme:            'light' | 'dark'
+  lang:             Language
   attemptTracking:  AttemptTracking
   maxFixedAttempts: number
   onToggle:         (boulderId: string, attempts: number, forceStatus: boolean) => void
@@ -66,12 +69,13 @@ function FixedAttemptButtons({ current, max, theme, onChange }: FixedAttemptButt
 // ─── ATTEMPT UI: STEPPER ──────────────────────────────────────────────────────
 
 interface StepperProps {
-  current:  number
-  theme:    'light' | 'dark'
-  onChange: (attempts: number) => void
+  current:     number
+  theme:       'light' | 'dark'
+  triesLabel:  string
+  onChange:    (attempts: number) => void
 }
 
-function AttemptStepper({ current, theme, onChange }: StepperProps) {
+function AttemptStepper({ current, theme, triesLabel, onChange }: StepperProps) {
   return (
     <div className="flex items-center gap-2 mt-2" onClick={e => e.stopPropagation()}>
       <button
@@ -103,7 +107,7 @@ function AttemptStepper({ current, theme, onChange }: StepperProps) {
         <Plus size={11} />
       </button>
       <span className={`text-[10px] ml-1 ${theme === 'dark' ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-        tries
+        {triesLabel}
       </span>
     </div>
   )
@@ -122,12 +126,14 @@ export default function BoulderCard({
   isOrganizer,
   isLocked,
   theme,
+  lang,
   attemptTracking,
   maxFixedAttempts,
   onToggle,
   onEdit,
   onDelete,
 }: BoulderCardProps) {
+  const t = translations[lang]
   const isTopped = completion !== undefined
   const isFlash  = isTopped && completion.attempts === 1
   const holdColor = boulder.color ?? '#94a3b8'
@@ -202,7 +208,7 @@ export default function BoulderCard({
               }
             `}>
               <Check size={9} strokeWidth={3} />
-              {isFlash ? 'Flash' : 'Top'}
+              {isFlash ? t.flash : t.top}
             </div>
           )}
         </div>
@@ -266,7 +272,7 @@ export default function BoulderCard({
           `}>
             <ShieldCheck size={11} className="text-purple-400 flex-shrink-0" />
             <span className="text-[9px] font-medium text-purple-400">
-              Judge required
+              {t.judgeRequired}
             </span>
           </div>
         )}
@@ -284,6 +290,7 @@ export default function BoulderCard({
             <AttemptStepper
               current={completion.attempts}
               theme={theme}
+              triesLabel={t.tries}
               onChange={handleAttemptChange}
             />
           )
@@ -295,7 +302,7 @@ export default function BoulderCard({
             <RotateCcw size={10} className="text-[#8E8E8E]" />
             <span className="text-[9px] text-[#8E8E8E] font-medium">
               {attemptTracking === 'none'
-                ? 'Topped'
+                ? t.topped
                 : `${completion.attempts} attempt${completion.attempts !== 1 ? 's' : ''}`
               }
             </span>
@@ -306,7 +313,7 @@ export default function BoulderCard({
         {isOrganizer && (
           <div className="flex items-center justify-between mt-2">
             <p className={`text-[9px] font-medium ${theme === 'dark' ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-              Tap to edit
+              {t.tapToEdit}
             </p>
             {onDelete && (
               <button

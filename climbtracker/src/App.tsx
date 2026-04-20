@@ -33,6 +33,7 @@ import PublicLeaderboardPage from './pages/PublicLeaderboardPage'
 import LegalNoticePage       from './pages/LegalNoticePage'
 import PrivacyPolicyPage     from './pages/PrivacyPolicyPage'
 import TermsPage             from './pages/TermsPage'
+import DemoPage              from './pages/DemoPage'
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
@@ -325,8 +326,10 @@ function AppInner() {
 
   // ── Core join logic (shared) ──────────────────────────────────────────────
   function joinCompetition(compId: string, user: Competitor, traitIds?: string[], gender?: string): boolean {
-    // Enforce participant capacity limit (organisers and judges are exempt)
     const comp = competitions.find(c => c.id === compId) as any
+    // Block banned emails
+    if ((comp?.bannedEmails ?? []).includes(user.email.toLowerCase())) return false
+    // Enforce participant capacity limit (organisers and judges are exempt)
     if (comp?.participantLimit) {
       const currentList     = competitorsMap[compId] ?? []
       const competitorCount = currentList.filter(c => c.role === 'competitor' || !c.role).length
@@ -406,6 +409,31 @@ function AppInner() {
     showToast(t.successSaved)
   }
 
+  function handleUnbanUser(email: string) {
+    if (!activeCompetition) return
+    setCompetitions(prev => prev.map(comp =>
+      comp.id === activeCompetition.id
+        ? { ...comp, bannedEmails: (comp.bannedEmails ?? []).filter(e => e !== email.toLowerCase()) }
+        : comp
+    ))
+    showToast(t.successSaved)
+  }
+
+  function handleBanUser(competitorId: string) {
+    if (!activeCompetition) return
+    const competitor = (competitorsMap[activeCompetition.id] ?? []).find(c => c.id === competitorId)
+    if (!competitor) return
+    // Remove from competitors list
+    setCompetitorsMap(prev => ({ ...prev, [activeCompetition.id]: (prev[activeCompetition.id] ?? []).filter(c => c.id !== competitorId) }))
+    // Add email to bannedEmails
+    setCompetitions(prev => prev.map(comp =>
+      comp.id === activeCompetition.id
+        ? { ...comp, bannedEmails: [...(comp.bannedEmails ?? []), competitor.email.toLowerCase()] }
+        : comp
+    ))
+    showToast(t.successSaved)
+  }
+
   function handleUpdateBib(competitorId: string, bib: number) {
     if (!activeCompetition) return
     setCompetitorsMap(prev => ({ ...prev, [activeCompetition.id]: (prev[activeCompetition.id] ?? []).map(c => c.id === competitorId ? { ...c, bibNumber: bib } : c) }))
@@ -468,6 +496,7 @@ function AppInner() {
         <Route path="/legal"           element={<LegalNoticePage />} />
         <Route path="/privacy"         element={<PrivacyPolicyPage />} />
         <Route path="/terms"           element={<TermsPage />} />
+        <Route path="/demo"            element={<DemoPage lang={lang} />} />
         <Route path="*"                element={<Navigate to="/" replace />} />
       </Routes>
     )
@@ -698,7 +727,7 @@ function AppInner() {
                     currentUser={currentUser} theme={theme} lang={lang}
                     viewOnly={isJudge}
                     onUpdateRole={handleUpdateRole} onUpdateBib={handleUpdateBib}
-                    onRemoveUser={handleRemoveUser}
+                    onRemoveUser={handleRemoveUser} onBanUser={handleBanUser} onUnbanUser={handleUnbanUser}
                   />
                 : <Navigate to="/competitions" replace />
             } />
@@ -723,6 +752,7 @@ function AppInner() {
             <Route path="/legal"   element={<LegalNoticePage />} />
             <Route path="/privacy" element={<PrivacyPolicyPage />} />
             <Route path="/terms"   element={<TermsPage />} />
+            <Route path="/demo"    element={<DemoPage lang={lang} />} />
 
             {/* Catch-all → /competitions is always safe for any logged-in user */}
             <Route path="*" element={<Navigate to="/competitions" replace />} />

@@ -322,6 +322,7 @@ export default function BouldersPage({
               isOrganizer={isOrganizer}
               isLocked={effectivelyLocked}
               theme={theme}
+              lang={lang}
               attemptTracking={resolveTracking(boulder, competition)}
               maxFixedAttempts={competition.maxFixedAttempts}
               onToggle={handleToggle}
