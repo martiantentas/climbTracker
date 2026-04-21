@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, CheckCircle } from 'lucide-react'
+import { ArrowLeft, CheckCircle, ShieldCheck } from 'lucide-react'
 import ascendiaLogo from '../assets/Ascendia.png'
 import type { Language } from '../translations'
 import { translations } from '../translations'
@@ -18,6 +18,10 @@ const C = {
   font:   "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
 }
 
+// Replace with your reCAPTCHA v2 ("I'm not a robot" checkbox) site key
+const RECAPTCHA_SITE_KEY: string | undefined =
+  (import.meta.env.VITE_RECAPTCHA_SITE_KEY as string | undefined)
+
 interface DemoPageProps {
   lang: Language
 }
@@ -28,6 +32,10 @@ export default function DemoPage({ lang }: DemoPageProps) {
   const navigate = useNavigate()
   const t        = translations[lang]
 
+  // If no v2 site key configured, skip the gate
+  const [captchaPassed, setCaptchaPassed] = useState(!RECAPTCHA_SITE_KEY)
+  const captchaContainerRef = useRef<HTMLDivElement>(null)
+
   const [name,      setName]      = useState('')
   const [company,   setCompany]   = useState('')
   const [phone,     setPhone]     = useState('')
@@ -35,6 +43,39 @@ export default function DemoPage({ lang }: DemoPageProps) {
   const [message,   setMessage]   = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [errors,    setErrors]    = useState<{ name?: string; email?: string }>({})
+
+  // ── Load & render reCAPTCHA v2 widget ─────────────────────────────────────
+  useEffect(() => {
+    if (!RECAPTCHA_SITE_KEY) return  // no key — gate already skipped via initial state
+
+    const callbackName = '__demoRecaptchaReady'
+
+    ;(window as any)[callbackName] = () => {
+      if (!captchaContainerRef.current) return
+      try {
+        ;(window as any).grecaptcha.render(captchaContainerRef.current, {
+          sitekey:  RECAPTCHA_SITE_KEY,
+          theme:    'dark',
+          callback: () => setCaptchaPassed(true),
+          'error-callback': () => setCaptchaPassed(true), // key mismatch or network — let through
+        })
+      } catch {
+        setCaptchaPassed(true) // render failed — fall through to form
+      }
+    }
+
+    const script = document.createElement('script')
+    script.src   = `https://www.google.com/recaptcha/api.js?onload=${callbackName}&render=explicit`
+    script.async = true
+    script.defer = true
+    script.onerror = () => setCaptchaPassed(true) // script failed to load — fall through
+    document.head.appendChild(script)
+
+    return () => {
+      document.head.removeChild(script)
+      delete (window as any)[callbackName]
+    }
+  }, [])
 
   function validate(): boolean {
     const next: { name?: string; email?: string } = {}
@@ -47,7 +88,13 @@ export default function DemoPage({ lang }: DemoPageProps) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (validate()) setSubmitted(true)
+    if (!validate()) return
+    const subject = encodeURIComponent('Ascendia – Demo Request')
+    const body = encodeURIComponent(
+      `Name: ${name}\nCompany: ${company || '—'}\nEmail: ${email}\nPhone: ${phone || '—'}\n\n${message}`
+    )
+    window.open(`mailto:blocopen@gmail.com?subject=${subject}&body=${body}`)
+    setSubmitted(true)
   }
 
   const labelCls: React.CSSProperties = {
@@ -101,7 +148,20 @@ export default function DemoPage({ lang }: DemoPageProps) {
           </p>
         </div>
 
-        {submitted ? (
+        {/* ── reCAPTCHA gate ── */}
+        {!captchaPassed ? (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 28, padding: '40px 0' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, textAlign: 'center' }}>
+              <ShieldCheck size={36} color={C.accent} strokeWidth={1.5} />
+              <p style={{ fontSize: 14, color: C.txtMid, margin: 0, maxWidth: 320, lineHeight: 1.65 }}>
+                Please confirm you're human before accessing the form.
+              </p>
+            </div>
+            {/* reCAPTCHA widget mounts here */}
+            <div ref={captchaContainerRef} />
+          </div>
+
+        ) : submitted ? (
           /* ── Success state ── */
           <div style={{ textAlign: 'center', padding: '40px 0' }}>
             <CheckCircle size={52} style={{ color: C.accent, margin: '0 auto 20px' }} strokeWidth={1.5} />
@@ -112,7 +172,7 @@ export default function DemoPage({ lang }: DemoPageProps) {
               {t.demoSuccessDesc}
             </p>
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate(`/${lang}`)}
               style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: C.accent, color: '#fff', border: 'none', borderRadius: 7, padding: '11px 24px', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: C.font, transition: 'background 0.25s' }}
               onMouseEnter={e => (e.currentTarget.style.background = '#6D799B')}
               onMouseLeave={e => (e.currentTarget.style.background = C.accent)}
@@ -120,6 +180,7 @@ export default function DemoPage({ lang }: DemoPageProps) {
               {t.demoBackHome}
             </button>
           </div>
+
         ) : (
           /* ── Form ── */
           <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>

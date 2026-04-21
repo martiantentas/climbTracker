@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { HashRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
+import { HashRouter, Routes, Route, Navigate, useNavigate, useParams, useLocation } from 'react-router-dom'
 
 import type { Competition, Boulder, Competitor, Completion } from './types'
 import { CompetitionStatus, ScoringType } from './types'
@@ -89,21 +89,62 @@ function Guard({ required, currentUser, isOrganizer, canAccessComp, onAccessDeni
 
 // ─── APP ──────────────────────────────────────────────────────────────────────
 
+// ─── LANG ROUTING ─────────────────────────────────────────────────────────────
+
+const VALID_LANGS: Language[] = ['en', 'es', 'ca']
+
+function RootRedirect() {
+  const stored = localStorage.getItem('ct-lang')
+  const lang: Language = VALID_LANGS.includes(stored as Language) ? stored as Language : 'ca'
+  return <Navigate to={`/${lang}`} replace />
+}
+
+function PathPreservingRedirect() {
+  const location = useLocation()
+  const stored = localStorage.getItem('ct-lang')
+  const lang: Language = VALID_LANGS.includes(stored as Language) ? stored as Language : 'ca'
+  return <Navigate to={`/${lang}${location.pathname}${location.search}`} replace />
+}
+
+function LangRouter() {
+  const { lang } = useParams<{ lang: string }>()
+  if (!VALID_LANGS.includes(lang as Language)) return <Navigate to="/ca" replace />
+  return <AppInner />
+}
+
 export default function App() {
   return (
     <HashRouter>
-      <AppInner />
+      <Routes>
+        <Route path="/" element={<RootRedirect />} />
+        <Route path="/:lang/*" element={<LangRouter />} />
+        <Route path="*" element={<PathPreservingRedirect />} />
+      </Routes>
     </HashRouter>
   )
 }
 
 function AppInner() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const { lang: urlLang = 'ca' } = useParams<{ lang: string }>()
+  const lang: Language = VALID_LANGS.includes(urlLang as Language) ? urlLang as Language : 'ca'
 
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
-  const [lang,  setLang]  = useState<Language>(() => (localStorage.getItem('ct-lang') as Language) ?? 'en')
 
-  function handleSetLang(l: Language) { setLang(l); localStorage.setItem('ct-lang', l) }
+  // Keep localStorage in sync for redirect preference
+  useEffect(() => { localStorage.setItem('ct-lang', lang) }, [lang])
+
+  // Navigate helper — always prepends the active lang prefix
+  const goto = (path: string, opts?: { replace?: boolean }) =>
+    navigate(`/${lang}${path}`, opts)
+
+  function handleSetLang(l: Language) {
+    // Preserve current sub-path when switching language
+    const subPath = location.pathname.replace(/^\/[a-z]{2}/, '') || '/'
+    navigate(`/${l}${subPath}${location.search}`, { replace: true })
+  }
+
   const t = translations[lang]
 
   const [currentUser, setCurrentUser] = useState<Competitor | null>(null)
@@ -491,13 +532,13 @@ function AppInner() {
     return (
       <Routes>
         <Route path="/"                element={<LandingPage lang={lang} setLang={handleSetLang} />} />
-        <Route path="/auth"            element={<AuthPage onLogin={u => { setCurrentUser(u); navigate('/competitions', { replace: true }) }} theme={theme} lang={lang} setLang={handleSetLang} />} />
-        <Route path="/results/:compId" element={<PublicLeaderboardPage competitions={competitions} competitorsMap={competitorsMap} bouldersMap={bouldersMap} completionsMap={completionsMap} />} />
-        <Route path="/legal"           element={<LegalNoticePage />} />
-        <Route path="/privacy"         element={<PrivacyPolicyPage />} />
-        <Route path="/terms"           element={<TermsPage />} />
-        <Route path="/demo"            element={<DemoPage lang={lang} />} />
-        <Route path="*"                element={<Navigate to="/" replace />} />
+        <Route path="auth"             element={<AuthPage onLogin={u => { setCurrentUser(u); goto('/competitions', { replace: true }) }} theme={theme} lang={lang} setLang={handleSetLang} />} />
+        <Route path="results/:compId"  element={<PublicLeaderboardPage competitions={competitions} competitorsMap={competitorsMap} bouldersMap={bouldersMap} completionsMap={completionsMap} />} />
+        <Route path="legal"            element={<LegalNoticePage lang={lang} />} />
+        <Route path="privacy"          element={<PrivacyPolicyPage lang={lang} />} />
+        <Route path="terms"            element={<TermsPage lang={lang} />} />
+        <Route path="demo"             element={<DemoPage lang={lang} />} />
+        <Route path="*"                element={<Navigate to={`/${lang}`} replace />} />
       </Routes>
     )
   }
@@ -556,7 +597,7 @@ function AppInner() {
               handleUpdateCompetitorTraits(updated.id, (updated as any).traitIds ?? [])
               setCurrentUser({ ...currentUser, gender: updated.gender } as any)
               setJoinProfileComp(null)
-              navigate('/event-profile')
+              goto('/event-profile')
             }}
           />
         )}
@@ -573,7 +614,7 @@ function AppInner() {
               return (isReg || isOwn) ? comp.branding : undefined
             })()}
           onOpenMenu={() => setIsMenuOpen(true)}
-          onLogout={() => { setCurrentUser(null); navigate('/competitions', { replace: true }) }}
+          onLogout={() => { setCurrentUser(null); goto('/', { replace: true }) }}
         />
 
         <MobileMenu
@@ -588,18 +629,17 @@ function AppInner() {
               const isOwn = comp?.ownerId === currentUser?.id
               return (isReg || isOwn) ? comp.branding : undefined
             })()}
-          onLogout={() => { setCurrentUser(null); navigate('/competitions', { replace: true }) }}
+          onLogout={() => { setCurrentUser(null); goto('/', { replace: true }) }}
         />
 
         <main className="max-w-7xl mx-auto px-4 md:px-6 py-8">
           <Routes>
 
-            {/* ── Join page — no role guard needed, just needs to be logged in ── */}
             {/* Redirect /auth to app if already logged in */}
-            <Route path="/auth" element={<Navigate to="/competitions" replace />} />
+            <Route path="auth" element={<Navigate to={`/${lang}/competitions`} replace />} />
 
             {/* ── Public join route ── */}
-            <Route path="/join/:code" element={
+            <Route path="join/:code" element={
               <JoinPage
                 competitions={competitions}
                 currentUser={currentUser}
@@ -611,7 +651,7 @@ function AppInner() {
             } />
 
             {/* ── Always accessible ── */}
-            <Route path="/competitions" element={
+            <Route path="competitions" element={
               <CompetitionsPage
                 competitions={competitions} activeCompId={activeCompId}
                 currentUser={currentUser} theme={theme} lang={lang}
@@ -623,23 +663,20 @@ function AppInner() {
                   const entry = (competitorsMap[compId] ?? []).find(c => c.id === currentUser.id)
                   return entry?.role ?? null
                 }}
-                onManage={(compId) => { setActiveCompId(compId); setTimeout(() => navigate('/settings'), 0) }}
+                onManage={(compId) => { setActiveCompId(compId); setTimeout(() => goto('/settings'), 0) }}
                 onJoinSuccess={(comp) => {
-                  // Show profile modal after joining any competition
                   setJoinProfileComp(comp)
                 }}
               />
             } />
 
-            <Route path="/profile" element={
+            <Route path="profile" element={
               <ProfilePage
                 currentUser={currentUser} theme={theme} lang={lang}
                 onJoinByCode={handleJoinByCode}
                 onSave={updated => {
                   updateAuthUser(updated, currentUser.email)
                   setCurrentUser(updated)
-                  // Sync profile changes (avatar, displayName, email) into every
-                  // competition the user is registered in, so standings etc. stay fresh
                   setCompetitorsMap(prev => {
                     const next = { ...prev }
                     for (const compId of Object.keys(next)) {
@@ -655,18 +692,16 @@ function AppInner() {
               />
             } />
 
-            {/* ── Event profile — not shown to organizers or judges of this comp ── */}
-            <Route path="/event-profile" element={
+            {/* ── Event profile ── */}
+            <Route path="event-profile" element={
               (isOrganizer || isJudge)
-                ? <Navigate to="/competitions" replace />
+                ? <Navigate to={`/${lang}/competitions`} replace />
                 : <Guard required="any" currentUser={currentUser} isOrganizer={isOrganizer} canAccessComp={canAccessActiveComp} onAccessDenied={showToast}>
                     <EventProfilePage
                       competition={activeCompetition}
                       boulders={activeBoulders}
                       completions={activeCompletions}
                       currentUser={(() => {
-                        // Use the live competitor record (deduped, with latest traitIds)
-                        // rather than the auth user snapshot which may be stale
                         const live = activeCompetitors.find(c => c.id === currentUser.id)
                         return live ?? currentUser
                       })()}
@@ -678,7 +713,7 @@ function AppInner() {
                   </Guard>
             } />
 
-            {/* ── Boulders — organizers always, judges read-only, competitors if registered ── */}
+            {/* ── Boulders (home) ── */}
             <Route path="/" element={
               (isOrganizer || isJudge || canAccessActiveComp)
                 ? <BouldersPage
@@ -689,26 +724,24 @@ function AppInner() {
                     canSelfScore={!isJudge && activeCompetition.canSelfScore}
                     onToggle={handleToggleCompletion} onUpdateBoulders={updateBoulders}
                   />
-                : <Navigate to="/competitions" replace />
+                : <Navigate to={`/${lang}/competitions`} replace />
             } />
 
-            <Route path="/leaderboard" element={
+            <Route path="leaderboard" element={
               <Guard required="any" currentUser={currentUser} isOrganizer={isOrganizer} canAccessComp={canAccessActiveComp} onAccessDenied={showToast}>
                 <LeaderboardPage rankings={rankings} competitors={activeCompetitors} competition={activeCompetition} theme={theme} lang={lang} isOrganizer={isOrganizer} />
               </Guard>
             } />
 
-            {/* Public results — accessible by logged-in users too */}
-            <Route path="/results/:compId" element={<PublicLeaderboardPage competitions={competitions} competitorsMap={competitorsMap} bouldersMap={bouldersMap} completionsMap={completionsMap} />} />
+            <Route path="results/:compId" element={<PublicLeaderboardPage competitions={competitions} competitorsMap={competitorsMap} bouldersMap={bouldersMap} completionsMap={completionsMap} />} />
 
-            <Route path="/rules" element={
+            <Route path="rules" element={
               <Guard required="any" currentUser={currentUser} isOrganizer={isOrganizer} canAccessComp={canAccessActiveComp} onAccessDenied={showToast}>
                 <RulesPage competition={activeCompetition} isOrganizer={isOrganizer} theme={theme} lang={lang} onUpdate={updateCompetition} />
               </Guard>
             } />
 
-            {/* ── Judges + organizers ── */}
-            <Route path="/judging" element={
+            <Route path="judging" element={
               (isOrganizer || isJudge)
                 ? <JudgingPage
                     competition={activeCompetition} boulders={activeBoulders}
@@ -716,11 +749,10 @@ function AppInner() {
                     theme={theme} lang={lang} onLogScore={handleLogScore}
                     currentUser={currentUser} showSuccess={showToast}
                   />
-                : <Navigate to="/competitions" replace />
+                : <Navigate to={`/${lang}/competitions`} replace />
             } />
 
-            {/* ── Organizers only ── */}
-            <Route path="/users" element={
+            <Route path="users" element={
               (isOrganizer || isJudge)
                 ? <UsersPage
                     competitors={activeCompetitors} competition={activeCompetition}
@@ -729,33 +761,33 @@ function AppInner() {
                     onUpdateRole={handleUpdateRole} onUpdateBib={handleUpdateBib}
                     onRemoveUser={handleRemoveUser} onBanUser={handleBanUser} onUnbanUser={handleUnbanUser}
                   />
-                : <Navigate to="/competitions" replace />
+                : <Navigate to={`/${lang}/competitions`} replace />
             } />
 
-            <Route path="/analytics" element={
+            <Route path="analytics" element={
               (isOrganizer || isJudge)
                 ? <AnalyticsPage
                     competition={activeCompetition} boulders={activeBoulders}
                     competitors={activeCompetitors} completions={activeCompletions}
                     theme={theme} lang={lang}
                   />
-                : <Navigate to="/competitions" replace />
+                : <Navigate to={`/${lang}/competitions`} replace />
             } />
 
-            <Route path="/settings" element={
+            <Route path="settings" element={
               <Guard required="organizer" currentUser={currentUser} isOrganizer={isOrganizer} canAccessComp={canAccessActiveComp} onAccessDenied={showToast}>
                 <SettingsPage competition={activeCompetition} theme={theme} lang={lang} onUpdate={updateCompetition} competitorCount={activeCompetitorCount} />
               </Guard>
             } />
 
-            {/* Policy pages — accessible while logged in too */}
-            <Route path="/legal"   element={<LegalNoticePage />} />
-            <Route path="/privacy" element={<PrivacyPolicyPage />} />
-            <Route path="/terms"   element={<TermsPage />} />
-            <Route path="/demo"    element={<DemoPage lang={lang} />} />
+            {/* Policy + demo pages */}
+            <Route path="legal"   element={<LegalNoticePage lang={lang} />} />
+            <Route path="privacy" element={<PrivacyPolicyPage lang={lang} />} />
+            <Route path="terms"   element={<TermsPage lang={lang} />} />
+            <Route path="demo"    element={<DemoPage lang={lang} />} />
 
-            {/* Catch-all → /competitions is always safe for any logged-in user */}
-            <Route path="*" element={<Navigate to="/competitions" replace />} />
+            {/* Catch-all */}
+            <Route path="*" element={<Navigate to={`/${lang}/competitions`} replace />} />
           </Routes>
         </main>
       </div>

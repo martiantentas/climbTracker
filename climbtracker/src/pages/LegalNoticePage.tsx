@@ -1,6 +1,8 @@
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import ascendiaLogo from '../assets/Ascendia.png'
+import type { Language } from '../translations'
+import { translations } from '../translations'
 
 // ─── SHARED STYLES ────────────────────────────────────────────────────────────
 
@@ -36,8 +38,9 @@ function P({ children }: { children: React.ReactNode }) {
 
 // ─── LEGAL NOTICE ─────────────────────────────────────────────────────────────
 
-export default function LegalNoticePage() {
+export default function LegalNoticePage({ lang }: { lang: Language }) {
   const navigate = useNavigate()
+  const t = translations[lang]
 
   return (
     <div style={{ background: C.bg, color: C.txt, fontFamily: C.font, minHeight: '100vh' }}>
@@ -52,7 +55,7 @@ export default function LegalNoticePage() {
             onMouseEnter={e => (e.currentTarget.style.color = C.txt)}
             onMouseLeave={e => (e.currentTarget.style.color = C.txtLow)}
           >
-            <ArrowLeft size={14} /> Back
+            <ArrowLeft size={14} /> {t.back}
           </button>
         </div>
       </nav>

@@ -33,7 +33,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  const goAuth = (tab: 'signin' | 'signup') => navigate(`/auth?tab=${tab}`)
+  const goAuth = (tab: 'signin' | 'signup') => navigate(`/${lang}/auth?tab=${tab}`)
 
   const C = {
     bg:       '#121212',
@@ -430,7 +430,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
             <button onClick={() => goAuth('signup')} style={{ ...btnPrimary, fontSize: 15, padding: '13px 32px' }} className="btn-primary">
               {t.landingStart} <ArrowRight size={16} />
             </button>
-            <button onClick={() => navigate('/demo')} style={{ ...btnOutline, fontSize: 15, padding: '13px 32px' }}
+            <button onClick={() => navigate(`/${lang}/demo`)} style={{ ...btnOutline, fontSize: 15, padding: '13px 32px' }}
               onMouseEnter={e => { e.currentTarget.style.color = C.txt; e.currentTarget.style.borderColor = C.accent }}
               onMouseLeave={e => { e.currentTarget.style.color = C.txtMid; e.currentTarget.style.borderColor = C.border }}
             >
@@ -453,7 +453,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
             ] as [string, string][]).map(([label, path]) => (
               <button
                 key={path}
-                onClick={() => navigate(path)}
+                onClick={() => navigate(`/${lang}${path}`)}
                 style={{ fontSize: 12, color: C.txtLow, background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 10px', borderRadius: 5, transition: 'color 0.33s, background 0.33s', fontFamily: C.font }}
                 onMouseEnter={e => { e.currentTarget.style.color = C.txt; e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
                 onMouseLeave={e => { e.currentTarget.style.color = C.txtLow; e.currentTarget.style.background = 'transparent' }}

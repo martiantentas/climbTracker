@@ -497,6 +497,8 @@ export const translations = {
     demoErrEmail:          'Email is required',
     demoErrEmailInvalid:   'Please enter a valid email address',
     demoRequired:          '* Required fields',
+    demoSending:           'Sending…',
+    demoSubmitError:       'Something went wrong. Please try again or email us directly.',
   },
 
   // ─── SPANISH ─────────────────────────────────────────────────────────────────
@@ -985,6 +987,8 @@ export const translations = {
     demoErrEmail:          'El email es obligatorio',
     demoErrEmailInvalid:   'Introduce una dirección de email válida',
     demoRequired:          '* Campos obligatorios',
+    demoSending:           'Enviando…',
+    demoSubmitError:       'Algo ha ido mal. Por favor inténtalo de nuevo o escríbenos directamente.',
   },
 
   // ─── CATALAN ─────────────────────────────────────────────────────────────────
@@ -1473,5 +1477,7 @@ export const translations = {
     demoErrEmail:          "L'email és obligatori",
     demoErrEmailInvalid:   "Introdueix una adreça d'email vàlida",
     demoRequired:          '* Camps obligatoris',
+    demoSending:           'Enviant…',
+    demoSubmitError:       "Alguna cosa ha anat malament. Si us plau torna-ho a intentar o escriu-nos directament.",
   },
 } as const
