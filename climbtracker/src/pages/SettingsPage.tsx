@@ -84,13 +84,15 @@ const BUNDLES = [
 
 const PROMO_GRANT = 100 // free participants granted by a valid promo code
 
-function BillingSection({ competition, competitorCount, theme, onUpdate }: {
+function BillingSection({ competition, competitorCount, theme, lang, onUpdate }: {
   competition:     Competition
   competitorCount: number
   theme:           'light' | 'dark'
+  lang:            Language
   onUpdate:        (updated: Competition) => void
 }) {
   const dk              = theme === 'dark'
+  const t               = translations[lang]
   const comp            = competition as any
   const baseLimit       = comp.participantLimit ?? 300
   const extraCapacity   = comp.additionalCapacity ?? 0
@@ -116,9 +118,9 @@ function BillingSection({ competition, competitorCount, theme, onUpdate }: {
   function openBundleCheckout(users: number, label: string, price: number) {
     setCheckout({
       title:    label,
-      subtitle: `One-time addition · applies immediately`,
+      subtitle: t.bundleOneTime,
       amount:   price,
-      ctaLabel: `Add ${users} participants`,
+      ctaLabel: t.addParticipants(users),
       users,
     })
   }
@@ -134,7 +136,7 @@ function BillingSection({ competition, competitorCount, theme, onUpdate }: {
       setPromoValid(true)
       setPromoError('')
     } else {
-      setPromoError('Invalid promo code. Codes are at least 6 characters.')
+      setPromoError(t.promoInvalid)
     }
   }
 
@@ -149,14 +151,14 @@ function BillingSection({ competition, competitorCount, theme, onUpdate }: {
   const inputFullCls = `w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms] ${dk ? 'bg-white/5 border-white/10 text-[#EEEEEE] focus:border-[#7F8BAD]/50 placeholder:text-[#5C5E62]' : 'bg-white border-[#EEEEEE] text-[#121212] focus:border-[#7F8BAD] placeholder:text-[#8E8E8E]'}`
 
   return (
-    <SectionCard title="Billing & Capacity" theme={theme} defaultOpen={false}>
+    <SectionCard title={t.billingSection} theme={theme} defaultOpen={false}>
 
       {/* Current usage */}
       <div className="flex items-center gap-3 mb-5">
         <div className={`flex items-center gap-2.5 px-4 py-3 rounded border flex-1 ${dk ? 'bg-white/[0.03] border-white/[0.07]' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
           <Users size={14} className="text-[#7F8BAD] flex-shrink-0" />
           <div>
-            <p className={`text-[10px] font-medium mb-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Registered</p>
+            <p className={`text-[10px] font-medium mb-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.registered2}</p>
             <p className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
               {competitorCount}
               <span className={`font-normal text-xs ml-1 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>/ {totalCapacity}</span>
@@ -166,16 +168,16 @@ function BillingSection({ competition, competitorCount, theme, onUpdate }: {
         <div className={`flex items-center gap-2.5 px-4 py-3 rounded border flex-1 ${dk ? 'bg-white/[0.03] border-white/[0.07]' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
           <Package size={14} className="text-[#7F8BAD] flex-shrink-0" />
           <div>
-            <p className={`text-[10px] font-medium mb-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Remaining</p>
+            <p className={`text-[10px] font-medium mb-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.remaining}</p>
             <p className={`text-sm font-medium ${isFull ? 'text-red-400' : dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
-              {isFull ? 'Full' : remaining}
+              {isFull ? t.full : remaining}
             </p>
           </div>
         </div>
         <div className={`flex items-center gap-2.5 px-4 py-3 rounded border flex-1 ${dk ? 'bg-white/[0.03] border-white/[0.07]' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
           <Package size={14} className="text-[#7F8BAD] flex-shrink-0" />
           <div>
-            <p className={`text-[10px] font-medium mb-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Limit</p>
+            <p className={`text-[10px] font-medium mb-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.limit}</p>
             <p className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>{totalCapacity}</p>
           </div>
         </div>
@@ -183,12 +185,12 @@ function BillingSection({ competition, competitorCount, theme, onUpdate }: {
 
       {isFull && (
         <div className={`px-4 py-3 rounded border mb-5 text-xs font-medium text-red-400 bg-red-400/10 border-red-400/20`}>
-          Participant limit reached — new registrations are blocked. Purchase a bundle below to expand capacity.
+          {t.limitReached}
         </div>
       )}
 
       <p className={`text-xs mb-4 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-        Bundles add on top of the confirmed limit. Purchases are one-time and apply immediately.
+        {t.bundlesNote}
       </p>
 
       {/* Bundles */}
@@ -203,7 +205,7 @@ function BillingSection({ competition, competitorCount, theme, onUpdate }: {
               onClick={() => openBundleCheckout(b.users, b.label, b.price)}
               className="px-4 py-2 rounded text-xs font-medium bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms]"
             >
-              Add {b.users}
+              {t.addLabel} {b.users}
             </button>
           </div>
         ))}
@@ -211,7 +213,7 @@ function BillingSection({ competition, competitorCount, theme, onUpdate }: {
         {/* Custom 500+ */}
         <div className={`flex items-center justify-between px-4 py-3.5 rounded border ${dk ? 'bg-white/[0.02] border-white/[0.06]' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
           <div className="flex-1">
-            <p className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>Custom bundle</p>
+            <p className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>{t.customBundle}</p>
             <p className={`text-[11px] mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
               €0.12/participant · min 500 · total €{(customQty * 0.12).toFixed(2)}
             </p>
@@ -225,10 +227,10 @@ function BillingSection({ competition, competitorCount, theme, onUpdate }: {
               className={inputCls}
             />
             <button
-              onClick={() => openBundleCheckout(customQty, `Custom bundle — ${customQty} participants`, customQty * 0.12)}
+              onClick={() => openBundleCheckout(customQty, `${t.customBundle} — ${customQty}`, customQty * 0.12)}
               className="px-4 py-2 rounded text-xs font-medium bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms]"
             >
-              Add
+              {t.addLabel}
             </button>
           </div>
         </div>
@@ -239,13 +241,13 @@ function BillingSection({ competition, competitorCount, theme, onUpdate }: {
 
       {/* Promo code */}
       <div>
-        <p className={`text-xs font-medium mb-3 ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>Promo Code</p>
+        <p className={`text-xs font-medium mb-3 ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>{t.promoCode}</p>
         <p className={`text-xs mb-3 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-          Apply a promo code to receive {PROMO_GRANT} free extra participant slots.
+          {t.promoDesc(PROMO_GRANT)}
         </p>
         {promoApplied ? (
           <div className={`px-4 py-3 rounded border text-xs font-medium text-green-400 bg-green-400/10 border-green-400/20 flex items-center gap-2`}>
-            <Check size={13} strokeWidth={3} /> Promo applied — {PROMO_GRANT} free slots added to your capacity.
+            <Check size={13} strokeWidth={3} /> {t.promoApplied(PROMO_GRANT)}
           </div>
         ) : (
           <>
@@ -261,18 +263,18 @@ function BillingSection({ competition, competitorCount, theme, onUpdate }: {
                 disabled={!promoCode.trim()}
                 className="px-4 py-2.5 rounded text-xs font-medium bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms] flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                Apply
+                {t.apply}
               </button>
             </div>
             {promoError && <p className="text-[11px] text-red-400 mb-3">{promoError}</p>}
             {promoValid && (
               <div className={`px-4 py-3 rounded border text-xs bg-green-400/10 border-green-400/20 text-green-400 mb-3 flex items-center justify-between`}>
-                <span className="flex items-center gap-2"><Check size={13} strokeWidth={3} /> Code valid — {PROMO_GRANT} free slots</span>
+                <span className="flex items-center gap-2"><Check size={13} strokeWidth={3} /> {t.promoValid(PROMO_GRANT)}</span>
                 <button
                   onClick={redeemPromo}
                   className="font-medium underline hover:no-underline transition-all"
                 >
-                  Redeem
+                  {t.redeem}
                 </button>
               </div>
             )}
@@ -297,12 +299,14 @@ function BillingSection({ competition, competitorCount, theme, onUpdate }: {
 
 // ─── BRANDING SECTION (PREMIUM) ───────────────────────────────────────────────
 
-function BrandingSection({ competition, theme, onUpdate }: {
+function BrandingSection({ competition, theme, lang, onUpdate }: {
   competition: Competition
   theme:       'light' | 'dark'
+  lang:        Language
   onUpdate:    (updated: Competition) => void
 }) {
   const dk      = theme === 'dark'
+  const t       = translations[lang]
   const comp    = competition as any
   const isPremium = comp.tier === 'premium'
 
@@ -350,7 +354,7 @@ function BrandingSection({ competition, theme, onUpdate }: {
             className="w-4 h-4 rounded-sm border border-black/10 flex-shrink-0 inline-block"
             style={{ backgroundColor: value }}
           />
-          Change
+          {t.changeLabel}
           <input
             id={inputId}
             type="color"
@@ -368,31 +372,30 @@ function BrandingSection({ competition, theme, onUpdate }: {
   if (!isPremium) {
     return (
       <>
-        <SectionCard title="Branding" theme={theme} defaultOpen={false}>
+        <SectionCard title={t.brandingSection} theme={theme} defaultOpen={false}>
           <div className={`flex flex-col items-center text-center py-6 px-4 rounded border border-dashed ${dk ? 'border-white/10' : 'border-[#EEEEEE]'}`}>
             <div className="w-10 h-10 rounded bg-[#7F8BAD]/10 flex items-center justify-center mb-3">
               <Sparkles size={18} className="text-[#7F8BAD]" />
             </div>
-            <p className={`text-sm font-medium mb-1 ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>Premium feature</p>
+            <p className={`text-sm font-medium mb-1 ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>{t.premiumFeature}</p>
             <p className={`text-xs leading-relaxed mb-4 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-              Replace the Ascendia logo with your own and customise the colour scheme.
-              Upgrade to <span className="text-[#7F8BAD] font-medium">Premium</span> to unlock white-label branding.
+              {t.brandingLocked}
             </p>
             <button
               onClick={() => setShowUpgradeCheckout(true)}
               className="flex items-center gap-2 px-5 py-2.5 bg-[#7F8BAD] text-white rounded text-sm font-medium hover:bg-[#6D799B] transition-colors duration-[330ms]"
             >
-              <Sparkles size={14} /> Upgrade to Premium — €50
+              <Sparkles size={14} /> {t.upgradePremiumBtn}
             </button>
           </div>
         </SectionCard>
 
         {showUpgradeCheckout && (
           <CheckoutModal
-            title="Upgrade to Premium"
-            subtitle="Unlocks white-label branding: custom logo & colour scheme"
+            title={t.upgradePremium}
+            subtitle={t.upgradeDesc}
             amount={50}
-            ctaLabel="Upgrade"
+            ctaLabel={t.upgradePremium}
             showPromo
             onClose={() => setShowUpgradeCheckout(false)}
             onSuccess={() => {
@@ -406,22 +409,22 @@ function BrandingSection({ competition, theme, onUpdate }: {
   }
 
   return (
-    <SectionCard title="Branding" theme={theme} defaultOpen>
+    <SectionCard title={t.brandingSection} theme={theme} defaultOpen>
       <div className="flex items-center justify-between mb-4">
         <p className={`text-xs ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-          Customise the logo and colour scheme shown to all participants.
+          {t.brandingDesc}
         </p>
         <button
           onClick={resetBranding}
           className={`flex items-center gap-1.5 text-xs font-medium transition-colors duration-[330ms] ${dk ? 'text-[#5C5E62] hover:text-[#D0D1D2]' : 'text-[#8E8E8E] hover:text-[#393C41]'}`}
         >
-          <RefreshCw size={12} /> Reset defaults
+          <RefreshCw size={12} /> {t.resetDefaults}
         </button>
       </div>
 
       {/* Logo */}
       <div className={`mb-5 pb-5 border-b ${dk ? 'border-white/[0.06]' : 'border-[#EEEEEE]'}`}>
-        <p className={`text-xs font-medium mb-3 ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>Logo</p>
+        <p className={`text-xs font-medium mb-3 ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>{t.logoLabel}</p>
         <div className="flex items-center gap-4">
           <div className={`w-16 h-16 rounded border flex items-center justify-center flex-shrink-0 overflow-hidden ${dk ? 'bg-white/[0.03] border-white/10' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
             {logoUrl
@@ -431,21 +434,21 @@ function BrandingSection({ competition, theme, onUpdate }: {
           </div>
           <div className="flex-1">
             <p className={`text-xs mb-2 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-              SVG or PNG recommended · shown in the navigation bar
+              {t.logoHint}
             </p>
             <div className="flex gap-2">
               <button
                 onClick={() => fileRef.current?.click()}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded text-xs font-medium transition-colors duration-[330ms] ${dk ? 'bg-white/5 text-[#8E8E8E] hover:bg-white/10 hover:text-[#EEEEEE]' : 'bg-[#F4F4F4] text-[#5C5E62] hover:bg-[#EEEEEE] hover:text-[#121212]'}`}
               >
-                <Upload size={12} /> Upload
+                <Upload size={12} /> {t.upload}
               </button>
               {logoUrl && (
                 <button
                   onClick={() => updateBranding({ logoDataUrl: '' })}
                   className={`px-3 py-2 rounded text-xs font-medium transition-colors duration-[330ms] text-red-400 hover:bg-red-400/10`}
                 >
-                  Remove
+                  {t.remove}
                 </button>
               )}
             </div>
@@ -455,11 +458,11 @@ function BrandingSection({ competition, theme, onUpdate }: {
       </div>
 
       {/* Colors */}
-      <p className={`text-xs font-medium mb-2 ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>Colours</p>
+      <p className={`text-xs font-medium mb-2 ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>{t.coloursLabel}</p>
       <div className={`divide-y ${dk ? 'divide-white/[0.06]' : 'divide-[#F4F4F4]'}`}>
-        {colorRow('Accent colour',            accent,  'accentColor')}
-        {colorRow('Light mode background',    lightBg, 'lightBg')}
-        {colorRow('Dark mode background',     darkBg,  'darkBg')}
+        {colorRow(t.accentColour,   accent,  'accentColor')}
+        {colorRow(t.lightBgLabel,   lightBg, 'lightBg')}
+        {colorRow(t.darkBgLabel,    darkBg,  'darkBg')}
       </div>
     </SectionCard>
   )
@@ -559,7 +562,7 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
       </div>
 
       {/* General */}
-      <SectionCard title="General" theme={theme}>
+      <SectionCard title={t.settingsGeneral} theme={theme}>
         <InputField label={t.name}        value={draft.name}        theme={theme} onChange={v => set('name', v)} />
         <InputField label={t.location}    value={draft.location}    theme={theme} onChange={v => set('location', v)} />
         <div className="mb-4">
@@ -568,34 +571,41 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
         </div>
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
-            <label className={labelCls}>Start Date</label>
+            <label className={labelCls}>{t.startDate}</label>
             <input type="datetime-local" value={draft.startDate.slice(0, 16)} onChange={e => set('startDate', e.target.value + ':00')} className={inputClass} />
           </div>
           <div>
-            <label className={labelCls}>End Date</label>
+            <label className={labelCls}>{t.endDate}</label>
             <input type="datetime-local" value={draft.endDate.slice(0, 16)} onChange={e => set('endDate', e.target.value + ':00')} className={inputClass} />
           </div>
         </div>
 
         {/* Status */}
         <div className="mb-4">
-          <label className={labelCls}>Status</label>
+          <label className={labelCls}>{t.statusLabel}</label>
           <div className="flex gap-2 flex-wrap">
-            {([CompetitionStatus.DRAFT, CompetitionStatus.LIVE, CompetitionStatus.FINISHED, CompetitionStatus.ARCHIVED] as CompetitionStatus[]).map(s => (
+            {([CompetitionStatus.DRAFT, CompetitionStatus.LIVE, CompetitionStatus.FINISHED, CompetitionStatus.ARCHIVED] as CompetitionStatus[]).map(s => {
+              const statusLabelMap: Record<CompetitionStatus, string> = {
+                [CompetitionStatus.DRAFT]:    t.statusDraft,
+                [CompetitionStatus.LIVE]:     t.statusLive,
+                [CompetitionStatus.FINISHED]: t.statusFinished,
+                [CompetitionStatus.ARCHIVED]: t.statusArchived,
+              }
+              return (
               <button
                 key={s}
                 onClick={() => set('status', s)}
                 className={`px-4 py-2 rounded text-xs font-medium border transition-colors duration-[330ms] ${draft.status === s ? statusColors[s] : dk ? 'bg-white/5 text-[#5C5E62] border-white/10 hover:bg-white/10' : 'bg-[#F4F4F4] text-[#8E8E8E] border-[#EEEEEE] hover:bg-[#EEEEEE]'}`}
               >
-                {s}
+                {statusLabelMap[s]}
               </button>
-            ))}
+            )})}
           </div>
         </div>
 
         {/* Invite code */}
         <div>
-          <label className={labelCls}>Invite Code</label>
+          <label className={labelCls}>{t.inviteCodeLabel}</label>
           <div className={`flex items-center gap-3 px-4 py-3 rounded border ${dk ? 'bg-white/5 border-white/10' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
             <Globe size={14} className="text-[#8E8E8E]" />
             <span className="font-medium text-[#7F8BAD] text-sm tracking-widest">{draft.inviteCode}</span>
@@ -603,16 +613,16 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
               onClick={() => navigator.clipboard.writeText(draft.inviteCode)}
               className={`ml-auto text-xs font-medium px-3 py-1.5 rounded transition-colors duration-[330ms] ${dk ? 'bg-white/5 text-[#8E8E8E] hover:bg-white/10' : 'bg-[#EEEEEE] text-[#5C5E62] hover:bg-[#D0D1D2]'}`}
             >
-              Copy
+              {t.copyLabel}
             </button>
           </div>
         </div>
 
         {/* Visibility */}
         <div className="mt-4">
-          <label className={labelCls}>Visibility</label>
+          <label className={labelCls}>{t.visibility}</label>
           <p className={`text-xs mb-3 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-            Public events appear in the discover list. Private events are invite-only.
+            {t.visibilityDesc}
           </p>
           <div className={`flex rounded border overflow-hidden ${dk ? 'border-white/10' : 'border-[#EEEEEE]'}`}>
             {(['public', 'private'] as const).map((v, i) => {
@@ -634,7 +644,7 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
                     }
                   `}
                 >
-                  {v === 'public' ? '🌐' : '🔒'} {v.charAt(0).toUpperCase() + v.slice(1)}
+                  {v === 'public' ? '🌐' : '🔒'} {v === 'public' ? t.visibilityPublic : t.visibilityPrivate}
                 </button>
               )
             })}
@@ -643,9 +653,9 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
 
         {/* Join Password */}
         <div className="mt-4">
-          <label className={labelCls}>Join Password</label>
+          <label className={labelCls}>{t.joinPassword}</label>
           <p className={`text-xs mb-2 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-            Competitors must enter this password after using the invite code. Leave blank for open access.
+            {t.joinPasswordDesc}
           </p>
           <div className="relative">
             <Lock size={14} className={`absolute left-3 top-1/2 -translate-y-1/2 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`} />
@@ -653,18 +663,18 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
               type="text"
               value={draft.joinPassword ?? ''}
               onChange={e => set('joinPassword', e.target.value || undefined)}
-              placeholder="Leave blank for open access"
+              placeholder={t.leaveBlank}
               className={`${inputClass} pl-9`}
             />
           </div>
           {draft.joinPassword && (
-            <p className="text-xs mt-1.5 text-amber-500">⚠ Stored in plain text — avoid reusing sensitive passwords.</p>
+            <p className="text-xs mt-1.5 text-amber-500">⚠ {t.joinPasswordHint}</p>
           )}
         </div>
       </SectionCard>
 
       {/* Scoring */}
-      <SectionCard title="Scoring" theme={theme}>
+      <SectionCard title={t.settingsScoring} theme={theme}>
         <div className="mb-6">
           <label className={labelCls}>{t.scoringSystem}</label>
           <div className="flex gap-2">
@@ -687,17 +697,17 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
           </div>
         )}
 
-        <InputField label="Top K Boulders" value={draft.topKBoulders ?? ''} type="number" theme={theme} onChange={v => set('topKBoulders', v ? Number(v) : undefined)} hint="Only count the best N boulders. Leave empty to count all." />
+        <InputField label={t.topKBoulders} value={draft.topKBoulders ?? ''} type="number" theme={theme} onChange={v => set('topKBoulders', v ? Number(v) : undefined)} hint={t.topKHint} />
 
         {/* Attempt Tracking */}
         <div className="mt-2 mb-6">
-          <label className={labelCls}>Attempt Tracking (default for all boulders)</label>
-          <p className={`text-xs mb-3 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Judge-required boulders always use "Free count". Individual boulders can override this.</p>
+          <label className={labelCls}>{t.attemptTracking}</label>
+          <p className={`text-xs mb-3 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.attemptTrackingHint}</p>
           <div className="flex flex-col gap-2 mb-4">
             {([
-              { value: 'none',          label: 'Top / No top only', desc: 'Just record whether topped — no attempt count' },
-              { value: 'fixed_options', label: 'Fixed options',     desc: 'Pill buttons (1 / 2 / … / N+) — quick to tap on mobile' },
-              { value: 'count',         label: 'Free count',        desc: '+/− stepper — records any number precisely' },
+              { value: 'none',          label: t.optTopOnly,      desc: t.optTopOnlyDesc },
+              { value: 'fixed_options', label: t.optFixedOptions,  desc: t.optFixedOptionsDesc },
+              { value: 'count',         label: t.optFreeCount,     desc: t.optFreeCountDesc },
             ] as const).map(opt => (
               <button
                 key={opt.value}
@@ -718,23 +728,23 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
           </div>
           {draft.attemptTracking === 'fixed_options' && (
             <InputField
-              label="Max fixed attempts (N)"
+              label={t.maxFixedAttempts}
               value={draft.maxFixedAttempts}
               type="number" min={2} max={10}
               theme={theme}
               onChange={v => set('maxFixedAttempts', Math.max(2, Math.min(10, Number(v))))}
-              hint={`Buttons: 1, 2, … ${draft.maxFixedAttempts - 1}, ${draft.maxFixedAttempts}+`}
+              hint={t.maxFixedAttemptsHint(draft.maxFixedAttempts)}
             />
           )}
         </div>
 
         {/* Zone Scoring */}
         <div className="mb-6">
-          <label className={labelCls}>Zone Scoring</label>
+          <label className={labelCls}>{t.zoneScoring}</label>
           <div className="flex gap-2">
             {([
-              { value: 'adds_to_score',    label: 'Adds to score',    desc: 'Zone points add even without a top' },
-              { value: 'tie_breaker_only', label: 'Tie-breaker only', desc: 'Zone does not add points' },
+              { value: 'adds_to_score',    label: t.zoneAddsScore,        desc: t.zoneAddsScoreDesc },
+              { value: 'tie_breaker_only', label: t.zoneTiebreakerOnly,   desc: t.zoneTiebreakerDesc },
             ] as const).map(opt => (
               <button
                 key={opt.value}
@@ -750,12 +760,12 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
 
         {/* Judging Method */}
         <div className="mb-6">
-          <label className={labelCls}>Judging Method</label>
+          <label className={labelCls}>{t.judgingMethod}</label>
           <div className="flex flex-col gap-2">
             {([
-              { value: 'self_scoring',      title: 'Fully self-scoring',          desc: 'Competitors log all their own tops.' },
-              { value: 'self_with_approval', title: 'Self-scoring with approval', desc: 'Competitors log, a judge approves.' },
-              { value: 'judge_required',    title: 'Judge logging (hybrid)',       desc: 'Puntuable boulders require a judge.' },
+              { value: 'self_scoring',       title: t.judgingFull,     desc: t.judgingFullDesc },
+              { value: 'self_with_approval', title: t.judgingApproval, desc: t.judgingApprovalDesc },
+              { value: 'judge_required',     title: t.judgingHybrid,   desc: t.judgingHybridDesc },
             ] as const).map(opt => (
               <button
                 key={opt.value}
@@ -778,11 +788,11 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
 
         {/* Penalty */}
         <div className={`p-4 rounded border ${dk ? 'border-white/10 bg-white/[0.02]' : 'border-[#EEEEEE] bg-[#F4F4F4]'}`}>
-          <ToggleRow label="Penalize Attempts" desc="Deduct points for extra attempts beyond the first" value={draft.penalizeAttempts} theme={theme} onChange={v => set('penalizeAttempts', v)} />
+          <ToggleRow label={t.penalizeAttempts} desc={t.penalizeDesc} value={draft.penalizeAttempts} theme={theme} onChange={v => set('penalizeAttempts', v)} />
           {draft.penalizeAttempts && (
             <div className={`grid grid-cols-2 gap-4 mt-4 pt-4 border-t ${dk ? 'border-white/5' : 'border-[#EEEEEE]'}`}>
               <div>
-                <label className={labelCls}>Penalty Type</label>
+                <label className={labelCls}>{t.penaltyType}</label>
                 <div className="flex gap-2">
                   {(['fixed', 'percent'] as const).map(pt => (
                     <button
@@ -796,7 +806,7 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
                 </div>
               </div>
               <InputField
-                label={`Penalty Value (${draft.penaltyType === 'percent' ? '%' : 'pts'})`}
+                label={draft.penaltyType === 'percent' ? t.penaltyValuePct : t.penaltyValuePts}
                 value={draft.penaltyValue} type="number"
                 theme={theme}
                 onChange={v => set('penaltyValue', Number(v))}
@@ -807,13 +817,13 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
       </SectionCard>
 
       {/* Traits / Divisions */}
-      <SectionCard title="Traits / Divisions" theme={theme}>
+      <SectionCard title={t.traitsSection} theme={theme}>
         <p className={`text-xs mb-4 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-          Traits are freeform labels competitors self-select when joining — e.g. "Open Men", "Youth U18", "Masters 40+". Competitors can hold multiple traits simultaneously.
+          {t.traitsDesc}
         </p>
         <ToggleRow
-          label="Require trait selection on join"
-          desc="Competitors must pick at least one trait before they can join"
+          label={t.requireTraits}
+          desc={t.requireTraitsDesc}
           value={draft.requireTraits ?? false}
           theme={theme}
           onChange={v => set('requireTraits', v)}
@@ -822,7 +832,7 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
         <div className="space-y-2 mb-4">
           {(draft.traits ?? []).length === 0 && (
             <p className={`text-xs text-center py-4 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-              No traits defined yet — add one below.
+              {t.noTraits}
             </p>
           )}
           {(draft.traits ?? []).map(trait => (
@@ -843,7 +853,7 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
             value={newTraitName}
             onChange={e => setNewTraitName(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && addTrait()}
-            placeholder="e.g. Open Men, Youth U18, Masters 40+…"
+            placeholder={t.traitPlaceholder}
             className={`${inputClass} flex-1`}
           />
           <button
@@ -851,13 +861,13 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
             disabled={!newTraitName.trim()}
             className="flex items-center gap-2 px-4 py-3 bg-[#7F8BAD] text-white rounded font-medium text-sm hover:bg-[#6D799B] transition-colors duration-[330ms] disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            <Plus size={14} />Add
+            <Plus size={14} />{t.addLabel}
           </button>
         </div>
       </SectionCard>
 
       {/* Difficulty Levels */}
-      <SectionCard title="Difficulty Levels" theme={theme} defaultOpen={false}>
+      <SectionCard title={t.difficultyLevels} theme={theme} defaultOpen={false}>
         <div className="space-y-2 mb-4">
           {(draft.difficultyLevels ?? []).map(d => (
             <div key={d.id} className={`rounded border p-3 ${dk ? 'border-white/10 bg-white/[0.02]' : 'border-[#EEEEEE] bg-[#FAFAFA]'}`}>
@@ -870,18 +880,18 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
                   type="text"
                   value={d.label}
                   onChange={e => updateDifficulty(d.id, 'label', e.target.value)}
-                  placeholder="Label (e.g. Easy)"
+                  placeholder={t.labelHint}
                   className={`${inputClass} py-2 text-sm flex-1`}
                 />
               </div>
               {/* Row 2: Top pts + Zone pts + Delete */}
               <div className="flex items-center gap-2">
                 <div className="flex-1">
-                  <label className={`text-[10px] font-medium mb-1 block ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Top pts</label>
+                  <label className={`text-[10px] font-medium mb-1 block ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.topPts}</label>
                   <input type="number" value={d.basePoints} onChange={e => updateDifficulty(d.id, 'basePoints', Number(e.target.value))} className={`${inputClass} py-2`} />
                 </div>
                 <div className="flex-1">
-                  <label className={`text-[10px] font-medium mb-1 block ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Zone pts</label>
+                  <label className={`text-[10px] font-medium mb-1 block ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.zonePts}</label>
                   <input type="number" value={d.zonePoints} onChange={e => updateDifficulty(d.id, 'zonePoints', Number(e.target.value))} className={`${inputClass} py-2`} />
                 </div>
                 <button
@@ -899,7 +909,7 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
           onClick={addDifficulty}
           className={`w-full py-3 rounded border-2 border-dashed text-sm font-medium flex items-center justify-center gap-2 transition-colors duration-[330ms] ${dk ? 'border-white/10 text-[#5C5E62] hover:border-[#7F8BAD]/30 hover:text-[#7F8BAD]' : 'border-[#EEEEEE] text-[#8E8E8E] hover:border-[#7F8BAD]/40 hover:text-[#7F8BAD]'}`}
         >
-          <Plus size={14} />Add Difficulty Level
+          <Plus size={14} />{t.addDifficultyLevel}
         </button>
       </SectionCard>
 
@@ -908,6 +918,7 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
         competition={competition}
         competitorCount={competitorCount}
         theme={theme}
+        lang={lang}
         onUpdate={onUpdate}
       />}
 
@@ -915,14 +926,15 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
       {(competition as any).subscription && <BrandingSection
         competition={competition}
         theme={theme}
+        lang={lang}
         onUpdate={onUpdate}
       />}
 
       {/* Access Control */}
-      <SectionCard title="Access Control" theme={theme}>
-        <ToggleRow label="Self Scoring"  desc="Allow competitors to log their own tops and attempts" value={draft.canSelfScore} theme={theme} onChange={v => set('canSelfScore', v)} />
+      <SectionCard title={t.accessControl} theme={theme}>
+        <ToggleRow label={t.selfScoring}  desc={t.selfScoringDesc} value={draft.canSelfScore} theme={theme} onChange={v => set('canSelfScore', v)} />
         <div className={`h-px my-2 ${dk ? 'bg-white/5' : 'bg-[#EEEEEE]'}`} />
-        <ToggleRow label="Lock Results" desc="Freeze all scores — competitors can no longer log tops"  value={draft.isLocked}    theme={theme} onChange={v => set('isLocked', v)} />
+        <ToggleRow label={t.lockResults}  desc={t.lockDesc}        value={draft.isLocked}    theme={theme} onChange={v => set('isLocked', v)} />
       </SectionCard>
 
       <div className="flex justify-end mt-6">

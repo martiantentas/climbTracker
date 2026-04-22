@@ -180,6 +180,7 @@ export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProp
         user={pendingUser}
         competition={MOCK_COMPETITION}
         theme={theme}
+        lang={lang}
         onComplete={updated => {
           setPendingUser(null)
           onLogin(updated)

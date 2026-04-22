@@ -303,7 +303,7 @@ export default function BoulderCard({
             <span className="text-[9px] text-[#8E8E8E] font-medium">
               {attemptTracking === 'none'
                 ? t.topped
-                : `${completion.attempts} attempt${completion.attempts !== 1 ? 's' : ''}`
+                : t.eventProfileAttempts(completion.attempts)
               }
             </span>
           </div>

@@ -1,18 +1,21 @@
 import { useState } from 'react'
 import { Check, ChevronRight, User } from 'lucide-react'
 import type { Competitor, Competition } from '../types'
+import type { Language } from '../translations'
+import { translations } from '../translations'
 
 export interface PostRegistrationModalProps {
   user:        Competitor
   competition: Competition
   onComplete:  (updated: Competitor) => void
   theme:       'light' | 'dark'
+  lang:        Language
 }
 
-const GENDERS = ['Male', 'Female', 'Prefer not to say']
-
-export default function PostRegistrationModal({ user, competition, onComplete, theme }: PostRegistrationModalProps) {
-  const dk   = theme === 'dark'
+export default function PostRegistrationModal({ user, competition, onComplete, theme, lang }: PostRegistrationModalProps) {
+  const dk = theme === 'dark'
+  const t  = translations[lang]
+  const GENDERS = [t.profileMale, t.profileFemale, t.profileNonBinary, t.profilePreferNot]
   const comp = competition as any
   const availableTraits: { id: string; name: string }[] =
     comp.traits?.length ? comp.traits : comp.categories?.length ? comp.categories : []
@@ -50,10 +53,10 @@ export default function PostRegistrationModal({ user, competition, onComplete, t
             </div>
             <div>
               <h2 className={`text-lg font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
-                {step === 1 ? 'Your profile' : 'Your categories'}
+                {step === 1 ? t.postRegYourProfile : t.postRegYourCategories}
               </h2>
               <p className={`text-sm mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-                Step {step} of 2 · {step === 1 ? 'Gender' : competition.name}
+                {t.postRegStepOf(step, 2, step === 1 ? t.postRegGenderLabel : competition.name)}
               </p>
             </div>
           </div>
@@ -62,7 +65,7 @@ export default function PostRegistrationModal({ user, competition, onComplete, t
           {step === 1 && (
             <>
               <p className={`text-sm mb-5 leading-relaxed ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-                This helps organisers set up category filters and leaderboard breakdowns.
+                {t.postRegGenderHelps}
               </p>
               <div className="flex flex-col gap-2.5">
                 {GENDERS.map(g => (
@@ -102,7 +105,7 @@ export default function PostRegistrationModal({ user, competition, onComplete, t
                   }
                 `}
               >
-                Continue <ChevronRight size={17} />
+                {t.postRegContinue} <ChevronRight size={17} />
               </button>
             </>
           )}
@@ -113,7 +116,7 @@ export default function PostRegistrationModal({ user, competition, onComplete, t
               {availableTraits.length > 0 ? (
                 <>
                   <p className={`text-sm mb-5 leading-relaxed ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-                    Select your categories for <span className={`font-medium ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>{competition.name}</span>. You can update these later from Event Settings.
+                    {t.postRegSelectCats(competition.name)}
                   </p>
                   <div className="flex flex-wrap gap-2.5 mb-6">
                     {availableTraits.map(trait => {
@@ -141,7 +144,7 @@ export default function PostRegistrationModal({ user, competition, onComplete, t
                 </>
               ) : (
                 <p className={`text-sm mb-6 leading-relaxed ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-                  No categories defined yet — you can update your profile later from Event Settings.
+                  {t.postRegNoCats}
                 </p>
               )}
               <div className="flex gap-2.5">
@@ -149,7 +152,7 @@ export default function PostRegistrationModal({ user, competition, onComplete, t
                   onClick={() => setStep(1)}
                   className={`flex-1 py-3.5 rounded text-sm font-medium border transition-colors duration-[330ms] ${dk ? 'border-white/10 text-[#5C5E62] hover:text-[#D0D1D2]' : 'border-[#EEEEEE] text-[#8E8E8E] hover:text-[#393C41]'}`}
                 >
-                  Back
+                  {t.postRegBack}
                 </button>
                 <button
                   onClick={handleFinish}
@@ -162,7 +165,7 @@ export default function PostRegistrationModal({ user, competition, onComplete, t
                     }
                   `}
                 >
-                  {availableTraits.length === 0 ? 'Enter Competition' : 'Save & Continue'}
+                  {availableTraits.length === 0 ? t.enterCompetition : t.postRegSaveAndContinue}
                 </button>
               </div>
             </>

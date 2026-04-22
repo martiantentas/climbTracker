@@ -52,11 +52,24 @@ interface JudgingPageProps {
 
 // ─── BOULDER JUDGING ROW ──────────────────────────────────────────────────────
 
+interface JudgingLabels {
+  topped:            string
+  zonesReached:      (n: number, m: number) => string
+  zoneLabel:         string
+  zoneAttempts:      string
+  topAttempts:       string
+  saveScore:         string
+  clear:             string
+  topLabel:          string
+  requiredBoulders:  string
+}
+
 interface BoulderJudgingRowProps {
   boulder:    Boulder
   completion: Completion | undefined
   theme:      'light' | 'dark'
   isLocked:   boolean
+  labels:     JudgingLabels
   onLog:      (attempts: number, hasZone: boolean, zoneAttempts: number, isTop: boolean, zonesReached: number) => void
   onClear:    () => void
 }
@@ -66,6 +79,7 @@ function BoulderJudgingRow({
   completion,
   theme,
   isLocked,
+  labels,
   onLog,
   onClear,
 }: BoulderJudgingRowProps) {
@@ -127,12 +141,12 @@ function BoulderJudgingRow({
         <div className="ml-auto flex items-center gap-2">
           {isTop && (
             <span className="flex items-center gap-1 text-[9px] font-medium text-green-400 bg-green-400/10 px-2 py-0.5 rounded border border-green-400/20">
-              <CheckCircle2 size={8} /> Topped
+              <CheckCircle2 size={8} /> {labels.topped}
             </span>
           )}
           {!isTop && hasZone && (
             <span className="flex items-center gap-1 text-[9px] font-medium text-[#7F8BAD] bg-[#7F8BAD]/10 px-2 py-0.5 rounded border border-[#7F8BAD]/20">
-              <Target size={8} /> {zonesReached}/{totalZones} zone{totalZones !== 1 ? 's' : ''}
+              <Target size={8} /> {zonesReached}/{totalZones}
             </span>
           )}
         </div>
@@ -142,7 +156,7 @@ function BoulderJudgingRow({
       {totalZones > 0 && (
         <div className="mb-4">
           <p className={`text-[10px] font-medium mb-2 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-            Zones reached ({zonesReached}/{totalZones})
+            {labels.zonesReached(zonesReached, totalZones)}
           </p>
           <div className="flex gap-2 flex-wrap">
             {Array.from({ length: totalZones }, (_, i) => {
@@ -173,7 +187,7 @@ function BoulderJudgingRow({
                   `}
                 >
                   <Target size={11} />
-                  Zone {zoneNum} {isReached ? '✓' : ''}
+                  {labels.zoneLabel} {zoneNum} {isReached ? '✓' : ''}
                 </button>
               )
             })}
@@ -182,7 +196,7 @@ function BoulderJudgingRow({
           {hasZone && (
             <div className="flex items-center gap-2 mt-2">
               <p className={`text-[10px] font-medium ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-                Zone attempts:
+                {labels.zoneAttempts}
               </p>
               <button
                 onClick={() => setZoneAttempts(z => Math.max(1, z - 1))}
@@ -210,7 +224,7 @@ function BoulderJudgingRow({
       <div className="grid grid-cols-2 gap-3 mb-3">
         <div>
           <p className={`text-[10px] font-medium mb-2 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-            Top attempts
+            {labels.topAttempts}
           </p>
           <div className="flex items-center gap-2">
             <button
@@ -252,7 +266,7 @@ function BoulderJudgingRow({
             `}
           >
             <CheckCircle2 size={13} />
-            Top {isTop ? '✓' : ''}
+            {labels.topLabel} {isTop ? '✓' : ''}
           </button>
         </div>
       </div>
@@ -264,7 +278,7 @@ function BoulderJudgingRow({
             onClick={handleSave}
             className="flex-1 py-2 rounded text-xs font-medium bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms]"
           >
-            Save score
+            {labels.saveScore}
           </button>
         )}
         {hasActivity && !isLocked && (
@@ -284,7 +298,7 @@ function BoulderJudgingRow({
               }
             `}
           >
-            <XCircle size={11} /> Clear
+            <XCircle size={11} /> {labels.clear}
           </button>
         )}
       </div>
@@ -310,6 +324,7 @@ interface CompetitorCardProps {
   theme:             'light' | 'dark'
   isLocked:          boolean
   judgeId:           string
+  labels:            JudgingLabels
   onLogScore:        JudgingPageProps['onLogScore']
   onClear:           (competitorId: string, boulderId: string) => void
 }
@@ -324,6 +339,7 @@ function CompetitorCard({
   theme,
   isLocked,
   judgeId,
+  labels,
   onLogScore,
   onClear,
 }: CompetitorCardProps) {
@@ -408,7 +424,7 @@ function CompetitorCard({
       {expanded && (
         <div className={`px-5 pb-5 border-t space-y-3 ${dk ? 'border-white/5' : 'border-[#EEEEEE]'}`}>
           <p className={`text-[10px] font-medium pt-4 mb-3 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-            Judge-required boulders
+            {labels.requiredBoulders}
           </p>
           {puntuableBoulders.map(boulder => (
             <BoulderJudgingRow
@@ -417,6 +433,7 @@ function CompetitorCard({
               completion={myCompletions.find(c => c.boulderId === boulder.id)}
               theme={theme}
               isLocked={isLocked}
+              labels={labels}
               onLog={(attempts, hasZone, zoneAttempts, isTop, zonesReached) =>
                 onLogScore(competitor.id, boulder.id, attempts, hasZone, zoneAttempts, isTop, judgeId, zonesReached)
               }
@@ -445,6 +462,18 @@ export default function JudgingPage({
   const t  = translations[lang]
   const dk = theme === 'dark'
   const [search, setSearch] = useState('')
+
+  const judgingLabels: JudgingLabels = {
+    topped:           t.topped,
+    zonesReached:     t.judgingZonesReached,
+    zoneLabel:        t.judgingZoneLabel,
+    zoneAttempts:     t.judgingZoneAttempts,
+    topAttempts:      t.judgingTopAttempts,
+    saveScore:        t.judgingSaveScore,
+    clear:            t.clearFilters,
+    topLabel:         t.judgingTopLabel,
+    requiredBoulders: t.judgingRequiredBoulders,
+  }
 
   const puntuableBoulders = useMemo(() =>
     boulders.filter(b => b.isPuntuable && b.status === 'active'),
@@ -475,12 +504,12 @@ export default function JudgingPage({
 
   function handleClear(competitorId: string, boulderId: string) {
     onLogScore(competitorId, boulderId, 0, false, 0, false, currentUser.id, 0)
-    showSuccess('Score cleared')
+    showSuccess(t.judgingScoreCleared)
   }
 
   function handleLog(...args: Parameters<typeof onLogScore>) {
     onLogScore(...args)
-    showSuccess('Score saved ✓')
+    showSuccess(t.judgingScoreSaved)
   }
 
   return (
@@ -491,7 +520,7 @@ export default function JudgingPage({
           {t.judging}
         </h1>
         <p className={`text-sm mt-1 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-          {competition.name} · {puntuableBoulders.length} judge-required boulder{puntuableBoulders.length !== 1 ? 's' : ''}
+          {competition.name} · {t.judgingBoulderCount(puntuableBoulders.length)}
         </p>
       </div>
 
@@ -502,19 +531,19 @@ export default function JudgingPage({
         <ShieldCheck size={14} className="text-[#7F8BAD] flex-shrink-0" />
         <span className={`text-xs font-medium ${dk ? 'text-[#5C5E62]' : 'text-[#5C5E62]'}`}>
           {competition.scoringMethod === 'self_scoring'
-            ? 'Fully self-scoring — judging page not active'
+            ? t.judgingSelfScoringMode
             : competition.scoringMethod === 'self_with_approval'
-              ? 'Self-scoring with judge approval'
-              : 'Hybrid — judge logs puntuable boulders'
+              ? t.judgingApprovalMode
+              : t.judgingHybridMode
           }
         </span>
       </div>
 
       <div className="grid grid-cols-3 gap-3 mb-6">
         {[
-          { label: 'Topped',    value: toppedCount,              color: 'text-green-400' },
-          { label: 'Zone only', value: zoneCount,                color: 'text-[#7F8BAD]' },
-          { label: 'Pending',   value: Math.max(0, pendingCount), color: 'text-amber-400' },
+          { label: t.topped,        value: toppedCount,              color: 'text-green-400' },
+          { label: t.judgingZoneOnly, value: zoneCount,            color: 'text-[#7F8BAD]' },
+          { label: t.judgingPending,  value: Math.max(0, pendingCount), color: 'text-amber-400' },
         ].map(s => (
           <div key={s.label} className={`rounded border p-4 text-center ${dk ? 'bg-white/[0.03] border-white/10' : 'bg-white border-[#EEEEEE]'}`}>
             <p className={`text-2xl font-medium ${s.color}`}>{s.value}</p>
@@ -526,8 +555,8 @@ export default function JudgingPage({
       {puntuableBoulders.length === 0 ? (
         <div className={`text-center py-20 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
           <Mountain size={40} className="mx-auto mb-4 opacity-40" />
-          <p className="font-medium text-sm mb-2">No judge-required boulders</p>
-          <p className="text-xs">Toggle "Judge Required" when adding or editing a boulder to enable judging.</p>
+          <p className="font-medium text-sm mb-2">{t.judgingNoRequired}</p>
+          <p className="text-xs">{t.judgingNoRequiredDesc}</p>
         </div>
       ) : (
         <>
@@ -538,14 +567,14 @@ export default function JudgingPage({
             <Search size={14} className={dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'} />
             <input
               type="text"
-              placeholder="Search competitor by name or BIB..."
+              placeholder={t.judgingSearchPlaceholder}
               value={search}
               onChange={e => setSearch(e.target.value)}
               className={`flex-1 bg-transparent outline-none text-sm ${dk ? 'placeholder:text-[#5C5E62] text-[#EEEEEE]' : 'placeholder:text-[#8E8E8E] text-[#121212]'}`}
             />
             {search && (
               <button onClick={() => setSearch('')} className={`text-xs font-medium ${dk ? 'text-[#5C5E62] hover:text-[#D0D1D2]' : 'text-[#8E8E8E] hover:text-[#393C41]'}`}>
-                Clear
+                {t.clearFilters}
               </button>
             )}
           </div>
@@ -563,6 +592,7 @@ export default function JudgingPage({
                 theme={theme}
                 isLocked={competition.isLocked}
                 judgeId={currentUser.id}
+                labels={judgingLabels}
                 onLogScore={handleLog}
                 onClear={handleClear}
               />
@@ -572,7 +602,7 @@ export default function JudgingPage({
           <div className={`flex items-start gap-3 mt-6 p-4 rounded border ${dk ? 'bg-white/[0.02] border-white/5' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
             <ShieldCheck size={14} className={`flex-shrink-0 mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`} />
             <p className={`text-[11px] leading-relaxed ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-              Click a competitor card to expand their judge-required boulders. Use <span className="font-medium">+/−</span> to log attempts, toggle zone buttons and <span className="font-medium">Top</span>, then hit <span className="font-medium">Save score</span>.
+              {t.judgingHelpText}
             </p>
           </div>
         </>

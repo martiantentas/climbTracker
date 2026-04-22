@@ -110,21 +110,21 @@ export default function NavBar({
 
         {/* ── Centre: Nav pills ── */}
         <nav className="hidden lg:flex items-center gap-0.5 overflow-x-auto">
-          <NavPill to="/competitions" label={t.myCompetitions} theme={theme} />
+          <NavPill to={`/${lang}/competitions`} label={t.myCompetitions} theme={theme} />
 
           {canAccessComp && (
             <>
-              <NavPill to="/"            label={t.boulders}    theme={theme} />
-              <NavPill to="/leaderboard" label={t.leaderboard} theme={theme} />
-              <NavPill to="/rules"       label="Rules"         theme={theme} />
+              <NavPill to={`/${lang}`}               label={t.boulders}    theme={theme} />
+              <NavPill to={`/${lang}/leaderboard`}   label={t.leaderboard} theme={theme} />
+              <NavPill to={`/${lang}/rules`}         label={t.rules}       theme={theme} />
               {!isOrganizer && !isJudge && (
-                <NavPill to="/event-profile" label="Event Settings" theme={theme} />
+                <NavPill to={`/${lang}/event-profile`} label={t.eventSettings} theme={theme} />
               )}
               {(isOrganizer || isJudge) && (
                 <>
-                  <NavPill to="/users"     label={t.users}     theme={theme} />
-                  <NavPill to="/analytics" label={t.analytics} theme={theme} />
-                  <NavPill to="/judging"   label={t.judging}   theme={theme} />
+                  <NavPill to={`/${lang}/users`}     label={t.users}     theme={theme} />
+                  <NavPill to={`/${lang}/analytics`} label={t.analytics} theme={theme} />
+                  <NavPill to={`/${lang}/judging`}   label={t.judging}   theme={theme} />
                 </>
               )}
             </>
@@ -169,7 +169,7 @@ export default function NavBar({
           {/* Settings icon — organizer only */}
           {isOrganizer && (
             <Link
-              to="/settings"
+              to={`/${lang}/settings`}
               className={`
                 p-2 rounded transition-colors duration-[330ms]
                 ${theme === 'dark'
@@ -184,7 +184,7 @@ export default function NavBar({
 
           {/* Profile icon */}
           <Link
-            to="/profile"
+            to={`/${lang}/profile`}
             className={`
               p-2 rounded transition-colors duration-[330ms]
               ${theme === 'dark'

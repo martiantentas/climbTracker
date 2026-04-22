@@ -340,6 +340,7 @@ export default function BouldersPage({
           existingBoulders={boulders}
           competition={competition}
           theme={theme}
+          lang={lang}
           onSave={handleSaveBoulder}
           onDelete={isOrganizer ? handleDeleteBoulder : undefined}
           onClose={() => setModalBoulder(null)}

@@ -1,12 +1,15 @@
 import { useState, useEffect, useMemo } from 'react'
 import { X, Save, Trash2, AlertCircle } from 'lucide-react'
 import type { Boulder, Competition, AttemptTracking } from '../types'
+import type { Language } from '../translations'
+import { translations } from '../translations'
 
 interface BoulderModalProps {
   boulder?:         Boulder
   existingBoulders: Boulder[]
   competition:      Competition
   theme:            'light' | 'dark'
+  lang:             Language
   onSave:           (boulder: Boulder) => void
   onDelete?:        (boulderId: string) => void
   onClose:          () => void
@@ -27,18 +30,19 @@ const HOLD_COLORS = [
 
 const STYLES = ['Slab', 'Overhang', 'Dyno', 'Crimp', 'Volume', 'Cave', 'Vertical', 'Other']
 
-const TRACKING_OPTIONS: { value: AttemptTracking | 'inherit'; label: string; desc: string }[] = [
-  { value: 'inherit',       label: 'Inherit from event', desc: 'Use the default set in competition settings' },
-  { value: 'none',          label: 'Top / No top only',  desc: 'Only record whether topped — no attempt count' },
-  { value: 'fixed_options', label: 'Fixed options',      desc: 'Pill buttons (1 / 2 / … / N+) — quickest to tap' },
-  { value: 'count',         label: 'Free count',         desc: '+/− stepper — records any number of attempts precisely' },
-]
-
 export default function BoulderModal({
-  boulder, existingBoulders, competition, theme, onSave, onDelete, onClose,
+  boulder, existingBoulders, competition, theme, lang, onSave, onDelete, onClose,
 }: BoulderModalProps) {
   const isEditing = !!boulder
   const dk        = theme === 'dark'
+  const t         = translations[lang]
+
+  const TRACKING_OPTIONS: { value: AttemptTracking | 'inherit'; label: string; desc: string }[] = [
+    { value: 'inherit',       label: t.modalInheritEvent, desc: t.modalInheritDesc },
+    { value: 'none',          label: t.modalTopNoTop,     desc: t.modalTopNoTopDesc },
+    { value: 'fixed_options', label: t.modalFixed,        desc: t.modalFixedDesc },
+    { value: 'count',         label: t.modalFreeCount,    desc: t.modalFreeCountDesc },
+  ]
 
   const nextNumber = existingBoulders
     .filter(b => b.status !== 'removed')
@@ -64,12 +68,12 @@ export default function BoulderModal({
   }, [onClose])
 
   const numberError = useMemo((): string | null => {
-    if (number < 1) return 'Boulder number must be at least 1.'
+    if (number < 1) return t.modalErrMin
     const clash = existingBoulders.find(
       b => b.number === number && b.status !== 'removed' && b.id !== boulder?.id
     )
-    return clash ? `Boulder #${number} already exists in this competition.` : null
-  }, [number, existingBoulders, boulder?.id])
+    return clash ? t.modalErrExists(number) : null
+  }, [number, existingBoulders, boulder?.id, t])
 
   const canSave = !numberError
 
@@ -125,7 +129,7 @@ export default function BoulderModal({
         {/* Header */}
         <div className={`sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b ${dk ? 'bg-[#121212] border-white/10' : 'bg-white border-[#EEEEEE]'}`}>
           <h2 className={`text-base font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
-            {isEditing ? `Edit Boulder #${boulder.number}` : 'Add Boulder'}
+            {isEditing ? t.modalEditBoulder(boulder.number) : t.modalAddBoulder}
           </h2>
           <button
             onClick={onClose}
@@ -140,7 +144,7 @@ export default function BoulderModal({
           {/* Number + Name */}
           <div className="grid grid-cols-[100px_1fr] gap-3 mb-5">
             <div>
-              <label className={labelCls}>Number *</label>
+              <label className={labelCls}>{t.modalNumberLabel}</label>
               <input
                 type="number" min={1} value={number}
                 onChange={e => setNumber(Number(e.target.value))}
@@ -154,14 +158,14 @@ export default function BoulderModal({
               )}
             </div>
             <div>
-              <label className={labelCls}>Name (optional)</label>
-              <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Beta Blaster" className={inputCls} />
+              <label className={labelCls}>{t.modalNameLabel}</label>
+              <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder={t.modalNamePlaceholder} className={inputCls} />
             </div>
           </div>
 
           {/* Hold colour */}
           <div className="mb-5">
-            <label className={labelCls}>Hold Colour</label>
+            <label className={labelCls}>{t.modalHoldColour}</label>
             <div className="flex flex-wrap gap-2">
               {HOLD_COLORS.map(c => (
                 <button key={c.value} onClick={() => setColor(c.value)} title={c.label}
@@ -169,15 +173,15 @@ export default function BoulderModal({
                   style={{ backgroundColor: c.value }} />
               ))}
               <input type="color" value={color} onChange={e => setColor(e.target.value)}
-                className="w-9 h-9 rounded cursor-pointer border-2 border-transparent hover:scale-105 transition-all" title="Custom colour" />
+                className="w-9 h-9 rounded cursor-pointer border-2 border-transparent hover:scale-105 transition-all" title={t.modalCustomColour} />
             </div>
-            <p className={`text-[10px] mt-2 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Selected: <span className="font-medium" style={{ color }}>{color}</span></p>
+            <p className={`text-[10px] mt-2 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.modalSelectedColour} <span className="font-medium" style={{ color }}>{color}</span></p>
           </div>
 
           {/* Difficulty */}
           {competition.difficultyLevels.length > 0 && (
             <div className="mb-5">
-              <label className={labelCls}>Difficulty Level</label>
+              <label className={labelCls}>{t.modalDiffLevel}</label>
               <div className="flex flex-wrap gap-2">
                 {competition.difficultyLevels.map(d => (
                   <button key={d.id} onClick={() => setDifficultyId(d.id)}
@@ -191,7 +195,7 @@ export default function BoulderModal({
 
           {/* Style */}
           <div className="mb-5">
-            <label className={labelCls}>Style (optional)</label>
+            <label className={labelCls}>{t.modalStyle}</label>
             <div className="flex flex-wrap gap-2">
               {STYLES.map(s => (
                 <button key={s} onClick={() => setStyle(style === s ? '' : s)} className={pillBtn(style === s)}>
@@ -203,10 +207,10 @@ export default function BoulderModal({
 
           {/* Attempt tracking override */}
           <div className="mb-5">
-            <label className={labelCls}>Attempt Tracking</label>
+            <label className={labelCls}>{t.modalAttemptTracking}</label>
             <p className={`text-[11px] mb-3 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-              Competition default: <span className="font-medium">{competition.attemptTracking}</span>
-              {competition.attemptTracking === 'fixed_options' && ` (up to ${competition.maxFixedAttempts}+)`}
+              {t.modalCompDefault} <span className="font-medium">{competition.attemptTracking}</span>
+              {competition.attemptTracking === 'fixed_options' && t.modalCompDefaultFixed(competition.maxFixedAttempts)}
             </p>
             <div className="flex flex-col gap-2">
               {TRACKING_OPTIONS.map(opt => (
@@ -229,8 +233,8 @@ export default function BoulderModal({
           {/* Judge required */}
           <div className={`flex items-center justify-between p-4 rounded border mb-5 ${dk ? 'bg-white/[0.02] border-white/10' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
             <div>
-              <p className={`text-sm font-medium ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>Judge Required</p>
-              <p className={`text-xs mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Only judges can log attempts and validate this boulder</p>
+              <p className={`text-sm font-medium ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>{t.modalJudgeReq}</p>
+              <p className={`text-xs mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.modalJudgeReqDesc}</p>
             </div>
             <button onClick={() => setIsPuntuable(p => !p)}>
               <div className={`w-12 h-6 rounded-full transition-colors duration-[330ms] relative ${isPuntuable ? 'bg-[#7F8BAD]' : dk ? 'bg-white/10' : 'bg-[#D0D1D2]'}`}>
@@ -242,11 +246,11 @@ export default function BoulderModal({
           {/* Zones */}
           {isPuntuable && (
             <div className="mb-5">
-              <label className={labelCls}>Number of Zones</label>
+              <label className={labelCls}>{t.modalZones}</label>
               <div className="flex gap-2">
                 {[0, 1, 2, 3, 4].map(n => (
                   <button key={n} onClick={() => setZoneCount(n)} className={`flex-1 py-2.5 rounded text-sm font-medium border transition-colors duration-[330ms] ${zoneCount === n ? 'bg-[#7F8BAD]/10 text-[#7F8BAD] border-[#7F8BAD]/30' : dk ? 'bg-white/5 text-[#5C5E62] border-white/10 hover:bg-white/10' : 'bg-[#F4F4F4] text-[#8E8E8E] border-[#EEEEEE] hover:bg-[#EEEEEE]'}`}>
-                    {n === 0 ? 'None' : n}
+                    {n === 0 ? t.modalNone : n}
                   </button>
                 ))}
               </div>
@@ -256,17 +260,19 @@ export default function BoulderModal({
           {/* Dynamic pot override */}
           {competition.scoringType === 'DYNAMIC' && (
             <div className="mb-5">
-              <label className={labelCls}>Points Override (Dynamic)</label>
+              <label className={labelCls}>{t.modalPointsOverride}</label>
               <input type="number" min={0} value={maxPoints} onChange={e => setMaxPoints(Number(e.target.value))} className={inputCls} />
-              <p className={`text-[11px] mt-1.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Overrides the competition default pot ({competition.dynamicPot ?? 1000} pts)</p>
+              <p className={`text-[11px] mt-1.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.modalPtsHint(competition.dynamicPot ?? 1000)}</p>
             </div>
           )}
 
           {/* Status */}
           <div className="mb-5">
-            <label className={labelCls}>Status</label>
+            <label className={labelCls}>{t.statusLabel}</label>
             <div className="flex gap-2">
-              {(['active', 'hidden', 'removed'] as Boulder['status'][]).map(s => (
+              {(['active', 'hidden', 'removed'] as Boulder['status'][]).map(s => {
+                const statusLabelMap = { active: t.modalStatusActive, hidden: t.modalStatusHidden, removed: t.modalStatusRemoved }
+                return (
                 <button key={s} onClick={() => setStatus(s)}
                   className={`flex-1 py-2 rounded text-xs font-medium border transition-colors duration-[330ms] ${
                     status === s
@@ -277,9 +283,9 @@ export default function BoulderModal({
                            : 'bg-[#F4F4F4] text-[#8E8E8E] border-[#EEEEEE] hover:bg-[#EEEEEE]'
                   }`}
                 >
-                  {s}
+                  {statusLabelMap[s]}
                 </button>
-              ))}
+              )})}
             </div>
           </div>
 
@@ -290,13 +296,13 @@ export default function BoulderModal({
           {isEditing && onDelete && (
             confirmDelete ? (
               <div className="flex items-center gap-2">
-                <span className={`text-xs font-medium ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Sure?</span>
-                <button onClick={() => { onDelete(boulder.id); onClose() }} className="px-3 py-2 rounded text-xs font-medium bg-red-400 text-white hover:bg-red-500 transition-colors duration-[330ms]">Delete</button>
-                <button onClick={() => setConfirmDelete(false)} className={`px-3 py-2 rounded text-xs font-medium transition-colors duration-[330ms] ${dk ? 'bg-white/5 text-[#5C5E62]' : 'bg-[#F4F4F4] text-[#8E8E8E]'}`}>Cancel</button>
+                <span className={`text-xs font-medium ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.modalSure}</span>
+                <button onClick={() => { onDelete(boulder.id); onClose() }} className="px-3 py-2 rounded text-xs font-medium bg-red-400 text-white hover:bg-red-500 transition-colors duration-[330ms]">{t.modalDelete}</button>
+                <button onClick={() => setConfirmDelete(false)} className={`px-3 py-2 rounded text-xs font-medium transition-colors duration-[330ms] ${dk ? 'bg-white/5 text-[#5C5E62]' : 'bg-[#F4F4F4] text-[#8E8E8E]'}`}>{t.cancel}</button>
               </div>
             ) : (
               <button onClick={() => setConfirmDelete(true)} className={`flex items-center gap-1.5 px-3 py-2 rounded text-xs font-medium transition-colors duration-[330ms] ${dk ? 'text-[#5C5E62] hover:text-red-400 hover:bg-red-400/10' : 'text-[#8E8E8E] hover:text-red-500 hover:bg-red-50'}`}>
-                <Trash2 size={13} /> Delete boulder
+                <Trash2 size={13} /> {t.modalDeleteBoulder}
               </button>
             )
           )}
@@ -305,7 +311,7 @@ export default function BoulderModal({
               onClick={onClose}
               className={`px-5 py-2.5 rounded text-sm font-medium border transition-colors duration-[330ms] ${dk ? 'bg-white/5 text-[#5C5E62] border-white/10 hover:bg-white/10' : 'bg-[#F4F4F4] text-[#5C5E62] border-[#EEEEEE] hover:bg-[#EEEEEE]'}`}
             >
-              Cancel
+              {t.cancel}
             </button>
             <button
               onClick={handleSave}
@@ -313,7 +319,7 @@ export default function BoulderModal({
               className="flex items-center gap-2 px-5 py-2.5 rounded text-sm font-medium bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms] disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Save size={15} />
-              {isEditing ? 'Save changes' : 'Add boulder'}
+              {isEditing ? t.modalSaveChanges : t.modalAddBtn}
             </button>
           </div>
         </div>

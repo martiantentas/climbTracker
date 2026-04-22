@@ -373,7 +373,7 @@ export default function CompetitionsPage({
         </button>
       </form>
       {codeError && <p className="text-xs text-red-400 mb-2 px-1">{t.invalidCode}</p>}
-      {joinFull && <p className="text-xs text-red-400 mb-2 px-1">This event is full — no more spots available.</p>}
+      {joinFull && <p className="text-xs text-red-400 mb-2 px-1">{t.compFull}</p>}
       <div className="mb-6" />
 
       {myComps.length > 0 && (

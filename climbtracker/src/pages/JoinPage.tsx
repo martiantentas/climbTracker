@@ -52,16 +52,16 @@ export default function JoinPage({
         <div className="text-center max-w-sm mx-auto px-6">
           <p className="text-5xl mb-4">🔍</p>
           <h2 className={`text-xl font-medium mb-2 ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
-            Competition not found
+            {t.joinNotFound}
           </h2>
           <p className={`text-sm mb-6 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-            The invite code <span className="font-medium text-[#7F8BAD]">{code}</span> doesn't match any competition.
+            {t.joinNotFoundDesc(code ?? '')}
           </p>
           <button
             onClick={() => navigate('/competitions')}
             className="px-6 py-3 bg-[#7F8BAD] text-white rounded font-medium text-sm hover:bg-[#6D799B] transition-colors duration-[330ms]"
           >
-            Browse my events
+            {t.joinBrowse}
           </button>
         </div>
       </div>
@@ -104,8 +104,8 @@ export default function JoinPage({
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
           <CheckCircle2 size={56} className="text-green-400 mx-auto mb-4" />
-          <h2 className={`text-2xl font-medium mb-2 ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>You're in! 🎉</h2>
-          <p className={`text-sm ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Heading to the boulders…</p>
+          <h2 className={`text-2xl font-medium mb-2 ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>{t.joinYoureIn}</h2>
+          <p className={`text-sm ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.joinRedirecting}</p>
         </div>
       </div>
     )
@@ -118,7 +118,7 @@ export default function JoinPage({
         {/* Header */}
         <div className={`px-8 pt-8 pb-6 border-b ${dk ? 'border-white/10' : 'border-[#EEEEEE]'}`}>
           <p className={`text-[10px] font-medium mb-2 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-            You've been invited to join
+            {t.joinInvitedTo}
           </p>
           <h1 className={`text-2xl font-medium mb-4 ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
             {comp.name}
@@ -144,7 +144,7 @@ export default function JoinPage({
             <div className={`flex items-center gap-2 mt-4 px-3 py-2 rounded border ${dk ? 'bg-amber-400/5 border-amber-400/20' : 'bg-amber-50 border-amber-100'}`}>
               <Lock size={13} className="text-amber-400 flex-shrink-0" />
               <p className={`text-xs font-medium ${dk ? 'text-amber-300' : 'text-amber-700'}`}>
-                This competition requires a password to join.
+                {t.joinPasswordReq}
               </p>
             </div>
           )}
@@ -159,7 +159,7 @@ export default function JoinPage({
             </div>
             <div className="min-w-0">
               <p className={`text-xs font-medium truncate ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>
-                Joining as {currentUser.displayName}
+                {t.joinJoiningAs} {currentUser.displayName}
               </p>
               <p className={`text-[10px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{currentUser.email}</p>
             </div>
@@ -168,10 +168,10 @@ export default function JoinPage({
           {/* Gender picker */}
           <div>
             <p className={`text-[10px] font-medium mb-2 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-              Gender <span className={dk ? 'text-[#393C41]' : 'text-[#D0D1D2]'}>(optional)</span>
+              {t.joinGenderOpt}
             </p>
             <div className="flex flex-wrap gap-2">
-              {['Male', 'Female', 'Non-binary', 'Prefer not to say'].map(option => (
+              {[t.joinMale, t.joinFemale, t.joinNonBinary, t.joinPreferNot].map(option => (
                 <button
                   key={option}
                   onClick={() => setGender(gender === option ? '' : option)}
@@ -197,7 +197,7 @@ export default function JoinPage({
               <div className="flex items-center gap-2 mb-2">
                 <Tag size={13} className={dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'} />
                 <p className={`text-[10px] font-medium ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-                  Select your traits{requireTraits ? ' *' : ' (optional)'}
+                  {requireTraits ? t.joinTraitsReq : t.joinTraitsOpt}
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -225,7 +225,7 @@ export default function JoinPage({
               </div>
               {requireTraits && selectedTraitIds.length === 0 && (
                 <p className={`text-[10px] mt-2 ${dk ? 'text-amber-400/80' : 'text-amber-600'}`}>
-                  Please select at least one trait to join.
+                  {t.joinTraitsRequired}
                 </p>
               )}
             </div>
@@ -234,7 +234,7 @@ export default function JoinPage({
           {/* Event full error */}
           {eventFull && (
             <div className="px-4 py-3 rounded bg-red-400/10 border border-red-400/20 text-red-400 text-sm text-center">
-              This event is full — no more spots available.
+              {t.joinEventFull}
             </div>
           )}
 
@@ -245,7 +245,7 @@ export default function JoinPage({
             className="w-full flex items-center justify-center gap-2 py-3.5 rounded font-medium text-sm bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <LogIn size={16} />
-            {needsPassword ? 'Join — Enter Password' : t.joinByCodeAction}
+            {needsPassword ? t.joinJoinPassword : t.joinByCodeAction}
           </button>
 
           <button

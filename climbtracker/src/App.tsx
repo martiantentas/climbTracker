@@ -592,6 +592,7 @@ function AppInner() {
             user={activeCompetitors.find(c => c.id === currentUser.id) ?? currentUser}
             competition={joinProfileComp}
             theme={theme}
+            lang={lang}
             onComplete={updated => {
               // Persist gender + traits into competitorsMap
               handleUpdateCompetitorTraits(updated.id, (updated as any).traitIds ?? [])

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Hash, Tag, CheckCircle2, Target, Zap, Trophy, Star, Clock } from 'lucide-react'
 import type { Competition, Boulder, Competitor, Completion } from '../types'
 import type { Language } from '../translations'
+import { translations } from '../translations'
 import { calcBoulderPoints } from '../utils/scoring'
 
 interface EventProfilePageProps {
@@ -22,8 +23,10 @@ export default function EventProfilePage({
   currentUser,
   rankings,
   theme,
+  lang,
   onUpdateTraits,
 }: EventProfilePageProps) {
+  const t  = translations[lang]
   const dk = theme === 'dark'
 
   // ── My completions ────────────────────────────────────────────────────────
@@ -110,7 +113,7 @@ export default function EventProfilePage({
       {/* ── Header ── */}
       <div className="mb-8">
         <h1 className={`text-2xl font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
-          Event Settings
+          {t.eventSettings}
         </h1>
         <p className={`text-sm mt-1 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
           {competition.name}
@@ -154,7 +157,7 @@ export default function EventProfilePage({
                 ? dk ? 'text-amber-300' : 'text-amber-800'
                 : dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'
             }`}>
-              {needsTraitSetup ? 'Select your category' : 'My Categories'}
+              {needsTraitSetup ? t.eventProfileSelectCategory : t.eventProfileMyCategories}
             </h2>
           </div>
           <p className={`text-xs mb-4 ${
@@ -163,8 +166,8 @@ export default function EventProfilePage({
               : dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'
           }`}>
             {needsTraitSetup
-              ? 'Choose the categories that apply to you so the organiser can place you in the right standings.'
-              : 'Tap to toggle your categories. Changes save instantly.'}
+              ? t.eventProfileCategorySetupDesc
+              : t.eventProfileCategoryToggleDesc}
           </p>
           <div className="flex flex-wrap gap-2">
             {availableTraits.map(trait => {
@@ -191,7 +194,7 @@ export default function EventProfilePage({
           </div>
           {needsTraitSetup && (
             <p className={`text-[10px] font-medium mt-4 ${dk ? 'text-amber-400/60' : 'text-amber-600/70'}`}>
-              {competition.requireTraits ? '⚠ Required to appear in standings' : 'Optional — you can update this anytime'}
+              {competition.requireTraits ? t.eventProfileRequiredForStandings : t.eventProfileOptional}
             </p>
           )}
         </div>
@@ -199,10 +202,10 @@ export default function EventProfilePage({
 
       {/* ── Stats grid ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-        {statCard(<Star size={11} />,   'Score',   myScore,                  'text-[#7F8BAD]')}
-        {statCard(<Trophy size={11} />, 'Tops',    `${tops}/${totalActive}`, 'text-green-400')}
-        {statCard(<Target size={11} />, 'Zones',   zones,                    'text-[#7F8BAD]')}
-        {statCard(<Zap size={11} />,    'Flashes', flashes,                  'text-amber-400')}
+        {statCard(<Star size={11} />,   t.score,   myScore,                  'text-[#7F8BAD]')}
+        {statCard(<Trophy size={11} />, t.tops,    `${tops}/${totalActive}`, 'text-green-400')}
+        {statCard(<Target size={11} />, t.zones,   zones,                    'text-[#7F8BAD]')}
+        {statCard(<Zap size={11} />,    t.flashes, flashes,                  'text-amber-400')}
       </div>
 
       {/* Rank banner */}
@@ -210,10 +213,10 @@ export default function EventProfilePage({
         <div className={`rounded border p-4 mb-6 flex items-center gap-3 ${dk ? 'bg-[#7F8BAD]/5 border-[#7F8BAD]/20' : 'bg-[#7F8BAD]/5 border-[#7F8BAD]/20'}`}>
           <Trophy size={18} className="text-[#7F8BAD] flex-shrink-0" />
           <div>
-            <p className={`text-xs font-medium ${dk ? 'text-[#7F8BAD]/80' : 'text-[#7F8BAD]/80'}`}>Current ranking</p>
+            <p className={`text-xs font-medium ${dk ? 'text-[#7F8BAD]/80' : 'text-[#7F8BAD]/80'}`}>{t.eventProfileCurrentRanking}</p>
             <p className="text-2xl font-medium text-[#7F8BAD] leading-tight">#{myRank}</p>
           </div>
-          <p className={`text-xs ml-auto ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{myScore} pts total</p>
+          <p className={`text-xs ml-auto ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{myScore} {t.eventProfilePtsTotal}</p>
         </div>
       )}
 
@@ -222,7 +225,7 @@ export default function EventProfilePage({
         <div className={cardCls}>
           <div className="flex items-center gap-2 mb-4">
             <Clock size={14} className={dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'} />
-            <h2 className={`text-sm font-medium ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>Recent Tops</h2>
+            <h2 className={`text-sm font-medium ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>{t.eventProfileRecentTops}</h2>
           </div>
           <div className="space-y-2">
             {recentTops.map(({ completion, boulder, points }) => {
@@ -240,7 +243,7 @@ export default function EventProfilePage({
                       #{boulder.number}{boulder.name ? ` — ${boulder.name}` : ''}
                     </p>
                     <p className={`text-[10px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-                      {completion.attempts} attempt{completion.attempts !== 1 ? 's' : ''}
+                      {t.eventProfileAttempts(completion.attempts)}
                       {diff && <span className="ml-1.5">· {diff.label}</span>}
                     </p>
                   </div>
@@ -264,8 +267,8 @@ export default function EventProfilePage({
       {tops === 0 && recentTops.length === 0 && (
         <div className={`${cardCls} p-8 text-center`}>
           <p className="text-4xl mb-3">🧗</p>
-          <p className={`font-medium text-sm ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>No activity yet</p>
-          <p className={`text-xs mt-1 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Start topping boulders to see your performance here.</p>
+          <p className={`font-medium text-sm ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.eventProfileNoActivity}</p>
+          <p className={`text-xs mt-1 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.eventProfileNoActivityDesc}</p>
         </div>
       )}
     </div>

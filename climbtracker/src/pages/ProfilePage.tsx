@@ -46,10 +46,6 @@ function InfoRow({ icon, label, value, theme }: InfoRowProps) {
   )
 }
 
-// ─── GENDER OPTIONS ───────────────────────────────────────────────────────────
-
-const GENDER_OPTIONS = ['Male', 'Female', 'Prefer not to say']
-
 // ─── SECTION LABEL ────────────────────────────────────────────────────────────
 
 function SectionLabel({ label, theme }: { label: string; theme: 'light' | 'dark' }) {
@@ -77,6 +73,8 @@ export default function ProfilePage({
 }: ProfilePageProps) {
   const t  = translations[lang]
   const dk = theme === 'dark'
+
+  const genderOptions = [t.profileMale, t.profileFemale, t.profileNonBinary, t.profilePreferNot]
 
   const [isEditing,   setIsEditing]   = useState(false)
   const [displayName, setDisplayName] = useState(currentUser.displayName)
@@ -171,7 +169,7 @@ export default function ProfilePage({
             `}
           >
             <Edit3 size={14} />
-            Edit
+            {t.edit}
           </button>
         ) : (
           <div className="flex items-center gap-2">
@@ -235,7 +233,7 @@ export default function ProfilePage({
 
       {/* Account-level fields */}
       <div className={cardClass}>
-        <SectionLabel label="Account details — shared across all competitions" theme={theme} />
+        <SectionLabel label={t.profileAccountDetails} theme={theme} />
 
         {isEditing ? (
           <div className="p-6 space-y-4">
@@ -272,7 +270,7 @@ export default function ProfilePage({
                 onChange={e => setGender(e.target.value)}
                 className={selectClass}
               >
-                {GENDER_OPTIONS.map(opt => (
+                {genderOptions.map(opt => (
                   <option key={opt} value={opt}>{opt}</option>
                 ))}
               </select>
@@ -297,13 +295,10 @@ export default function ProfilePage({
 
       {/* Competition registration */}
       <div className={cardClass}>
-        <SectionLabel label="Competition registration" theme={theme} />
+        <SectionLabel label={t.profileCompReg} theme={theme} />
         <div className="px-6 py-5">
           <p className={`text-sm leading-relaxed ${dk ? 'text-[#5C5E62]' : 'text-[#5C5E62]'}`}>
-            When you join a competition, you'll be asked to choose your category and gender for that event. These can differ across competitions — for example, you might compete in Open at one event and Masters at another.
-          </p>
-          <p className={`text-xs mt-3 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-            BIB numbers are assigned automatically when you join. Judges and organizers don't have a BIB number.
+            {t.profileRegNote}
           </p>
           <div className={`
             flex items-start gap-3 mt-4 p-3 rounded
@@ -311,7 +306,7 @@ export default function ProfilePage({
           `}>
             <Info size={14} className="text-amber-400 flex-shrink-0 mt-0.5" />
             <p className={`text-xs leading-relaxed ${dk ? 'text-amber-300/70' : 'text-amber-700'}`}>
-              BIB number and category are assigned per competition by the organizer and can differ across events you participate in.
+              {t.profileBibNote}
             </p>
           </div>
         </div>
@@ -343,7 +338,7 @@ export default function ProfilePage({
           </form>
 
           {codeError   && <p className="text-xs text-red-400 mt-2">{t.invalidCode}</p>}
-          {codeFull    && <p className="text-xs text-red-400 mt-2">This event is full — no more spots available.</p>}
+          {codeFull    && <p className="text-xs text-red-400 mt-2">{t.compFull}</p>}
           {codeSuccess && <p className="text-xs text-[#7F8BAD] mt-2">{t.welcomeBack} 🎉</p>}
         </div>
       </div>

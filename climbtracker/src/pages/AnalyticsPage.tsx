@@ -4,6 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 
 
 import type { Competition, Boulder, Competitor, Completion } from '../types'
 import type { Language } from '../translations'
+import { translations } from '../translations'
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -45,7 +46,9 @@ export default function AnalyticsPage({
   competitors,
   completions,
   theme,
+  lang,
 }: AnalyticsPageProps) {
+  const t  = translations[lang]
   const dk = theme === 'dark'
 
   // ── Derive category options from competition (categories or traits) ─────────
@@ -137,10 +140,10 @@ export default function AnalyticsPage({
       {/* ── Header ── */}
       <div className="mb-6">
         <h1 className={`text-2xl font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
-          Statistics
+          {t.analytics}
         </h1>
         <p className={`text-sm mt-1 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-          {competition.name} · Live stats
+          {competition.name} · {t.analyticsLiveStats}
         </p>
       </div>
 
@@ -149,7 +152,7 @@ export default function AnalyticsPage({
         <div className="mb-6 space-y-3">
           <div className="flex flex-wrap items-center gap-2">
             <span className={`text-[10px] font-medium w-16 flex-shrink-0 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-              Category
+              {t.category}
             </span>
             {categoryOptions.map(c => {
               const active = categoryFilters.includes(c.name)
@@ -175,13 +178,13 @@ export default function AnalyticsPage({
           {categoryFilters.length > 0 && (
             <div className="flex items-center gap-3">
               <span className={`text-xs ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-                {filteredCompetitors.length} of {actualCompetitors.length} competitors
+                {t.analyticsOfCompetitors(filteredCompetitors.length, actualCompetitors.length)}
               </span>
               <button
                 onClick={() => setCategoryFilters([])}
                 className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium transition-colors duration-[330ms] ${dk ? 'text-red-400 bg-red-400/10 hover:bg-red-400/20' : 'text-red-500 bg-red-50 hover:bg-red-100'}`}
               >
-                <X size={10} /> Clear
+                <X size={10} /> {t.clearFilters}
               </button>
             </div>
           )}
@@ -190,10 +193,10 @@ export default function AnalyticsPage({
 
       {/* ── Stat grid ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-        <StatCard label="Competitors"  value={filteredCompetitors.length}  accent="text-[#7F8BAD]"  theme={theme} />
-        <StatCard label="Total tops"   value={totalTops}                   accent="text-green-400"  theme={theme} />
-        <StatCard label="Flashes"      value={totalFlashes}                accent="text-amber-400"  theme={theme} />
-        <StatCard label="Avg tops"     value={avgTopsPerCompetitor}        accent="text-[#7F8BAD]"  theme={theme} sub="per climber" />
+        <StatCard label={t.analyticsCompetitors}  value={filteredCompetitors.length}  accent="text-[#7F8BAD]"  theme={theme} />
+        <StatCard label={t.analyticsTotalTops}   value={totalTops}                   accent="text-green-400"  theme={theme} />
+        <StatCard label={t.flashes}              value={totalFlashes}                accent="text-amber-400"  theme={theme} />
+        <StatCard label={t.analyticsAvgTops}     value={avgTopsPerCompetitor}        accent="text-[#7F8BAD]"  theme={theme} sub={t.analyticsPerClimber} />
       </div>
 
       {/* ── Completion rates chart ── */}
@@ -201,7 +204,7 @@ export default function AnalyticsPage({
         <div className={`rounded border p-5 mb-6 ${dk ? 'bg-white/[0.03] border-white/10' : 'bg-white border-[#EEEEEE]'}`}>
           <div className="flex items-center gap-2 mb-5">
             <TrendingUp size={14} className={dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'} />
-            <h2 className={`text-sm font-medium ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>Boulder completion rates</h2>
+            <h2 className={`text-sm font-medium ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>{t.analyticsCompletionRates}</h2>
           </div>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={boulderStats} barSize={20}>
@@ -223,7 +226,7 @@ export default function AnalyticsPage({
                   fontSize: 12,
                   fontWeight: 500,
                 }}
-                formatter={(v) => [`${v ?? 0}%`, 'Completion']}
+                formatter={(v) => [`${v ?? 0}%`, t.analyticsCompletion]}
                 cursor={{ fill: dk ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)' }}
               />
               <Bar dataKey="rate" radius={[2, 2, 0, 0]}>
@@ -240,13 +243,13 @@ export default function AnalyticsPage({
       <div className={`rounded border overflow-hidden ${dk ? 'bg-white/[0.03] border-white/10' : 'bg-white border-[#EEEEEE]'}`}>
         <div className={`px-5 py-4 border-b flex items-center gap-2 ${dk ? 'border-white/10' : 'border-[#EEEEEE]'}`}>
           <BarChart2 size={14} className={dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'} />
-          <h2 className={`text-sm font-medium ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>Boulder breakdown</h2>
+          <h2 className={`text-sm font-medium ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>{t.analyticsBoulderBreakdown}</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className={dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}>
-                {['Boulder', 'Tops', 'Zones', 'Flashes', 'Rate'].map(h => (
+                {[t.analyticsBoulder, t.tops, t.zones, t.flashes, t.analyticsRate].map(h => (
                   <th key={h} className="text-[10px] font-medium px-5 py-3 text-left">{h}</th>
                 ))}
               </tr>

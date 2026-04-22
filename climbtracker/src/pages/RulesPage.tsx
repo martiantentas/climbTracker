@@ -167,7 +167,7 @@ export default function RulesPage({
             px-4 py-2 text-[10px] font-medium border-b
             ${dk ? 'bg-white/5 text-[#5C5E62] border-white/10' : 'bg-[#F4F4F4] text-[#8E8E8E] border-[#EEEEEE]'}
           `}>
-            Markdown supported · ### Heading · **bold** · - bullet · 1. numbered
+            {t.rulesMarkdownHint}
           </div>
 
           <div className={`grid grid-cols-2 divide-x ${dk ? 'divide-white/10' : 'divide-[#EEEEEE]'}`}>
@@ -181,11 +181,11 @@ export default function RulesPage({
                   : 'bg-white text-[#393C41] placeholder:text-[#8E8E8E]'
                 }
               `}
-              placeholder="Write rules here using markdown..."
+              placeholder={t.rulesPlaceholder}
               spellCheck={false}
             />
             <div className={`h-96 p-4 overflow-y-auto ${dk ? 'bg-[#121212]/50' : 'bg-[#F4F4F4]'}`}>
-              <p className={`text-[9px] font-medium mb-3 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>Preview</p>
+              <p className={`text-[9px] font-medium mb-3 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.rulesPreview}</p>
               {renderMarkdown(draftText, theme)}
             </div>
           </div>
@@ -197,7 +197,7 @@ export default function RulesPage({
             ? renderMarkdown(rulesContent, theme)
             : (
               <p className={`text-sm text-center py-8 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-                No rules have been set for this competition yet.
+                {t.rulesEmpty}
               </p>
             )
           }
@@ -205,7 +205,7 @@ export default function RulesPage({
       )}
 
       <p className={`text-[11px] text-center mt-6 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-        Viewing rules in: {lang.toUpperCase()} · Changes save to the active language only
+        {t.rulesViewingIn(lang.toUpperCase())}
       </p>
     </div>
   )

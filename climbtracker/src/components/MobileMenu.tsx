@@ -140,27 +140,27 @@ export default function MobileMenu({
 
           {/* ── Navigation links ── */}
           <nav className="flex flex-col gap-0.5 flex-1">
-            <MenuLink to="/competitions" icon={<Layers size={18} />} label={t.myCompetitions} theme={theme} onClick={onClose} />
+            <MenuLink to={`/${lang}/competitions`} icon={<Layers size={18} />} label={t.myCompetitions} theme={theme} onClick={onClose} />
 
             {canAccessComp && (
               <>
                 {/* Divider */}
                 <div className={`h-px my-2 ${theme === 'dark' ? 'bg-white/10' : 'bg-[#EEEEEE]'}`} />
 
-                <MenuLink to="/"            icon={<LayoutGrid size={18} />} label={t.boulders}    theme={theme} onClick={onClose} />
-                <MenuLink to="/leaderboard" icon={<Trophy size={18} />}     label={t.leaderboard} theme={theme} onClick={onClose} />
-                <MenuLink to="/rules"       icon={<BookOpen size={18} />}   label={t.rules}       theme={theme} onClick={onClose} />
+                <MenuLink to={`/${lang}`}               icon={<LayoutGrid size={18} />} label={t.boulders}    theme={theme} onClick={onClose} />
+                <MenuLink to={`/${lang}/leaderboard`}   icon={<Trophy size={18} />}     label={t.leaderboard} theme={theme} onClick={onClose} />
+                <MenuLink to={`/${lang}/rules`}         icon={<BookOpen size={18} />}   label={t.rules}       theme={theme} onClick={onClose} />
                 {!isOrganizer && !isJudge && (
-                  <MenuLink to="/event-profile" icon={<CalendarDays size={18} />} label="Event Settings" theme={theme} onClick={onClose} />
+                  <MenuLink to={`/${lang}/event-profile`} icon={<CalendarDays size={18} />} label={t.eventSettings} theme={theme} onClick={onClose} />
                 )}
 
                 {(isOrganizer || isJudge) && (
                   <>
-                    <MenuLink to="/users"     icon={<Users size={18} />}         label={t.users}     theme={theme} onClick={onClose} />
-                    <MenuLink to="/analytics" icon={<BarChart2 size={18} />}     label={t.analytics} theme={theme} onClick={onClose} />
-                    <MenuLink to="/judging"   icon={<ClipboardList size={18} />} label={t.judging}   theme={theme} onClick={onClose} />
+                    <MenuLink to={`/${lang}/users`}     icon={<Users size={18} />}         label={t.users}     theme={theme} onClick={onClose} />
+                    <MenuLink to={`/${lang}/analytics`} icon={<BarChart2 size={18} />}     label={t.analytics} theme={theme} onClick={onClose} />
+                    <MenuLink to={`/${lang}/judging`}   icon={<ClipboardList size={18} />} label={t.judging}   theme={theme} onClick={onClose} />
                     {isOrganizer && (
-                      <MenuLink to="/settings" icon={<Settings size={18} />} label={t.settings} theme={theme} onClick={onClose} />
+                      <MenuLink to={`/${lang}/settings`} icon={<Settings size={18} />} label={t.settings} theme={theme} onClick={onClose} />
                     )}
                   </>
                 )}
@@ -173,7 +173,7 @@ export default function MobileMenu({
 
             {/* User info row */}
             <Link
-              to="/profile"
+              to={`/${lang}/profile`}
               onClick={onClose}
               className={`
                 flex items-center gap-3 px-3 py-3 rounded mb-2 transition-colors duration-[330ms]
