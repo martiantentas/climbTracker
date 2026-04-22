@@ -147,7 +147,18 @@ function AppInner() {
 
   const t = translations[lang]
 
-  const [currentUser, setCurrentUser] = useState<Competitor | null>(null)
+  const [currentUser, setCurrentUserRaw] = useState<Competitor | null>(() => {
+    try {
+      const stored = localStorage.getItem('ct-user')
+      return stored ? (JSON.parse(stored) as Competitor) : null
+    } catch { return null }
+  })
+
+  function setCurrentUser(user: Competitor | null) {
+    setCurrentUserRaw(user)
+    if (user) localStorage.setItem('ct-user', JSON.stringify(user))
+    else localStorage.removeItem('ct-user')
+  }
 
   const [competitions,   setCompetitions]   = useState<Competition[]>([MOCK_COMPETITION])
   const [activeCompId,   setActiveCompId]   = useState<string>(MOCK_COMPETITION.id)
