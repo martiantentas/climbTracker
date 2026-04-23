@@ -2,6 +2,7 @@ import { useState, useMemo, useRef } from 'react'
 import { Trophy, Zap, Target, X, Download, FileText, Link2, ChevronDown as ChevDown } from 'lucide-react'
 
 import type { Competition, Competitor, RankResult } from '../types'
+import { CompetitionStatus } from '../types'
 import type { Language } from '../translations'
 import { translations } from '../translations'
 
@@ -53,6 +54,222 @@ function RankBadge({ rank, theme }: { rank: number; theme: 'light' | 'dark' }) {
   )
 }
 
+// ─── PODIUM CARD ──────────────────────────────────────────────────────────────
+
+const PODIUM_STYLES = {
+  1: {
+    medal:    '🥇',
+    border:   'border-amber-400/30',
+    bgDark:   'bg-amber-400/[0.07]',
+    bgLight:  'bg-amber-50',
+    text:     'text-amber-500',
+    avatarRing: 'border-amber-400/40',
+  },
+  2: {
+    medal:    '🥈',
+    border:   'border-[#7F8BAD]/30',
+    bgDark:   'bg-[#7F8BAD]/[0.07]',
+    bgLight:  'bg-[#7F8BAD]/5',
+    text:     'text-[#7F8BAD]',
+    avatarRing: 'border-[#7F8BAD]/40',
+  },
+  3: {
+    medal:    '🥉',
+    border:   'border-orange-700/30',
+    bgDark:   'bg-orange-900/[0.08]',
+    bgLight:  'bg-orange-50',
+    text:     'text-orange-600',
+    avatarRing: 'border-orange-600/30',
+  },
+} as const
+
+function PodiumCard({
+  result, position, theme, competitors, posLabel,
+}: {
+  result:      RankResult | null
+  position:    1 | 2 | 3
+  theme:       'light' | 'dark'
+  competitors: Competitor[]
+  posLabel:    string
+}) {
+  const dk = theme === 'dark'
+  const s  = PODIUM_STYLES[position]
+
+  if (!result) {
+    return (
+      <div className={`rounded border flex items-center justify-center py-12 ${dk ? 'bg-white/[0.02] border-white/5' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
+        <span className={`text-sm ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>–</span>
+      </div>
+    )
+  }
+
+  const live   = competitors.find(c => c.id === result.competitorId) as any
+  const avatar = live?.avatar as string | undefined
+
+  return (
+    <div className={`
+      rounded border ${s.border} ${dk ? s.bgDark : s.bgLight}
+      flex flex-col items-center gap-3 px-6 py-8
+      transition-colors duration-[330ms]
+    `}>
+      {/* Avatar */}
+      <div className={`
+        w-16 h-16 rounded-full flex items-center justify-center text-3xl flex-shrink-0
+        border-2 ${s.avatarRing}
+        ${dk ? 'bg-white/5' : 'bg-white'}
+      `}>
+        {avatar
+          ? <span>{avatar}</span>
+          : <span className={`text-xl font-medium ${s.text}`}>{result.name.charAt(0).toUpperCase()}</span>
+        }
+      </div>
+
+      {/* Medal + label */}
+      <div className="flex flex-col items-center gap-0.5">
+        <span className="text-2xl">{s.medal}</span>
+        <span className={`text-[10px] font-medium uppercase tracking-widest ${s.text}`}>{posLabel}</span>
+      </div>
+
+      {/* Name */}
+      <p className={`text-sm font-medium text-center leading-snug ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
+        {result.name}
+      </p>
+
+      {/* Points */}
+      <div className="flex items-baseline gap-1">
+        <span className={`text-xl font-medium ${s.text}`}>{result.totalPoints}</span>
+        <span className={`text-[10px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>pts</span>
+      </div>
+    </div>
+  )
+}
+
+// ─── PODIUM SECTION ───────────────────────────────────────────────────────────
+
+function PodiumSection({
+  top3, theme, competitors,
+  allCategories, genderOptions,
+  categoryFilters, genderFilters,
+  onToggleCategory, onToggleGender, onClearFilters,
+  hasActiveFilters, t,
+}: {
+  top3:             RankResult[]
+  theme:            'light' | 'dark'
+  competitors:      Competitor[]
+  allCategories:    { id: string; name: string }[]
+  genderOptions:    string[]
+  categoryFilters:  string[]
+  genderFilters:    string[]
+  onToggleCategory: (name: string) => void
+  onToggleGender:   (g: string)    => void
+  onClearFilters:   () => void
+  hasActiveFilters: boolean
+  t:                (typeof translations)[Language]
+}) {
+  const dk = theme === 'dark'
+
+  const first  = top3[0] ?? null
+  const second = top3[1] ?? null
+  const third  = top3[2] ?? null
+
+  return (
+    <section className={`mb-8 rounded border ${dk ? 'bg-white/[0.02] border-white/10' : 'bg-[#F9F9F9] border-[#EEEEEE]'} p-6`}>
+
+      {/* Section header */}
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <p className={`text-[10px] font-medium uppercase tracking-widest mb-1 text-[#7F8BAD]`}>
+            {t.podiumFinalResults}
+          </p>
+          <h2 className={`text-lg font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
+            {t.podiumWinners}
+          </h2>
+        </div>
+        {hasActiveFilters && (
+          <span className={`text-[10px] font-medium px-2.5 py-1 rounded border ${dk ? 'border-[#7F8BAD]/20 text-[#7F8BAD] bg-[#7F8BAD]/5' : 'border-[#7F8BAD]/20 text-[#7F8BAD] bg-[#7F8BAD]/5'}`}>
+            {t.podiumFilterHint}
+          </span>
+        )}
+      </div>
+
+      {/* Filter chips */}
+      {(allCategories.length > 0 || genderOptions.length > 0) && (
+        <div className={`mb-6 pb-5 border-b ${dk ? 'border-white/5' : 'border-[#EEEEEE]'} space-y-2.5`}>
+          {allCategories.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`text-xs font-medium w-16 flex-shrink-0 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
+                {t.category}
+              </span>
+              {allCategories.map(cat => (
+                <FilterChip
+                  key={cat.id}
+                  label={cat.name}
+                  active={categoryFilters.includes(cat.name)}
+                  theme={theme}
+                  onClick={() => onToggleCategory(cat.name)}
+                />
+              ))}
+            </div>
+          )}
+          {genderOptions.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`text-xs font-medium w-16 flex-shrink-0 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
+                {t.gender}
+              </span>
+              {genderOptions.map(g => (
+                <FilterChip
+                  key={g}
+                  label={g}
+                  active={genderFilters.includes(g)}
+                  theme={theme}
+                  onClick={() => onToggleGender(g)}
+                />
+              ))}
+            </div>
+          )}
+          {hasActiveFilters && (
+            <button
+              onClick={onClearFilters}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium transition-colors duration-[330ms] ${dk ? 'text-red-400 bg-red-400/10 hover:bg-red-400/20' : 'text-red-500 bg-red-50 hover:bg-red-100'}`}
+            >
+              <X size={10} /> {t.clearAll}
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Podium — desktop: [2nd · 1st · 3rd] with 1st elevated; mobile: [1st · 2nd · 3rd] */}
+      {top3.length === 0 ? (
+        <div className={`text-center py-10 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
+          <Trophy size={32} className="mx-auto mb-2 opacity-30" />
+          <p className="text-sm">{t.noResults}</p>
+        </div>
+      ) : (
+        <>
+          {/* Mobile: stack gold → silver → bronze */}
+          <div className="grid grid-cols-1 gap-3 md:hidden">
+            <PodiumCard result={first}  position={1} theme={theme} competitors={competitors} posLabel={t.podiumFirst}  />
+            <PodiumCard result={second} position={2} theme={theme} competitors={competitors} posLabel={t.podiumSecond} />
+            <PodiumCard result={third}  position={3} theme={theme} competitors={competitors} posLabel={t.podiumThird}  />
+          </div>
+
+          {/* Desktop: [silver · gold · bronze], gold elevated */}
+          <div className="hidden md:grid md:grid-cols-3 md:items-end gap-4">
+            {/* 2nd — normal height */}
+            <PodiumCard result={second} position={2} theme={theme} competitors={competitors} posLabel={t.podiumSecond} />
+            {/* 1st — elevated via negative margin */}
+            <div className="-mt-8">
+              <PodiumCard result={first} position={1} theme={theme} competitors={competitors} posLabel={t.podiumFirst} />
+            </div>
+            {/* 3rd — normal height */}
+            <PodiumCard result={third}  position={3} theme={theme} competitors={competitors} posLabel={t.podiumThird}  />
+          </div>
+        </>
+      )}
+    </section>
+  )
+}
+
 // ─── LEADERBOARD PAGE ─────────────────────────────────────────────────────────
 
 export default function LeaderboardPage({
@@ -70,6 +287,9 @@ export default function LeaderboardPage({
   const [genderFilters,   setGenderFilters]   = useState<string[]>([])
   const [showDownload,    setShowDownload]     = useState(false)
   const downloadRef = useRef<HTMLDivElement>(null)
+
+  const isFinished = competition.status === CompetitionStatus.FINISHED
+                  || competition.status === CompetitionStatus.ARCHIVED
 
   const toggleCategory = (name: string) =>
     setCategoryFilters(prev => prev.includes(name) ? prev.filter(x => x !== name) : [...prev, name])
@@ -275,8 +495,26 @@ export default function LeaderboardPage({
         ))}
       </div>
 
-      {/* Multi-select filters */}
-      {(allCategories.length > 0 || genderOptions.length > 0) && (
+      {/* ── Podium (FINISHED / ARCHIVED only) ── */}
+      {isFinished && (
+        <PodiumSection
+          top3={visible.slice(0, 3)}
+          theme={theme}
+          competitors={competitors}
+          allCategories={allCategories}
+          genderOptions={genderOptions}
+          categoryFilters={categoryFilters}
+          genderFilters={genderFilters}
+          onToggleCategory={toggleCategory}
+          onToggleGender={toggleGender}
+          onClearFilters={() => { setCategoryFilters([]); setGenderFilters([]) }}
+          hasActiveFilters={hasActiveFilters}
+          t={t}
+        />
+      )}
+
+      {/* ── Filters (LIVE only — when FINISHED they live inside PodiumSection) ── */}
+      {!isFinished && (allCategories.length > 0 || genderOptions.length > 0) && (
         <div className="mb-5 space-y-3">
           {allCategories.length > 0 && (
             <div className="flex flex-wrap items-center gap-2">
@@ -326,6 +564,13 @@ export default function LeaderboardPage({
             </div>
           )}
         </div>
+      )}
+
+      {/* ── Filtered count (shown below podium when FINISHED + filters active) ── */}
+      {isFinished && hasActiveFilters && visible.length > 0 && (
+        <p className={`text-xs mb-4 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
+          {t.leaderboardOfClimbers(visible.length, rankings.length)}
+        </p>
       )}
 
       {/* Table */}
