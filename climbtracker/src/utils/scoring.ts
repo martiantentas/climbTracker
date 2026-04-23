@@ -27,8 +27,7 @@ function calcTraditionalPoints(
       (zs === 'with_top'    && completion.topValidated)  ||
       (zs === 'without_top' && !completion.topValidated)
     if (awardZone) {
-      const totalZones = boulder.zoneCount || 1
-      points += Math.floor(difficulty.zonePoints * (zonesReached / totalZones))
+      points += difficulty.zonePoints * zonesReached
     }
   }
   // tie_breaker_only (legacy): zones contribute 0 pts
@@ -98,8 +97,7 @@ function calcZonePoints(
 
   const difficulty = competition.difficultyLevels.find(d => d.id === boulder.difficultyId)
   if (!difficulty) return 0
-  const totalZones = boulder.zoneCount || 1
-  return Math.floor(difficulty.zonePoints * (zonesReached / totalZones))
+  return difficulty.zonePoints * zonesReached
 }
 
 export function calcBoulderPoints(
