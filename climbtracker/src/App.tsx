@@ -201,6 +201,19 @@ function AppInner() {
   const setCompletionsMap = setCompletionsMapRaw
   const setCompetitorsMap = setCompetitorsMapRaw
 
+  // After login commits to state, redirect to any pending invite join.
+  // Must be a useEffect (not inline in the login callback) because navigate()
+  // fires before React flushes the setCurrentUser state update, so the
+  // unauthenticated shell is still rendering and its wildcard catches the URL.
+  useEffect(() => {
+    if (!currentUser) return
+    const pendingCode = localStorage.getItem('ct-pending-join')
+    if (!pendingCode) return
+    localStorage.removeItem('ct-pending-join')
+    goto(`/join/${pendingCode}`, { replace: true })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.id])
+
   const [toast,        setToast]        = useState<{ message: string; visible: boolean }>({ message: '', visible: false })
   const [isMenuOpen,   setIsMenuOpen]   = useState(false)
   const [paymentComp,    setPaymentComp]    = useState<Competition | null>(null)
@@ -625,21 +638,10 @@ function AppInner() {
 
   // ── Unauthenticated shell: Landing + Auth ─────────────────────────────────
   if (!currentUser) {
-    function handleLoginAndRedirect(u: Competitor) {
-      setCurrentUser(u)
-      const pendingCode = localStorage.getItem('ct-pending-join')
-      if (pendingCode) {
-        localStorage.removeItem('ct-pending-join')
-        // Navigate to the join page so the user lands in the join flow
-        navigate(`/${lang}/join/${pendingCode}`, { replace: true })
-      } else {
-        goto('/competitions', { replace: true })
-      }
-    }
     return (
       <Routes>
         <Route path="/"                element={<LandingPage lang={lang} setLang={handleSetLang} />} />
-        <Route path="auth"             element={<AuthPage onLogin={handleLoginAndRedirect} theme={theme} lang={lang} setLang={handleSetLang} />} />
+        <Route path="auth"             element={<AuthPage onLogin={u => { setCurrentUser(u); if (!localStorage.getItem('ct-pending-join')) goto('/competitions', { replace: true }) }} theme={theme} lang={lang} setLang={handleSetLang} />} />
         <Route path="join/:code"       element={<GuestJoinRedirect lang={lang} />} />
         <Route path="results/:compId"  element={<PublicLeaderboardPage competitions={competitions} competitorsMap={competitorsMap} bouldersMap={bouldersMap} completionsMap={completionsMap} />} />
         <Route path="legal"            element={<LegalNoticePage lang={lang} />} />
