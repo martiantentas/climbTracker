@@ -1786,7 +1786,7 @@ export const translations = {
     podiumSecond:           'Segon',
     podiumThird:            'Tercer',
     podiumFilterHint:       'Els filtres canvien el podi',
-    badgesSection:          'Distintius',
+    badgesSection:          'Assoliments',
     badgesNone:             'Sense distintius encara — acaba entre els 3 primers de qualsevol competició per obtenir el primer',
     badgeOverall:           'General',
     badgeYou:               'TU',

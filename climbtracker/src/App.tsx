@@ -163,11 +163,35 @@ function AppInner() {
     else localStorage.removeItem('ct-user')
   }
 
-  const [competitions,   setCompetitions]   = useState<Competition[]>([MOCK_COMPETITION])
-  const [activeCompId,   setActiveCompId]   = useState<string>(MOCK_COMPETITION.id)
-  const [bouldersMap,    setBouldersMap]    = useState<Record<string, Boulder[]>>({ [MOCK_COMPETITION.id]: MOCK_BOULDERS })
-  const [completionsMap, setCompletionsMap] = useState<Record<string, Completion[]>>({ [MOCK_COMPETITION.id]: MOCK_COMPLETIONS })
-  const [competitorsMap, setCompetitorsMap] = useState<Record<string, Competitor[]>>({ [MOCK_COMPETITION.id]: MOCK_COMPETITORS })
+  const [competitions, setCompetitionsRaw] = useState<Competition[]>(() => {
+    try { const s = localStorage.getItem('ct-competitions'); return s ? JSON.parse(s) : [MOCK_COMPETITION] } catch { return [MOCK_COMPETITION] }
+  })
+  const [activeCompId, setActiveCompIdRaw] = useState<string>(() => {
+    try { return localStorage.getItem('ct-active-comp') ?? MOCK_COMPETITION.id } catch { return MOCK_COMPETITION.id }
+  })
+  const [bouldersMap, setBouldersMapRaw] = useState<Record<string, Boulder[]>>(() => {
+    try { const s = localStorage.getItem('ct-boulders'); return s ? JSON.parse(s) : { [MOCK_COMPETITION.id]: MOCK_BOULDERS } } catch { return { [MOCK_COMPETITION.id]: MOCK_BOULDERS } }
+  })
+  const [completionsMap, setCompletionsMapRaw] = useState<Record<string, Completion[]>>(() => {
+    try { const s = localStorage.getItem('ct-completions'); return s ? JSON.parse(s) : { [MOCK_COMPETITION.id]: MOCK_COMPLETIONS } } catch { return { [MOCK_COMPETITION.id]: MOCK_COMPLETIONS } }
+  })
+  const [competitorsMap, setCompetitorsMapRaw] = useState<Record<string, Competitor[]>>(() => {
+    try { const s = localStorage.getItem('ct-competitors'); return s ? JSON.parse(s) : { [MOCK_COMPETITION.id]: MOCK_COMPETITORS } } catch { return { [MOCK_COMPETITION.id]: MOCK_COMPETITORS } }
+  })
+
+  // Persist all app state to localStorage on every change
+  useEffect(() => { localStorage.setItem('ct-competitions', JSON.stringify(competitions)) },   [competitions])
+  useEffect(() => { localStorage.setItem('ct-active-comp', activeCompId) },                   [activeCompId])
+  useEffect(() => { localStorage.setItem('ct-boulders',    JSON.stringify(bouldersMap)) },    [bouldersMap])
+  useEffect(() => { localStorage.setItem('ct-completions', JSON.stringify(completionsMap)) }, [completionsMap])
+  useEffect(() => { localStorage.setItem('ct-competitors', JSON.stringify(competitorsMap)) }, [competitorsMap])
+
+  // Stable setters (proxy the raw setters so call-sites don't change)
+  const setCompetitions   = setCompetitionsRaw
+  const setActiveCompId   = setActiveCompIdRaw
+  const setBouldersMap    = setBouldersMapRaw
+  const setCompletionsMap = setCompletionsMapRaw
+  const setCompetitorsMap = setCompetitorsMapRaw
 
   const [toast,        setToast]        = useState<{ message: string; visible: boolean }>({ message: '', visible: false })
   const [isMenuOpen,   setIsMenuOpen]   = useState(false)
