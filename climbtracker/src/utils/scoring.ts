@@ -2,9 +2,11 @@ import type { Competition, Boulder, Competitor, Completion, RankResult } from '.
 import { ScoringType } from '../types'
 
 // ─── TRADITIONAL SCORING ──────────────────────────────────────────────────────
-// Zone points are independent of topping — they're awarded for reaching a zone
-// regardless of whether the competitor topped the boulder (when zoneScoring =
-// 'adds_to_score'). Top points are only added when topValidated is true.
+// Zone points behaviour depends on zoneScoring setting:
+//   adds_to_score  — zone pts always added regardless of top
+//   with_top       — zone pts only if the boulder was also topped
+//   without_top    — zone pts only if the boulder was NOT topped (consolation)
+//   tie_breaker_only (legacy) — zones never add points
 
 function calcTraditionalPoints(
   completion: Completion,
@@ -16,12 +18,20 @@ function calcTraditionalPoints(
 
   let points = 0
 
-  // Zone points — awarded even without a top when zoneScoring = 'adds_to_score'
-  if (comp.zoneScoring === 'adds_to_score' && (completion.zonesReached ?? 0) > 0) {
-    const totalZones = boulder.zoneCount || 1
-    points += Math.floor(difficulty.zonePoints * (completion.zonesReached / totalZones))
+  // Zone points — see zoneScoring rules above
+  const zonesReached = completion.zonesReached ?? 0
+  if (zonesReached > 0) {
+    const zs = comp.zoneScoring
+    const awardZone =
+      zs === 'adds_to_score'  ||
+      (zs === 'with_top'    && completion.topValidated)  ||
+      (zs === 'without_top' && !completion.topValidated)
+    if (awardZone) {
+      const totalZones = boulder.zoneCount || 1
+      points += Math.floor(difficulty.zonePoints * (zonesReached / totalZones))
+    }
   }
-  // When zoneScoring = 'tie_breaker_only', zones contribute 0 pts (used for tie-breaking only)
+  // tie_breaker_only (legacy): zones contribute 0 pts
 
   // Top points — only when the top has been validated
   if (completion.topValidated) {
@@ -76,12 +86,20 @@ function calcZonePoints(
   boulder:     Boulder,
   competition: Competition,
 ): number {
-  if (competition.zoneScoring !== 'adds_to_score') return 0
-  if ((completion.zonesReached ?? 0) === 0) return 0
+  const zonesReached = completion.zonesReached ?? 0
+  if (zonesReached === 0) return 0
+
+  const zs = competition.zoneScoring
+  const award =
+    zs === 'adds_to_score'  ||
+    (zs === 'with_top'    && completion.topValidated)  ||
+    (zs === 'without_top' && !completion.topValidated)
+  if (!award) return 0
+
   const difficulty = competition.difficultyLevels.find(d => d.id === boulder.difficultyId)
   if (!difficulty) return 0
   const totalZones = boulder.zoneCount || 1
-  return Math.floor(difficulty.zonePoints * (completion.zonesReached / totalZones))
+  return Math.floor(difficulty.zonePoints * (zonesReached / totalZones))
 }
 
 export function calcBoulderPoints(
@@ -163,8 +181,6 @@ export function calculateRankings(
     const flashCount    = mine.filter(c => c.attempts === 1 && c.topValidated).length
     const totalZones    = mine.reduce((sum, c) => sum + (c.zonesReached ?? 0), 0)
     const zoneAttempts  = mine.reduce((sum, c) => sum + c.zoneAttempts, 0)
-
-    const category = competition.traits?.find(t => competitor.traitIds?.[0] === t.id)
 
     return {
       competitorId:  competitor.id,

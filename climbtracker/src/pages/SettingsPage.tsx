@@ -741,17 +741,18 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
         {/* Zone Scoring */}
         <div className="mb-6">
           <label className={labelCls}>{t.zoneScoring}</label>
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2">
             {([
-              { value: 'adds_to_score',    label: t.zoneAddsScore,        desc: t.zoneAddsScoreDesc },
-              { value: 'tie_breaker_only', label: t.zoneTiebreakerOnly,   desc: t.zoneTiebreakerDesc },
+              { value: 'with_top',      label: t.zoneWithTop,      desc: t.zoneWithTopDesc },
+              { value: 'adds_to_score', label: t.zoneAddsScore,    desc: t.zoneAddsScoreDesc },
+              { value: 'without_top',   label: t.zoneWithoutTop,   desc: t.zoneWithoutTopDesc },
             ] as const).map(opt => (
               <button
                 key={opt.value}
                 onClick={() => set('zoneScoring', opt.value)}
-                className={`flex-1 py-3 px-4 rounded text-xs font-medium border transition-colors duration-[330ms] text-left ${draft.zoneScoring === opt.value ? 'bg-[#7F8BAD]/10 text-[#7F8BAD] border-[#7F8BAD]/30' : dk ? 'bg-white/5 text-[#5C5E62] border-white/10 hover:bg-white/10' : 'bg-[#F4F4F4] text-[#8E8E8E] border-[#EEEEEE] hover:bg-[#EEEEEE]'}`}
+                className={`py-3 px-4 rounded text-xs font-medium border transition-colors duration-[330ms] text-left ${draft.zoneScoring === opt.value ? 'bg-[#7F8BAD]/10 text-[#7F8BAD] border-[#7F8BAD]/30' : dk ? 'bg-white/5 text-[#5C5E62] border-white/10 hover:bg-white/10' : 'bg-[#F4F4F4] text-[#8E8E8E] border-[#EEEEEE] hover:bg-[#EEEEEE]'}`}
               >
-                <div className="font-medium mb-1">{opt.label}</div>
+                <div className="font-medium mb-0.5">{opt.label}</div>
                 <div className={`text-[10px] font-normal ${draft.zoneScoring === opt.value ? 'text-[#7F8BAD]/70' : dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{opt.desc}</div>
               </button>
             ))}
@@ -790,26 +791,36 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
         <div className={`p-4 rounded border ${dk ? 'border-white/10 bg-white/[0.02]' : 'border-[#EEEEEE] bg-[#F4F4F4]'}`}>
           <ToggleRow label={t.penalizeAttempts} desc={t.penalizeDesc} value={draft.penalizeAttempts} theme={theme} onChange={v => set('penalizeAttempts', v)} />
           {draft.penalizeAttempts && (
-            <div className={`grid grid-cols-2 gap-4 mt-4 pt-4 border-t ${dk ? 'border-white/5' : 'border-[#EEEEEE]'}`}>
-              <div>
-                <label className={labelCls}>{t.penaltyType}</label>
-                <div className="flex gap-2">
-                  {(['fixed', 'percent'] as const).map(pt => (
-                    <button
-                      key={pt}
-                      onClick={() => set('penaltyType', pt)}
-                      className={`flex-1 py-2 rounded text-xs font-medium border transition-colors duration-[330ms] ${draft.penaltyType === pt ? 'bg-[#7F8BAD]/10 text-[#7F8BAD] border-[#7F8BAD]/30' : dk ? 'bg-white/5 text-[#5C5E62] border-white/10' : 'bg-[#F4F4F4] text-[#8E8E8E] border-[#EEEEEE]'}`}
-                    >
-                      {pt}
-                    </button>
-                  ))}
+            <div className={`mt-4 pt-4 border-t ${dk ? 'border-white/5' : 'border-[#EEEEEE]'}`}>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={labelCls}>{t.penaltyType}</label>
+                  <div className="flex gap-2">
+                    {(['fixed', 'percent'] as const).map(pt => (
+                      <button
+                        key={pt}
+                        onClick={() => set('penaltyType', pt)}
+                        className={`flex-1 py-2 rounded text-xs font-medium border transition-colors duration-[330ms] ${draft.penaltyType === pt ? 'bg-[#7F8BAD]/10 text-[#7F8BAD] border-[#7F8BAD]/30' : dk ? 'bg-white/5 text-[#5C5E62] border-white/10' : 'bg-[#F4F4F4] text-[#8E8E8E] border-[#EEEEEE]'}`}
+                      >
+                        {pt}
+                      </button>
+                    ))}
+                  </div>
                 </div>
+                <InputField
+                  label={draft.penaltyType === 'percent' ? t.penaltyValuePct : t.penaltyValuePts}
+                  value={draft.penaltyValue} type="number"
+                  theme={theme}
+                  onChange={v => set('penaltyValue', Number(v))}
+                />
               </div>
               <InputField
-                label={draft.penaltyType === 'percent' ? t.penaltyValuePct : t.penaltyValuePts}
-                value={draft.penaltyValue} type="number"
+                label={t.minScorePerBoulder}
+                value={draft.minScorePerBoulder ?? 0}
+                type="number" min={0}
                 theme={theme}
-                onChange={v => set('penaltyValue', Number(v))}
+                onChange={v => set('minScorePerBoulder', Number(v))}
+                hint={t.minScorePerBoulderHint}
               />
             </div>
           )}

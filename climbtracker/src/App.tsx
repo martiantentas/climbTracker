@@ -89,6 +89,14 @@ function Guard({ required, currentUser, isOrganizer, canAccessComp, onAccessDeni
 
 // ─── APP ──────────────────────────────────────────────────────────────────────
 
+// Captures the invite code, stores it, then sends the guest to auth.
+// Defined at module level so it's never remounted inside renders.
+function GuestJoinRedirect({ lang }: { lang: Language }) {
+  const { code } = useParams<{ code: string }>()
+  if (code) localStorage.setItem('ct-pending-join', code.toUpperCase())
+  return <Navigate to={`/${lang}/auth`} replace />
+}
+
 // ─── LANG ROUTING ─────────────────────────────────────────────────────────────
 
 const VALID_LANGS: Language[] = ['en', 'es', 'ca']
@@ -617,10 +625,22 @@ function AppInner() {
 
   // ── Unauthenticated shell: Landing + Auth ─────────────────────────────────
   if (!currentUser) {
+    function handleLoginAndRedirect(u: Competitor) {
+      setCurrentUser(u)
+      const pendingCode = localStorage.getItem('ct-pending-join')
+      if (pendingCode) {
+        localStorage.removeItem('ct-pending-join')
+        // Navigate to the join page so the user lands in the join flow
+        navigate(`/${lang}/join/${pendingCode}`, { replace: true })
+      } else {
+        goto('/competitions', { replace: true })
+      }
+    }
     return (
       <Routes>
         <Route path="/"                element={<LandingPage lang={lang} setLang={handleSetLang} />} />
-        <Route path="auth"             element={<AuthPage onLogin={u => { setCurrentUser(u); goto('/competitions', { replace: true }) }} theme={theme} lang={lang} setLang={handleSetLang} />} />
+        <Route path="auth"             element={<AuthPage onLogin={handleLoginAndRedirect} theme={theme} lang={lang} setLang={handleSetLang} />} />
+        <Route path="join/:code"       element={<GuestJoinRedirect lang={lang} />} />
         <Route path="results/:compId"  element={<PublicLeaderboardPage competitions={competitions} competitorsMap={competitorsMap} bouldersMap={bouldersMap} completionsMap={completionsMap} />} />
         <Route path="legal"            element={<LegalNoticePage lang={lang} />} />
         <Route path="privacy"          element={<PrivacyPolicyPage lang={lang} />} />

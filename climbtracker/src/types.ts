@@ -22,8 +22,10 @@ export interface Trait {
 }
 
 export const ZoneScoring = {
-  ADDS_TO_SCORE:    'adds_to_score',
-  TIE_BREAKER_ONLY: 'tie_breaker_only',
+  ADDS_TO_SCORE:    'adds_to_score',    // zone pts always added (no matter if topped or not)
+  TIE_BREAKER_ONLY: 'tie_breaker_only', // legacy: zone 0 pts, tiebreak only
+  WITH_TOP:         'with_top',         // zone pts only if the boulder is also topped
+  WITHOUT_TOP:      'without_top',      // zone pts only if the boulder is NOT topped
 } as const
 export type ZoneScoring = typeof ZoneScoring[keyof typeof ZoneScoring]
 
