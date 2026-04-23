@@ -132,8 +132,11 @@ function AppInner() {
 
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
 
-  // Keep localStorage in sync for redirect preference
-  useEffect(() => { localStorage.setItem('ct-lang', lang) }, [lang])
+  // Keep localStorage and <html lang> in sync
+  useEffect(() => {
+    localStorage.setItem('ct-lang', lang)
+    document.documentElement.lang = lang
+  }, [lang])
 
   // Navigate helper — always prepends the active lang prefix
   const goto = (path: string, opts?: { replace?: boolean }) =>

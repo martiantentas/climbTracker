@@ -138,6 +138,7 @@ export default function NavBar({
           <select
             value={lang}
             onChange={e => setLang(e.target.value as Language)}
+            aria-label="Language"
             className={`
               text-xs font-medium bg-transparent border-none outline-none
               cursor-pointer px-2 py-2 rounded transition-colors duration-[330ms]

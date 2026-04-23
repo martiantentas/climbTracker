@@ -262,10 +262,11 @@ export default function ProfilePage({
             </div>
 
             <div>
-              <label className={`block text-xs font-medium mb-2 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
+              <label htmlFor="profile-gender" className={`block text-xs font-medium mb-2 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
                 {t.gender}
               </label>
               <select
+                id="profile-gender"
                 value={gender}
                 onChange={e => setGender(e.target.value)}
                 className={selectClass}

@@ -131,6 +131,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
               value={lang}
               onChange={e => setLang(e.target.value as Language)}
               className="lp-lang"
+              aria-label="Language"
             >
               <option value="en">EN</option>
               <option value="es">ES</option>
@@ -146,6 +147,8 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
           </div>
         </div>
       </nav>
+
+      <main>
 
       {/* ══ HERO ═════════════════════════════════════════════════════════════ */}
       <section ref={heroRef} style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '100px 24px 80px', position: 'relative', overflow: 'hidden' }}>
@@ -335,7 +338,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
             ] as [string, string, string, string][]).map(([num, title, desc, color]) => (
               <div key={num} style={{ position: 'relative', zIndex: 1 }}>
                 <div style={{ width: 56, height: 56, borderRadius: 10, background: C.bg, border: `1px solid ${color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24, fontWeight: 700, fontSize: 16, color, fontFamily: C.mono }}>{num}</div>
-                <h4 style={{ fontSize: 15, fontWeight: 600, color: C.txt, margin: '0 0 8px', letterSpacing: '-0.01em' }}>{title}</h4>
+                <h3 style={{ fontSize: 15, fontWeight: 600, color: C.txt, margin: '0 0 8px', letterSpacing: '-0.01em' }}>{title}</h3>
                 <p style={{ fontSize: 13, color: C.txtLow, lineHeight: 1.6, margin: 0 }}>{desc}</p>
               </div>
             ))}
@@ -463,6 +466,8 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
           <p style={{ fontSize: 12, color: C.txtLow, margin: 0 }}>© 2026 Ascendia</p>
         </div>
       </footer>
+
+      </main>
     </div>
   )
 }

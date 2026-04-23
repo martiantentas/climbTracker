@@ -246,6 +246,7 @@ export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProp
           <select
             value={lang}
             onChange={e => setLang(e.target.value as Language)}
+            aria-label="Language"
             className="text-xs font-medium bg-transparent border border-white/10 text-[#5C5E62] rounded px-2 py-1 outline-none cursor-pointer hover:border-white/20 transition-colors duration-[330ms]"
           >
             <option value="en">EN</option>
