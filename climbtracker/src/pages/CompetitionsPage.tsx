@@ -168,8 +168,9 @@ export default function CompetitionsPage({
   }
 
   function copyLink(comp: Competition) {
-    const url = `${window.location.origin}${window.location.pathname}#/join/${comp.inviteCode}`
+    const url = `${window.location.origin}${window.location.pathname}#/${lang}/join/${comp.inviteCode}`
     navigator.clipboard.writeText(url)
+      .catch(() => prompt('Copy this link:', url))
     setCopiedId(comp.id)
     setTimeout(() => setCopiedId(null), 2000)
   }
