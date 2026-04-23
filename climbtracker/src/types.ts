@@ -154,6 +154,17 @@ export interface Competition {
   bannedEmails?:      string[]
 }
 
+// ─── BADGE ────────────────────────────────────────────────────────────────────
+
+export interface Badge {
+  id:              string   // `${compId}-${category}-${placement}`
+  competitionId:   string
+  competitionName: string
+  placement:       1 | 2 | 3
+  category:        string   // 'general' | trait name | gender value
+  awardedAt:       number   // ms timestamp
+}
+
 // ─── LEADERBOARD ROW ──────────────────────────────────────────────────────────
 
 export interface RankResult {

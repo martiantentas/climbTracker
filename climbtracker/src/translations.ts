@@ -570,6 +570,10 @@ export const translations = {
     podiumSecond:           'Second',
     podiumThird:            'Third',
     podiumFilterHint:       'Filters change the podium',
+    badgesSection:          'Badges',
+    badgesNone:             'No badges yet — finish in the top 3 of any competition to earn your first',
+    badgeOverall:           'Overall',
+    badgeYou:               'YOU',
 
     // ── Judging page extras ────────────────────────────────────────────────────
     judgingBoulderCount:       (n: number) => `${n} judge-required boulder${n !== 1 ? 's' : ''}`,
@@ -1174,6 +1178,10 @@ export const translations = {
     podiumSecond:           'Segundo',
     podiumThird:            'Tercero',
     podiumFilterHint:       'Los filtros cambian el podio',
+    badgesSection:          'Insignias',
+    badgesNone:             'Sin insignias aún — termina entre los 3 primeros de cualquier competición para obtener la primera',
+    badgeOverall:           'General',
+    badgeYou:               'TÚ',
 
     // ── Judging page extras ────────────────────────────────────────────────────
     judgingBoulderCount:       (n: number) => `${n} boulder${n !== 1 ? 's' : ''} con árbitro`,
@@ -1778,6 +1786,10 @@ export const translations = {
     podiumSecond:           'Segon',
     podiumThird:            'Tercer',
     podiumFilterHint:       'Els filtres canvien el podi',
+    badgesSection:          'Distintius',
+    badgesNone:             'Sense distintius encara — acaba entre els 3 primers de qualsevol competició per obtenir el primer',
+    badgeOverall:           'General',
+    badgeYou:               'TU',
 
     // ── Judging page extras ────────────────────────────────────────────────────
     judgingBoulderCount:       (n: number) => `${n} boulder${n !== 1 ? 's' : ''} amb àrbitre`,

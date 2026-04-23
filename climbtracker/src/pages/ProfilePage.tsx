@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { User, Mail, Edit3, Save, X, Key, Tag, Info } from 'lucide-react'
+import { User, Mail, Edit3, Save, X, Key, Tag, Info, ChevronDown, Award } from 'lucide-react'
 
-import type { Competitor } from '../types'
+import type { Competitor, Badge } from '../types'
 import type { Language } from '../translations'
 import { translations } from '../translations'
 import EmojiAvatarPicker from '../components/EmojiAvatarPicker'
@@ -12,6 +12,7 @@ interface ProfilePageProps {
   currentUser:  Competitor
   theme:        'light' | 'dark'
   lang:         Language
+  badges:       Badge[]
   onJoinByCode: (code: string) => boolean | 'full'
   onSave:       (updated: Competitor) => void
 }
@@ -68,6 +69,7 @@ export default function ProfilePage({
   currentUser,
   theme,
   lang,
+  badges,
   onJoinByCode,
   onSave,
 }: ProfilePageProps) {
@@ -76,7 +78,8 @@ export default function ProfilePage({
 
   const genderOptions = [t.profileMale, t.profileFemale, t.profileNonBinary, t.profilePreferNot]
 
-  const [isEditing,   setIsEditing]   = useState(false)
+  const [isEditing,    setIsEditing]    = useState(false)
+  const [badgesOpen,   setBadgesOpen]   = useState(true)
   const [displayName, setDisplayName] = useState(currentUser.displayName)
   const [email,       setEmail]       = useState(currentUser.email)
   const [gender,      setGender]      = useState(currentUser.gender)
@@ -311,6 +314,78 @@ export default function ProfilePage({
             </p>
           </div>
         </div>
+      </div>
+
+      {/* Badges */}
+      <div className={cardClass}>
+        <button
+          onClick={() => setBadgesOpen(v => !v)}
+          className={`w-full flex items-center justify-between px-6 py-4 border-b transition-colors duration-[330ms]
+            ${dk ? 'border-white/10 hover:bg-white/[0.02]' : 'border-[#EEEEEE] hover:bg-[#F9F9F9]'}`}
+        >
+          <div className="flex items-center gap-2">
+            <Award size={14} className="text-[#7F8BAD]" />
+            <span className={`text-xs font-medium ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
+              {t.badgesSection}
+            </span>
+            {badges.length > 0 && (
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#7F8BAD]/10 text-[#7F8BAD]">
+                {badges.length}
+              </span>
+            )}
+          </div>
+          <ChevronDown size={14} className={`transition-transform duration-[330ms] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'} ${badgesOpen ? 'rotate-180' : ''}`} />
+        </button>
+
+        {badgesOpen && (
+          <div className="p-6">
+            {badges.length === 0 ? (
+              <p className={`text-xs leading-relaxed ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
+                {t.badgesNone}
+              </p>
+            ) : (
+              <div className="space-y-5">
+                {/* Group badges by competition */}
+                {Array.from(
+                  badges.reduce((map, b) => {
+                    const key = b.competitionId
+                    return map.set(key, [...(map.get(key) ?? []), b])
+                  }, new Map<string, Badge[]>())
+                ).map(([, group]) => {
+                  const first = group[0]
+                  return (
+                    <div key={first.competitionId}>
+                      <p className={`text-[10px] font-medium uppercase tracking-wider mb-2.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
+                        {first.competitionName}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {group.map(badge => {
+                          const medal     = badge.placement === 1 ? '🥇' : badge.placement === 2 ? '🥈' : '🥉'
+                          const posLabel  = badge.placement === 1 ? t.podiumFirst : badge.placement === 2 ? t.podiumSecond : t.podiumThird
+                          const catLabel  = badge.category === 'general' ? t.badgeOverall : badge.category
+                          const textColor = badge.placement === 1 ? 'text-amber-500' : badge.placement === 2 ? 'text-[#7F8BAD]' : 'text-orange-600'
+                          const bgColor   = badge.placement === 1
+                            ? dk ? 'bg-amber-400/10 border-amber-400/20'   : 'bg-amber-50 border-amber-200'
+                            : badge.placement === 2
+                            ? dk ? 'bg-[#7F8BAD]/10 border-[#7F8BAD]/20' : 'bg-[#7F8BAD]/5 border-[#7F8BAD]/20'
+                            : dk ? 'bg-orange-900/10 border-orange-700/20' : 'bg-orange-50 border-orange-200'
+                          return (
+                            <div key={badge.id} className={`flex items-center gap-1.5 px-3 py-1.5 rounded border text-xs font-medium ${bgColor} ${textColor}`}>
+                              <span>{medal}</span>
+                              <span>{posLabel}</span>
+                              <span className="opacity-50">·</span>
+                              <span>{catLabel}</span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Join by code */}

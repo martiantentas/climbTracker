@@ -9,12 +9,13 @@ import { translations } from '../translations'
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
 interface LeaderboardPageProps {
-  rankings:     RankResult[]
-  competitors?: Competitor[]
-  competition:  Competition
-  theme:        'light' | 'dark'
-  lang:         Language
-  isOrganizer?: boolean
+  rankings:      RankResult[]
+  competitors?:  Competitor[]
+  competition:   Competition
+  theme:         'light' | 'dark'
+  lang:          Language
+  isOrganizer?:  boolean
+  currentUserId?: string
 }
 
 // ─── FILTER CHIP ─────────────────────────────────────────────────────────────
@@ -279,6 +280,7 @@ export default function LeaderboardPage({
   theme,
   lang,
   isOrganizer = false,
+  currentUserId,
 }: LeaderboardPageProps) {
   const t  = translations[lang]
   const dk = theme === 'dark'
@@ -609,9 +611,16 @@ export default function LeaderboardPage({
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <p className={`font-medium text-sm truncate ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
-                    {result.name}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className={`font-medium text-sm truncate ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
+                      {result.name}
+                    </p>
+                    {result.competitorId === currentUserId && (
+                      <span className="flex-shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#7F8BAD] text-white tracking-wider">
+                        {t.badgeYou}
+                      </span>
+                    )}
+                  </div>
                   <div className={`flex items-center gap-2 text-xs ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
                     <span>BIB #{result.bib}</span>
                     {(() => {

@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { HashRouter, Routes, Route, Navigate, useNavigate, useParams, useLocation } from 'react-router-dom'
 
-import type { Competition, Boulder, Competitor, Completion } from './types'
+import type { Competition, Boulder, Competitor, Completion, Badge } from './types'
 import { CompetitionStatus, ScoringType } from './types'
 import {
   MOCK_COMPETITION, MOCK_BOULDERS, MOCK_COMPETITORS,
@@ -217,6 +217,56 @@ function AppInner() {
       : [],
     [activeCompetition, activeBoulders, activeCompetitors, activeCompletions]
   )
+
+  // ── Badge computation — runs across all FINISHED/ARCHIVED competitions ────
+  const badgesByCompetitor = useMemo(() => {
+    const map = new Map<string, Badge[]>()
+
+    function awardTop3(rows: ReturnType<typeof calculateRankings>, category: string, compId: string, compName: string, endDate: string) {
+      rows.slice(0, 3).forEach((r, idx) => {
+        const placement = (idx + 1) as 1 | 2 | 3
+        const badge: Badge = {
+          id:              `${compId}-${category}-${placement}`,
+          competitionId:   compId,
+          competitionName: compName,
+          placement,
+          category,
+          awardedAt:       new Date(endDate).getTime(),
+        }
+        const existing = map.get(r.competitorId) ?? []
+        if (!existing.some(b => b.id === badge.id)) {
+          map.set(r.competitorId, [...existing, badge])
+        }
+      })
+    }
+
+    for (const comp of competitions) {
+      if (comp.status !== CompetitionStatus.FINISHED && comp.status !== CompetitionStatus.ARCHIVED) continue
+      const boulders    = bouldersMap[comp.id]    ?? []
+      const rivals      = competitorsMap[comp.id] ?? []
+      const compls      = completionsMap[comp.id] ?? []
+      const rows        = calculateRankings(comp, boulders, rivals, compls)
+      if (rows.length === 0) continue
+
+      // Overall
+      awardTop3(rows, 'general', comp.id, comp.name, comp.endDate)
+
+      // Per trait/category
+      for (const trait of comp.traits ?? []) {
+        const filtered = rows.filter(r => rivals.find(c => c.id === r.competitorId)?.traitIds?.includes(trait.id))
+        if (filtered.length > 0) awardTop3(filtered, trait.name, comp.id, comp.name, comp.endDate)
+      }
+
+      // Per gender
+      const genders = [...new Set(rivals.map(c => (c as any).gender).filter(Boolean))] as string[]
+      for (const gender of genders) {
+        const filtered = rows.filter(r => (rivals.find(c => c.id === r.competitorId) as any)?.gender === gender)
+        if (filtered.length > 0) awardTop3(filtered, gender, comp.id, comp.name, comp.endDate)
+      }
+    }
+
+    return map
+  }, [competitions, bouldersMap, competitorsMap, completionsMap])
 
   // ── Premium branding — inject CSS overrides when active competition has branding ──
   useEffect(() => {
@@ -688,6 +738,7 @@ function AppInner() {
             <Route path="profile" element={
               <ProfilePage
                 currentUser={currentUser} theme={theme} lang={lang}
+                badges={badgesByCompetitor.get(currentUser.id) ?? []}
                 onJoinByCode={handleJoinByCode}
                 onSave={updated => {
                   updateAuthUser(updated, currentUser.email)
@@ -744,7 +795,7 @@ function AppInner() {
 
             <Route path="leaderboard" element={
               <Guard required="any" currentUser={currentUser} isOrganizer={isOrganizer} canAccessComp={canAccessActiveComp} onAccessDenied={showToast}>
-                <LeaderboardPage rankings={rankings} competitors={activeCompetitors} competition={activeCompetition} theme={theme} lang={lang} isOrganizer={isOrganizer} />
+                <LeaderboardPage rankings={rankings} competitors={activeCompetitors} competition={activeCompetition} theme={theme} lang={lang} isOrganizer={isOrganizer} currentUserId={currentUser.id} />
               </Guard>
             } />
 
