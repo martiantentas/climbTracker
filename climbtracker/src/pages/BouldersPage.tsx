@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
-import { Plus, SlidersHorizontal, Lock, Mountain } from 'lucide-react'
+import { Plus, SlidersHorizontal, Lock, Mountain, ChevronDown, Layers } from 'lucide-react'
+import { motion, AnimatePresence } from 'motion/react'
 
 import type { Boulder, Competition, Competitor, Completion, AttemptTracking } from '../types'
 import { translations } from '../translations'
@@ -24,6 +25,7 @@ interface BouldersPageProps {
 
 type FilterStatus = 'all' | 'completed' | 'incomplete'
 type SortKey      = 'number' | 'difficulty'
+type GroupBy      = 'none' | 'color' | 'difficulty'
 
 function resolveTracking(boulder: Boulder, competition: Competition): AttemptTracking {
   if (boulder.isPuntuable) return 'count'
@@ -46,9 +48,10 @@ export default function BouldersPage({
 
   const [filter,       setFilter]       = useState<FilterStatus>('all')
   const [sortBy,       setSortBy]       = useState<SortKey>('number')
+  const [groupBy,      setGroupBy]      = useState<GroupBy>('none')
   const [search,       setSearch]       = useState('')
   const [modalBoulder, setModalBoulder] = useState<Boulder | null | 'new'>(null)
-
+  const [openGroups,   setOpenGroups]   = useState<Record<string, boolean>>({})
   const [pendingDelete, setPendingDelete] = useState<Boulder | null>(null)
 
   const myCompletions = useMemo(() =>
@@ -159,6 +162,41 @@ export default function BouldersPage({
   const toppedCount   = myCompletions.filter(c => c.topValidated).length
   const flashCount    = myCompletions.filter(c => c.attempts === 1 && c.topValidated).length
   const effectivelyLocked = competition.isLocked || (!isOrganizer && !canSelfScore)
+
+  // ── Group boulders for competitor view ──────────────────────────────────────
+  const boulderGroups = useMemo((): { key: string; label: string; color?: string; boulders: Boulder[] }[] => {
+    if (groupBy === 'none') return [{ key: 'all', label: '', boulders: visibleBoulders }]
+
+    const groups: Map<string, { label: string; color?: string; boulders: Boulder[] }> = new Map()
+
+    if (groupBy === 'color') {
+      for (const b of visibleBoulders) {
+        const key = b.color || '__other__'
+        if (!groups.has(key)) groups.set(key, { label: b.color || t.groupOther, color: b.color || undefined, boulders: [] })
+        groups.get(key)!.boulders.push(b)
+      }
+    } else {
+      // difficulty
+      for (const b of visibleBoulders) {
+        const diff = competition.difficultyLevels.find(d => d.id === b.difficultyId)
+        const key  = diff ? diff.id : '__other__'
+        const lbl  = diff ? `${diff.label} (${diff.level})` : t.groupOther
+        if (!groups.has(key)) groups.set(key, { label: lbl, boulders: [] })
+        groups.get(key)!.boulders.push(b)
+      }
+    }
+
+    return Array.from(groups.entries()).map(([key, val]) => ({ key, ...val }))
+  }, [groupBy, visibleBoulders, competition.difficultyLevels, t.groupOther])
+
+  function isGroupOpen(key: string) {
+    // Default: all groups open
+    return openGroups[key] !== false
+  }
+
+  function toggleGroup(key: string) {
+    setOpenGroups(prev => ({ ...prev, [key]: !isGroupOpen(key) }))
+  }
 
   const dk = theme === 'dark'
 
@@ -271,7 +309,7 @@ export default function BouldersPage({
         )}
       </div>
 
-      {/* ── Filter + sort pills ── */}
+      {/* ── Filter + sort + group pills ── */}
       <div className="flex items-center gap-2 mb-6 flex-wrap">
         {!isOrganizer && (
           <>
@@ -289,9 +327,20 @@ export default function BouldersPage({
             {s === 'number' ? t.number : t.difficulty}
           </button>
         ))}
+        {!isOrganizer && (
+          <>
+            <div className={`w-px h-4 mx-1 ${dk ? 'bg-white/10' : 'bg-[#EEEEEE]'}`} />
+            <span className={`text-xs font-medium ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.groupBy}:</span>
+            {(['none', 'color', 'difficulty'] as GroupBy[]).map(g => (
+              <button key={g} onClick={() => { setGroupBy(g); setOpenGroups({}) }} className={pillCls(groupBy === g)}>
+                {g === 'none' ? t.groupByNone : g === 'color' ? t.groupByColor : t.groupByDiff}
+              </button>
+            ))}
+          </>
+        )}
       </div>
 
-      {/* ── Grid ── */}
+      {/* ── Grid / Grouped view ── */}
       {visibleBoulders.length === 0 ? (
         <div className={`text-center py-20 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
           <Mountain size={40} className="mx-auto mb-4 opacity-40" />
@@ -307,8 +356,11 @@ export default function BouldersPage({
             </button>
           )}
         </div>
-      ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+      ) : groupBy === 'none' ? (
+        <motion.div
+          layout
+          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"
+        >
           {visibleBoulders.map(boulder => (
             <BoulderCard
               key={boulder.id}
@@ -330,6 +382,84 @@ export default function BouldersPage({
               onDelete={isOrganizer ? () => handleDeleteBoulder(boulder.id) : undefined}
             />
           ))}
+        </motion.div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {boulderGroups.map(group => {
+            const open = isGroupOpen(group.key)
+            return (
+              <div
+                key={group.key}
+                className={`rounded border overflow-hidden ${dk ? 'border-white/[0.08]' : 'border-[#EEEEEE]'}`}
+              >
+                {/* Group header */}
+                <button
+                  onClick={() => toggleGroup(group.key)}
+                  className={`w-full flex items-center justify-between px-4 py-3 transition-colors duration-[330ms] ${dk ? 'bg-white/[0.03] hover:bg-white/[0.05]' : 'bg-[#F4F4F4] hover:bg-[#ECECEC]'}`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    {groupBy === 'color' && group.color && (
+                      <span
+                        className="w-3 h-3 rounded-full flex-shrink-0 ring-1 ring-black/10"
+                        style={{ background: group.color }}
+                      />
+                    )}
+                    <span className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
+                      {group.label}
+                    </span>
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${dk ? 'bg-white/[0.06] text-[#5C5E62]' : 'bg-white text-[#8E8E8E]'}`}>
+                      {group.boulders.length}
+                    </span>
+                  </div>
+                  <motion.span
+                    animate={{ rotate: open ? 180 : 0 }}
+                    transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+                    className="flex-shrink-0"
+                  >
+                    <ChevronDown size={15} className={dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'} />
+                  </motion.span>
+                </button>
+
+                {/* Animated content */}
+                <AnimatePresence initial={false}>
+                  {open && (
+                    <motion.div
+                      key="content"
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
+                      style={{ overflow: 'hidden' }}
+                    >
+                      <div className={`p-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 ${dk ? 'bg-[#121212]' : 'bg-white'}`}>
+                        {group.boulders.map(boulder => (
+                          <BoulderCard
+                            key={boulder.id}
+                            boulder={boulder}
+                            completion={myCompletions.find(c => c.boulderId === boulder.id)}
+                            difficulty={competition.difficultyLevels?.find(d => d.id === boulder.difficultyId)}
+                            points={getPoints(boulder)}
+                            basePoints={getBasePoints(boulder)}
+                            penalizeAttempts={competition.penalizeAttempts}
+                            penaltyLabel={getPenaltyLabel(boulder)}
+                            isOrganizer={isOrganizer}
+                            isLocked={effectivelyLocked}
+                            theme={theme}
+                            lang={lang}
+                            attemptTracking={resolveTracking(boulder, competition)}
+                            maxFixedAttempts={competition.maxFixedAttempts}
+                            onToggle={handleToggle}
+                            onEdit={isOrganizer ? b => setModalBoulder(b) : undefined}
+                            onDelete={isOrganizer ? () => handleDeleteBoulder(boulder.id) : undefined}
+                          />
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )
+          })}
         </div>
       )}
 
