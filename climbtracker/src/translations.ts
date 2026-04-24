@@ -669,10 +669,10 @@ export const translations = {
     boulders:       'Bloques',
     leaderboard:    'Clasificación',
     analytics:      'Estadísticas',
-    rules:          'Reglas del Evento',
+    rules:          'Normas',
     settings:       'Configuración',
     profile:        'Perfil',
-    judging:        'Jueces',
+    judging:        'Árbitro',
     users:          'Usuarios',
     myCompetitions: 'Eventos',
 
@@ -1324,7 +1324,7 @@ export const translations = {
     rules:          'Normes',
     settings:       'Configuració',
     profile:        'Perfil',
-    judging:        'Jutges',
+    judging:        'Àrbitre',
     users:          'Usuaris',
     myCompetitions: 'Esdeveniments',
 
