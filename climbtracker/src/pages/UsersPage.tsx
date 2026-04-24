@@ -4,20 +4,18 @@ import { Search, Shield, User, Trash2, ChevronDown, X, Save, Hash, AlertCircle, 
 import type { Competitor, Competition } from '../types'
 import type { Language } from '../translations'
 import { translations } from '../translations'
-import UndoToast from '../components/UndoToast'
-
 interface UsersPageProps {
-  competitors:  Competitor[]
-  competition:  Competition
-  currentUser:  Competitor
-  theme:        'light' | 'dark'
-  lang:         Language
-  viewOnly?:    boolean
-  onUpdateRole: (competitorId: string, role: 'competitor' | 'judge' | 'organizer') => void
-  onUpdateBib:  (competitorId: string, bib: number) => void
-  onRemoveUser: (competitorId: string) => void
-  onBanUser:    (competitorId: string) => void
-  onUnbanUser:  (email: string) => void
+  competitors:     Competitor[]
+  competition:     Competition
+  currentUser:     Competitor
+  theme:           'light' | 'dark'
+  lang:            Language
+  viewOnly?:       boolean
+  onUpdateRole:    (competitorId: string, role: 'competitor' | 'judge' | 'organizer') => void
+  onUpdateBib:     (competitorId: string, bib: number) => void
+  onInitiateRemove:(competitor: Competitor) => void
+  onInitiateBan:   (competitor: Competitor) => void
+  onUnbanUser:     (email: string) => void
 }
 
 function RoleBadge({ role, theme, labels }: { role?: string; theme: 'light' | 'dark'; labels: Record<string, string> }) {
@@ -269,16 +267,14 @@ function UserDetailModal({ competitor, allCompetitors, competition, isMe, viewOn
   )
 }
 
-export default function UsersPage({ competitors, competition, currentUser, theme, lang, viewOnly = false, onUpdateRole, onUpdateBib, onRemoveUser, onBanUser, onUnbanUser }: UsersPageProps) {
+export default function UsersPage({ competitors, competition, currentUser, theme, lang, viewOnly = false, onUpdateRole, onUpdateBib, onInitiateRemove, onInitiateBan, onUnbanUser }: UsersPageProps) {
   const t  = translations[lang]
   const dk = theme === 'dark'
   const labels = { competitor: t.roleCompetitor, judge: t.roleJudge, organizer: t.roleOrganizer }
 
-  const [tab,           setTab]           = useState<'active' | 'banned'>('active')
-  const [search,        setSearch]        = useState('')
-  const [selectedUser,  setSelectedUser]  = useState<Competitor | null>(null)
-  const [pendingRemove, setPendingRemove] = useState<Competitor | null>(null)
-  const [pendingBan,    setPendingBan]    = useState<Competitor | null>(null)
+  const [tab,          setTab]          = useState<'active' | 'banned'>('active')
+  const [search,       setSearch]       = useState('')
+  const [selectedUser, setSelectedUser] = useState<Competitor | null>(null)
   const [confirmUnban,  setConfirmUnban]  = useState<string | null>(null)
 
   const bannedEmails = competition.bannedEmails ?? []
@@ -497,33 +493,12 @@ export default function UsersPage({ competitors, competition, currentUser, theme
           labels={labels}
           onUpdateRole={(id, role) => { onUpdateRole(id, role); setSelectedUser(prev => prev ? { ...prev, role } : null) }}
           onUpdateBib={(id, bib)   => { onUpdateBib(id, bib);   setSelectedUser(prev => prev ? { ...prev, bibNumber: bib } : null) }}
-          onRemove={() => { setPendingRemove(selectedUser); setSelectedUser(null) }}
-          onBan={() => { setPendingBan(selectedUser); setSelectedUser(null) }}
+          onRemove={() => { onInitiateRemove(selectedUser); setSelectedUser(null) }}
+          onBan={() => { onInitiateBan(selectedUser); setSelectedUser(null) }}
           onClose={() => setSelectedUser(null)}
         />
       )}
 
-      {pendingRemove && (
-        <UndoToast
-          key={pendingRemove.id}
-          message={`${pendingRemove.displayName} removed from competition`}
-          theme={theme}
-          onUndo={() => setPendingRemove(null)}
-          onCommit={() => { onRemoveUser(pendingRemove.id); setPendingRemove(null) }}
-          onDismiss={() => setPendingRemove(null)}
-        />
-      )}
-
-      {pendingBan && (
-        <UndoToast
-          key={`ban-${pendingBan.id}`}
-          message={`${pendingBan.displayName} banned from event`}
-          theme={theme}
-          onUndo={() => setPendingBan(null)}
-          onCommit={() => { onBanUser(pendingBan.id); setPendingBan(null) }}
-          onDismiss={() => setPendingBan(null)}
-        />
-      )}
     </div>
   )
 }

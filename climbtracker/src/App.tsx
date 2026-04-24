@@ -12,6 +12,7 @@ import type { Language } from './translations'
 import { translations } from './translations'
 import NavBar from './components/NavBar'
 import Toast from './components/Toast'
+import UndoToast from './components/UndoToast'
 import MobileMenu from './components/MobileMenu'
 import ProtectedRoute from './components/ProtectedRoute'
 import BouldersPage from './pages/BouldersPage'
@@ -218,10 +219,12 @@ function AppInner() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser?.id])
 
-  const [toast,        setToast]        = useState<{ message: string; visible: boolean }>({ message: '', visible: false })
-  const [isMenuOpen,   setIsMenuOpen]   = useState(false)
-  const [paymentComp,    setPaymentComp]    = useState<Competition | null>(null)
-  const [joinProfileComp, setJoinProfileComp] = useState<Competition | null>(null) // show profile modal after joining
+  const [toast,             setToast]             = useState<{ message: string; visible: boolean }>({ message: '', visible: false })
+  const [isMenuOpen,        setIsMenuOpen]        = useState(false)
+  const [paymentComp,       setPaymentComp]       = useState<Competition | null>(null)
+  const [joinProfileComp,   setJoinProfileComp]   = useState<Competition | null>(null)
+  const [pendingRemoveUser, setPendingRemoveUser] = useState<Competitor | null>(null)
+  const [pendingBanUser,    setPendingBanUser]    = useState<Competitor | null>(null)
 
   // ── Derived ──────────────────────────────────────────────────────────────────
   const activeCompetition = useMemo(() =>
@@ -714,6 +717,28 @@ function AppInner() {
 
         <Toast message={toast.message} visible={toast.visible} theme={theme} />
 
+        {pendingRemoveUser && (
+          <UndoToast
+            key={pendingRemoveUser.id}
+            message={`${pendingRemoveUser.displayName} removed from competition`}
+            theme={theme}
+            onUndo={() => setPendingRemoveUser(null)}
+            onCommit={() => { handleRemoveUser(pendingRemoveUser.id); setPendingRemoveUser(null) }}
+            onDismiss={() => setPendingRemoveUser(null)}
+          />
+        )}
+
+        {pendingBanUser && (
+          <UndoToast
+            key={`ban-${pendingBanUser.id}`}
+            message={`${pendingBanUser.displayName} banned from event`}
+            theme={theme}
+            onUndo={() => setPendingBanUser(null)}
+            onCommit={() => { handleBanUser(pendingBanUser.id); setPendingBanUser(null) }}
+            onDismiss={() => setPendingBanUser(null)}
+          />
+        )}
+
         {/* Payment modal — shown when organizer tries to publish a draft competition */}
         {paymentComp && (
           <PaymentModal
@@ -907,7 +932,9 @@ function AppInner() {
                     currentUser={currentUser} theme={theme} lang={lang}
                     viewOnly={isJudge}
                     onUpdateRole={handleUpdateRole} onUpdateBib={handleUpdateBib}
-                    onRemoveUser={handleRemoveUser} onBanUser={handleBanUser} onUnbanUser={handleUnbanUser}
+                    onInitiateRemove={c => setPendingRemoveUser(c)}
+                    onInitiateBan={c => setPendingBanUser(c)}
+                    onUnbanUser={handleUnbanUser}
                   />
                 : <Navigate to={`/${lang}/competitions`} replace />
             } />
