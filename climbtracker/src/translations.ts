@@ -93,7 +93,7 @@ export const translations = {
     dynamic:        'Dynamic (1000)',
     competition:    'Competition',
     managementMode: 'Manage Boulders',
-    editRules:      'Edit Rules',
+    editRules:      'Edit',
     addCategory:    'New Category',
 
     settingsGeneral:        'General',
@@ -730,7 +730,7 @@ export const translations = {
     dynamic:        'Dinámico (1000)',
     competition:    'Competición',
     managementMode: 'Gestionar Bloques',
-    editRules:      'Editar Reglas',
+    editRules:      'Editar',
     addCategory:    'Nueva Categoría',
 
     settingsGeneral:        'General',
@@ -1277,7 +1277,7 @@ export const translations = {
     boulders:       'Blocs',
     leaderboard:    'Classificació',
     analytics:      'Estadístiques',
-    rules:          'Regles de la Compe',
+    rules:          'Normes de la Compe',
     settings:       'Configuració',
     profile:        'Perfil',
     judging:        'Jutges',
@@ -1297,7 +1297,7 @@ export const translations = {
     searchCompetitor: 'Cerca per nom o BIB…',
 
     // ── Actions ────────────────────────────────────────────────────────────────
-    save:     'Desar Canvis',
+    save:     'Guardar',
     cancel:   'Cancel·lar',
     confirm:  'Confirmar',
     logout:   'Sortir',
@@ -1360,7 +1360,7 @@ export const translations = {
     dynamic:        'Dinàmic (1000)',
     competition:    'Competició',
     managementMode: 'Gestionar Blocs',
-    editRules:      'Editar Regles',
+    editRules:      'Editar',
     addCategory:    'Nova Categoria',
 
     settingsGeneral:        'General',
@@ -1542,9 +1542,9 @@ export const translations = {
     // ── Invite / join ──────────────────────────────────────────────────────────
     inviteCode:        "Codi d'Invitació",
     joinWithCode:      'Uneix-te amb Codi',
-    enterInviteCode:   'Introdueix el codi de 6 dígits',
+    enterInviteCode:   'Introduir codi...',
     invalidCode:       'Codi invàlid. Torna-ho a intentar.',
-    joinByCodeAction:  'Accedir a la Competició',
+    joinByCodeAction:  'Accedir',
     copyLink:          "Copiar Enllaç d'Invitació",
     linkCopied:        'Enllaç copiat!',
     inviteWorkflow:    'Convidar Competidors',
@@ -1881,8 +1881,8 @@ export const translations = {
     // ── Rules page extras ──────────────────────────────────────────────────────
     rulesMarkdownHint: 'Markdown · ### Encapçalament · **negreta** · - llista · 1. numerat',
     rulesPreview:      'Previsualització',
-    rulesPlaceholder:  'Escriu les regles aquí fent servir markdown...',
-    rulesEmpty:        "No s'han establert regles per a aquesta competició encara.",
+    rulesPlaceholder:  'Escriu les normes aquí...',
+    rulesEmpty:        "No s'han establert normes per a aquesta competició encara.",
     rulesViewingIn:    (lang: string) => `Veient regles en: ${lang} · Els canvis es desen només en l'idioma actiu`,
 
     // ── Event profile ──────────────────────────────────────────────────────────
