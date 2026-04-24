@@ -199,6 +199,20 @@ function AppInner() {
   useEffect(() => { localStorage.setItem('ct-competitors', JSON.stringify(competitorsMap)) }, [competitorsMap])
   useEffect(() => { localStorage.setItem('ct-waitlist',    JSON.stringify(waitlistMap)) },    [waitlistMap])
 
+  // Sync state when another tab/window writes to localStorage (enables real-time public results)
+  useEffect(() => {
+    function onStorage(e: StorageEvent) {
+      try {
+        if (e.key === 'ct-competitions' && e.newValue) setCompetitionsRaw(JSON.parse(e.newValue))
+        if (e.key === 'ct-boulders'     && e.newValue) setBouldersMapRaw(JSON.parse(e.newValue))
+        if (e.key === 'ct-completions'  && e.newValue) setCompletionsMapRaw(JSON.parse(e.newValue))
+        if (e.key === 'ct-competitors'  && e.newValue) setCompetitorsMapRaw(JSON.parse(e.newValue))
+      } catch { /* ignore malformed data */ }
+    }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [])
+
   // Stable setters (proxy the raw setters so call-sites don't change)
   const setCompetitions   = setCompetitionsRaw
   const setActiveCompId   = setActiveCompIdRaw

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Trophy, MapPin, Calendar, Key, Trash2, LogIn, Settings, X, Lock, Copy, Check, Shield, Clock, QrCode } from 'lucide-react'
+import { Plus, Trophy, MapPin, Calendar, Key, Trash2, LogIn, Settings, X, Lock, Copy, Check, Shield, Clock, QrCode, BarChart2 } from 'lucide-react'
 import type { Competition, Competitor } from '../types'
 import { CompetitionStatus } from '../types'
 import { getStatusColor } from '../App'
@@ -312,6 +312,17 @@ export default function CompetitionsPage({
                 <QrCode size={12} /> {t.qrButton}
               </button>
             </>
+          )}
+
+          {(comp.status === CompetitionStatus.LIVE || comp.status === CompetitionStatus.FINISHED) && (
+            <a
+              href={`${window.location.origin}${window.location.pathname}#/${lang}/results/${comp.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`flex items-center gap-1.5 px-3 py-2 rounded text-xs font-medium transition-colors duration-[330ms] ${dk ? 'bg-white/5 text-[#8E8E8E] hover:bg-white/10 border border-white/10' : 'bg-[#F4F4F4] text-[#5C5E62] hover:bg-[#EEEEEE] border border-[#EEEEEE]'}`}
+            >
+              <BarChart2 size={12} /> {t.publicViewResults}
+            </a>
           )}
 
           {registered && !isMine && (
