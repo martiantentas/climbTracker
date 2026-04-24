@@ -53,6 +53,8 @@ export interface Boulder {
   tags:                     string[]
   attemptTrackingOverride?: AttemptTracking
   flashBonus?:              number  // extra pts awarded when topped on the first attempt
+  penaltyOverride?:         'inherit' | 'penalize' | 'no_penalty'
+  penaltyValueOverride?:    number  // overrides comp.penaltyValue when penaltyOverride === 'penalize'
 }
 
 // ─── COMPETITOR ───────────────────────────────────────────────────────────────

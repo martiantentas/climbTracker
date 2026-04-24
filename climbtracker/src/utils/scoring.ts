@@ -36,12 +36,19 @@ function calcTraditionalPoints(
   if (completion.topValidated) {
     let topPoints = difficulty.basePoints
 
-    if (comp.penalizeAttempts && completion.attempts > 1) {
+    const shouldPenalize = boulder.penaltyOverride === 'penalize'
+      ? true
+      : boulder.penaltyOverride === 'no_penalty'
+        ? false
+        : comp.penalizeAttempts
+    const penaltyValue = boulder.penaltyValueOverride ?? comp.penaltyValue
+
+    if (shouldPenalize && completion.attempts > 1) {
       if (comp.penaltyType === 'fixed') {
-        topPoints -= (completion.attempts - 1) * comp.penaltyValue
+        topPoints -= (completion.attempts - 1) * penaltyValue
       } else {
         // Compound decay: each extra attempt reduces by penaltyValue% of the running total
-        topPoints = difficulty.basePoints * Math.pow(1 - comp.penaltyValue / 100, completion.attempts - 1)
+        topPoints = difficulty.basePoints * Math.pow(1 - penaltyValue / 100, completion.attempts - 1)
       }
     }
 
@@ -120,12 +127,19 @@ export function calcBoulderPoints(
     let topPoints = calcDynamicPointsForBoulder(boulder, allCompletions, competition)
 
     // Apply attempt penalty to the competitor's personal share if configured
-    if (competition.penalizeAttempts && completion.attempts > 1) {
+    const shouldPenalize = boulder.penaltyOverride === 'penalize'
+      ? true
+      : boulder.penaltyOverride === 'no_penalty'
+        ? false
+        : competition.penalizeAttempts
+    const penaltyValue = boulder.penaltyValueOverride ?? competition.penaltyValue
+
+    if (shouldPenalize && completion.attempts > 1) {
       if (competition.penaltyType === 'fixed') {
-        topPoints -= (completion.attempts - 1) * competition.penaltyValue
+        topPoints -= (completion.attempts - 1) * penaltyValue
       } else {
         // Compound decay: each extra attempt reduces by penaltyValue% of the running total
-        topPoints = topPoints * Math.pow(1 - competition.penaltyValue / 100, completion.attempts - 1)
+        topPoints = topPoints * Math.pow(1 - penaltyValue / 100, completion.attempts - 1)
       }
       topPoints = Math.max(topPoints, competition.minDynamicPoints ?? 0)
     }

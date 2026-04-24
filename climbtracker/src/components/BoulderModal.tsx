@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { X, Save, Trash2, AlertCircle } from 'lucide-react'
 import type { Boulder, Competition, AttemptTracking } from '../types'
+type PenaltyOverride = 'inherit' | 'penalize' | 'no_penalty'
 import type { Language } from '../translations'
 import { translations } from '../translations'
 
@@ -60,6 +61,12 @@ export default function BoulderModal({
   const [trackingOverride, setTrackingOverride] = useState<AttemptTracking | 'inherit'>(
     boulder?.attemptTrackingOverride ?? 'inherit'
   )
+  const [penaltyOverride, setPenaltyOverride] = useState<PenaltyOverride>(
+    boulder?.penaltyOverride ?? 'inherit'
+  )
+  const [penaltyValueOverride, setPenaltyValueOverride] = useState<number | ''>(
+    boulder?.penaltyValueOverride ?? ''
+  )
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   useEffect(() => {
@@ -94,6 +101,8 @@ export default function BoulderModal({
       zoneCount,
       flashBonus:              flashBonus === '' ? undefined : flashBonus,
       attemptTrackingOverride: trackingOverride === 'inherit' ? undefined : trackingOverride,
+      penaltyOverride:         penaltyOverride === 'inherit' ? undefined : penaltyOverride,
+      penaltyValueOverride:    penaltyOverride === 'penalize' && penaltyValueOverride !== '' ? penaltyValueOverride : undefined,
     })
     onClose()
   }
@@ -286,6 +295,64 @@ export default function BoulderModal({
                 </button>
               )}
             </div>
+          </div>
+
+          {/* Penalty override */}
+          <div className="mb-5">
+            <label className={labelCls}>{t.modalPenaltyOverride}</label>
+            <p className={`text-[11px] mb-3 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
+              {t.modalPenaltyOverrideDesc}
+            </p>
+            <div className="flex flex-col gap-2">
+              {([
+                { value: 'inherit'    as PenaltyOverride, label: t.modalPenaltyInherit, desc: t.modalPenaltyInheritDesc },
+                { value: 'penalize'   as PenaltyOverride, label: t.modalPenaltyAlways,  desc: t.modalPenaltyAlwaysDesc  },
+                { value: 'no_penalty' as PenaltyOverride, label: t.modalPenaltyNever,   desc: t.modalPenaltyNeverDesc   },
+              ]).map(opt => (
+                <button key={opt.value} onClick={() => setPenaltyOverride(opt.value)}
+                  className={`text-left px-4 py-3 rounded border transition-colors duration-[330ms] ${penaltyOverride === opt.value ? 'bg-[#7F8BAD]/10 border-[#7F8BAD]/30' : dk ? 'bg-white/5 border-white/10 hover:bg-white/8' : 'bg-[#F4F4F4] border-[#EEEEEE] hover:bg-[#EEEEEE]'}`}>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${penaltyOverride === opt.value ? 'border-[#7F8BAD] bg-[#7F8BAD]' : dk ? 'border-[#5C5E62]' : 'border-[#D0D1D2]'}`}>
+                      {penaltyOverride === opt.value && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                    </div>
+                    <div>
+                      <p className={`text-xs font-medium ${penaltyOverride === opt.value ? 'text-[#7F8BAD]' : dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>{opt.label}</p>
+                      <p className={`text-[10px] mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{opt.desc}</p>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {penaltyOverride === 'penalize' && (
+              <div className="mt-3 pl-1">
+                <label className={labelCls}>{t.modalPenaltyValueLabel}</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="number"
+                    min={0}
+                    value={penaltyValueOverride}
+                    placeholder={String(competition.penaltyValue)}
+                    onChange={e => setPenaltyValueOverride(e.target.value === '' ? '' : Math.max(0, Number(e.target.value)))}
+                    className={`${inputCls} w-32`}
+                  />
+                  <span className={`text-xs ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
+                    {competition.penaltyType === 'percent' ? '%' : 'pts'} / attempt
+                  </span>
+                  {penaltyValueOverride !== '' && (
+                    <button
+                      onClick={() => setPenaltyValueOverride('')}
+                      className={`text-xs transition-colors duration-[330ms] ${dk ? 'text-[#5C5E62] hover:text-[#D0D1D2]' : 'text-[#8E8E8E] hover:text-[#393C41]'}`}
+                    >
+                      {t.remove}
+                    </button>
+                  )}
+                </div>
+                <p className={`text-[10px] mt-1.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
+                  {t.modalPenaltyValueHint(competition.penaltyValue, competition.penaltyType)}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Dynamic pot override */}

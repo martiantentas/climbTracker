@@ -87,7 +87,12 @@ export default function BouldersPage({
 
   function getPenaltyLabel(boulder: Boulder): string {
     const completion = myCompletions.find(c => c.boulderId === boulder.id)
-    if (!completion || !competition.penalizeAttempts || completion.attempts <= 1) return ''
+    const shouldPenalize = boulder.penaltyOverride === 'penalize'
+      ? true
+      : boulder.penaltyOverride === 'no_penalty'
+        ? false
+        : competition.penalizeAttempts
+    if (!completion || !shouldPenalize || completion.attempts <= 1) return ''
     const extra = completion.attempts - 1
     if (competition.penaltyType === 'fixed') {
       return `−${extra * competition.penaltyValue} pts`
