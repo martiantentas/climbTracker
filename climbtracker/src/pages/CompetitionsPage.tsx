@@ -106,7 +106,7 @@ function CreateModal({ theme, lang, onSave, onClose }: {
 export default function CompetitionsPage({
   competitions, activeCompId, currentUser, theme, lang,
   onEnter, onManage, onCreate, onDelete, onLeave, onJoinByCode, isRegistered, onJoinSuccess,
-  getCompRole, waitlistMap = {}, onJoinWaitlist, onLeaveWaitlist,
+  getCompRole, waitlistMap = {}, onLeaveWaitlist,
 }: CompetitionsPageProps) {
   const t  = translations[lang]
   const dk = theme === 'dark'

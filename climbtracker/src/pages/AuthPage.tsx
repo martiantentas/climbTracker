@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useGoogleLogin } from '@react-oauth/google'
 import { Eye, EyeOff, ArrowLeft, CheckCircle2 } from 'lucide-react'
 import ascendiaLogo from '../assets/Ascendia.png'
 import type { Competitor, Competition } from '../types'
@@ -112,6 +113,50 @@ export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProp
   const [loading,    setLoading]    = useState(false)
   const [success,    setSuccess]    = useState(false)
   const [pendingUser, setPendingUser] = useState<Competitor | null>(null)
+
+  const loginWithGoogle = useGoogleLogin({
+    onSuccess: async tokenResponse => {
+      setLoading(true)
+      try {
+        const info = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+        }).then(r => r.json()) as {
+          sub: string; name: string; given_name?: string
+          family_name?: string; email: string; picture?: string
+        }
+
+        const existing = findUser(info.email)
+        const user: Competitor = existing ?? (() => {
+          const first = info.given_name  ?? info.name.split(' ')[0] ?? ''
+          const last  = info.family_name ?? info.name.split(' ').slice(1).join(' ') ?? ''
+          const created: Competitor = {
+            id:          `g-${info.sub}`,
+            firstName:   first,
+            lastName:    last,
+            displayName: info.name,
+            email:       info.email.toLowerCase(),
+            avatar:      info.picture,
+            gender:      '',
+            categoryId:  '',
+            traitIds:    [],
+            bibNumber:   0,
+            role:        'competitor',
+          } as any
+          registerUser(created, '')
+          return created
+        })()
+
+        setSuccess(true)
+        setTimeout(() => { onLogin(user); navigate('/competitions', { replace: true }) }, 600)
+      } catch {
+        setErrors({ _global: 'Google sign-in failed. Please try again.' })
+        setLoading(false)
+      }
+    },
+    onError: () => {
+      setErrors({ _global: 'Google sign-in was cancelled or failed.' })
+    },
+  })
 
   useEffect(() => {
     const t = params.get('tab')
@@ -341,16 +386,27 @@ export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProp
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              {['Google', 'Apple'].map(provider => (
-                <button
-                  key={provider}
-                  type="button"
-                  onClick={() => alert(`${provider} ${tr.authForgotComing}`)}
-                  className="py-3 rounded text-sm font-medium border border-white/10 bg-white/[0.04] text-[#5C5E62] hover:border-[#7F8BAD]/30 hover:text-[#D0D1D2] transition-colors duration-[330ms]"
-                >
-                  {provider}
-                </button>
-              ))}
+              <button
+                type="button"
+                onClick={() => loginWithGoogle()}
+                disabled={loading}
+                className="py-3 rounded text-sm font-medium border border-white/10 bg-white/[0.04] text-[#5C5E62] hover:border-[#7F8BAD]/30 hover:text-[#D0D1D2] transition-colors duration-[330ms] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                <svg width="16" height="16" viewBox="0 0 48 48" fill="none">
+                  <path d="M43.6 20.5H42V20H24v8h11.3C33.7 32.6 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 2.9l5.7-5.7C34.5 7.1 29.5 5 24 5 13 5 4 14 4 24s9 19 20 19c11 0 20-9 20-20 0-1.2-.1-2.5-.4-3.5z" fill="#FFC107"/>
+                  <path d="M6.3 14.7l6.6 4.8C14.7 16.1 19 13 24 13c3.1 0 5.8 1.1 7.9 2.9l5.7-5.7C34.5 7.1 29.5 5 24 5c-7.7 0-14.4 4.4-17.7 9.7z" fill="#FF3D00"/>
+                  <path d="M24 43c5.4 0 10.2-1.9 13.9-5.1l-6.4-5.4C29.6 34.5 26.9 35.5 24 35.5c-5.2 0-9.6-3.4-11.2-8H6.3C9.6 38.4 16.3 43 24 43z" fill="#4CAF50"/>
+                  <path d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.3 5.7l6.4 5.4C37.1 39.1 44 34 44 24c0-1.2-.1-2.5-.4-3.5z" fill="#1976D2"/>
+                </svg>
+                Google
+              </button>
+              <button
+                type="button"
+                onClick={() => alert(`Apple ${tr.authForgotComing}`)}
+                className="py-3 rounded text-sm font-medium border border-white/10 bg-white/[0.04] text-[#5C5E62] hover:border-[#7F8BAD]/30 hover:text-[#D0D1D2] transition-colors duration-[330ms]"
+              >
+                Apple
+              </button>
             </div>
 
             <p className="text-center text-sm text-[#5C5E62] mt-1">
