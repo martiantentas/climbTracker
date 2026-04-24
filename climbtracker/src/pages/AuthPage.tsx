@@ -278,7 +278,7 @@ export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProp
       </div>
 
       {/* Right panel — form */}
-      <div className="auth-right-panel flex-1 flex flex-col justify-center px-10 py-10 overflow-y-auto" style={{ maxWidth: 480 }}>
+      <div className="auth-right-panel flex-1 flex flex-col justify-center px-6 py-8 sm:px-10 sm:py-10 overflow-y-auto" style={{ maxWidth: 480 }}>
 
         {/* Back + lang row */}
         <div className="flex items-center justify-between mb-10">

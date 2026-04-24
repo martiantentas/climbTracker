@@ -4,6 +4,7 @@ import type { Competition, Boulder, Competitor, Completion } from '../types'
 import type { Language } from '../translations'
 import { translations } from '../translations'
 import { calcBoulderPoints } from '../utils/scoring'
+import UserAvatar from '../components/UserAvatar'
 
 interface EventProfilePageProps {
   competition:    Competition
@@ -122,12 +123,14 @@ export default function EventProfilePage({
 
       {/* ── Identity card ── */}
       <div className={`${cardCls} mb-6 flex items-center gap-5`}>
-        <div className={`w-14 h-14 rounded flex items-center justify-center flex-shrink-0 text-xl font-medium ${dk ? 'bg-[#7F8BAD]/10 text-[#7F8BAD]' : 'bg-[#7F8BAD]/10 text-[#7F8BAD]'}`}>
-          {currentUser.avatar
-            ? <span className="text-3xl">{currentUser.avatar}</span>
-            : currentUser.displayName.charAt(0).toUpperCase()
-          }
-        </div>
+        <UserAvatar
+          avatar={currentUser.avatar}
+          displayName={currentUser.displayName}
+          sizeClass="w-14 h-14"
+          className="bg-[#7F8BAD]/10"
+          emojiClass="text-3xl"
+          iconSize={24}
+        />
         <div className="flex-1 min-w-0">
           <p className={`text-lg font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>{currentUser.displayName}</p>
           <p className={`text-sm ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{currentUser.email}</p>

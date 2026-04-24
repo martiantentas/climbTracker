@@ -5,6 +5,7 @@ import type { Competitor, Badge } from '../types'
 import type { Language } from '../translations'
 import { translations } from '../translations'
 import EmojiAvatarPicker from '../components/EmojiAvatarPicker'
+import UserAvatar from '../components/UserAvatar'
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -214,10 +215,13 @@ export default function ProfilePage({
             ${!isEditing ? 'cursor-pointer hover:ring-2 hover:ring-[#7F8BAD]/40' : ''}
           `}
         >
-          {currentUser.avatar
-            ? <span>{currentUser.avatar}</span>
-            : <User size={28} className="text-[#7F8BAD]" />
-          }
+          <UserAvatar
+            avatar={currentUser.avatar}
+            displayName={currentUser.displayName}
+            sizeClass="w-full h-full"
+            emojiClass="text-3xl"
+            iconSize={28}
+          />
           {!isEditing && (
             <div className="absolute inset-0 rounded bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
               <span className="text-[9px] font-medium text-white">Edit</span>

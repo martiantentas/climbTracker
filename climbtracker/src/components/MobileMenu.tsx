@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
+import UserAvatar from './UserAvatar'
 import {
   X,
   LayoutGrid,
@@ -8,7 +9,6 @@ import {
   BarChart2,
   ClipboardList,
   Settings,
-  User,
   LogOut,
   ChevronRight,
   Users,
@@ -180,12 +180,13 @@ export default function MobileMenu({
                 ${theme === 'dark' ? 'hover:bg-white/5' : 'hover:bg-[#F4F4F4]'}
               `}
             >
-              <div className="w-9 h-9 rounded-full bg-[#7F8BAD]/10 flex items-center justify-center text-[#7F8BAD] overflow-hidden flex-shrink-0 text-lg">
-                {currentUser.avatar
-                  ? <span>{currentUser.avatar}</span>
-                  : <User size={18} />
-                }
-              </div>
+              <UserAvatar
+                avatar={currentUser.avatar}
+                displayName={currentUser.displayName}
+                sizeClass="w-9 h-9"
+                className="rounded-full bg-[#7F8BAD]/10"
+                iconSize={18}
+              />
               <div>
                 <p className={`text-sm font-medium ${theme === 'dark' ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
                   {currentUser.displayName}

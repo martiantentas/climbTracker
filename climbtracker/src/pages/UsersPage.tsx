@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Search, Shield, User, Trash2, ChevronDown, X, Save, Hash, AlertCircle, MoreHorizontal, Ban, ShieldOff } from 'lucide-react'
+import UserAvatar from '../components/UserAvatar'
 import type { Competitor, Competition } from '../types'
 import type { Language } from '../translations'
 import { translations } from '../translations'
@@ -129,7 +130,7 @@ function UserDetailModal({ competitor, allCompetitors, competition, isMe, viewOn
         <div className={`flex items-center justify-between px-6 py-4 border-b ${dk ? 'border-white/10' : 'border-[#EEEEEE]'}`}>
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded flex items-center justify-center overflow-hidden flex-shrink-0 ${dk ? 'bg-white/5' : 'bg-[#F4F4F4]'}`}>
-              {competitor.avatar ? <span className="text-xl">{competitor.avatar}</span> : <User size={18} className="text-[#8E8E8E]" />}
+              <UserAvatar avatar={competitor.avatar} displayName={competitor.displayName} sizeClass="w-full h-full" emojiClass="text-xl" iconSize={18} />
             </div>
             <div>
               <p className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
@@ -384,7 +385,7 @@ export default function UsersPage({ competitors, competition, currentUser, theme
                 >
                   <button onClick={() => setSelectedUser(competitor)} className="flex items-center gap-3 min-w-0 text-left hover:opacity-80 transition-opacity">
                     <div className={`w-8 h-8 rounded flex items-center justify-center flex-shrink-0 overflow-hidden ${dk ? 'bg-white/5' : 'bg-[#F4F4F4]'}`}>
-                      {competitor.avatar ? <span className="text-xl">{competitor.avatar}</span> : <User size={15} className="text-[#8E8E8E]" />}
+                      <UserAvatar avatar={competitor.avatar} displayName={competitor.displayName} sizeClass="w-full h-full" emojiClass="text-xl" iconSize={15} />
                     </div>
                     <div className="min-w-0">
                       <p className={`text-sm font-medium leading-tight truncate ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
