@@ -15,7 +15,7 @@ export interface PostRegistrationModalProps {
 export default function PostRegistrationModal({ user, competition, onComplete, theme, lang }: PostRegistrationModalProps) {
   const dk = theme === 'dark'
   const t  = translations[lang]
-  const GENDERS = [t.profileMale, t.profileFemale, t.profileNonBinary, t.profilePreferNot]
+  const GENDERS = [t.profileMale, t.profileFemale, t.profileOther]
   const comp = competition as any
   const availableTraits: { id: string; name: string }[] =
     comp.traits?.length ? comp.traits : comp.categories?.length ? comp.categories : []

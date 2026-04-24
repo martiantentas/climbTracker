@@ -52,6 +52,7 @@ export interface Boulder {
   zoneCount:                number
   tags:                     string[]
   attemptTrackingOverride?: AttemptTracking
+  flashBonus?:              number  // extra pts awarded when topped on the first attempt
 }
 
 // ─── COMPETITOR ───────────────────────────────────────────────────────────────
@@ -151,6 +152,10 @@ export interface Competition {
 
   attemptTracking:    AttemptTracking
   maxFixedAttempts:   number
+
+  // Flash bonus — event-level setting (per-boulder flashBonus overrides if set)
+  flashBonusEnabled?: boolean
+  flashBonusPoints?:  number
 
   // Moderation — emails blocked from (re)joining
   bannedEmails?:      string[]

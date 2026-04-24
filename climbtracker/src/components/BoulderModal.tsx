@@ -56,6 +56,7 @@ export default function BoulderModal({
   const [maxPoints,        setMaxPoints]        = useState(boulder?.maxPoints        ?? competition.dynamicPot ?? 1000)
   const [status,           setStatus]           = useState<Boulder['status']>(boulder?.status ?? 'active')
   const [zoneCount,        setZoneCount]        = useState(boulder?.zoneCount        ?? 0)
+  const [flashBonus,       setFlashBonus]       = useState<number | ''>(boulder?.flashBonus ?? '')
   const [trackingOverride, setTrackingOverride] = useState<AttemptTracking | 'inherit'>(
     boulder?.attemptTrackingOverride ?? 'inherit'
   )
@@ -91,6 +92,7 @@ export default function BoulderModal({
       tags:                    boulder?.tags ?? [],
       status,
       zoneCount,
+      flashBonus:              flashBonus === '' ? undefined : flashBonus,
       attemptTrackingOverride: trackingOverride === 'inherit' ? undefined : trackingOverride,
     })
     onClose()
@@ -256,6 +258,35 @@ export default function BoulderModal({
               </div>
             </div>
           )}
+
+          {/* Flash bonus */}
+          <div className="mb-5">
+            <label className={labelCls}>{t.flashBonusLabel}</label>
+            <p className={`text-[11px] mb-2 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.flashBonusDesc}</p>
+            <div className="flex items-center gap-3">
+              <input
+                type="number"
+                min={0}
+                value={flashBonus}
+                placeholder="0"
+                onChange={e => setFlashBonus(e.target.value === '' ? '' : Math.max(0, Number(e.target.value)))}
+                className={`${inputCls} w-32`}
+              />
+              {flashBonus !== '' && flashBonus > 0 && (
+                <span className={`text-xs font-medium px-2.5 py-1.5 rounded border ${dk ? 'bg-amber-400/10 text-amber-300 border-amber-400/20' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+                  ⚡ +{flashBonus} {t.flashBonusPts}
+                </span>
+              )}
+              {(flashBonus !== '' && flashBonus > 0) && (
+                <button
+                  onClick={() => setFlashBonus('')}
+                  className={`text-xs transition-colors duration-[330ms] ${dk ? 'text-[#5C5E62] hover:text-[#D0D1D2]' : 'text-[#8E8E8E] hover:text-[#393C41]'}`}
+                >
+                  {t.remove}
+                </button>
+              )}
+            </div>
+          </div>
 
           {/* Dynamic pot override */}
           {competition.scoringType === 'DYNAMIC' && (

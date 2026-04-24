@@ -7,12 +7,15 @@ import { translations } from '../translations'
 import PasswordModal from '../components/PasswordModal'
 
 interface JoinPageProps {
-  competitions: Competition[]
-  currentUser:  Competitor
-  theme:        'light' | 'dark'
-  lang:         Language
-  isRegistered: (compId: string) => boolean
-  onJoin: (compId: string, password?: string, traitIds?: string[], gender?: string) => boolean | 'full'
+  competitions:     Competition[]
+  currentUser:      Competitor
+  theme:            'light' | 'dark'
+  lang:             Language
+  isRegistered:     (compId: string) => boolean
+  onJoin:           (compId: string, password?: string, traitIds?: string[], gender?: string) => boolean | 'full'
+  waitlistMap:      Record<string, Competitor[]>
+  onJoinWaitlist:   (compId: string) => void
+  onLeaveWaitlist:  (compId: string) => void
 }
 
 function formatDate(iso: string, lang: string): string {
@@ -23,6 +26,7 @@ function formatDate(iso: string, lang: string): string {
 
 export default function JoinPage({
   competitions, currentUser, theme, lang, isRegistered, onJoin,
+  waitlistMap, onJoinWaitlist, onLeaveWaitlist,
 }: JoinPageProps) {
   const { code } = useParams<{ code: string }>()
   const navigate  = useNavigate()
@@ -34,6 +38,10 @@ export default function JoinPage({
   const hasTraits     = (comp?.traits?.length ?? 0) > 0
   const requireTraits = comp?.requireTraits ?? false
 
+  const waitlist         = comp ? (waitlistMap[comp.id] ?? []) : []
+  const waitlistPos      = waitlist.findIndex(c => c.id === currentUser.id) + 1  // 0 = not on list
+  const isOnWaitlist     = waitlistPos > 0
+
   const [joined,            setJoined]            = useState(false)
   const [passwordError,     setPasswordError]     = useState(false)
   const [eventFull,         setEventFull]         = useState(false)
@@ -42,8 +50,8 @@ export default function JoinPage({
   const [gender,            setGender]            = useState('')
 
   useEffect(() => {
-    if (comp && isRegistered(comp.id)) navigate('/', { replace: true })
-  }, [comp, isRegistered, navigate])
+    if (comp && isRegistered(comp.id)) navigate(`/${lang}`, { replace: true })
+  }, [comp, isRegistered, navigate, lang])
 
   // ── Unknown code ─────────────────────────────────────────────────────────
   if (!comp) {
@@ -58,7 +66,7 @@ export default function JoinPage({
             {t.joinNotFoundDesc(code ?? '')}
           </p>
           <button
-            onClick={() => navigate('/competitions')}
+            onClick={() => navigate(`/${lang}/competitions`)}
             className="px-6 py-3 bg-[#7F8BAD] text-white rounded font-medium text-sm hover:bg-[#6D799B] transition-colors duration-[330ms]"
           >
             {t.joinBrowse}
@@ -79,7 +87,7 @@ export default function JoinPage({
     if (result === true) {
       setJoined(true)
       setShowPasswordModal(false)
-      setTimeout(() => navigate('/'), 1200)
+      setTimeout(() => navigate(`/${lang}`), 1200)
     } else if (result === 'full') {
       setEventFull(true)
       setShowPasswordModal(false)
@@ -171,7 +179,7 @@ export default function JoinPage({
               {t.joinGenderOpt}
             </p>
             <div className="flex flex-wrap gap-2">
-              {[t.joinMale, t.joinFemale, t.joinNonBinary, t.joinPreferNot].map(option => (
+              {[t.joinMale, t.joinFemale, t.joinOther].map(option => (
                 <button
                   key={option}
                   onClick={() => setGender(gender === option ? '' : option)}
@@ -231,25 +239,50 @@ export default function JoinPage({
             </div>
           )}
 
-          {/* Event full error */}
-          {eventFull && (
-            <div className="px-4 py-3 rounded bg-red-400/10 border border-red-400/20 text-red-400 text-sm text-center">
-              {t.joinEventFull}
+          {/* Waitlist position — if already on waitlist */}
+          {isOnWaitlist && (
+            <div className={`px-4 py-3 rounded border flex items-center justify-between gap-3 ${dk ? 'bg-[#7F8BAD]/10 border-[#7F8BAD]/20' : 'bg-[#7F8BAD]/5 border-[#7F8BAD]/20'}`}>
+              <div>
+                <p className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>{t.waitlistPosition(waitlistPos)}</p>
+                <p className={`text-xs mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.waitlistDesc}</p>
+              </div>
+              <button
+                onClick={() => { onLeaveWaitlist(comp!.id); setEventFull(false) }}
+                className={`flex-shrink-0 text-xs font-medium px-3 py-1.5 rounded border transition-colors duration-[330ms] ${dk ? 'bg-white/5 border-white/10 text-[#5C5E62] hover:text-red-400 hover:border-red-400/30 hover:bg-red-400/10' : 'bg-white border-[#EEEEEE] text-[#8E8E8E] hover:text-red-500 hover:border-red-200 hover:bg-red-50'}`}
+              >
+                {t.waitlistLeave}
+              </button>
             </div>
           )}
 
-          {/* Join button */}
-          <button
-            onClick={handleJoinClick}
-            disabled={!canJoin || eventFull}
-            className="w-full flex items-center justify-center gap-2 py-3.5 rounded font-medium text-sm bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms] disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            <LogIn size={16} />
-            {needsPassword ? t.joinJoinPassword : t.joinByCodeAction}
-          </button>
+          {/* Event full — offer waitlist */}
+          {eventFull && !isOnWaitlist && (
+            <div className={`px-4 py-4 rounded border ${dk ? 'bg-white/[0.02] border-white/10' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
+              <p className={`text-sm font-medium mb-1 ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>{t.waitlistFull}</p>
+              <p className={`text-xs mb-3 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.waitlistDesc}</p>
+              <button
+                onClick={() => onJoinWaitlist(comp!.id)}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded text-sm font-medium bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms]"
+              >
+                {t.waitlistJoin}
+              </button>
+            </div>
+          )}
+
+          {/* Join button — hidden once on waitlist or full */}
+          {!isOnWaitlist && !eventFull && (
+            <button
+              onClick={handleJoinClick}
+              disabled={!canJoin}
+              className="w-full flex items-center justify-center gap-2 py-3.5 rounded font-medium text-sm bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms] disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <LogIn size={16} />
+              {needsPassword ? t.joinJoinPassword : t.joinByCodeAction}
+            </button>
+          )}
 
           <button
-            onClick={() => navigate('/competitions')}
+            onClick={() => navigate(`/${lang}/competitions`)}
             className={`w-full py-2.5 rounded text-sm font-medium transition-colors duration-[330ms] ${dk ? 'text-[#5C5E62] hover:text-[#D0D1D2]' : 'text-[#8E8E8E] hover:text-[#393C41]'}`}
           >
             {t.cancel}

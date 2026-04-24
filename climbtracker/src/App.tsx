@@ -186,6 +186,9 @@ function AppInner() {
   const [competitorsMap, setCompetitorsMapRaw] = useState<Record<string, Competitor[]>>(() => {
     try { const s = localStorage.getItem('ct-competitors'); return s ? JSON.parse(s) : { [MOCK_COMPETITION.id]: MOCK_COMPETITORS } } catch { return { [MOCK_COMPETITION.id]: MOCK_COMPETITORS } }
   })
+  const [waitlistMap, setWaitlistMap] = useState<Record<string, Competitor[]>>(() => {
+    try { const s = localStorage.getItem('ct-waitlist'); return s ? JSON.parse(s) : {} } catch { return {} }
+  })
 
   // Persist all app state to localStorage on every change
   useEffect(() => { localStorage.setItem('ct-competitions', JSON.stringify(competitions)) },   [competitions])
@@ -193,6 +196,7 @@ function AppInner() {
   useEffect(() => { localStorage.setItem('ct-boulders',    JSON.stringify(bouldersMap)) },    [bouldersMap])
   useEffect(() => { localStorage.setItem('ct-completions', JSON.stringify(completionsMap)) }, [completionsMap])
   useEffect(() => { localStorage.setItem('ct-competitors', JSON.stringify(competitorsMap)) }, [competitorsMap])
+  useEffect(() => { localStorage.setItem('ct-waitlist',    JSON.stringify(waitlistMap)) },    [waitlistMap])
 
   // Stable setters (proxy the raw setters so call-sites don't change)
   const setCompetitions   = setCompetitionsRaw
@@ -453,6 +457,7 @@ function AppInner() {
       isLocked: false, canSelfScore: true,
       inviteCode: generateInviteCode(),
       penalizeAttempts: false, penaltyType: 'fixed', penaltyValue: 0, minScorePerBoulder: 0,
+      flashBonusEnabled: false, flashBonusPoints: 10,
       rules: { en: '### Rules\n1. Use your common sense.', es: '### Reglas\n1. Usa el sentido común.', ca: '### Regles\n1. Fes servir el seny.' },
       zoneScoring: 'adds_to_score', scoringMethod: 'self_scoring',
       visibility: 'private' as const,
@@ -538,9 +543,37 @@ function AppInner() {
     return ok ? true : 'full'
   }
 
+  function handleJoinWaitlist(compId: string) {
+    if (!currentUser) return
+    setWaitlistMap(prev => {
+      const list = prev[compId] ?? []
+      if (list.some(c => c.id === currentUser.id)) return prev
+      return { ...prev, [compId]: [...list, currentUser] }
+    })
+    showToast(t.waitlistJoined)
+  }
+
+  function handleLeaveWaitlist(compId: string) {
+    if (!currentUser) return
+    setWaitlistMap(prev => ({ ...prev, [compId]: (prev[compId] ?? []).filter(c => c.id !== currentUser.id) }))
+  }
+
   function handleLeaveCompetition(compId: string) {
     if (!currentUser) return
     setCompetitorsMap(prev => ({ ...prev, [compId]: (prev[compId] ?? []).filter(c => c.id !== currentUser.id) }))
+    // Auto-promote the first waitlisted competitor into the now-free spot
+    const waitlist = waitlistMap[compId] ?? []
+    if (waitlist.length > 0) {
+      const [promoted, ...remaining] = waitlist
+      setCompetitorsMap(prev => {
+        const list = prev[compId] ?? []
+        const nextBib = list.filter(c => c.bibNumber > 0).length > 0
+          ? Math.max(...list.map(c => c.bibNumber)) + 1
+          : 101
+        return { ...prev, [compId]: [...list, { ...promoted, bibNumber: nextBib }] }
+      })
+      setWaitlistMap(prev => ({ ...prev, [compId]: remaining }))
+    }
   }
 
   function isUserRegistered(compId: string): boolean {
@@ -758,6 +791,9 @@ function AppInner() {
                 lang={lang}
                 isRegistered={isUserRegistered}
                 onJoin={handleJoinByCompId}
+                waitlistMap={waitlistMap}
+                onJoinWaitlist={handleJoinWaitlist}
+                onLeaveWaitlist={handleLeaveWaitlist}
               />
             } />
 

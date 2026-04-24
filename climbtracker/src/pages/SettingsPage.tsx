@@ -530,7 +530,8 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
   }
   function removeDifficulty(id: string) {
     if (draft.difficultyLevels.length <= 1) return
-    set('difficultyLevels', draft.difficultyLevels.filter(d => d.id !== id))
+    const remaining = draft.difficultyLevels.filter(d => d.id !== id)
+    set('difficultyLevels', remaining.map((d, i) => ({ ...d, level: i + 1 })))
   }
   function updateDifficulty(id: string, field: keyof DifficultyLevel, value: string | number) {
     set('difficultyLevels', (draft.difficultyLevels ?? []).map(d => d.id === id ? { ...d, [field]: value } : d))
@@ -785,6 +786,29 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Flash Bonus */}
+        <div className={`p-4 rounded border mb-6 ${dk ? 'border-white/10 bg-white/[0.02]' : 'border-[#EEEEEE] bg-[#F4F4F4]'}`}>
+          <ToggleRow
+            label={t.flashBonusEnabledLabel}
+            desc={t.flashBonusEnabledDesc}
+            value={(draft as any).flashBonusEnabled ?? false}
+            theme={theme}
+            onChange={v => set('flashBonusEnabled' as any, v)}
+          />
+          {(draft as any).flashBonusEnabled && (
+            <div className={`mt-4 pt-4 border-t ${dk ? 'border-white/5' : 'border-[#EEEEEE]'}`}>
+              <InputField
+                label={t.flashBonusPointsLabel}
+                value={(draft as any).flashBonusPoints ?? 10}
+                type="number" min={1}
+                theme={theme}
+                onChange={v => set('flashBonusPoints' as any, Math.max(1, Number(v)))}
+                hint={t.flashBonusPointsHint}
+              />
+            </div>
+          )}
         </div>
 
         {/* Penalty */}

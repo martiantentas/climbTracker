@@ -76,7 +76,7 @@ export default function ProfilePage({
   const t  = translations[lang]
   const dk = theme === 'dark'
 
-  const genderOptions = [t.profileMale, t.profileFemale, t.profileNonBinary, t.profilePreferNot]
+  const genderOptions = [t.profileMale, t.profileFemale, t.profileOther]
 
   const [isEditing,    setIsEditing]    = useState(false)
   const [badgesOpen,   setBadgesOpen]   = useState(true)

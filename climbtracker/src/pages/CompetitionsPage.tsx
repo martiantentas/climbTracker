@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Trophy, MapPin, Calendar, Key, Trash2, LogIn, Settings, X, Lock, Copy, Check, Shield, Clock } from 'lucide-react'
+import { Plus, Trophy, MapPin, Calendar, Key, Trash2, LogIn, Settings, X, Lock, Copy, Check, Shield, Clock, QrCode } from 'lucide-react'
 import type { Competition, Competitor } from '../types'
 import { CompetitionStatus } from '../types'
 import { getStatusColor } from '../App'
@@ -7,22 +7,26 @@ import type { Language } from '../translations'
 import { translations } from '../translations'
 import PasswordModal from '../components/PasswordModal'
 import UndoToast from '../components/UndoToast'
+import QRModal from '../components/QRModal'
 
 interface CompetitionsPageProps {
-  competitions:   Competition[]
-  activeCompId:   string
-  currentUser:    Competitor
-  theme:          'light' | 'dark'
-  lang:           Language
-  onEnter:        (compId: string) => void
-  onManage:       (compId: string) => void
-  onCreate:       (name: string, location: string, description: string) => void
-  onDelete:       (compId: string) => void
-  onLeave:        (compId: string) => void
-  onJoinByCode:   (code: string, password?: string, traitIds?: string[], gender?: string) => boolean | 'full'
-  isRegistered:   (compId: string) => boolean
-  onJoinSuccess?: (comp: Competition) => void
-  getCompRole?:   (compId: string) => string | null
+  competitions:    Competition[]
+  activeCompId:    string
+  currentUser:     Competitor
+  theme:           'light' | 'dark'
+  lang:            Language
+  onEnter:         (compId: string) => void
+  onManage:        (compId: string) => void
+  onCreate:        (name: string, location: string, description: string) => void
+  onDelete:        (compId: string) => void
+  onLeave:         (compId: string) => void
+  onJoinByCode:    (code: string, password?: string, traitIds?: string[], gender?: string) => boolean | 'full'
+  isRegistered:    (compId: string) => boolean
+  onJoinSuccess?:  (comp: Competition) => void
+  getCompRole?:    (compId: string) => string | null
+  waitlistMap?:    Record<string, Competitor[]>
+  onJoinWaitlist?: (compId: string) => void
+  onLeaveWaitlist?:(compId: string) => void
 }
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
@@ -102,7 +106,7 @@ function CreateModal({ theme, lang, onSave, onClose }: {
 export default function CompetitionsPage({
   competitions, activeCompId, currentUser, theme, lang,
   onEnter, onManage, onCreate, onDelete, onLeave, onJoinByCode, isRegistered, onJoinSuccess,
-  getCompRole,
+  getCompRole, waitlistMap = {}, onJoinWaitlist, onLeaveWaitlist,
 }: CompetitionsPageProps) {
   const t  = translations[lang]
   const dk = theme === 'dark'
@@ -117,6 +121,7 @@ export default function CompetitionsPage({
   const [pendingDeleteComp,  setPendingDeleteComp]  = useState<Competition | null>(null)
   const [pendingComp,        setPendingComp]        = useState<Competition | null>(null)
   const [passwordError,      setPasswordError]      = useState(false)
+  const [qrComp,             setQrComp]             = useState<Competition | null>(null)
 
   const myComps   = competitions.filter(c => c.ownerId === currentUser.id)
   const joined    = competitions.filter(c => c.ownerId !== currentUser.id && isRegistered(c.id))
@@ -182,10 +187,13 @@ export default function CompetitionsPage({
   }
 
   function CompCard({ comp }: { comp: Competition }) {
-    const active     = comp.id === activeCompId
-    const isMine     = comp.ownerId === currentUser.id
-    const registered = isRegistered(comp.id)
-    const activated  = comp.id === justActivated
+    const active        = comp.id === activeCompId
+    const isMine        = comp.ownerId === currentUser.id
+    const registered    = isRegistered(comp.id)
+    const activated     = comp.id === justActivated
+    const waitlist      = waitlistMap[comp.id] ?? []
+    const waitlistPos   = waitlist.findIndex(c => c.id === currentUser.id) + 1
+    const isOnWaitlist  = waitlistPos > 0
 
     return (
       <div className={`
@@ -296,6 +304,13 @@ export default function CompetitionsPage({
                   : <><Copy size={12} /> {t.copyLink}</>
                 }
               </button>
+
+              <button
+                onClick={() => setQrComp(comp)}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded text-xs font-medium transition-colors duration-[330ms] ${dk ? 'bg-white/5 text-[#8E8E8E] hover:bg-white/10 border border-white/10' : 'bg-[#F4F4F4] text-[#5C5E62] hover:bg-[#EEEEEE] border border-[#EEEEEE]'}`}
+              >
+                <QrCode size={12} /> {t.qrButton}
+              </button>
             </>
           )}
 
@@ -306,6 +321,18 @@ export default function CompetitionsPage({
             >
               <X size={12} />{t.leaveCompetition}
             </button>
+          )}
+
+          {/* Waitlist — shown for non-registered, non-owner users */}
+          {!registered && !isMine && isOnWaitlist && (
+            <div className={`flex items-center gap-2 px-3 py-2 rounded text-xs font-medium border ${dk ? 'bg-[#7F8BAD]/10 border-[#7F8BAD]/20 text-[#7F8BAD]' : 'bg-[#7F8BAD]/5 border-[#7F8BAD]/20 text-[#7F8BAD]'}`}>
+              <span>#{waitlistPos} {t.waitlistJoin}</span>
+              {onLeaveWaitlist && (
+                <button onClick={() => onLeaveWaitlist(comp.id)} className="ml-1 opacity-60 hover:opacity-100 transition-opacity">
+                  <X size={10} />
+                </button>
+              )}
+            </div>
           )}
 
           {isMine && (
@@ -450,6 +477,16 @@ export default function CompetitionsPage({
           onUndo={() => setPendingDeleteComp(null)}
           onCommit={() => { onDelete(pendingDeleteComp.id); setPendingDeleteComp(null) }}
           onDismiss={() => setPendingDeleteComp(null)}
+        />
+      )}
+
+      {qrComp && (
+        <QRModal
+          url={`${window.location.origin}${window.location.pathname}#/${lang}/join/${qrComp.inviteCode}`}
+          competitionName={qrComp.name}
+          theme={theme}
+          lang={lang}
+          onClose={() => setQrComp(null)}
         />
       )}
     </div>

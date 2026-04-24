@@ -107,6 +107,11 @@ export function calcBoulderPoints(
   allCompletions: Completion[],
 ): number {
   const zonePoints = calcZonePoints(completion, boulder, competition)
+  // Flash bonus — per-boulder value takes priority; falls back to event-level setting
+  const eventFlash = competition.flashBonusEnabled ? (competition.flashBonusPoints ?? 0) : 0
+  const flashBonus = (completion.topValidated && completion.attempts === 1)
+    ? (boulder.flashBonus ?? eventFlash)
+    : 0
 
   if (competition.scoringType === ScoringType.DYNAMIC) {
     if (!completion.topValidated) return zonePoints
@@ -125,11 +130,11 @@ export function calcBoulderPoints(
       topPoints = Math.max(topPoints, competition.minDynamicPoints ?? 0)
     }
 
-    return Math.max(topPoints + zonePoints, 0)
+    return Math.max(topPoints + zonePoints, 0) + flashBonus
   }
 
   // Traditional: zones + top + penalties all handled together
-  return calcTraditionalPoints(completion, boulder, competition)
+  return calcTraditionalPoints(completion, boulder, competition) + flashBonus
 }
 
 // ─── TOTAL SCORE FOR ONE COMPETITOR ───────────────────────────────────────────

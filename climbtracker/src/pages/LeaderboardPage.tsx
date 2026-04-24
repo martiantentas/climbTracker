@@ -288,6 +288,7 @@ export default function LeaderboardPage({
   const [categoryFilters, setCategoryFilters] = useState<string[]>([])
   const [genderFilters,   setGenderFilters]   = useState<string[]>([])
   const [showDownload,    setShowDownload]     = useState(false)
+  const [openRowId,       setOpenRowId]       = useState<string | null>(null)
   const downloadRef = useRef<HTMLDivElement>(null)
 
   const isFinished = competition.status === CompetitionStatus.FINISHED
@@ -408,7 +409,7 @@ export default function LeaderboardPage({
   }, [rankings, competitors, competition])
 
   const genderOptions = useMemo(() => {
-    const GENDER_OPTIONS = ['Male', 'Female', 'Prefer not to say']
+    const GENDER_OPTIONS = ['Male', 'Female', 'Other']
     const present = new Set([
       ...competitors.map(c => (c as any).gender),
       ...rankings.map(r => (r as any).gender),
@@ -585,81 +586,113 @@ export default function LeaderboardPage({
       ) : (
         <div className="space-y-1">
           {visible.map((result) => {
-            const isTop3 = result.rank <= 3
+            const isTop3    = result.rank <= 3
+            const isOpen    = openRowId === result.competitorId
+            const rowColors = isTop3 && result.rank === 1
+              ? dk ? 'bg-amber-400/5 border-amber-400/20' : 'bg-amber-50 border-amber-200'
+              : dk ? 'bg-white/[0.02] border-white/8 hover:bg-white/[0.04]' : 'bg-white border-[#EEEEEE] hover:border-[#D0D1D2]'
+
             return (
               <div
                 key={result.competitorId}
-                className={`
-                  flex items-center gap-4 px-5 py-4 rounded border transition-colors duration-[330ms]
-                  ${isTop3 && result.rank === 1
-                    ? dk ? 'bg-amber-400/5 border-amber-400/20' : 'bg-amber-50 border-amber-200'
-                    : dk ? 'bg-white/[0.02] border-white/8 hover:bg-white/[0.04]' : 'bg-white border-[#EEEEEE] hover:border-[#D0D1D2]'
-                  }
-                `}
+                className={`rounded border overflow-hidden transition-colors duration-[330ms] ${rowColors}`}
               >
-                <div className="flex-shrink-0 w-8 flex justify-center">
-                  <RankBadge rank={result.rank} theme={theme} />
-                </div>
-
-                <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-xl ${dk ? 'bg-white/5' : 'bg-[#F4F4F4]'}`}>
-                  {(() => {
-                    const live = competitors.find(c => c.id === result.competitorId) as any
-                    return live?.avatar
-                      ? <span>{live.avatar}</span>
-                      : <span className={`text-sm font-medium ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{result.name.charAt(0).toUpperCase()}</span>
-                  })()}
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className={`font-medium text-sm truncate ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
-                      {result.name}
-                    </p>
-                    {result.competitorId === currentUserId && (
-                      <span className="flex-shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#7F8BAD] text-white tracking-wider">
-                        {t.badgeYou}
-                      </span>
-                    )}
+                {/* Main row */}
+                <div className="flex items-center gap-4 px-5 py-4">
+                  <div className="flex-shrink-0 w-8 flex justify-center">
+                    <RankBadge rank={result.rank} theme={theme} />
                   </div>
-                  <div className={`flex items-center gap-2 text-xs ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-                    <span>BIB #{result.bib}</span>
+
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-xl ${dk ? 'bg-white/5' : 'bg-[#F4F4F4]'}`}>
                     {(() => {
-                      const cats  = competitorCategoryMap.get(result.competitorId) ?? []
-                      const label = cats.join(', ')
-                      if (!label) return null
-                      return (<><span>·</span><span className="font-medium">{label}</span></>)
-                    })()}
-                    {(() => {
-                      const live   = competitors.find(c => c.id === result.competitorId) as any
-                      const gender = live?.gender ?? (result as any).gender
-                      if (!gender) return null
-                      return (<><span>·</span><span>{gender}</span></>)
+                      const live = competitors.find(c => c.id === result.competitorId) as any
+                      return live?.avatar
+                        ? <span>{live.avatar}</span>
+                        : <span className={`text-sm font-medium ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{result.name.charAt(0).toUpperCase()}</span>
                     })()}
                   </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className={`font-medium text-sm truncate ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
+                        {result.name}
+                      </p>
+                      {result.competitorId === currentUserId && (
+                        <span className="flex-shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#7F8BAD] text-white tracking-wider">
+                          {t.badgeYou}
+                        </span>
+                      )}
+                    </div>
+                    <div className={`flex items-center gap-2 text-xs ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
+                      <span>BIB #{result.bib}</span>
+                      {(() => {
+                        const cats  = competitorCategoryMap.get(result.competitorId) ?? []
+                        const label = cats.join(', ')
+                        if (!label) return null
+                        return (<><span>·</span><span className="font-medium">{label}</span></>)
+                      })()}
+                      {(() => {
+                        const live   = competitors.find(c => c.id === result.competitorId) as any
+                        const gender = live?.gender ?? (result as any).gender
+                        if (!gender) return null
+                        return (<><span>·</span><span>{gender}</span></>)
+                      })()}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-5 flex-shrink-0">
+                    <div className="text-center hidden md:block">
+                      <p className={`text-sm font-medium ${dk ? 'text-green-400' : 'text-green-600'}`}>{result.totalTops}</p>
+                      <p className={`text-[9px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.tops}</p>
+                    </div>
+                    <div className="text-center hidden lg:block">
+                      <p className={`text-sm font-medium ${dk ? 'text-purple-400' : 'text-purple-600'}`}>{result.totalZones ?? 0}</p>
+                      <p className={`text-[9px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.zones}</p>
+                    </div>
+                    <div className="text-center hidden lg:block">
+                      <p className={`text-sm font-medium ${dk ? 'text-[#8E8E8E]' : 'text-[#5C5E62]'}`}>{result.totalAttempts}</p>
+                      <p className={`text-[9px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.leaderboardTries}</p>
+                    </div>
+                    <div className="text-center hidden sm:block">
+                      <p className="text-sm font-medium text-amber-500">{result.flashCount}</p>
+                      <p className={`text-[9px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>⚡</p>
+                    </div>
+                    <div className="text-right min-w-[56px]">
+                      <p className="text-xl font-medium text-[#7F8BAD]">{result.totalPoints}</p>
+                      <p className={`text-[9px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>pts</p>
+                    </div>
+                    {/* Chevron — mobile only */}
+                    <button
+                      className={`md:hidden flex-shrink-0 p-1 rounded transition-colors duration-[330ms] ${dk ? 'text-[#5C5E62] hover:text-[#D0D1D2]' : 'text-[#8E8E8E] hover:text-[#393C41]'}`}
+                      onClick={() => setOpenRowId(isOpen ? null : result.competitorId)}
+                      aria-label="Toggle details"
+                    >
+                      <ChevDown size={14} className={`transition-transform duration-[330ms] ${isOpen ? 'rotate-180' : ''}`} />
+                    </button>
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-5 flex-shrink-0">
-                  <div className="text-center hidden md:block">
-                    <p className={`text-sm font-medium ${dk ? 'text-green-400' : 'text-green-600'}`}>{result.totalTops}</p>
-                    <p className={`text-[9px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.tops}</p>
+                {/* Expandable stats — mobile only */}
+                {isOpen && (
+                  <div className={`md:hidden grid grid-cols-4 border-t px-5 py-3 gap-2 ${dk ? 'border-white/8' : 'border-[#EEEEEE]'}`}>
+                    <div className="text-center">
+                      <p className={`text-sm font-medium ${dk ? 'text-green-400' : 'text-green-600'}`}>{result.totalTops}</p>
+                      <p className={`text-[9px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.tops}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className={`text-sm font-medium ${dk ? 'text-purple-400' : 'text-purple-600'}`}>{result.totalZones ?? 0}</p>
+                      <p className={`text-[9px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.zones}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className={`text-sm font-medium ${dk ? 'text-[#8E8E8E]' : 'text-[#5C5E62]'}`}>{result.totalAttempts}</p>
+                      <p className={`text-[9px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.leaderboardTries}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-medium text-amber-500">{result.flashCount}</p>
+                      <p className={`text-[9px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>⚡</p>
+                    </div>
                   </div>
-                  <div className="text-center hidden lg:block">
-                    <p className={`text-sm font-medium ${dk ? 'text-purple-400' : 'text-purple-600'}`}>{result.totalZones ?? 0}</p>
-                    <p className={`text-[9px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.zones}</p>
-                  </div>
-                  <div className="text-center hidden lg:block">
-                    <p className={`text-sm font-medium ${dk ? 'text-[#8E8E8E]' : 'text-[#5C5E62]'}`}>{result.totalAttempts}</p>
-                    <p className={`text-[9px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.leaderboardTries}</p>
-                  </div>
-                  <div className="text-center hidden sm:block">
-                    <p className="text-sm font-medium text-amber-500">{result.flashCount}</p>
-                    <p className={`text-[9px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>⚡</p>
-                  </div>
-                  <div className="text-right min-w-[56px]">
-                    <p className="text-xl font-medium text-[#7F8BAD]">{result.totalPoints}</p>
-                    <p className={`text-[9px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>pts</p>
-                  </div>
-                </div>
+                )}
               </div>
             )
           })}
