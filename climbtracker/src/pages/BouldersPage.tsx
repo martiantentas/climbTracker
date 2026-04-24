@@ -171,8 +171,11 @@ export default function BouldersPage({
 
     if (groupBy === 'color') {
       for (const b of visibleBoulders) {
-        const key = b.color || '__other__'
-        if (!groups.has(key)) groups.set(key, { label: b.color || t.groupOther, color: b.color || undefined, boulders: [] })
+        const key   = b.color || '__other__'
+        const label = b.color
+          ? (t.colorNames[b.color.toLowerCase()] ?? t.colorNames[b.color] ?? b.color)
+          : t.groupOther
+        if (!groups.has(key)) groups.set(key, { label, color: b.color || undefined, boulders: [] })
         groups.get(key)!.boulders.push(b)
       }
     } else {
