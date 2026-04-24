@@ -10,7 +10,9 @@ if (!rootElement) {
   throw new Error('Could not find #root element. Check your index.html.')
 }
 
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? ''
+// Falls back to a placeholder so GoogleOAuthProvider never receives undefined.
+// The Google button is disabled when this is empty.
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'placeholder'
 
 createRoot(rootElement).render(
   <StrictMode>

@@ -388,7 +388,13 @@ export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProp
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
-                onClick={() => loginWithGoogle()}
+                onClick={() => {
+                  if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) {
+                    alert('Google login is not configured yet.')
+                    return
+                  }
+                  loginWithGoogle()
+                }}
                 disabled={loading}
                 className="py-3 rounded text-sm font-medium border border-white/10 bg-white/[0.04] text-[#5C5E62] hover:border-[#7F8BAD]/30 hover:text-[#D0D1D2] transition-colors duration-[330ms] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
