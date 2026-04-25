@@ -27,16 +27,18 @@ function SectionCard({ title, children, theme, defaultOpen = true }: {
   const dk = theme === 'dark'
   return (
     <div className={`rounded border overflow-hidden mb-4 ${dk ? 'border-white/10' : 'border-[#EEEEEE]'}`}>
-      <button
+      <motion.button
         onClick={() => setOpen(o => !o)}
         className={`w-full flex items-center justify-between px-6 py-4 text-left transition-colors duration-[330ms] ${dk ? 'bg-white/[0.03] hover:bg-white/[0.05]' : 'bg-[#F4F4F4] hover:bg-[#EEEEEE]'}`}
+        whileTap={{ scale: 0.99 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 28 }}
       >
         <span className={`text-sm font-medium ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>{title}</span>
         {open
           ? <ChevronUp size={15} className={dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'} />
           : <ChevronDown size={15} className={dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'} />
         }
-      </button>
+      </motion.button>
       <AnimatePresence>
         {open && (
           <motion.div
@@ -210,12 +212,14 @@ function BillingSection({ competition, competitorCount, theme, lang, onUpdate }:
               <p className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>{b.label}</p>
               <p className={`text-[11px] mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>€{b.price.toFixed(2)} · one-time</p>
             </div>
-            <button
+            <motion.button
               onClick={() => openBundleCheckout(b.users, b.label, b.price)}
               className="px-4 py-2 rounded text-xs font-medium bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms]"
+              whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
+              transition={{ type: 'spring', stiffness: 420, damping: 26 }}
             >
               {t.addLabel} {b.users}
-            </button>
+            </motion.button>
           </div>
         ))}
 
@@ -235,12 +239,14 @@ function BillingSection({ competition, competitorCount, theme, lang, onUpdate }:
               onChange={e => setCustomQty(Math.max(500, Number(e.target.value)))}
               className={inputCls}
             />
-            <button
+            <motion.button
               onClick={() => openBundleCheckout(customQty, `${t.customBundle} — ${customQty}`, customQty * 0.12)}
               className="px-4 py-2 rounded text-xs font-medium bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms]"
+              whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
+              transition={{ type: 'spring', stiffness: 420, damping: 26 }}
             >
               {t.addLabel}
-            </button>
+            </motion.button>
           </div>
         </div>
       </div>
@@ -267,13 +273,16 @@ function BillingSection({ competition, competitorCount, theme, lang, onUpdate }:
                 placeholder="YOURCODE"
                 className={`${inputFullCls} font-mono tracking-widest flex-1`}
               />
-              <button
+              <motion.button
                 onClick={applyPromo}
                 disabled={!promoCode.trim()}
                 className="px-4 py-2.5 rounded text-xs font-medium bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms] flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                whileHover={promoCode.trim() ? { scale: 1.04 } : {}}
+                whileTap={promoCode.trim() ? { scale: 0.94 } : {}}
+                transition={{ type: 'spring', stiffness: 420, damping: 26 }}
               >
                 {t.apply}
-              </button>
+              </motion.button>
             </div>
             {promoError && <p className="text-[11px] text-red-400 mb-3">{promoError}</p>}
             {promoValid && (
@@ -390,12 +399,14 @@ function BrandingSection({ competition, theme, lang, onUpdate }: {
             <p className={`text-xs leading-relaxed mb-4 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
               {t.brandingLocked}
             </p>
-            <button
+            <motion.button
               onClick={() => setShowUpgradeCheckout(true)}
               className="flex items-center gap-2 px-5 py-2.5 bg-[#7F8BAD] text-white rounded text-sm font-medium hover:bg-[#6D799B] transition-colors duration-[330ms]"
+              whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
+              transition={{ type: 'spring', stiffness: 420, damping: 26 }}
             >
               <Sparkles size={14} /> {t.upgradePremiumBtn}
-            </button>
+            </motion.button>
           </div>
         </SectionCard>
 
@@ -609,13 +620,15 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
                 [CompetitionStatus.ARCHIVED]: t.statusArchived,
               }
               return (
-              <button
+              <motion.button
                 key={s}
                 onClick={() => set('status', s)}
                 className={`px-4 py-2 rounded text-xs font-medium border transition-colors duration-[330ms] ${draft.status === s ? statusColors[s] : dk ? 'bg-white/5 text-[#5C5E62] border-white/10 hover:bg-white/10' : 'bg-[#F4F4F4] text-[#8E8E8E] border-[#EEEEEE] hover:bg-[#EEEEEE]'}`}
+                whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
+                transition={{ type: 'spring', stiffness: 420, damping: 26 }}
               >
                 {statusLabelMap[s]}
-              </button>
+              </motion.button>
             )})}
           </div>
         </div>
@@ -626,12 +639,14 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
           <div className={`flex items-center gap-3 px-4 py-3 rounded border ${dk ? 'bg-white/5 border-white/10' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
             <Globe size={14} className="text-[#8E8E8E]" />
             <span className="font-medium text-[#7F8BAD] text-sm tracking-widest">{draft.inviteCode}</span>
-            <button
+            <motion.button
               onClick={() => navigator.clipboard.writeText(draft.inviteCode)}
               className={`ml-auto text-xs font-medium px-3 py-1.5 rounded transition-colors duration-[330ms] ${dk ? 'bg-white/5 text-[#8E8E8E] hover:bg-white/10' : 'bg-[#EEEEEE] text-[#5C5E62] hover:bg-[#D0D1D2]'}`}
+              whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.93 }}
+              transition={{ type: 'spring', stiffness: 420, damping: 26 }}
             >
               {t.copyLabel}
-            </button>
+            </motion.button>
           </div>
         </div>
 
@@ -696,13 +711,15 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
           <label className={labelCls}>{t.scoringSystem}</label>
           <div className="flex gap-2">
             {[ScoringType.TRADITIONAL, ScoringType.DYNAMIC].map(s => (
-              <button
+              <motion.button
                 key={s}
                 onClick={() => set('scoringType', s)}
                 className={`flex-1 py-3 rounded text-xs font-medium border transition-colors duration-[330ms] ${draft.scoringType === s ? 'bg-[#7F8BAD]/10 text-[#7F8BAD] border-[#7F8BAD]/30' : dk ? 'bg-white/5 text-[#5C5E62] border-white/10 hover:bg-white/10' : 'bg-[#F4F4F4] text-[#8E8E8E] border-[#EEEEEE] hover:bg-[#EEEEEE]'}`}
+                whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+                transition={{ type: 'spring', stiffness: 420, damping: 26 }}
               >
                 {s === ScoringType.TRADITIONAL ? t.traditional : t.dynamic}
-              </button>
+              </motion.button>
             ))}
           </div>
         </div>
@@ -889,12 +906,14 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
           {(draft.traits ?? []).map(trait => (
             <div key={trait.id} className={`flex items-center justify-between px-4 py-3 rounded border ${dk ? 'bg-white/5 border-white/10' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
               <span className={`text-sm font-medium ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>{trait.name}</span>
-              <button
+              <motion.button
                 onClick={() => removeTrait(trait.id)}
                 className={`p-1.5 rounded transition-colors duration-[330ms] ${dk ? 'text-[#5C5E62] hover:text-red-400 hover:bg-red-400/10' : 'text-[#D0D1D2] hover:text-red-500 hover:bg-red-50'}`}
+                whileHover={{ scale: 1.12 }} whileTap={{ scale: 0.86 }}
+                transition={{ type: 'spring', stiffness: 420, damping: 26 }}
               >
                 <Trash2 size={13} />
-              </button>
+              </motion.button>
             </div>
           ))}
         </div>
@@ -907,13 +926,16 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
             placeholder={t.traitPlaceholder}
             className={`${inputClass} flex-1`}
           />
-          <button
+          <motion.button
             onClick={addTrait}
             disabled={!newTraitName.trim()}
             className="flex items-center gap-2 px-4 py-3 bg-[#7F8BAD] text-white rounded font-medium text-sm hover:bg-[#6D799B] transition-colors duration-[330ms] disabled:opacity-40 disabled:cursor-not-allowed"
+            whileHover={newTraitName.trim() ? { scale: 1.03 } : {}}
+            whileTap={newTraitName.trim() ? { scale: 0.95 } : {}}
+            transition={{ type: 'spring', stiffness: 420, damping: 26 }}
           >
             <Plus size={14} />{t.addLabel}
-          </button>
+          </motion.button>
         </div>
       </SectionCard>
 
@@ -945,23 +967,28 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
                   <label className={`text-[10px] font-medium mb-1 block ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.zonePts}</label>
                   <input type="number" value={d.zonePoints} onChange={e => updateDifficulty(d.id, 'zonePoints', Number(e.target.value))} className={`${inputClass} py-2`} />
                 </div>
-                <button
+                <motion.button
                   onClick={() => removeDifficulty(d.id)}
                   disabled={draft.difficultyLevels.length <= 1}
                   className={`p-2 rounded transition-colors duration-[330ms] flex-shrink-0 mt-5 ${dk ? 'text-[#5C5E62] hover:text-red-400 hover:bg-red-400/10' : 'text-[#D0D1D2] hover:text-red-500 hover:bg-red-50'} disabled:opacity-20 disabled:cursor-not-allowed`}
+                  whileHover={draft.difficultyLevels.length > 1 ? { scale: 1.12 } : {}}
+                  whileTap={draft.difficultyLevels.length > 1 ? { scale: 0.86 } : {}}
+                  transition={{ type: 'spring', stiffness: 420, damping: 26 }}
                 >
                   <Trash2 size={14} />
-                </button>
+                </motion.button>
               </div>
             </div>
           ))}
         </div>
-        <button
+        <motion.button
           onClick={addDifficulty}
           className={`w-full py-3 rounded border-2 border-dashed text-sm font-medium flex items-center justify-center gap-2 transition-colors duration-[330ms] ${dk ? 'border-white/10 text-[#5C5E62] hover:border-[#7F8BAD]/30 hover:text-[#7F8BAD]' : 'border-[#EEEEEE] text-[#8E8E8E] hover:border-[#7F8BAD]/40 hover:text-[#7F8BAD]'}`}
+          whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
+          transition={{ type: 'spring', stiffness: 420, damping: 26 }}
         >
           <Plus size={14} />{t.addDifficultyLevel}
-        </button>
+        </motion.button>
       </SectionCard>
 
       {/* Billing & Capacity — only shown once competition has a subscription */}

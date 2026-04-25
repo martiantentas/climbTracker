@@ -173,8 +173,8 @@ export default function BoulderCard({
         transition-colors duration-[330ms] overflow-hidden
         ${isTopped
           ? theme === 'dark'
-            ? 'bg-[#7F8BAD]/10 border-[#7F8BAD]/30'
-            : 'bg-[#7F8BAD]/5 border-[#7F8BAD]/20'
+            ? 'bg-[#7F8BAD]/18 border-[#7F8BAD]/45 shadow-[inset_0_0_0_1px_rgba(127,139,173,0.15)]'
+            : 'bg-[#7F8BAD]/10 border-[#7F8BAD]/35 shadow-[inset_0_0_0_1px_rgba(127,139,173,0.08)]'
           : theme === 'dark'
             ? 'bg-white/5 border-white/10 hover:bg-white/8 hover:border-white/20'
             : 'bg-white border-[#EEEEEE] hover:bg-[#F4F4F4] hover:border-[#D0D1D2]'
@@ -197,7 +197,7 @@ export default function BoulderCard({
               className="w-2.5 h-2.5 rounded-full flex-shrink-0"
               style={{ backgroundColor: holdColor }}
             />
-            <span className={`text-lg font-medium leading-none ${theme === 'dark' ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
+            <span className={`text-lg font-medium leading-none ${isTopped ? 'text-[#7F8BAD]' : theme === 'dark' ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
               #{boulder.number}
             </span>
           </div>

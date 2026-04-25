@@ -168,8 +168,10 @@ export default function ProfilePage({
         </h1>
 
         {!isEditing ? (
-          <button
+          <motion.button
             onClick={() => setIsEditing(true)}
+            whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.95 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 26 }}
             className={`
               flex items-center gap-2 px-4 py-2 rounded text-sm font-medium transition-colors duration-[330ms]
               ${dk
@@ -180,11 +182,13 @@ export default function ProfilePage({
           >
             <Edit3 size={14} />
             {t.edit}
-          </button>
+          </motion.button>
         ) : (
           <div className="flex items-center gap-2">
-            <button
+            <motion.button
               onClick={handleCancel}
+              whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.95 }}
+              transition={{ type: 'spring', stiffness: 420, damping: 26 }}
               className={`
                 flex items-center gap-2 px-4 py-2 rounded text-sm font-medium transition-colors duration-[330ms]
                 ${dk
@@ -195,11 +199,11 @@ export default function ProfilePage({
             >
               <X size={14} />
               {t.cancel}
-            </button>
+            </motion.button>
             <motion.button
               onClick={handleSave}
               className="flex items-center gap-2 px-4 py-2 rounded text-sm font-medium bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms]"
-              whileTap={{ scale: 0.97 }}
+              whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
               transition={{ type: 'spring', stiffness: 400, damping: 25 }}
             >
               <Save size={14} />

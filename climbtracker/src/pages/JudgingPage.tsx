@@ -164,7 +164,7 @@ function BoulderJudgingRow({
               const zoneNum   = i + 1
               const isReached = zonesReached >= zoneNum
               return (
-                <button
+                <motion.button
                   key={zoneNum}
                   disabled={isLocked}
                   onClick={() => {
@@ -175,6 +175,9 @@ function BoulderJudgingRow({
                       if (zoneAttempts === 0) setZoneAttempts(1)
                     }
                   }}
+                  whileHover={isLocked ? {} : { scale: 1.05 }}
+                  whileTap={isLocked ? {} : { scale: 0.92 }}
+                  transition={{ type: 'spring', stiffness: 420, damping: 24 }}
                   className={`
                     flex items-center gap-1.5 px-4 py-2 rounded text-xs font-medium
                     border transition-colors duration-[330ms]
@@ -189,7 +192,7 @@ function BoulderJudgingRow({
                 >
                   <Target size={11} />
                   {labels.zoneLabel} {zoneNum} {isReached ? '✓' : ''}
-                </button>
+                </motion.button>
               )
             })}
           </div>
@@ -199,23 +202,27 @@ function BoulderJudgingRow({
               <p className={`text-[10px] font-medium ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
                 {labels.zoneAttempts}
               </p>
-              <button
+              <motion.button
                 onClick={() => setZoneAttempts(z => Math.max(1, z - 1))}
                 disabled={isLocked}
+                whileHover={isLocked ? {} : { scale: 1.12 }} whileTap={isLocked ? {} : { scale: 0.86 }}
+                transition={{ type: 'spring', stiffness: 440, damping: 22 }}
                 className={counterBtnCls}
               >
                 <Minus size={11} />
-              </button>
+              </motion.button>
               <span className={`text-sm font-medium w-6 text-center ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>
                 {zoneAttempts}
               </span>
-              <button
+              <motion.button
                 onClick={() => setZoneAttempts(z => z + 1)}
                 disabled={isLocked}
+                whileHover={isLocked ? {} : { scale: 1.12 }} whileTap={isLocked ? {} : { scale: 0.86 }}
+                transition={{ type: 'spring', stiffness: 440, damping: 22 }}
                 className={counterBtnCls}
               >
                 <Plus size={11} />
-              </button>
+              </motion.button>
             </div>
           )}
         </div>
@@ -228,32 +235,39 @@ function BoulderJudgingRow({
             {labels.topAttempts}
           </p>
           <div className="flex items-center gap-2">
-            <button
+            <motion.button
               onClick={() => setAttempts(a => Math.max(0, a - 1))}
               disabled={isLocked || attempts === 0}
+              whileHover={isLocked ? {} : { scale: 1.12 }} whileTap={isLocked ? {} : { scale: 0.86 }}
+              transition={{ type: 'spring', stiffness: 440, damping: 22 }}
               className={counterBtnCls}
             >
               <Minus size={12} />
-            </button>
+            </motion.button>
             <span className={`text-lg font-medium w-8 text-center ${
               attempts > 0 ? 'text-[#7F8BAD]' : dk ? 'text-[#5C5E62]' : 'text-[#D0D1D2]'
             }`}>
               {attempts}
             </span>
-            <button
+            <motion.button
               onClick={() => setAttempts(a => a + 1)}
               disabled={isLocked}
+              whileHover={isLocked ? {} : { scale: 1.12 }} whileTap={isLocked ? {} : { scale: 0.86 }}
+              transition={{ type: 'spring', stiffness: 440, damping: 22 }}
               className={counterBtnCls}
             >
               <Plus size={12} />
-            </button>
+            </motion.button>
           </div>
         </div>
 
         <div className="flex items-end">
-          <button
+          <motion.button
             onClick={() => setIsTop(t => !t)}
             disabled={isLocked}
+            whileHover={isLocked ? {} : { scale: 1.04 }}
+            whileTap={isLocked ? {} : { scale: 0.94 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 26 }}
             className={`
               w-full flex items-center justify-center gap-2 py-2.5 rounded
               text-xs font-medium border transition-colors duration-[330ms]
@@ -268,7 +282,7 @@ function BoulderJudgingRow({
           >
             <CheckCircle2 size={13} />
             {labels.topLabel} {isTop ? '✓' : ''}
-          </button>
+          </motion.button>
         </div>
       </div>
 

@@ -8,6 +8,8 @@ import type { Competitor, Competition } from '../types'
 import { MOCK_COMPETITORS, MOCK_COMPETITION } from '../constants'
 import type { Language } from '../translations'
 import { translations } from '../translations'
+import BackgroundBeams from '../components/BackgroundBeams'
+import LoadingSpinner from '../components/LoadingSpinner'
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -242,17 +244,8 @@ export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProp
     <div className="min-h-screen bg-[#121212] flex">
 
       {/* Left panel — branding (hidden on mobile) */}
-      <div className="auth-left-panel hidden flex-col justify-between p-14 relative overflow-hidden bg-[#0F1318]">
-        {/* Subtle grid */}
-        <div className="absolute inset-0 pointer-events-none"
-          style={{
-            backgroundImage: 'linear-gradient(rgba(127,139,173,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(127,139,173,0.04) 1px, transparent 1px)',
-            backgroundSize: '48px 48px',
-          }}
-        />
-        <div className="absolute bottom-[-80px] left-[-80px] w-[400px] h-[400px] rounded-full pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(127,139,173,0.08) 0%, transparent 70%)' }}
-        />
+      <div className="auth-left-panel hidden flex-col justify-between p-14 relative overflow-hidden bg-[#080A0F]">
+        <BackgroundBeams />
 
         <div className="flex items-center gap-2.5 relative">
           <img src={ascendiaLogo} alt="Ascendia" className="h-8 w-auto object-contain" />
@@ -291,12 +284,15 @@ export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProp
 
         {/* Back + lang row */}
         <div className="flex items-center justify-between mb-10">
-          <button
+          <motion.button
             onClick={() => navigate('/')}
+            whileHover={{ x: -3, scale: 1.02 }}
+            whileTap={{ scale: 0.95 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 26 }}
             className="flex items-center gap-1.5 text-[#5C5E62] text-sm font-medium hover:text-[#D0D1D2] transition-colors duration-[330ms]"
           >
             <ArrowLeft size={14} /> {tr.authBackHome}
-          </button>
+          </motion.button>
           <select
             value={lang}
             onChange={e => setLang(e.target.value as Language)}
@@ -314,18 +310,27 @@ export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProp
         </div>
 
         {/* Tab toggle */}
-        <div className="flex bg-white/5 rounded p-1 mb-9">
+        <div className="flex bg-white/5 rounded p-1 mb-9 relative">
           {(['signin', 'signup'] as Tab[]).map(tab_ => (
-            <button
+            <motion.button
               key={tab_}
               onClick={() => setTab(tab_)}
-              className={`
-                flex-1 py-2.5 rounded text-sm font-medium transition-colors duration-[330ms]
-                ${tab === tab_ ? 'bg-[#7F8BAD] text-white' : 'text-[#5C5E62] hover:text-[#D0D1D2]'}
-              `}
+              whileTap={{ scale: 0.96 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+              className="flex-1 py-2.5 rounded text-sm font-medium transition-colors duration-[330ms] relative z-10"
+              style={{ color: tab === tab_ ? 'white' : undefined }}
             >
-              {tab_ === 'signin' ? tr.authSignIn : tr.authCreateAccount}
-            </button>
+              {tab === tab_ && (
+                <motion.div
+                  layoutId="auth-tab-indicator"
+                  className="absolute inset-0 rounded bg-[#7F8BAD]"
+                  transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                />
+              )}
+              <span className={`relative z-10 ${tab === tab_ ? 'text-white' : 'text-[#5C5E62]'}`}>
+                {tab_ === 'signin' ? tr.authSignIn : tr.authCreateAccount}
+              </span>
+            </motion.button>
           ))}
         </div>
 
@@ -405,7 +410,7 @@ export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProp
                     {tr.authGdprLabel}{' '}
                     <button
                       type="button"
-                      onClick={e => { e.stopPropagation(); e.preventDefault() }}
+                      onClick={e => { e.stopPropagation(); e.preventDefault(); navigate(`/${lang}/privacy`) }}
                       className="text-[#7F8BAD] hover:text-[#6D799B] underline underline-offset-2 transition-colors duration-200"
                     >
                       {tr.authGdprLink}
@@ -431,7 +436,10 @@ export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProp
               whileTap={{ scale: 0.97 }}
               transition={{ type: 'spring', stiffness: 400, damping: 25 }}
             >
-              {loading ? '…' : tab === 'signin' ? tr.authSignIn : tr.authCreateAccount}
+              {loading
+                ? <LoadingSpinner size={22} color="#fff" />
+                : tab === 'signin' ? tr.authSignIn : tr.authCreateAccount
+              }
             </motion.button>
 
             <div className="flex items-center gap-3 text-[#393C41]">
@@ -441,7 +449,7 @@ export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProp
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <button
+              <motion.button
                 type="button"
                 onClick={() => {
                   if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) {
@@ -451,6 +459,9 @@ export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProp
                   loginWithGoogle()
                 }}
                 disabled={loading}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.96 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 26 }}
                 className="py-3 rounded text-sm font-medium border border-white/10 bg-white/[0.04] text-[#5C5E62] hover:border-[#7F8BAD]/30 hover:text-[#D0D1D2] transition-colors duration-[330ms] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 <svg width="16" height="16" viewBox="0 0 48 48" fill="none">
@@ -460,25 +471,31 @@ export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProp
                   <path d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.3 5.7l6.4 5.4C37.1 39.1 44 34 44 24c0-1.2-.1-2.5-.4-3.5z" fill="#1976D2"/>
                 </svg>
                 Google
-              </button>
-              <button
+              </motion.button>
+              <motion.button
                 type="button"
                 onClick={() => alert(`Apple ${tr.authForgotComing}`)}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.96 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 26 }}
                 className="py-3 rounded text-sm font-medium border border-white/10 bg-white/[0.04] text-[#5C5E62] hover:border-[#7F8BAD]/30 hover:text-[#D0D1D2] transition-colors duration-[330ms]"
               >
                 Apple
-              </button>
+              </motion.button>
             </div>
 
             <p className="text-center text-sm text-[#5C5E62] mt-1">
               {tab === 'signin' ? tr.authNoAccount : tr.authHasAccount}{' '}
-              <button
+              <motion.button
                 type="button"
                 onClick={() => setTab(tab === 'signin' ? 'signup' : 'signin')}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 26 }}
                 className="text-[#7F8BAD] font-medium hover:text-[#6D799B] transition-colors duration-[330ms]"
               >
                 {tab === 'signin' ? tr.authSignUp : tr.authSignIn}
-              </button>
+              </motion.button>
             </p>
 
             {/* Dev shortcuts */}

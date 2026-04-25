@@ -2,9 +2,9 @@ import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 
 // ─── GLSL ─────────────────────────────────────────────────────────────────────
-// Terrain scrolls forward by incrementing tz = uTime * SPEED (in world units).
-// SPEED = 40  →  noise coord shifts 40/SCALE = 40/32 ≈ 1.25 noise-units/sec
-// → each hill (~1 noise-unit wide) passes the camera in ~0.8 s.  Very visible.
+// Bird-view cloud flyover: camera high up, looking nearly straight down.
+// Terrain represents cloud tops — white at peaks, dark-blue gaps between clouds.
+// Slow drift gives a peaceful "flying over a low-density cloudscape" feel.
 
 const vert = /* glsl */`
 uniform float uTime;
@@ -21,25 +21,25 @@ float vn(vec2 p){
              mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x),f.y);
 }
 float fbm(vec2 p){
-  return vn(p)*0.500+vn(p*2.13)*0.250+vn(p*4.37)*0.125+vn(p*8.91)*0.0625;
+  // Fewer octaves → broader, rounder cloud shapes
+  return vn(p)*0.500+vn(p*1.97)*0.280+vn(p*3.91)*0.140+vn(p*7.83)*0.060+vn(p*15.7)*0.020;
 }
-// height: [-2, 7]
-float th(vec2 p){ return fbm(p)*9.0-2.0; }
+// height in [-1.5, 8.0] — broader range makes clouds look puffier
+float th(vec2 p){ return fbm(p)*9.5-1.5; }
 
 void main(){
-  // world-z scroll: 8 units/sec, negative → terrain approaches camera (fly-in feel)
-  float tz = uTime * 8.0;
-  vec2  nc = vec2(position.x/32.0, (position.z-tz)/32.0);
+  // Slow scroll: 4 units/sec, negative → approaching
+  float tz = uTime * 4.0;
+  vec2  nc = vec2(position.x/48.0, (position.z-tz)/48.0);
   float h  = th(nc);
   vH = h;
 
-  // finite-difference normal for lighting
   float d = 1.0;
-  float hL=th(vec2((position.x-d)/32.0,(position.z-tz)/32.0));
-  float hR=th(vec2((position.x+d)/32.0,(position.z-tz)/32.0));
-  float hB=th(vec2( position.x/32.0,(position.z-d-tz)/32.0));
-  float hF=th(vec2( position.x/32.0,(position.z+d-tz)/32.0));
-  vN = normalize(vec3(hL-hR, 2.0*d, hB-hF));
+  float hL=th(vec2((position.x-d)/48.0,(position.z-tz)/48.0));
+  float hR=th(vec2((position.x+d)/48.0,(position.z-tz)/48.0));
+  float hB=th(vec2( position.x/48.0,(position.z-d-tz)/48.0));
+  float hF=th(vec2( position.x/48.0,(position.z+d-tz)/48.0));
+  vN = normalize(vec3(hL-hR, 2.5*d, hB-hF));
 
   gl_Position = projectionMatrix*modelViewMatrix*vec4(position.x,h,position.z,1.0);
 }
@@ -53,17 +53,24 @@ uniform vec3  uFog;
 uniform float uFogD;
 
 void main(){
-  float t = clamp((vH+2.0)/9.0, 0.0, 1.0);
-  vec3 c0=vec3(0.14,0.04,0.01), c1=vec3(0.40,0.13,0.04),
-       c2=vec3(0.62,0.26,0.09), c3=vec3(0.76,0.44,0.22), c4=vec3(0.87,0.64,0.43);
-  vec3 col;
-  if(t<0.20)      col=mix(c0,c1,t/0.20);
-  else if(t<0.45) col=mix(c1,c2,(t-0.20)/0.25);
-  else if(t<0.72) col=mix(c2,c3,(t-0.45)/0.27);
-  else            col=mix(c3,c4,(t-0.72)/0.28);
+  // t=0: dark sky gaps, t=1: bright cloud tops
+  float t = clamp((vH+1.5)/9.5, 0.0, 1.0);
 
+  // Mars stone palette: dark basalt → orange dust → rust → warm tan peaks
+  vec3 c0=vec3(0.09,0.03,0.01);   // deep basalt / shadowed crevice
+  vec3 c1=vec3(0.28,0.10,0.03);   // dark rust
+  vec3 c2=vec3(0.52,0.22,0.07);   // mid orange-brown
+  vec3 c3=vec3(0.72,0.40,0.18);   // warm orange
+  vec3 c4=vec3(0.88,0.62,0.38);   // dusty tan / sunlit ridge
+  vec3 col;
+  if(t<0.18)      col=mix(c0,c1,t/0.18);
+  else if(t<0.40) col=mix(c1,c2,(t-0.18)/0.22);
+  else if(t<0.68) col=mix(c2,c3,(t-0.40)/0.28);
+  else            col=mix(c3,c4,(t-0.68)/0.32);
+
+  // Gentle top-light diffuse (sun nearly overhead)
   float diff=max(dot(normalize(vN),normalize(uSun)),0.0);
-  col *= 0.25+0.75*diff;
+  col *= 0.40+0.60*diff;
 
   float depth=gl_FragCoord.z/gl_FragCoord.w;
   float ff=1.0-exp(-(uFogD*uFogD)*depth*depth);
@@ -71,7 +78,7 @@ void main(){
 }
 `
 
-// ─── JS terrain mirror — must match shader exactly ────────────────────────────
+// ─── JS terrain mirror ────────────────────────────────────────────────────────
 function jh(x: number, y: number) {
   const s = Math.sin(x*127.1+y*311.7)*43758.5453
   return s - Math.floor(s)
@@ -83,11 +90,10 @@ function jv(x: number, y: number) {
   return a + (b-a)*u + (c-a)*v + (a-b-c+d)*u*v
 }
 function jfbm(x: number, y: number) {
-  return jv(x,y)*0.500+jv(x*2.13,y*2.13)*0.250+jv(x*4.37,y*4.37)*0.125+jv(x*8.91,y*8.91)*0.0625
+  return jv(x,y)*0.500+jv(x*1.97,y*1.97)*0.280+jv(x*3.91,y*3.91)*0.140+jv(x*7.83,y*7.83)*0.060+jv(x*15.7,y*15.7)*0.020
 }
-// Matches shader: tz = t * 8; nc = (wx/32, (wz-tz)/32)
 function terrainAt(wx: number, wz: number, t: number) {
-  return jfbm(wx/32, (wz - t*8)/32)*9 - 2
+  return jfbm(wx/48, (wz - t*4)/48)*9.5 - 1.5
 }
 
 // ─── COMPONENT ────────────────────────────────────────────────────────────────
@@ -106,24 +112,26 @@ export default function MarsCanvas() {
     renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5))
     renderer.setSize(W, H, false)
 
-    const SKY = new THREE.Color(0x130401)
+    // Dark Mars rust — hazy upper-atmosphere feel
+    const SKY = new THREE.Color(0x100401)
     renderer.setClearColor(SKY)
 
     const scene  = new THREE.Scene()
-    const camera = new THREE.PerspectiveCamera(70, W/H, 0.5, 400)
-    camera.position.set(0, 10, 0)
+    // Wide FOV for the top-down bird-view sprawl
+    const camera = new THREE.PerspectiveCamera(65, W/H, 0.5, 500)
+    camera.position.set(0, 22, 0)
 
-    // Plane is wide and DEEP — camera sits near one end and looks forward
-    const geo = new THREE.PlaneGeometry(300, 300, 200, 200)
+    // Wider, deeper plane to fill the bird-view frame
+    const geo = new THREE.PlaneGeometry(380, 380, 220, 220)
     geo.rotateX(-Math.PI/2)
-    // Shift plane so most of it is AHEAD of the camera (in -z direction)
-    geo.translate(0, 0, -120)
+    geo.translate(0, 0, -140)
 
     const uniforms = {
       uTime: { value: 0 },
-      uSun:  { value: new THREE.Vector3(-0.3, 1.0, 0.3).normalize() },
+      // Sun nearly directly overhead → brings out cloud tops clearly
+      uSun:  { value: new THREE.Vector3(0.2, 1.0, 0.15).normalize() },
       uFog:  { value: new THREE.Vector3(SKY.r, SKY.g, SKY.b) },
-      uFogD: { value: 0.012 },
+      uFogD: { value: 0.008 },
     }
     scene.add(new THREE.Mesh(geo, new THREE.ShaderMaterial({
       vertexShader: vert,
@@ -132,7 +140,7 @@ export default function MarsCanvas() {
     })))
 
     const clock = new THREE.Clock()
-    let camY = 10
+    let camY = 22
     let camX = 0
     let raf  = 0
 
@@ -141,27 +149,26 @@ export default function MarsCanvas() {
       const t = clock.getElapsedTime()
       uniforms.uTime.value = t
 
-      // Autonomous serpentine drift
-      const targetX = Math.sin(t * 0.14) * 18 + Math.sin(t * 0.09) * 9
-      camX += (targetX - camX) * 0.015
+      // Slow, wide serpentine drift — bird circling high above
+      const targetX = Math.sin(t * 0.08) * 24 + Math.sin(t * 0.05) * 12
+      camX += (targetX - camX) * 0.008
 
-      // Terrain height at camera (z=0) and 30 units ahead (z=-30)
+      // Stay high — just float gently over cloud terrain
       const hNow   = terrainAt(camX,   0, t)
-      const hAhead = terrainAt(camX, -30, t)
-      const targetY = Math.max(hNow, hAhead) + 5.5
-      camY += (targetY - camY) * 0.06
+      const hAhead = terrainAt(camX, -40, t)
+      const targetY = Math.max(hNow, hAhead) + 18   // always high above clouds
+      camY += (targetY - camY) * 0.025
 
       camera.position.set(camX, camY, 0)
 
-      // Look ahead and slightly down — horizontal fly-through feel
-      // Bank into the drift by tilting the up vector
-      const driftSpeed = Math.cos(t * 0.14) * 0.14 * 18 + Math.cos(t * 0.09) * 0.09 * 9
-      const bankAngle  = -driftSpeed * 0.006   // subtle roll into turns
+      // Very steep downward angle — bird's eye, slight forward tilt so you see horizon
+      const driftSpeed = Math.cos(t * 0.08) * 0.08 * 24 + Math.cos(t * 0.05) * 0.05 * 12
+      const bankAngle  = -driftSpeed * 0.004
       camera.up.set(Math.sin(bankAngle), Math.cos(bankAngle), 0)
 
-      const lookX = camX * 0.2
-      const lookY = camY - 2.0
-      camera.lookAt(lookX, lookY, -60)
+      // Look far ahead but mostly down — clouds spread below you
+      const lookX = camX * 0.15
+      camera.lookAt(lookX, 0, -55)
 
       renderer.render(scene, camera)
     }

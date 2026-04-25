@@ -244,13 +244,16 @@ export default function BouldersPage({
           </div>
         </div>
         {isOrganizer && (
-          <button
+          <motion.button
             onClick={() => setModalBoulder('new')}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.95 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 26 }}
             className="flex items-center gap-2 px-4 py-2 bg-[#7F8BAD] text-white rounded text-sm font-medium hover:bg-[#6D799B] transition-colors duration-[330ms]"
           >
             <Plus size={15} />
             {t.addBoulder}
-          </button>
+          </motion.button>
         )}
       </div>
 
@@ -322,27 +325,33 @@ export default function BouldersPage({
         {!isOrganizer && (
           <>
             {(['all', 'completed', 'incomplete'] as FilterStatus[]).map(f => (
-              <button key={f} onClick={() => setFilter(f)} className={pillCls(filter === f)}>
+              <motion.button key={f} onClick={() => setFilter(f)} className={pillCls(filter === f)}
+                whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
+                transition={{ type: 'spring', stiffness: 420, damping: 26 }}>
                 {f === 'all' ? t.all : f === 'completed' ? t.completed : t.incomplete}
-              </button>
+              </motion.button>
             ))}
             <div className={`w-px h-4 mx-1 ${dk ? 'bg-white/10' : 'bg-[#EEEEEE]'}`} />
           </>
         )}
         <span className={`text-xs font-medium ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.sortBy}:</span>
         {(['number', 'difficulty'] as SortKey[]).map(s => (
-          <button key={s} onClick={() => setSortBy(s)} className={pillCls(sortBy === s)}>
+          <motion.button key={s} onClick={() => setSortBy(s)} className={pillCls(sortBy === s)}
+            whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 26 }}>
             {s === 'number' ? t.number : t.difficulty}
-          </button>
+          </motion.button>
         ))}
         {!isOrganizer && (
           <>
             <div className={`w-px h-4 mx-1 ${dk ? 'bg-white/10' : 'bg-[#EEEEEE]'}`} />
             <span className={`text-xs font-medium ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.groupBy}:</span>
             {(['none', 'color', 'difficulty'] as GroupBy[]).map(g => (
-              <button key={g} onClick={() => { setGroupBy(g); setOpenGroups({}) }} className={pillCls(groupBy === g)}>
+              <motion.button key={g} onClick={() => { setGroupBy(g); setOpenGroups({}) }} className={pillCls(groupBy === g)}
+                whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
+                transition={{ type: 'spring', stiffness: 420, damping: 26 }}>
                 {g === 'none' ? t.groupByNone : g === 'color' ? t.groupByColor : t.groupByDiff}
-              </button>
+              </motion.button>
             ))}
           </>
         )}

@@ -141,7 +141,9 @@ function UserDetailModal({ competitor, allCompetitors, competition, isMe, viewOn
               <p className={`text-xs mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{competitor.email}</p>
             </div>
           </div>
-          <button onClick={onClose} className={`p-2 rounded transition-colors duration-[330ms] ${dk ? 'hover:bg-white/5 text-[#5C5E62]' : 'hover:bg-[#F4F4F4] text-[#8E8E8E]'}`}><X size={17} /></button>
+          <motion.button onClick={onClose} className={`p-2 rounded transition-colors duration-[330ms] ${dk ? 'hover:bg-white/5 text-[#5C5E62]' : 'hover:bg-[#F4F4F4] text-[#8E8E8E]'}`}
+            whileHover={{ scale: 1.12 }} whileTap={{ scale: 0.88 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 26 }}><X size={17} /></motion.button>
         </div>
 
         <div className="px-6 py-5 space-y-5">
@@ -193,13 +195,15 @@ function UserDetailModal({ competitor, allCompetitors, competition, isMe, viewOn
                   className={`${inputCls} pl-9 ${isJudgeOrOrganizer ? 'opacity-40 cursor-not-allowed' : ''} ${bibError && !isJudgeOrOrganizer ? '!border-red-400/60' : ''}`}
                 />
               </div>
-              <button
+              <motion.button
                 onClick={() => { if (canSaveBib) onUpdateBib(competitor.id, parseInt(bibInput)) }}
                 disabled={!canSaveBib}
                 className={`flex items-center gap-1.5 px-4 py-3 rounded text-xs font-medium transition-colors duration-[330ms] ${!canSaveBib ? 'opacity-40 cursor-not-allowed bg-white/5 text-[#5C5E62]' : 'bg-[#7F8BAD] text-white hover:bg-[#6D799B]'}`}
+                whileHover={canSaveBib ? { scale: 1.03 } : {}} whileTap={canSaveBib ? { scale: 0.95 } : {}}
+                transition={{ type: 'spring', stiffness: 420, damping: 26 }}
               >
                 <Save size={13} />{t.save}
-              </button>
+              </motion.button>
             </div>
             {bibError && !isJudgeOrOrganizer && (
               <div className="flex items-start gap-1 mt-1.5">
@@ -243,23 +247,29 @@ function UserDetailModal({ competitor, allCompetitors, competition, isMe, viewOn
             {dangerAction === 'remove' ? (
               <div className="flex items-center gap-3">
                 <p className={`text-xs font-medium flex-1 ${dk ? 'text-[#8E8E8E]' : 'text-[#5C5E62]'}`}>{t.confirmRemove(competitor.displayName)}</p>
-                <button onClick={() => { onRemove(); onClose() }} className="px-4 py-2 rounded text-xs font-medium bg-red-400 text-white hover:bg-red-500 transition-colors duration-[330ms]">{t.removeFromEvent}</button>
-                <button onClick={() => setDangerAction(null)} className={`px-4 py-2 rounded text-xs font-medium transition-colors duration-[330ms] ${dk ? 'bg-white/5 text-[#8E8E8E]' : 'bg-[#F4F4F4] text-[#5C5E62]'}`}>{t.cancel}</button>
+                <motion.button onClick={() => { onRemove(); onClose() }} className="px-4 py-2 rounded text-xs font-medium bg-red-400 text-white hover:bg-red-500 transition-colors duration-[330ms]"
+                  whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.95 }} transition={{ type: 'spring', stiffness: 420, damping: 26 }}>{t.removeFromEvent}</motion.button>
+                <motion.button onClick={() => setDangerAction(null)} className={`px-4 py-2 rounded text-xs font-medium transition-colors duration-[330ms] ${dk ? 'bg-white/5 text-[#8E8E8E]' : 'bg-[#F4F4F4] text-[#5C5E62]'}`}
+                  whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.95 }} transition={{ type: 'spring', stiffness: 420, damping: 26 }}>{t.cancel}</motion.button>
               </div>
             ) : dangerAction === 'ban' ? (
               <div className="flex items-center gap-3">
                 <p className={`text-xs font-medium flex-1 ${dk ? 'text-[#8E8E8E]' : 'text-[#5C5E62]'}`}>{t.confirmBan(competitor.displayName)}</p>
-                <button onClick={() => { onBan(); onClose() }} className="px-4 py-2 rounded text-xs font-medium bg-red-400 text-white hover:bg-red-500 transition-colors duration-[330ms]">{t.banFromEvent}</button>
-                <button onClick={() => setDangerAction(null)} className={`px-4 py-2 rounded text-xs font-medium transition-colors duration-[330ms] ${dk ? 'bg-white/5 text-[#8E8E8E]' : 'bg-[#F4F4F4] text-[#5C5E62]'}`}>{t.cancel}</button>
+                <motion.button onClick={() => { onBan(); onClose() }} className="px-4 py-2 rounded text-xs font-medium bg-red-400 text-white hover:bg-red-500 transition-colors duration-[330ms]"
+                  whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.95 }} transition={{ type: 'spring', stiffness: 420, damping: 26 }}>{t.banFromEvent}</motion.button>
+                <motion.button onClick={() => setDangerAction(null)} className={`px-4 py-2 rounded text-xs font-medium transition-colors duration-[330ms] ${dk ? 'bg-white/5 text-[#8E8E8E]' : 'bg-[#F4F4F4] text-[#5C5E62]'}`}
+                  whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.95 }} transition={{ type: 'spring', stiffness: 420, damping: 26 }}>{t.cancel}</motion.button>
               </div>
             ) : (
               <div className="flex items-center gap-4">
-                <button onClick={() => setDangerAction('remove')} className={`flex items-center gap-2 text-xs font-medium transition-colors duration-[330ms] ${dk ? 'text-[#5C5E62] hover:text-red-400' : 'text-[#8E8E8E] hover:text-red-500'}`}>
+                <motion.button onClick={() => setDangerAction('remove')} className={`flex items-center gap-2 text-xs font-medium transition-colors duration-[330ms] ${dk ? 'text-[#5C5E62] hover:text-red-400' : 'text-[#8E8E8E] hover:text-red-500'}`}
+                  whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }} transition={{ type: 'spring', stiffness: 420, damping: 26 }}>
                   <Trash2 size={13} />{t.removeFromEvent}
-                </button>
-                <button onClick={() => setDangerAction('ban')} className={`flex items-center gap-2 text-xs font-medium transition-colors duration-[330ms] ${dk ? 'text-[#5C5E62] hover:text-red-400' : 'text-[#8E8E8E] hover:text-red-500'}`}>
+                </motion.button>
+                <motion.button onClick={() => setDangerAction('ban')} className={`flex items-center gap-2 text-xs font-medium transition-colors duration-[330ms] ${dk ? 'text-[#5C5E62] hover:text-red-400' : 'text-[#8E8E8E] hover:text-red-500'}`}
+                  whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }} transition={{ type: 'spring', stiffness: 420, damping: 26 }}>
                   <Ban size={13} />{t.banFromEvent}
-                </button>
+                </motion.button>
               </div>
             )}
           </div>
@@ -330,7 +340,7 @@ export default function UsersPage({ competitors, competition, currentUser, theme
             const label    = t2 === 'active' ? t.activeTab : t.bannedTab
             const count    = t2 === 'banned' ? bannedEmails.length : undefined
             return (
-              <button
+              <motion.button
                 key={t2}
                 onClick={() => { setTab(t2); setSearch('') }}
                 className={`flex items-center gap-2 px-4 py-1.5 rounded text-xs font-medium transition-colors duration-[250ms] ${
@@ -340,6 +350,8 @@ export default function UsersPage({ competitors, competition, currentUser, theme
                       : dk ? 'bg-white/8 text-[#EEEEEE]' : 'bg-white text-[#121212] shadow-sm'
                     : dk ? 'text-[#5C5E62] hover:text-[#8E8E8E]' : 'text-[#8E8E8E] hover:text-[#5C5E62]'
                 }`}
+                whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
+                transition={{ type: 'spring', stiffness: 420, damping: 26 }}
               >
                 {t2 === 'banned' && <Ban size={11} />}
                 {label}
@@ -348,7 +360,7 @@ export default function UsersPage({ competitors, competition, currentUser, theme
                     {count}
                   </span>
                 )}
-              </button>
+              </motion.button>
             )
           })}
         </div>
@@ -364,7 +376,10 @@ export default function UsersPage({ competitors, competition, currentUser, theme
             className="flex-1 bg-transparent outline-none text-sm placeholder:text-[#8E8E8E]"
           />
           {search && (
-            <button onClick={() => setSearch('')} className={`text-xs font-medium ${dk ? 'text-[#5C5E62] hover:text-[#EEEEEE]' : 'text-[#8E8E8E] hover:text-[#5C5E62]'}`}>{t.clearFilters}</button>
+            <motion.button onClick={() => setSearch('')} className={`text-xs font-medium ${dk ? 'text-[#5C5E62] hover:text-[#EEEEEE]' : 'text-[#8E8E8E] hover:text-[#5C5E62]'}`}
+              whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.93 }}
+              transition={{ type: 'spring', stiffness: 420, damping: 26 }}
+            >{t.clearFilters}</motion.button>
           )}
         </div>
 
@@ -418,10 +433,12 @@ export default function UsersPage({ competitors, competition, currentUser, theme
                     }
                   </div>
                   <div className="flex justify-end">
-                    <button
+                    <motion.button
                       onClick={() => setSelectedUser(competitor)}
                       className={`p-2 rounded transition-colors duration-[330ms] text-xs font-medium ${dk ? 'text-[#5C5E62] hover:text-[#D0D1D2] hover:bg-white/5' : 'text-[#D0D1D2] hover:text-[#5C5E62] hover:bg-[#F4F4F4]'}`}
-                    ><MoreHorizontal size={15} /></button>
+                      whileHover={{ scale: 1.12 }} whileTap={{ scale: 0.88 }}
+                      transition={{ type: 'spring', stiffness: 420, damping: 26 }}
+                    ><MoreHorizontal size={15} /></motion.button>
                   </div>
                 </motion.div>
               )
@@ -467,22 +484,28 @@ export default function UsersPage({ competitors, competition, currentUser, theme
                   {confirmUnban === email ? (
                     <div className="flex items-center gap-2 flex-shrink-0 ml-4">
                       <p className={`text-xs ${dk ? 'text-[#8E8E8E]' : 'text-[#5C5E62]'}`}>{t.confirmUnban(email)}</p>
-                      <button
+                      <motion.button
                         onClick={() => { onUnbanUser(email); setConfirmUnban(null) }}
                         className="px-3 py-1.5 rounded text-xs font-medium bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[250ms]"
-                      >{t.unbanUser}</button>
-                      <button
+                        whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.95 }}
+                        transition={{ type: 'spring', stiffness: 420, damping: 26 }}
+                      >{t.unbanUser}</motion.button>
+                      <motion.button
                         onClick={() => setConfirmUnban(null)}
                         className={`px-3 py-1.5 rounded text-xs font-medium transition-colors duration-[250ms] ${dk ? 'bg-white/5 text-[#8E8E8E] hover:bg-white/10' : 'bg-[#F4F4F4] text-[#5C5E62] hover:bg-[#EEEEEE]'}`}
-                      >{t.cancel}</button>
+                        whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.95 }}
+                        transition={{ type: 'spring', stiffness: 420, damping: 26 }}
+                      >{t.cancel}</motion.button>
                     </div>
                   ) : (
-                    <button
+                    <motion.button
                       onClick={() => setConfirmUnban(email)}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors duration-[250ms] flex-shrink-0 ml-4 ${dk ? 'text-[#5C5E62] hover:text-[#7F8BAD] hover:bg-[#7F8BAD]/10 border border-white/10' : 'text-[#8E8E8E] hover:text-[#7F8BAD] hover:bg-[#7F8BAD]/10 border border-[#EEEEEE]'}`}
+                      whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
+                      transition={{ type: 'spring', stiffness: 420, damping: 26 }}
                     >
                       <ShieldOff size={12} />{t.unbanUser}
-                    </button>
+                    </motion.button>
                   )}
                 </div>
               )

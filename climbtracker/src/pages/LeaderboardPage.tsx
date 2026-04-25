@@ -26,7 +26,7 @@ function FilterChip({ label, active, theme, onClick }: {
 }) {
   const dk = theme === 'dark'
   return (
-    <button
+    <motion.button
       onClick={onClick}
       className={`
         px-3 py-1.5 rounded text-xs font-medium border transition-colors duration-[330ms]
@@ -37,9 +37,12 @@ function FilterChip({ label, active, theme, onClick }: {
             : 'bg-white border-[#EEEEEE] text-[#5C5E62] hover:text-[#121212]'
         }
       `}
+      whileHover={{ scale: 1.04 }}
+      whileTap={{ scale: 0.94 }}
+      transition={{ type: 'spring', stiffness: 420, damping: 26 }}
     >
       {label}
-    </button>
+    </motion.button>
   )
 }
 
@@ -230,12 +233,14 @@ function PodiumSection({
             </div>
           )}
           {hasActiveFilters && (
-            <button
+            <motion.button
               onClick={onClearFilters}
               className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium transition-colors duration-[330ms] ${dk ? 'text-red-400 bg-red-400/10 hover:bg-red-400/20' : 'text-red-500 bg-red-50 hover:bg-red-100'}`}
+              whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.93 }}
+              transition={{ type: 'spring', stiffness: 420, damping: 26 }}
             >
               <X size={10} /> {t.clearAll}
-            </button>
+            </motion.button>
           )}
         </div>
       )}
@@ -459,14 +464,17 @@ export default function LeaderboardPage({
 
         {isOrganizer && (
           <div ref={downloadRef} className="relative flex-shrink-0">
-            <button
+            <motion.button
               onClick={() => setShowDownload(v => !v)}
               className={`flex items-center gap-2 px-4 py-2.5 rounded text-sm font-medium border transition-colors duration-[330ms] ${dk ? 'bg-white/5 border-white/10 text-[#D0D1D2] hover:bg-white/10' : 'bg-white border-[#EEEEEE] text-[#393C41] hover:bg-[#F4F4F4]'}`}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.96 }}
+              transition={{ type: 'spring', stiffness: 420, damping: 26 }}
             >
               <Download size={14} />
               {t.leaderboardExport}
               <ChevDown size={12} className={`transition-transform ${showDownload ? 'rotate-180' : ''}`} />
-            </button>
+            </motion.button>
 
             {showDownload && (
               <>
@@ -564,12 +572,14 @@ export default function LeaderboardPage({
               <span className={`text-xs ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
                 {t.leaderboardOfClimbers(visible.length, rankings.length)}
               </span>
-              <button
+              <motion.button
                 onClick={() => { setCategoryFilters([]); setGenderFilters([]) }}
                 className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium transition-colors duration-[330ms] ${dk ? 'text-red-400 bg-red-400/10 hover:bg-red-400/20' : 'text-red-500 bg-red-50 hover:bg-red-100'}`}
+                whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.93 }}
+                transition={{ type: 'spring', stiffness: 420, damping: 26 }}
               >
                 <X size={10} /> {t.clearAll}
-              </button>
+              </motion.button>
             </div>
           )}
         </div>

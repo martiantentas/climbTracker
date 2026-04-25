@@ -1,5 +1,6 @@
 import { useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { motion } from 'motion/react'
 import {
   Zap, BarChart2, Users, Shield,
   ArrowRight, Check, ChevronDown, Trophy,
@@ -130,12 +131,14 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
               <option value="ca">CA</option>
             </select>
 
-            <button onClick={() => goAuth('signin')} style={{ ...btnOutline, padding: '8px 16px' }} className="btn-outline">
+            <motion.button onClick={() => goAuth('signin')} style={{ ...btnOutline, padding: '8px 16px' }} className="btn-outline"
+              whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.96 }} transition={{ type: 'spring', stiffness: 420, damping: 26 }}>
               {t.landingSignIn}
-            </button>
-            <button onClick={() => goAuth('signup')} style={{ ...btnPrimary, padding: '8px 16px' }} className="btn-primary">
+            </motion.button>
+            <motion.button onClick={() => goAuth('signup')} style={{ ...btnPrimary, padding: '8px 16px' }} className="btn-primary"
+              whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.96 }} transition={{ type: 'spring', stiffness: 420, damping: 26 }}>
               {t.landingGetStarted}
-            </button>
+            </motion.button>
           </div>
         </div>
       </nav>
@@ -143,11 +146,11 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
       <main>
 
       {/* ══ HERO ═════════════════════════════════════════════════════════════ */}
-      <section ref={heroRef} style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '100px 24px 80px', position: 'relative', overflow: 'hidden', background: '#130600' }}>
+      <section ref={heroRef} style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '100px 24px 80px', position: 'relative', overflow: 'hidden', background: '#100401' }}>
         {/* Mars terrain canvas */}
         <MarsCanvas />
         {/* Radial vignette so text stays readable */}
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 90% 70% at 50% 45%, rgba(0,0,0,0.10) 0%, rgba(0,0,0,0.52) 100%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 90% 70% at 50% 45%, rgba(16,4,1,0.10) 0%, rgba(16,4,1,0.58) 100%)', pointerEvents: 'none' }} />
         {/* Bottom gradient — seamless blend into the page background */}
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '38%', background: 'linear-gradient(to bottom, transparent 0%, rgba(18,18,18,0.6) 40%, #121212 100%)', pointerEvents: 'none' }} />
 
@@ -164,12 +167,14 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
             {t.landingHeroDesc}
           </p>
           <div className="anim-4 hero-ctas" style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button onClick={() => goAuth('signup')} style={{ ...btnPrimary, fontSize: 15, padding: '13px 28px' }} className="btn-primary">
+            <motion.button onClick={() => goAuth('signup')} style={{ ...btnPrimary, fontSize: 15, padding: '13px 28px' }} className="btn-primary"
+              whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} transition={{ type: 'spring', stiffness: 400, damping: 24 }}>
               {t.landingStart} <ArrowRight size={16} />
-            </button>
-            <button onClick={() => document.getElementById('workflow')?.scrollIntoView({ behavior: 'smooth' })} style={{ ...btnOutline, fontSize: 15, padding: '13px 28px' }} className="btn-outline">
+            </motion.button>
+            <motion.button onClick={() => document.getElementById('workflow')?.scrollIntoView({ behavior: 'smooth' })} style={{ ...btnOutline, fontSize: 15, padding: '13px 28px' }} className="btn-outline"
+              whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} transition={{ type: 'spring', stiffness: 400, damping: 24 }}>
               {t.landingHowWorks}
-            </button>
+            </motion.button>
           </div>
           <div style={{ marginTop: 72, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, color: C.txtLow }}>
             <ChevronDown size={15} className="chevron-pulse" />
@@ -371,9 +376,10 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
                 </li>
               ))}
             </ul>
-            <button onClick={() => goAuth('signup')} style={{ ...btnOutline, justifyContent: 'center', marginTop: 'auto' }} className="btn-outline">
+            <motion.button onClick={() => goAuth('signup')} style={{ ...btnOutline, justifyContent: 'center', marginTop: 'auto' }} className="btn-outline"
+              whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.96 }} transition={{ type: 'spring', stiffness: 420, damping: 26 }}>
               {t.landingGetStarted}
-            </button>
+            </motion.button>
           </div>
 
           {/* Premium */}
@@ -403,9 +409,10 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
                 )
               })}
             </ul>
-            <button onClick={() => goAuth('signup')} style={{ ...btnPrimary, justifyContent: 'center', marginTop: 'auto' }} className="btn-primary">
+            <motion.button onClick={() => goAuth('signup')} style={{ ...btnPrimary, justifyContent: 'center', marginTop: 'auto' }} className="btn-primary"
+              whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.96 }} transition={{ type: 'spring', stiffness: 420, damping: 26 }}>
               {t.landingGetStarted}
-            </button>
+            </motion.button>
           </div>
         </div>
 
@@ -415,9 +422,10 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
             <h3 style={{ fontSize: 15, fontWeight: 600, color: C.txt, margin: '0 0 4px', letterSpacing: '-0.01em' }}>{t.pricingBundles}</h3>
             <p style={{ fontSize: 13, color: C.txtLow, margin: 0, lineHeight: 1.55 }}>{t.pricingBundlesDesc}</p>
           </div>
-          <button onClick={() => goAuth('signup')} style={{ ...btnOutline, whiteSpace: 'nowrap' }} className="btn-outline">
+          <motion.button onClick={() => goAuth('signup')} style={{ ...btnOutline, whiteSpace: 'nowrap' }} className="btn-outline"
+            whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.96 }} transition={{ type: 'spring', stiffness: 420, damping: 26 }}>
             {t.pricingViewBundles} <ArrowRight size={13} />
-          </button>
+          </motion.button>
         </div>
       </section>
       </div>
@@ -431,15 +439,16 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
           </h2>
           <p style={{ fontSize: 15, color: C.txtLow, lineHeight: 1.65, marginBottom: 36 }}>{t.ctaDesc}</p>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, flexWrap: 'wrap' }}>
-            <button onClick={() => goAuth('signup')} style={{ ...btnPrimary, fontSize: 15, padding: '13px 32px' }} className="btn-primary">
+            <motion.button onClick={() => goAuth('signup')} style={{ ...btnPrimary, fontSize: 15, padding: '13px 32px' }} className="btn-primary"
+              whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} transition={{ type: 'spring', stiffness: 400, damping: 24 }}>
               {t.landingStart} <ArrowRight size={16} />
-            </button>
-            <button onClick={() => navigate(`/${lang}/demo`)} style={{ ...btnOutline, fontSize: 15, padding: '13px 32px' }}
-              onMouseEnter={e => { e.currentTarget.style.color = C.txt; e.currentTarget.style.borderColor = C.accent }}
-              onMouseLeave={e => { e.currentTarget.style.color = C.txtMid; e.currentTarget.style.borderColor = C.border }}
-            >
+            </motion.button>
+            <motion.button onClick={() => navigate(`/${lang}/demo`)} style={{ ...btnOutline, fontSize: 15, padding: '13px 32px' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = C.txt; (e.currentTarget as HTMLButtonElement).style.borderColor = C.accent }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = C.txtMid; (e.currentTarget as HTMLButtonElement).style.borderColor = C.border }}
+              whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} transition={{ type: 'spring', stiffness: 400, damping: 24 }}>
               {t.bookDemo}
-            </button>
+            </motion.button>
           </div>
         </div>
       </section>

@@ -273,8 +273,10 @@ export default function CompetitionsPage({
         {/* Action buttons */}
         <div className="flex items-center gap-2 flex-wrap">
           {(registered || isMine) && (
-            <button
+            <motion.button
               onClick={() => activate(comp.id)}
+              whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
+              transition={{ type: 'spring', stiffness: 420, damping: 26 }}
               className={`flex items-center gap-1.5 px-4 py-2 rounded text-xs font-medium transition-colors duration-[330ms] ${
                 active
                   ? 'bg-[#7F8BAD] text-white hover:bg-[#6D799B]'
@@ -284,65 +286,77 @@ export default function CompetitionsPage({
               }`}
             >
               <Trophy size={12} />{active ? 'Currently Active' : t.enterCompetition}
-            </button>
+            </motion.button>
           )}
 
           {isMine && (
             <>
-              <button
+              <motion.button
                 onClick={() => onManage(comp.id)}
+                whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
+                transition={{ type: 'spring', stiffness: 420, damping: 26 }}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded text-xs font-medium transition-colors duration-[330ms] ${dk ? 'bg-purple-400/10 text-purple-400 hover:bg-purple-400/20 border border-purple-400/20' : 'bg-purple-50 text-purple-600 hover:bg-purple-100 border border-purple-200'}`}
               >
                 <Settings size={12} />{t.manageEvent}
-              </button>
+              </motion.button>
 
-              <button
+              <motion.button
                 onClick={() => copyLink(comp)}
+                whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
+                transition={{ type: 'spring', stiffness: 420, damping: 26 }}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded text-xs font-medium transition-colors duration-[330ms] ${dk ? 'bg-white/5 text-[#8E8E8E] hover:bg-white/10 border border-white/10' : 'bg-[#F4F4F4] text-[#5C5E62] hover:bg-[#EEEEEE] border border-[#EEEEEE]'}`}
               >
                 {copiedId === comp.id
                   ? <><Check size={12} className="text-green-500" /> Copied!</>
                   : <><Copy size={12} /> {t.copyLink}</>
                 }
-              </button>
+              </motion.button>
 
-              <button
+              <motion.button
                 onClick={() => setQrComp(comp)}
+                whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
+                transition={{ type: 'spring', stiffness: 420, damping: 26 }}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded text-xs font-medium transition-colors duration-[330ms] ${dk ? 'bg-white/5 text-[#8E8E8E] hover:bg-white/10 border border-white/10' : 'bg-[#F4F4F4] text-[#5C5E62] hover:bg-[#EEEEEE] border border-[#EEEEEE]'}`}
               >
                 <QrCode size={12} /> {t.qrButton}
-              </button>
+              </motion.button>
             </>
           )}
 
           {(comp.status === CompetitionStatus.LIVE || comp.status === CompetitionStatus.FINISHED) && (
-            <a
+            <motion.a
               href={`${window.location.origin}${window.location.pathname}#/${lang}/results/${comp.id}`}
               target="_blank"
               rel="noopener noreferrer"
+              whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
+              transition={{ type: 'spring', stiffness: 420, damping: 26 }}
               className={`flex items-center gap-1.5 px-3 py-2 rounded text-xs font-medium transition-colors duration-[330ms] ${dk ? 'bg-white/5 text-[#8E8E8E] hover:bg-white/10 border border-white/10' : 'bg-[#F4F4F4] text-[#5C5E62] hover:bg-[#EEEEEE] border border-[#EEEEEE]'}`}
             >
               <BarChart2 size={12} /> {t.publicViewResults}
-            </a>
+            </motion.a>
           )}
 
           {registered && !isMine && (
-            <button
+            <motion.button
               onClick={() => onLeave(comp.id)}
+              whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
+              transition={{ type: 'spring', stiffness: 420, damping: 26 }}
               className={`flex items-center gap-1.5 px-3 py-2 rounded text-xs font-medium transition-colors duration-[330ms] ${dk ? 'bg-red-400/10 text-red-400 hover:bg-red-400/20 border border-red-400/20' : 'bg-red-50 text-red-500 hover:bg-red-100 border border-red-200'}`}
             >
               <X size={12} />{t.leaveCompetition}
-            </button>
+            </motion.button>
           )}
 
-          {/* Waitlist — shown for non-registered, non-owner users */}
           {!registered && !isMine && isOnWaitlist && (
             <div className={`flex items-center gap-2 px-3 py-2 rounded text-xs font-medium border ${dk ? 'bg-[#7F8BAD]/10 border-[#7F8BAD]/20 text-[#7F8BAD]' : 'bg-[#7F8BAD]/5 border-[#7F8BAD]/20 text-[#7F8BAD]'}`}>
               <span>#{waitlistPos} {t.waitlistJoin}</span>
               {onLeaveWaitlist && (
-                <button onClick={() => onLeaveWaitlist(comp.id)} className="ml-1 opacity-60 hover:opacity-100 transition-opacity">
+                <motion.button onClick={() => onLeaveWaitlist(comp.id)}
+                  whileHover={{ scale: 1.2 }} whileTap={{ scale: 0.86 }}
+                  transition={{ type: 'spring', stiffness: 440, damping: 22 }}
+                  className="ml-1 opacity-60 hover:opacity-100 transition-opacity">
                   <X size={10} />
-                </button>
+                </motion.button>
               )}
             </div>
           )}
@@ -351,19 +365,26 @@ export default function CompetitionsPage({
             confirmDelete === comp.id ? (
               <div className="flex items-center gap-2 ml-auto">
                 <span className={`text-xs ${dk ? 'text-[#8E8E8E]' : 'text-[#5C5E62]'}`}>Delete?</span>
-                <button
+                <motion.button
                   onClick={() => { setPendingDeleteComp(comp); setConfirmDelete(null) }}
+                  whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
+                  transition={{ type: 'spring', stiffness: 420, damping: 26 }}
                   className="px-3 py-2 rounded text-xs font-medium bg-red-400 text-white hover:bg-red-500 transition-colors duration-[330ms]"
-                >Yes, delete</button>
-                <button onClick={() => setConfirmDelete(null)} className={`px-3 py-2 rounded text-xs font-medium transition-colors duration-[330ms] ${dk ? 'bg-white/5 text-[#8E8E8E]' : 'bg-[#F4F4F4] text-[#5C5E62]'}`}>{t.cancel}</button>
+                >Yes, delete</motion.button>
+                <motion.button onClick={() => setConfirmDelete(null)}
+                  whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
+                  transition={{ type: 'spring', stiffness: 420, damping: 26 }}
+                  className={`px-3 py-2 rounded text-xs font-medium transition-colors duration-[330ms] ${dk ? 'bg-white/5 text-[#8E8E8E]' : 'bg-[#F4F4F4] text-[#5C5E62]'}`}>{t.cancel}</motion.button>
               </div>
             ) : (
-              <button
+              <motion.button
                 onClick={() => setConfirmDelete(comp.id)}
+                whileHover={{ scale: 1.1, color: '#f87171' }} whileTap={{ scale: 0.90 }}
+                transition={{ type: 'spring', stiffness: 420, damping: 26 }}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded text-xs font-medium transition-colors duration-[330ms] ml-auto ${dk ? 'text-[#5C5E62] hover:text-red-400 hover:bg-red-400/10' : 'text-[#8E8E8E] hover:text-red-500 hover:bg-red-50'}`}
               >
                 <Trash2 size={12} />
-              </button>
+              </motion.button>
             )
           )}
         </div>

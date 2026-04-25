@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
+import { motion } from 'motion/react'
 import { Sun, Moon, User, Menu, LogOut, Settings } from 'lucide-react'
 
 import type { Competitor, Competition } from '../types'
@@ -32,25 +33,48 @@ interface NavPillProps {
   theme: 'light' | 'dark'
 }
 
+const PILL_SPRING = { type: 'spring', stiffness: 380, damping: 30, mass: 0.8 } as const
+const BTN_SPRING  = { type: 'spring', stiffness: 420, damping: 26, mass: 0.7 } as const
+
 function NavPill({ to, label, theme }: NavPillProps) {
   const location = useLocation()
   const isActive = location.pathname === to
+  const dk = theme === 'dark'
 
   return (
     <Link
       to={to}
-      className={`
-        px-4 py-2 rounded text-sm font-medium
-        transition-colors duration-[330ms] whitespace-nowrap
-        ${isActive
-          ? 'bg-[#7F8BAD]/10 text-[#7F8BAD]'
-          : theme === 'dark'
-            ? 'text-[#8E8E8E] hover:text-[#EEEEEE]'
-            : 'text-[#5C5E62] hover:text-[#121212]'
-        }
-      `}
+      style={{ position: 'relative', display: 'block', borderRadius: 6 }}
     >
-      {label}
+      {/* Sliding pill — shared layoutId animates between active items */}
+      {isActive && (
+        <motion.div
+          layoutId="nav-active-pill"
+          className="absolute inset-0 rounded-md"
+          style={{
+            background: dk ? 'rgba(127,139,173,0.18)' : 'white',
+            boxShadow: dk ? 'none' : '0 1px 4px rgba(0,0,0,0.08)',
+          }}
+          transition={PILL_SPRING}
+        />
+      )}
+      <motion.span
+        whileHover={{ opacity: 0.85 }}
+        whileTap={{ scale: 0.96 }}
+        transition={BTN_SPRING}
+        className={`
+          relative z-10 block px-4 py-1.5 rounded-md text-sm font-medium
+          whitespace-nowrap select-none
+          ${isActive
+            ? 'text-[#7F8BAD]'
+            : dk
+              ? 'text-[#8E8E8E] hover:text-[#D0D1D2]'
+              : 'text-[#5C5E62] hover:text-[#121212]'
+          }
+        `}
+      >
+        {label}
+      </motion.span>
     </Link>
   )
 }
@@ -85,14 +109,19 @@ export default function NavBar({
       <div className="w-full px-4 md:px-6 py-2 flex items-center gap-3">
 
         {/* ── Logo ── */}
-        <div className="flex-shrink-0">
+        <motion.div
+          className="flex-shrink-0"
+          whileHover={{ scale: 1.04 }}
+          whileTap={{ scale: 0.97 }}
+          transition={BTN_SPRING}
+        >
           {branding?.logoDataUrl
             ? <img src={branding.logoDataUrl} alt="logo" className="h-8 w-auto object-contain" />
             : <img src={logo} alt="Ascendia" className="h-8 w-auto object-contain" />
           }
-        </div>
+        </motion.div>
 
-        {/* ── Status dot + competition name — only when in a competition ── */}
+        {/* ── Status dot + competition name ── */}
         {canAccessComp && (
           <div className="hidden md:flex items-center gap-2 flex-shrink-0 px-3 py-1.5">
             <div
@@ -109,7 +138,10 @@ export default function NavBar({
         )}
 
         {/* ── Centre: Nav pills ── */}
-        <nav className="hidden lg:flex items-center gap-0.5 overflow-x-auto">
+        <nav className={`
+          hidden lg:flex items-center gap-0.5 p-1 rounded-lg overflow-x-auto
+          ${theme === 'dark' ? 'bg-white/[0.05]' : 'bg-[#F0F0F0]'}
+        `}>
           <NavPill to={`/${lang}/competitions`} label={t.myCompetitions} theme={theme} />
 
           {canAccessComp && (
@@ -154,8 +186,11 @@ export default function NavBar({
           </select>
 
           {/* Theme toggle */}
-          <button
+          <motion.button
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.88 }}
+            transition={BTN_SPRING}
             className={`
               p-2 rounded transition-colors duration-[330ms]
               ${theme === 'dark'
@@ -165,54 +200,72 @@ export default function NavBar({
             `}
           >
             {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
-          </button>
+          </motion.button>
 
           {/* Settings icon — organizer only */}
           {isOrganizer && (
+            <motion.div
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.88 }}
+              transition={BTN_SPRING}
+            >
+              <Link
+                to={`/${lang}/settings`}
+                className={`
+                  p-2 rounded transition-colors duration-[330ms] flex items-center
+                  ${theme === 'dark'
+                    ? 'text-[#5C5E62] hover:text-[#EEEEEE] hover:bg-white/5'
+                    : 'text-[#5C5E62] hover:text-[#121212] hover:bg-[#F4F4F4]'
+                  }
+                `}
+              >
+                <Settings size={17} />
+              </Link>
+            </motion.div>
+          )}
+
+          {/* Profile icon */}
+          <motion.div
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.88 }}
+            transition={BTN_SPRING}
+          >
             <Link
-              to={`/${lang}/settings`}
+              to={`/${lang}/profile`}
               className={`
-                p-2 rounded transition-colors duration-[330ms]
+                p-2 rounded transition-colors duration-[330ms] flex items-center
                 ${theme === 'dark'
                   ? 'text-[#5C5E62] hover:text-[#EEEEEE] hover:bg-white/5'
                   : 'text-[#5C5E62] hover:text-[#121212] hover:bg-[#F4F4F4]'
                 }
               `}
             >
-              <Settings size={17} />
+              <User size={17} />
             </Link>
-          )}
-
-          {/* Profile icon */}
-          <Link
-            to={`/${lang}/profile`}
-            className={`
-              p-2 rounded transition-colors duration-[330ms]
-              ${theme === 'dark'
-                ? 'text-[#5C5E62] hover:text-[#EEEEEE] hover:bg-white/5'
-                : 'text-[#5C5E62] hover:text-[#121212] hover:bg-[#F4F4F4]'
-              }
-            `}
-          >
-            <User size={17} />
-          </Link>
+          </motion.div>
 
           {/* Logout */}
-          <button
+          <motion.button
             onClick={onLogout}
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.93 }}
+            transition={BTN_SPRING}
             className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded text-xs font-medium text-red-400 hover:bg-red-400/10 transition-colors duration-[330ms]"
           >
             <LogOut size={14} />
             {t.logout}
-          </button>
+          </motion.button>
 
           {/* Hamburger — mobile only */}
-          <button
+          <motion.button
             onClick={onOpenMenu}
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.90 }}
+            transition={BTN_SPRING}
             className="lg:hidden p-2 rounded bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms]"
           >
             <Menu size={17} />
-          </button>
+          </motion.button>
 
         </div>
       </div>

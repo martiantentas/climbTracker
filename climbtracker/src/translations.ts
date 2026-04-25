@@ -1889,8 +1889,8 @@ export const translations = {
 
     // ── Landing page ───────────────────────────────────────────────────────────
     landingTagline:    'Software Professional per a Competicions de Bloc',
-    landingHero1:      'Registra cada pas.',
-    landingHero2:      'Analitza cada acció',
+    landingHero1:      'Digitalitza la',
+    landingHero2:      'teva competició',
     landingHeroDesc:   'Monitoritza la competició en temps real: classificacions en directe, informes, anàlisi i gestió avançada d\'usuaris.',
     landingStart:      'Accedeix',
     landingHowWorks:   'Com funciona?',

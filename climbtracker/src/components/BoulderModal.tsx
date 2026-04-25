@@ -157,12 +157,14 @@ export default function BoulderModal({
           <h2 className={`text-base font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
             {isEditing ? t.modalEditBoulder(boulder.number) : t.modalAddBoulder}
           </h2>
-          <button
+          <motion.button
             onClick={onClose}
+            whileHover={{ scale: 1.12 }} whileTap={{ scale: 0.88 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 26 }}
             className={`p-2 rounded transition-colors duration-[330ms] ${dk ? 'hover:bg-white/5 text-[#5C5E62]' : 'hover:bg-[#F4F4F4] text-[#8E8E8E]'}`}
           >
             <X size={18} />
-          </button>
+          </motion.button>
         </div>
 
         <div className="p-6">
@@ -194,8 +196,10 @@ export default function BoulderModal({
             <label className={labelCls}>{t.modalHoldColour}</label>
             <div className="flex flex-wrap gap-2">
               {HOLD_COLORS.map(c => (
-                <button key={c.value} onClick={() => setColor(c.value)} title={c.label}
-                  className={`w-9 h-9 rounded transition-all border-2 ${color === c.value ? 'border-[#7F8BAD] scale-110' : 'border-transparent hover:scale-105'}`}
+                <motion.button key={c.value} onClick={() => setColor(c.value)} title={c.label}
+                  whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.88 }}
+                  transition={{ type: 'spring', stiffness: 440, damping: 24 }}
+                  className={`w-9 h-9 rounded border-2 ${color === c.value ? 'border-[#7F8BAD]' : 'border-transparent'}`}
                   style={{ backgroundColor: c.value }} />
               ))}
               <input type="color" value={color} onChange={e => setColor(e.target.value)}
@@ -210,10 +214,12 @@ export default function BoulderModal({
               <label className={labelCls}>{t.modalDiffLevel}</label>
               <div className="flex flex-wrap gap-2">
                 {competition.difficultyLevels.map(d => (
-                  <button key={d.id} onClick={() => setDifficultyId(d.id)}
+                  <motion.button key={d.id} onClick={() => setDifficultyId(d.id)}
+                    whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
+                    transition={{ type: 'spring', stiffness: 420, damping: 26 }}
                     className={pillBtn(difficultyId === d.id)}>
                     {d.label}<span className="ml-1.5 text-[10px] opacity-50">{d.basePoints}pts</span>
-                  </button>
+                  </motion.button>
                 ))}
               </div>
             </div>
@@ -224,9 +230,12 @@ export default function BoulderModal({
             <label className={labelCls}>{t.modalStyle}</label>
             <div className="flex flex-wrap gap-2">
               {STYLES.map(s => (
-                <button key={s} onClick={() => setStyle(style === s ? '' : s)} className={pillBtn(style === s)}>
+                <motion.button key={s} onClick={() => setStyle(style === s ? '' : s)}
+                  whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
+                  transition={{ type: 'spring', stiffness: 420, damping: 26 }}
+                  className={pillBtn(style === s)}>
                   {s}
-                </button>
+                </motion.button>
               ))}
             </div>
           </div>
@@ -271,9 +280,12 @@ export default function BoulderModal({
               <label className={labelCls}>{t.modalZones}</label>
               <div className="flex gap-2">
                 {[0, 1, 2, 3, 4].map(n => (
-                  <button key={n} onClick={() => setZoneCount(n)} className={`flex-1 py-2.5 rounded text-sm font-medium border transition-colors duration-[330ms] ${zoneCount === n ? 'bg-[#7F8BAD]/10 text-[#7F8BAD] border-[#7F8BAD]/30' : dk ? 'bg-white/5 text-[#5C5E62] border-white/10 hover:bg-white/10' : 'bg-[#F4F4F4] text-[#8E8E8E] border-[#EEEEEE] hover:bg-[#EEEEEE]'}`}>
+                  <motion.button key={n} onClick={() => setZoneCount(n)}
+                    whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.93 }}
+                    transition={{ type: 'spring', stiffness: 420, damping: 26 }}
+                    className={`flex-1 py-2.5 rounded text-sm font-medium border transition-colors duration-[330ms] ${zoneCount === n ? 'bg-[#7F8BAD]/10 text-[#7F8BAD] border-[#7F8BAD]/30' : dk ? 'bg-white/5 text-[#5C5E62] border-white/10 hover:bg-white/10' : 'bg-[#F4F4F4] text-[#8E8E8E] border-[#EEEEEE] hover:bg-[#EEEEEE]'}`}>
                     {n === 0 ? t.modalNone : n}
-                  </button>
+                  </motion.button>
                 ))}
               </div>
             </div>
@@ -390,7 +402,9 @@ export default function BoulderModal({
               {(['active', 'hidden', 'removed'] as Boulder['status'][]).map(s => {
                 const statusLabelMap = { active: t.modalStatusActive, hidden: t.modalStatusHidden, removed: t.modalStatusRemoved }
                 return (
-                <button key={s} onClick={() => setStatus(s)}
+                <motion.button key={s} onClick={() => setStatus(s)}
+                  whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
+                  transition={{ type: 'spring', stiffness: 420, damping: 26 }}
                   className={`flex-1 py-2 rounded text-xs font-medium border transition-colors duration-[330ms] ${
                     status === s
                       ? s === 'active'  ? 'bg-green-400/10 text-green-400 border-green-400/30'
@@ -401,7 +415,7 @@ export default function BoulderModal({
                   }`}
                 >
                   {statusLabelMap[s]}
-                </button>
+                </motion.button>
               )})}
             </div>
           </div>
@@ -414,30 +428,43 @@ export default function BoulderModal({
             confirmDelete ? (
               <div className="flex items-center gap-2">
                 <span className={`text-xs font-medium ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.modalSure}</span>
-                <button onClick={() => { onDelete(boulder.id); onClose() }} className="px-3 py-2 rounded text-xs font-medium bg-red-400 text-white hover:bg-red-500 transition-colors duration-[330ms]">{t.modalDelete}</button>
-                <button onClick={() => setConfirmDelete(false)} className={`px-3 py-2 rounded text-xs font-medium transition-colors duration-[330ms] ${dk ? 'bg-white/5 text-[#5C5E62]' : 'bg-[#F4F4F4] text-[#8E8E8E]'}`}>{t.cancel}</button>
+                <motion.button onClick={() => { onDelete(boulder.id); onClose() }}
+                  whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
+                  transition={{ type: 'spring', stiffness: 420, damping: 26 }}
+                  className="px-3 py-2 rounded text-xs font-medium bg-red-400 text-white hover:bg-red-500 transition-colors duration-[330ms]">{t.modalDelete}</motion.button>
+                <motion.button onClick={() => setConfirmDelete(false)}
+                  whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
+                  transition={{ type: 'spring', stiffness: 420, damping: 26 }}
+                  className={`px-3 py-2 rounded text-xs font-medium transition-colors duration-[330ms] ${dk ? 'bg-white/5 text-[#5C5E62]' : 'bg-[#F4F4F4] text-[#8E8E8E]'}`}>{t.cancel}</motion.button>
               </div>
             ) : (
-              <button onClick={() => setConfirmDelete(true)} className={`flex items-center gap-1.5 px-3 py-2 rounded text-xs font-medium transition-colors duration-[330ms] ${dk ? 'text-[#5C5E62] hover:text-red-400 hover:bg-red-400/10' : 'text-[#8E8E8E] hover:text-red-500 hover:bg-red-50'}`}>
+              <motion.button onClick={() => setConfirmDelete(true)}
+                whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
+                transition={{ type: 'spring', stiffness: 420, damping: 26 }}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded text-xs font-medium transition-colors duration-[330ms] ${dk ? 'text-[#5C5E62] hover:text-red-400 hover:bg-red-400/10' : 'text-[#8E8E8E] hover:text-red-500 hover:bg-red-50'}`}>
                 <Trash2 size={13} /> {t.modalDeleteBoulder}
-              </button>
+              </motion.button>
             )
           )}
           <div className="flex items-center gap-2 ml-auto">
-            <button
+            <motion.button
               onClick={onClose}
+              whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.95 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 26 }}
               className={`px-5 py-2.5 rounded text-sm font-medium border transition-colors duration-[330ms] ${dk ? 'bg-white/5 text-[#5C5E62] border-white/10 hover:bg-white/10' : 'bg-[#F4F4F4] text-[#5C5E62] border-[#EEEEEE] hover:bg-[#EEEEEE]'}`}
             >
               {t.cancel}
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               onClick={handleSave}
               disabled={!canSave}
+              whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.95 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 26 }}
               className="flex items-center gap-2 px-5 py-2.5 rounded text-sm font-medium bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms] disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Save size={15} />
               {isEditing ? t.modalSaveChanges : t.modalAddBtn}
-            </button>
+            </motion.button>
           </div>
         </div>
       </motion.div>
