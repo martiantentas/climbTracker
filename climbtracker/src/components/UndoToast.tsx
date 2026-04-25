@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Undo2, X } from 'lucide-react'
+import { motion } from 'motion/react'
 
 interface UndoToastProps {
   message:   string
@@ -54,15 +55,21 @@ export default function UndoToast({ message, theme, onUndo, onCommit, onDismiss 
   }
 
   return (
-    <div className={`
-      fixed bottom-6 left-1/2 -translate-x-1/2 z-[600]
-      min-w-[320px] max-w-sm w-full mx-4
-      rounded border overflow-hidden
-      ${dk
-        ? 'bg-[#1C1F24] border-white/15 text-[#EEEEEE]'
-        : 'bg-white border-[#EEEEEE] text-[#121212]'
-      }
-    `}>
+    <motion.div
+      className={`
+        fixed bottom-6 left-1/2 -translate-x-1/2 z-[600]
+        min-w-[320px] max-w-sm w-full mx-4
+        rounded border overflow-hidden
+        ${dk
+          ? 'bg-[#1C1F24] border-white/15 text-[#EEEEEE]'
+          : 'bg-white border-[#EEEEEE] text-[#121212]'
+        }
+      `}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 16 }}
+      transition={{ type: 'spring', stiffness: 380, damping: 30, mass: 0.85 }}
+    >
       <div className="flex items-center gap-3 px-4 py-3.5">
         <div className={`w-7 h-7 rounded flex items-center justify-center flex-shrink-0 ${dk ? 'bg-red-400/15' : 'bg-red-50'}`}>
           <Undo2 size={13} className="text-red-400" />
@@ -93,6 +100,6 @@ export default function UndoToast({ message, theme, onUndo, onCommit, onDismiss 
           style={{ width: `${progress}%` }}
         />
       </div>
-    </div>
+    </motion.div>
   )
 }

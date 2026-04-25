@@ -1,4 +1,5 @@
 import { Check, RotateCcw, ShieldCheck, Plus, Minus, Trash2 } from 'lucide-react'
+import { motion } from 'motion/react'
 import type { Boulder, Completion, DifficultyLevel, AttemptTracking } from '../types'
 import type { Language } from '../translations'
 import { translations } from '../translations'
@@ -163,8 +164,10 @@ export default function BoulderCard({
     attemptTracking !== 'none'
 
   return (
-    <div
+    <motion.div
       onClick={handleClick}
+      whileTap={isLocked ? undefined : { scale: 0.95 }}
+      transition={{ type: 'spring', stiffness: 420, damping: 26, mass: 0.7 }}
       className={`
         relative rounded border cursor-pointer
         transition-colors duration-[330ms] overflow-hidden
@@ -334,6 +337,6 @@ export default function BoulderCard({
         )}
 
       </div>
-    </div>
+    </motion.div>
   )
 }

@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Trophy, Target, Zap, ArrowLeft, Share2, Check, Radio } from 'lucide-react'
+import { Trophy, Target, Zap, ArrowLeft, Share2, Check, Radio, Sun, Moon } from 'lucide-react'
+import { motion } from 'motion/react'
 import ascendiaLogo from '../assets/Ascendia.png'
 
 import type { Competition, Competitor, Boulder, Completion } from '../types'
@@ -45,6 +46,21 @@ export default function PublicLeaderboardPage({
   const VALID_LANGS: Language[] = ['en', 'es', 'ca']
   const lang: Language = VALID_LANGS.includes(urlLang as Language) ? urlLang as Language : 'ca'
   const t = translations[lang]
+
+  // ── Theme ──────────────────────────────────────────────────────────────────
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    try { return (localStorage.getItem('ct-pub-theme') as 'dark' | 'light') ?? 'dark' }
+    catch { return 'dark' }
+  })
+  const dk = theme === 'dark'
+
+  const toggleTheme = useCallback(() => {
+    setTheme(prev => {
+      const next = prev === 'dark' ? 'light' : 'dark'
+      try { localStorage.setItem('ct-pub-theme', next) } catch { /* ignore */ }
+      return next
+    })
+  }, [])
 
   const competition = competitions.find(c => c.id === compId)
   const competitors = competitorsMap[compId ?? ''] ?? []
@@ -114,10 +130,10 @@ export default function PublicLeaderboardPage({
   // ── Not found ──
   if (!competition) {
     return (
-      <div className="min-h-screen bg-[#121212] flex flex-col items-center justify-center font-sans text-[#EEEEEE] px-6">
+      <div className={`min-h-screen flex flex-col items-center justify-center font-sans px-6 transition-colors duration-300 ${dk ? 'bg-[#121212] text-[#EEEEEE]' : 'bg-[#F9F9F9] text-[#121212]'}`}>
         <p className="text-5xl mb-4">🏔️</p>
         <h1 className="text-xl font-medium mb-2">{t.publicNotFound}</h1>
-        <p className="text-[#5C5E62] mb-6 text-center text-sm">{t.publicNotFoundDesc}</p>
+        <p className={`mb-6 text-center text-sm ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.publicNotFoundDesc}</p>
         <button
           onClick={() => navigate('/')}
           className="px-6 py-2.5 rounded bg-[#7F8BAD] text-white font-medium hover:bg-[#6D799B] transition-colors duration-[330ms]"
@@ -129,26 +145,44 @@ export default function PublicLeaderboardPage({
   }
 
   return (
-    <div className="min-h-screen bg-[#121212] text-[#EEEEEE]">
+    <div className={`min-h-screen transition-colors duration-300 ${dk ? 'bg-[#121212] text-[#EEEEEE]' : 'bg-[#F9F9F9] text-[#121212]'}`}>
 
       {/* ── Nav ── */}
-      <nav className="border-b border-white/[0.06] bg-[#121212]/90 backdrop-blur sticky top-0 z-50">
+      <nav className={`border-b backdrop-blur sticky top-0 z-50 transition-colors duration-300 ${dk ? 'border-white/[0.06] bg-[#121212]/90' : 'border-[#EEEEEE] bg-white/90'}`}>
         <div className="max-w-3xl mx-auto px-5 h-14 flex items-center justify-between gap-4">
           <div className="flex items-center gap-2 min-w-0">
             <img src={ascendiaLogo} alt="Ascendia" className="h-6 w-auto object-contain flex-shrink-0" />
-            <span className="text-[#393C41] text-sm hidden sm:inline">·</span>
-            <span className="text-sm text-[#5C5E62] truncate hidden sm:inline">{competition.name}</span>
+            <span className={`text-sm hidden sm:inline ${dk ? 'text-[#393C41]' : 'text-[#D0D1D2]'}`}>·</span>
+            <span className={`text-sm truncate hidden sm:inline ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{competition.name}</span>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Theme toggle */}
+            <motion.button
+              onClick={toggleTheme}
+              whileTap={{ scale: 0.86 }}
+              transition={{ type: 'spring', stiffness: 420, damping: 24, mass: 0.7 }}
+              className={`p-2 rounded border transition-colors duration-[330ms] ${dk ? 'border-white/10 bg-white/[0.04] text-[#5C5E62] hover:text-[#D0D1D2] hover:border-white/20' : 'border-[#EEEEEE] bg-[#F4F4F4] text-[#8E8E8E] hover:text-[#393C41]'}`}
+              title={dk ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              <motion.div
+                key={theme}
+                initial={{ rotate: -30, opacity: 0 }}
+                animate={{ rotate: 0, opacity: 1 }}
+                transition={{ duration: 0.18 }}
+              >
+                {dk ? <Sun size={14} /> : <Moon size={14} />}
+              </motion.div>
+            </motion.button>
+
             <button
               onClick={handleShare}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded border border-white/10 bg-white/[0.04] text-xs font-medium text-[#5C5E62] hover:text-[#D0D1D2] hover:border-[#7F8BAD]/30 transition-colors duration-[330ms]"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded border text-xs font-medium transition-colors duration-[330ms] ${dk ? 'border-white/10 bg-white/[0.04] text-[#5C5E62] hover:text-[#D0D1D2] hover:border-[#7F8BAD]/30' : 'border-[#EEEEEE] bg-[#F4F4F4] text-[#8E8E8E] hover:text-[#393C41]'}`}
             >
               {copied ? <><Check size={12} className="text-green-400" /> {t.publicLinkCopied}</> : <><Share2 size={12} /> {t.publicShareResults}</>}
             </button>
             <button
               onClick={() => navigate(-1)}
-              className="flex items-center gap-1.5 text-[#5C5E62] text-sm font-medium cursor-pointer hover:text-[#D0D1D2] transition-colors duration-[330ms]"
+              className={`flex items-center gap-1.5 text-sm font-medium cursor-pointer transition-colors duration-[330ms] ${dk ? 'text-[#5C5E62] hover:text-[#D0D1D2]' : 'text-[#8E8E8E] hover:text-[#393C41]'}`}
             >
               <ArrowLeft size={14} />
             </button>
@@ -161,24 +195,24 @@ export default function PublicLeaderboardPage({
         {/* ── Header ── */}
         <div className="mb-7">
           <div className="flex items-center gap-2 mb-3 flex-wrap">
-            <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded border ${isLive ? 'bg-green-400/10 border-green-400/30' : 'bg-white/5 border-white/10'}`}>
+            <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded border ${isLive ? 'bg-green-400/10 border-green-400/30' : dk ? 'bg-white/5 border-white/10' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
               {isLive
                 ? <Radio size={11} className="text-green-400 animate-pulse" />
                 : <div className="w-1.5 h-1.5 rounded-full bg-[#5C5E62]" />
               }
-              <span className={`text-[11px] font-medium ${isLive ? 'text-green-400' : 'text-[#5C5E62]'}`}>
+              <span className={`text-[11px] font-medium ${isLive ? 'text-green-400' : dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
                 {isLive ? t.publicLiveStandings : t.publicFinalResults}
               </span>
             </div>
             {isLive && (
-              <span className="text-[11px] text-[#393C41]">{updatedLabel}</span>
+              <span className={`text-[11px] ${dk ? 'text-[#393C41]' : 'text-[#D0D1D2]'}`}>{updatedLabel}</span>
             )}
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-medium text-[#EEEEEE] mb-1.5 leading-tight">
+          <h1 className={`text-2xl sm:text-3xl font-medium mb-1.5 leading-tight ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
             {competition.name}
           </h1>
-          <p className="text-sm text-[#5C5E62]">
+          <p className={`text-sm ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
             {competition.location} · {new Date(competition.startDate).toLocaleDateString(
               lang === 'en' ? 'en-GB' : lang === 'es' ? 'es-ES' : 'ca-ES',
               { day: 'numeric', month: 'long', year: 'numeric' }
@@ -197,7 +231,7 @@ export default function PublicLeaderboardPage({
               color: 'text-amber-400'
             },
           ].map(s => (
-            <div key={s.label} className={`flex items-center gap-1.5 px-3 py-1.5 rounded border bg-white/[0.03] border-white/[0.07] text-xs font-medium ${s.color}`}>
+            <div key={s.label} className={`flex items-center gap-1.5 px-3 py-1.5 rounded border text-xs font-medium ${s.color} ${dk ? 'bg-white/[0.03] border-white/[0.07]' : 'bg-white border-[#EEEEEE]'}`}>
               {s.icon} {s.label}
             </div>
           ))}
@@ -211,18 +245,23 @@ export default function PublicLeaderboardPage({
           </div>
         ) : (
           <div className="flex flex-col gap-2">
-            {rankings.map(result => {
+            {rankings.map((result, i) => {
               const isFirst = result.rank === 1
               const cats    = categoryMap.get(result.competitorId) ?? []
               const live    = competitors.find(c => c.id === result.competitorId) as any
               const gender  = live?.gender ?? (result as any).gender
               return (
-                <div
+                <motion.div
                   key={result.competitorId}
-                  className={`flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3.5 rounded border transition-colors duration-[330ms] ${
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ type: 'spring', stiffness: 320, damping: 26, mass: 0.8, delay: i * 0.045 }}
+                  className={`flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3.5 rounded border transition-colors duration-300 ${
                     isFirst
                       ? 'bg-amber-400/[0.04] border-amber-400/[0.15]'
-                      : 'bg-white/[0.02] border-white/[0.06]'
+                      : dk
+                        ? 'bg-white/[0.02] border-white/[0.06]'
+                        : 'bg-white border-[#EEEEEE]'
                   }`}
                 >
                   {/* Rank */}
@@ -241,8 +280,8 @@ export default function PublicLeaderboardPage({
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[#EEEEEE] truncate">{result.name}</p>
-                    <div className="flex items-center gap-1.5 text-[11px] text-[#5C5E62] mt-0.5 flex-wrap">
+                    <p className={`text-sm font-medium truncate ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>{result.name}</p>
+                    <div className={`flex items-center gap-1.5 text-[11px] mt-0.5 flex-wrap ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
                       <span>#{result.bib}</span>
                       {cats.length > 0 && <><span>·</span><span className="font-medium">{cats.join(', ')}</span></>}
                       {gender && <><span>·</span><span>{gender}</span></>}
@@ -266,14 +305,14 @@ export default function PublicLeaderboardPage({
                       <p className="text-[9px] text-[#5C5E62]">pts</p>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               )
             })}
           </div>
         )}
 
         {/* ── Footer ── */}
-        <div className="mt-12 text-center text-[#393C41] text-xs">
+        <div className={`mt-12 text-center text-xs ${dk ? 'text-[#393C41]' : 'text-[#D0D1D2]'}`}>
           <div className="flex items-center justify-center gap-1.5 mb-1">
             <img src={ascendiaLogo} alt="Ascendia" className="h-4 w-auto object-contain opacity-40" />
             <span className="font-medium">{t.publicPoweredBy}</span>

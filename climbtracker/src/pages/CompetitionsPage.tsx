@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { motion } from 'motion/react'
 import { Plus, Trophy, MapPin, Calendar, Key, Trash2, LogIn, Settings, X, Lock, Copy, Check, Shield, Clock, QrCode, BarChart2 } from 'lucide-react'
 import type { Competition, Competitor } from '../types'
 import { CompetitionStatus } from '../types'
@@ -378,16 +379,23 @@ export default function CompetitionsPage({
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <motion.div
+      className="max-w-3xl mx-auto"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }}
+    >
 
       <div className="flex items-center justify-between mb-8">
         <h1 className={`text-2xl font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>{t.myCompetitions}</h1>
-        <button
+        <motion.button
           onClick={() => setShowCreate(true)}
           className="flex items-center gap-2 px-4 py-2 bg-[#7F8BAD] text-white rounded font-medium text-sm hover:bg-[#6D799B] transition-colors duration-[330ms]"
+          whileTap={{ scale: 0.97 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
         >
           <Plus size={15} />{t.newCompetition}
-        </button>
+        </motion.button>
       </div>
 
       {/* Join by code */}
@@ -418,14 +426,36 @@ export default function CompetitionsPage({
       {myComps.length > 0 && (
         <div className="mb-8">
           <SectionHeading label="Competitions I organise" />
-          <div className="space-y-2">{myComps.map(c => <CompCard key={c.id} comp={c} />)}</div>
+          <div className="space-y-2">
+            {myComps.map((c, index) => (
+              <motion.div
+                key={c.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ type: 'spring', stiffness: 320, damping: 26, mass: 0.8, delay: index * 0.045 }}
+              >
+                <CompCard comp={c} />
+              </motion.div>
+            ))}
+          </div>
         </div>
       )}
 
       {joined.length > 0 && (
         <div className="mb-8">
           <SectionHeading label="Competitions I'm competing in" />
-          <div className="space-y-2">{joined.map(c => <CompCard key={c.id} comp={c} />)}</div>
+          <div className="space-y-2">
+            {joined.map((c, index) => (
+              <motion.div
+                key={c.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ type: 'spring', stiffness: 320, damping: 26, mass: 0.8, delay: index * 0.045 }}
+              >
+                <CompCard comp={c} />
+              </motion.div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -433,8 +463,14 @@ export default function CompetitionsPage({
         <div className="mb-8">
           <SectionHeading label="Available to join" />
           <div className="space-y-2">
-            {available.map(comp => (
-              <div key={comp.id} className={`rounded border p-5 flex items-center justify-between gap-4 transition-colors duration-[330ms] ${dk ? 'bg-white/[0.03] border-white/10 hover:bg-white/[0.05]' : 'bg-white border-[#EEEEEE] hover:border-[#D0D1D2]'}`}>
+            {available.map((comp, index) => (
+              <motion.div
+                key={comp.id}
+                className={`rounded border p-5 flex items-center justify-between gap-4 transition-colors duration-[330ms] ${dk ? 'bg-white/[0.03] border-white/10 hover:bg-white/[0.05]' : 'bg-white border-[#EEEEEE] hover:border-[#D0D1D2]'}`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ type: 'spring', stiffness: 320, damping: 26, mass: 0.8, delay: index * 0.045 }}
+              >
                 <div className="flex-1 min-w-0">
                   <StatusBadge status={comp.status} />
                   <h3 className={`font-medium text-base mt-1 ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>{comp.name}</h3>
@@ -449,7 +485,7 @@ export default function CompetitionsPage({
                 >
                   <LogIn size={13} />{t.joinByCodeAction}
                 </button>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -459,12 +495,14 @@ export default function CompetitionsPage({
         <div className={`text-center py-20 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
           <p className="text-4xl mb-4">🏆</p>
           <p className="font-medium text-sm mb-2">{t.noCompetitions}</p>
-          <button
+          <motion.button
             onClick={() => setShowCreate(true)}
             className="mt-4 px-6 py-3 bg-[#7F8BAD] text-white rounded font-medium text-sm hover:bg-[#6D799B] transition-colors duration-[330ms]"
+            whileTap={{ scale: 0.97 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
           >
             {t.createCompetition}
-          </button>
+          </motion.button>
         </div>
       )}
 
@@ -500,6 +538,6 @@ export default function CompetitionsPage({
           onClose={() => setQrComp(null)}
         />
       )}
-    </div>
+    </motion.div>
   )
 }

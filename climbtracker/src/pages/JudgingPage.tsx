@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { motion, AnimatePresence } from 'motion/react'
 import { Search, ChevronDown, ChevronUp, Target, CheckCircle2, XCircle, ShieldCheck, Plus, Minus, Star, Mountain } from 'lucide-react'
 
 import type { Boulder, Competitor, Completion, Competition } from '../types'
@@ -274,15 +275,17 @@ function BoulderJudgingRow({
       {/* Actions row */}
       <div className="flex gap-2">
         {!isLocked && (
-          <button
+          <motion.button
             onClick={handleSave}
+            whileTap={{ scale: 0.97 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
             className="flex-1 py-2 rounded text-xs font-medium bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms]"
           >
             {labels.saveScore}
-          </button>
+          </motion.button>
         )}
         {hasActivity && !isLocked && (
-          <button
+          <motion.button
             onClick={() => {
               setAttempts(0)
               setZonesReached(0)
@@ -290,6 +293,8 @@ function BoulderJudgingRow({
               setIsTop(false)
               onClear()
             }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
             className={`
               flex items-center gap-1 px-3 py-2 rounded text-xs font-medium border transition-colors duration-[330ms]
               ${dk
@@ -299,7 +304,7 @@ function BoulderJudgingRow({
             `}
           >
             <XCircle size={11} /> {labels.clear}
-          </button>
+          </motion.button>
         )}
       </div>
 
@@ -421,27 +426,37 @@ function CompetitorCard({
         </div>
       </button>
 
-      {expanded && (
-        <div className={`px-5 pb-5 border-t space-y-3 ${dk ? 'border-white/5' : 'border-[#EEEEEE]'}`}>
-          <p className={`text-[10px] font-medium pt-4 mb-3 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-            {labels.requiredBoulders}
-          </p>
-          {puntuableBoulders.map(boulder => (
-            <BoulderJudgingRow
-              key={boulder.id}
-              boulder={boulder}
-              completion={myCompletions.find(c => c.boulderId === boulder.id)}
-              theme={theme}
-              isLocked={isLocked}
-              labels={labels}
-              onLog={(attempts, hasZone, zoneAttempts, isTop, zonesReached) =>
-                onLogScore(competitor.id, boulder.id, attempts, hasZone, zoneAttempts, isTop, judgeId, zonesReached)
-              }
-              onClear={() => onClear(competitor.id, boulder.id)}
-            />
-          ))}
-        </div>
-      )}
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }}
+            style={{ overflow: 'hidden' }}
+          >
+            <div className={`px-5 pb-5 border-t space-y-3 ${dk ? 'border-white/5' : 'border-[#EEEEEE]'}`}>
+              <p className={`text-[10px] font-medium pt-4 mb-3 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
+                {labels.requiredBoulders}
+              </p>
+              {puntuableBoulders.map(boulder => (
+                <BoulderJudgingRow
+                  key={boulder.id}
+                  boulder={boulder}
+                  completion={myCompletions.find(c => c.boulderId === boulder.id)}
+                  theme={theme}
+                  isLocked={isLocked}
+                  labels={labels}
+                  onLog={(attempts, hasZone, zoneAttempts, isTop, zonesReached) =>
+                    onLogScore(competitor.id, boulder.id, attempts, hasZone, zoneAttempts, isTop, judgeId, zonesReached)
+                  }
+                  onClear={() => onClear(competitor.id, boulder.id)}
+                />
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
@@ -515,6 +530,12 @@ export default function JudgingPage({
   return (
     <div className="max-w-3xl mx-auto">
 
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }}
+      >
+
       <div className="mb-6">
         <h1 className={`text-2xl font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
           {t.judging}
@@ -580,22 +601,28 @@ export default function JudgingPage({
           </div>
 
           <div className="space-y-3">
-            {visible.map(competitor => (
-              <CompetitorCard
+            {visible.map((competitor, index) => (
+              <motion.div
                 key={competitor.id}
-                competitor={competitor}
-                competition={competition}
-                puntuableBoulders={puntuableBoulders}
-                allBoulders={boulders}
-                completions={completions}
-                allCompletions={completions}
-                theme={theme}
-                isLocked={competition.isLocked}
-                judgeId={currentUser.id}
-                labels={judgingLabels}
-                onLogScore={handleLog}
-                onClear={handleClear}
-              />
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ type: 'spring', stiffness: 320, damping: 26, mass: 0.8, delay: index * 0.045 }}
+              >
+                <CompetitorCard
+                  competitor={competitor}
+                  competition={competition}
+                  puntuableBoulders={puntuableBoulders}
+                  allBoulders={boulders}
+                  completions={completions}
+                  allCompletions={completions}
+                  theme={theme}
+                  isLocked={competition.isLocked}
+                  judgeId={currentUser.id}
+                  labels={judgingLabels}
+                  onLogScore={handleLog}
+                  onClear={handleClear}
+                />
+              </motion.div>
             ))}
           </div>
 
@@ -607,6 +634,8 @@ export default function JudgingPage({
           </div>
         </>
       )}
+
+      </motion.div>
     </div>
   )
 }

@@ -421,7 +421,7 @@ export default function BouldersPage({
                   </div>
                   <motion.span
                     animate={{ rotate: open ? 180 : 0 }}
-                    transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+                    transition={{ type: 'spring', stiffness: 380, damping: 28, mass: 0.7 }}
                     className="flex-shrink-0"
                   >
                     <ChevronDown size={15} className={dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'} />
@@ -436,7 +436,7 @@ export default function BouldersPage({
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
+                      transition={{ duration: 0.32, ease: [0.25, 0.46, 0.45, 0.94] }}
                       style={{ overflow: 'hidden' }}
                     >
                       <div className={`p-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 ${dk ? 'bg-[#121212]' : 'bg-white'}`}>
@@ -472,30 +472,34 @@ export default function BouldersPage({
       )}
 
       {/* ── Modal ── */}
-      {modalBoulder !== null && (
-        <BoulderModal
-          boulder={modalBoulder === 'new' ? undefined : modalBoulder}
-          existingBoulders={boulders}
-          competition={competition}
-          theme={theme}
-          lang={lang}
-          onSave={handleSaveBoulder}
-          onDelete={isOrganizer ? handleDeleteBoulder : undefined}
-          onClose={() => setModalBoulder(null)}
-        />
-      )}
+      <AnimatePresence>
+        {modalBoulder !== null && (
+          <BoulderModal
+            boulder={modalBoulder === 'new' ? undefined : modalBoulder}
+            existingBoulders={boulders}
+            competition={competition}
+            theme={theme}
+            lang={lang}
+            onSave={handleSaveBoulder}
+            onDelete={isOrganizer ? handleDeleteBoulder : undefined}
+            onClose={() => setModalBoulder(null)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* ── Undo toast ── */}
-      {pendingDelete && (
-        <UndoToast
-          key={pendingDelete.id}
-          message={`Boulder #${pendingDelete.number}${pendingDelete.name ? ` "${pendingDelete.name}"` : ''} deleted`}
-          theme={theme}
-          onUndo={() => setPendingDelete(null)}
-          onCommit={commitDeleteBoulder}
-          onDismiss={() => setPendingDelete(null)}
-        />
-      )}
+      <AnimatePresence>
+        {pendingDelete && (
+          <UndoToast
+            key={pendingDelete.id}
+            message={`Boulder #${pendingDelete.number}${pendingDelete.name ? ` "${pendingDelete.name}"` : ''} deleted`}
+            theme={theme}
+            onUndo={() => setPendingDelete(null)}
+            onCommit={commitDeleteBoulder}
+            onDismiss={() => setPendingDelete(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }

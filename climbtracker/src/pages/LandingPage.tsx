@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Zap, BarChart2, Users, Shield,
@@ -8,6 +8,9 @@ import {
 import ascendiaLogo from '../assets/Ascendia.png'
 import type { Language } from '../translations'
 import { translations } from '../translations'
+
+import MarsCanvas from '../components/MarsCanvas'
+import DotGrid   from '../components/DotGrid'
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
 
@@ -21,17 +24,6 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
   const heroRef  = useRef<HTMLDivElement>(null)
   const t = translations[lang]
 
-  useEffect(() => {
-    const onScroll = () => {
-      const y    = window.scrollY
-      const orb1 = document.getElementById('orb1')
-      const orb2 = document.getElementById('orb2')
-      if (orb1) orb1.style.transform = `translateY(${y * 0.15}px)`
-      if (orb2) orb2.style.transform = `translateY(${y * -0.10}px)`
-    }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
 
   const goAuth = (tab: 'signin' | 'signup') => navigate(`/${lang}/auth?tab=${tab}`)
 
@@ -151,10 +143,13 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
       <main>
 
       {/* ══ HERO ═════════════════════════════════════════════════════════════ */}
-      <section ref={heroRef} style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '100px 24px 80px', position: 'relative', overflow: 'hidden' }}>
-        <div id="orb1" style={{ position: 'absolute', top: '12%', left: '8%', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(127,139,173,0.09) 0%, transparent 70%)', pointerEvents: 'none' }} />
-        <div id="orb2" style={{ position: 'absolute', bottom: '8%', right: '4%',  width: 380, height: 380, borderRadius: '50%', background: 'radial-gradient(circle, rgba(127,139,173,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: `radial-gradient(${C.border} 1px, transparent 1px)`, backgroundSize: '40px 40px', pointerEvents: 'none', opacity: 0.5 }} />
+      <section ref={heroRef} style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '100px 24px 80px', position: 'relative', overflow: 'hidden', background: '#130600' }}>
+        {/* Mars terrain canvas */}
+        <MarsCanvas />
+        {/* Radial vignette so text stays readable */}
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 90% 70% at 50% 45%, rgba(0,0,0,0.10) 0%, rgba(0,0,0,0.52) 100%)', pointerEvents: 'none' }} />
+        {/* Bottom gradient — seamless blend into the page background */}
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '38%', background: 'linear-gradient(to bottom, transparent 0%, rgba(18,18,18,0.6) 40%, #121212 100%)', pointerEvents: 'none' }} />
 
         <div style={{ maxWidth: 720, textAlign: 'center', position: 'relative', zIndex: 1 }}>
           <div className="anim-1" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 28, padding: '5px 14px', borderRadius: 999, border: `1px solid ${C.accent}30`, background: `${C.accent}0D`, fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.accent }}>
@@ -316,7 +311,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
       </section>
 
       {/* ══ WORKFLOW ═════════════════════════════════════════════════════════ */}
-      <section id="workflow" style={{ padding: '100px 24px', background: C.bgAlt, borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}` }}>
+      <section id="workflow" style={{ padding: '100px 24px 0', background: C.bgAlt, borderTop: `1px solid ${C.border}`, position: 'relative' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 64, flexWrap: 'wrap', gap: 20 }}>
             <div>
@@ -344,10 +339,14 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
             ))}
           </div>
         </div>
+        {/* Gradient fade from workflow into pricing */}
+        <div style={{ height: 100, background: `linear-gradient(to bottom, ${C.bgAlt}, ${C.bg})`, pointerEvents: 'none' }} />
       </section>
 
       {/* ══ PRICING ══════════════════════════════════════════════════════════ */}
-      <section id="pricing" style={{ padding: '100px 24px', maxWidth: 960, margin: '0 auto' }}>
+      <div style={{ position: 'relative', background: C.bg, overflow: 'hidden' }}>
+        <DotGrid color="#7F8BAD" spacing={26} radius={140} />
+      <section id="pricing" style={{ padding: '100px 24px', maxWidth: 960, margin: '0 auto', position: 'relative', zIndex: 1 }}>
         <div style={{ textAlign: 'center', marginBottom: 64 }}>
           <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: C.accent, marginBottom: 14 }}>Pricing</p>
           <h2 style={{ fontSize: 'clamp(28px, 4.5vw, 46px)', fontWeight: 300, letterSpacing: '-0.03em', color: C.txt, margin: '0 0 16px' }}>
@@ -358,7 +357,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
 
         <div className="pricing-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
           {/* Standard */}
-          <div className="lp-card" style={{ ...glass, padding: 40, display: 'flex', flexDirection: 'column' }}>
+          <div className="lp-card" style={{ ...glass, background: '#121212', padding: 40, display: 'flex', flexDirection: 'column' }}>
             <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.txtMid, marginBottom: 16 }}>{t.pricingStd}</p>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 4 }}>
               <span style={{ fontSize: 52, fontWeight: 200, color: C.txt, fontFamily: C.mono, lineHeight: 1 }}>€99</span>
@@ -378,7 +377,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
           </div>
 
           {/* Premium */}
-          <div className="lp-card" style={{ ...glass, padding: 40, display: 'flex', flexDirection: 'column', borderColor: `${C.accent}35`, position: 'relative', overflow: 'hidden' }}>
+          <div className="lp-card" style={{ ...glass, background: '#121212', padding: 40, display: 'flex', flexDirection: 'column', borderColor: `${C.accent}35`, position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', top: -40, right: -40, width: 180, height: 180, borderRadius: '50%', background: `radial-gradient(circle, ${C.accent}10 0%, transparent 70%)`, pointerEvents: 'none' }} />
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
               <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.accent, margin: 0 }}>{t.pricingPrem}</p>
@@ -411,7 +410,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
         </div>
 
         {/* Bundles callout */}
-        <div style={{ ...glass, padding: '28px 36px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20 }}>
+        <div style={{ ...glass, background: '#121212', padding: '28px 36px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20 }}>
           <div>
             <h3 style={{ fontSize: 15, fontWeight: 600, color: C.txt, margin: '0 0 4px', letterSpacing: '-0.01em' }}>{t.pricingBundles}</h3>
             <p style={{ fontSize: 13, color: C.txtLow, margin: 0, lineHeight: 1.55 }}>{t.pricingBundlesDesc}</p>
@@ -421,9 +420,11 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
           </button>
         </div>
       </section>
+      </div>
 
       {/* ══ CTA ══════════════════════════════════════════════════════════════ */}
-      <section style={{ padding: '80px 24px', borderTop: `1px solid ${C.border}`, background: C.bgAlt }}>
+      <div style={{ height: 80, background: `linear-gradient(to bottom, ${C.bg}, ${C.bgAlt})`, pointerEvents: 'none' }} />
+      <section style={{ padding: '0 24px 80px', background: C.bgAlt }}>
         <div style={{ maxWidth: 600, margin: '0 auto', textAlign: 'center' }}>
           <h2 style={{ fontSize: 'clamp(26px, 4vw, 40px)', fontWeight: 300, letterSpacing: '-0.03em', color: C.txt, margin: '0 0 16px' }}>
             {t.ctaTitle}<br /><span style={{ fontWeight: 700 }}>{t.ctaTitle2}</span>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { motion } from 'motion/react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useGoogleLogin } from '@react-oauth/google'
 import { Eye, EyeOff, ArrowLeft, CheckCircle2 } from 'lucide-react'
@@ -109,6 +110,7 @@ export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProp
   const [password,   setPassword]   = useState('')
   const [firstName,  setFirstName]  = useState('')
   const [lastName,   setLastName]   = useState('')
+  const [gdpr,       setGdpr]       = useState(false)
   const [errors,     setErrors]     = useState<Record<string, string>>({})
   const [loading,    setLoading]    = useState(false)
   const [success,    setSuccess]    = useState(false)
@@ -172,6 +174,7 @@ export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProp
     if (tab === 'signup') {
       if (!firstName.trim()) e.firstName = tr.authErrFirstName
       if (!lastName.trim())  e.lastName  = tr.authErrLastName
+      if (!gdpr)             e.gdpr      = tr.authErrGdpr
     }
     setErrors(e)
     return Object.keys(e).length === 0
@@ -278,7 +281,13 @@ export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProp
       </div>
 
       {/* Right panel — form */}
-      <div className="auth-right-panel flex-1 flex flex-col justify-center px-6 py-8 sm:px-10 sm:py-10 overflow-y-auto" style={{ maxWidth: 480 }}>
+      <motion.div
+        className="auth-right-panel flex-1 flex flex-col justify-center px-6 py-8 sm:px-10 sm:py-10 overflow-y-auto"
+        style={{ maxWidth: 480 }}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }}
+      >
 
         {/* Back + lang row */}
         <div className="flex items-center justify-between mb-10">
@@ -365,7 +374,51 @@ export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProp
               }
             />
 
-            <button
+            {tab === 'signup' && (
+              <div className="flex flex-col gap-1.5">
+                <label className="flex items-start gap-3 cursor-pointer group">
+                  <div className="relative flex-shrink-0 mt-0.5">
+                    <input
+                      type="checkbox"
+                      checked={gdpr}
+                      onChange={e => setGdpr(e.target.checked)}
+                      className="sr-only"
+                    />
+                    <div
+                      className={`w-4 h-4 rounded border flex items-center justify-center transition-colors duration-200 ${
+                        gdpr
+                          ? 'bg-[#7F8BAD] border-[#7F8BAD]'
+                          : errors.gdpr
+                          ? 'border-red-500/60 bg-transparent'
+                          : 'border-white/20 bg-transparent group-hover:border-[#7F8BAD]/50'
+                      }`}
+                      onClick={() => setGdpr(v => !v)}
+                    >
+                      {gdpr && (
+                        <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
+                          <path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+                  <span className="text-xs text-[#5C5E62] leading-relaxed group-hover:text-[#8E8E8E] transition-colors duration-200">
+                    {tr.authGdprLabel}{' '}
+                    <button
+                      type="button"
+                      onClick={e => { e.stopPropagation(); e.preventDefault() }}
+                      className="text-[#7F8BAD] hover:text-[#6D799B] underline underline-offset-2 transition-colors duration-200"
+                    >
+                      {tr.authGdprLink}
+                    </button>
+                  </span>
+                </label>
+                {errors.gdpr && (
+                  <p className="text-xs text-red-400 pl-7">{errors.gdpr}</p>
+                )}
+              </div>
+            )}
+
+            <motion.button
               type="submit"
               disabled={loading}
               className={`
@@ -375,9 +428,11 @@ export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProp
                   : 'bg-[#7F8BAD] text-white hover:bg-[#6D799B] cursor-pointer'
                 }
               `}
+              whileTap={{ scale: 0.97 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
             >
               {loading ? '…' : tab === 'signin' ? tr.authSignIn : tr.authCreateAccount}
-            </button>
+            </motion.button>
 
             <div className="flex items-center gap-3 text-[#393C41]">
               <div className="flex-1 h-px bg-white/[0.07]" />
@@ -440,7 +495,7 @@ export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProp
             </div>
           </form>
         )}
-      </div>
+      </motion.div>
 
       <style>{`
         @media (min-width: 900px) {

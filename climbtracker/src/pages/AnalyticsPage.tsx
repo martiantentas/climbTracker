@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { motion } from 'motion/react'
 import { BarChart2, Users, TrendingUp, X } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 
@@ -135,7 +136,12 @@ export default function AnalyticsPage({
     : '0'
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <motion.div
+      className="max-w-5xl mx-auto"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }}
+    >
 
       {/* ── Header ── */}
       <div className="mb-6">
@@ -193,10 +199,21 @@ export default function AnalyticsPage({
 
       {/* ── Stat grid ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-        <StatCard label={t.analyticsCompetitors}  value={filteredCompetitors.length}  accent="text-[#7F8BAD]"  theme={theme} />
-        <StatCard label={t.analyticsTotalTops}   value={totalTops}                   accent="text-green-400"  theme={theme} />
-        <StatCard label={t.flashes}              value={totalFlashes}                accent="text-amber-400"  theme={theme} />
-        <StatCard label={t.analyticsAvgTops}     value={avgTopsPerCompetitor}        accent="text-[#7F8BAD]"  theme={theme} sub={t.analyticsPerClimber} />
+        {[
+          { label: t.analyticsCompetitors, value: filteredCompetitors.length, accent: 'text-[#7F8BAD]' },
+          { label: t.analyticsTotalTops,   value: totalTops,                  accent: 'text-green-400' },
+          { label: t.flashes,              value: totalFlashes,               accent: 'text-amber-400' },
+          { label: t.analyticsAvgTops,     value: avgTopsPerCompetitor,       accent: 'text-[#7F8BAD]', sub: t.analyticsPerClimber },
+        ].map((card, index) => (
+          <motion.div
+            key={card.label}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: 'spring', stiffness: 320, damping: 26, mass: 0.8, delay: index * 0.045 }}
+          >
+            <StatCard label={card.label} value={card.value} accent={card.accent} theme={theme} sub={card.sub} />
+          </motion.div>
+        ))}
       </div>
 
       {/* ── Completion rates chart ── */}
@@ -256,7 +273,13 @@ export default function AnalyticsPage({
             </thead>
             <tbody>
               {boulderStats.map((b, i) => (
-                <tr key={b.name} className={`border-t transition-colors duration-[330ms] ${dk ? 'border-white/5 hover:bg-white/[0.02]' : 'border-[#F4F4F4] hover:bg-[#F4F4F4]'}`}>
+                <motion.tr
+                  key={b.name}
+                  className={`border-t transition-colors duration-[330ms] ${dk ? 'border-white/5 hover:bg-white/[0.02]' : 'border-[#F4F4F4] hover:bg-[#F4F4F4]'}`}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ type: 'spring', stiffness: 320, damping: 26, mass: 0.8, delay: i * 0.045 }}
+                >
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-2">
                       <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: boulderStats[i].color || '#7F8BAD' }} />
@@ -283,13 +306,13 @@ export default function AnalyticsPage({
                       <span className={`text-xs font-medium ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{b.rate}%</span>
                     </div>
                   </td>
-                </tr>
+                </motion.tr>
               ))}
             </tbody>
           </table>
         </div>
       </div>
 
-    </div>
+    </motion.div>
   )
 }

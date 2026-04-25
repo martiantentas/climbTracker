@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { motion } from 'motion/react'
 import { Hash, Tag, CheckCircle2, Target, Zap, Trophy, Star, Clock } from 'lucide-react'
 import type { Competition, Boulder, Competitor, Completion } from '../types'
 import type { Language } from '../translations'
@@ -109,7 +110,12 @@ export default function EventProfilePage({
   )
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <motion.div
+      className="max-w-2xl mx-auto"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }}
+    >
 
       {/* ── Header ── */}
       <div className="mb-8">
@@ -205,10 +211,21 @@ export default function EventProfilePage({
 
       {/* ── Stats grid ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-        {statCard(<Star size={11} />,   t.score,   myScore,                  'text-[#7F8BAD]')}
-        {statCard(<Trophy size={11} />, t.tops,    `${tops}/${totalActive}`, 'text-green-400')}
-        {statCard(<Target size={11} />, t.zones,   zones,                    'text-[#7F8BAD]')}
-        {statCard(<Zap size={11} />,    t.flashes, flashes,                  'text-amber-400')}
+        {[
+          { icon: <Star size={11} />,   label: t.score,   value: myScore,                  accent: 'text-[#7F8BAD]' },
+          { icon: <Trophy size={11} />, label: t.tops,    value: `${tops}/${totalActive}`, accent: 'text-green-400' },
+          { icon: <Target size={11} />, label: t.zones,   value: zones,                    accent: 'text-[#7F8BAD]' },
+          { icon: <Zap size={11} />,    label: t.flashes, value: flashes,                  accent: 'text-amber-400' },
+        ].map((s, index) => (
+          <motion.div
+            key={s.label}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: 'spring', stiffness: 320, damping: 26, mass: 0.8, delay: index * 0.045 }}
+          >
+            {statCard(s.icon, s.label, s.value, s.accent)}
+          </motion.div>
+        ))}
       </div>
 
       {/* Rank banner */}
@@ -231,15 +248,21 @@ export default function EventProfilePage({
             <h2 className={`text-sm font-medium ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>{t.eventProfileRecentTops}</h2>
           </div>
           <div className="space-y-2">
-            {recentTops.map(({ completion, boulder, points }) => {
+            {recentTops.map(({ completion, boulder, points }, index) => {
               if (!boulder) return null
               const isFlash = completion.attempts === 1
               const diff    = competition.difficultyLevels.find(d => d.id === boulder.difficultyId)
               return (
-                <div key={boulder.id} className={`
-                  flex items-center gap-3 px-4 py-3 rounded transition-colors duration-[330ms]
-                  ${dk ? 'bg-white/[0.02] hover:bg-white/[0.04]' : 'bg-[#F4F4F4] hover:bg-[#EEEEEE]'}
-                `}>
+                <motion.div
+                  key={boulder.id}
+                  className={`
+                    flex items-center gap-3 px-4 py-3 rounded transition-colors duration-[330ms]
+                    ${dk ? 'bg-white/[0.02] hover:bg-white/[0.04]' : 'bg-[#F4F4F4] hover:bg-[#EEEEEE]'}
+                  `}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ type: 'spring', stiffness: 320, damping: 26, mass: 0.8, delay: index * 0.045 }}
+                >
                   <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: boulder.color }} />
                   <div className="flex-1 min-w-0">
                     <p className={`text-sm font-medium ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>
@@ -260,7 +283,7 @@ export default function EventProfilePage({
                       {points}<span className={`text-[10px] ml-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>pts</span>
                     </span>
                   </div>
-                </div>
+                </motion.div>
               )
             })}
           </div>
@@ -274,6 +297,6 @@ export default function EventProfilePage({
           <p className={`text-xs mt-1 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.eventProfileNoActivityDesc}</p>
         </div>
       )}
-    </div>
+    </motion.div>
   )
 }

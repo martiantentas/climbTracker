@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
+import { motion, AnimatePresence } from 'motion/react'
 import {
   Save, Plus, Trash2, Globe, Check,
-  ToggleLeft, ToggleRight, ChevronDown, ChevronUp, Lock, Users, Package,
+  ChevronDown, ChevronUp, Lock, Users, Package,
   Palette, Upload, Sparkles, RefreshCw,
 } from 'lucide-react'
+import Toggle from '../components/Toggle'
 import type { Competition, DifficultyLevel } from '../types'
 import { CompetitionStatus, ScoringType } from '../types'
 import type { Language } from '../translations'
@@ -35,7 +37,19 @@ function SectionCard({ title, children, theme, defaultOpen = true }: {
           : <ChevronDown size={15} className={dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'} />
         }
       </button>
-      {open && <div className={`p-6 ${dk ? 'bg-transparent' : 'bg-white'}`}>{children}</div>}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }}
+            style={{ overflow: 'hidden' }}
+          >
+            <div className={`p-6 ${dk ? 'bg-transparent' : 'bg-white'}`}>{children}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
@@ -50,12 +64,7 @@ function ToggleRow({ label, desc, value, theme, onChange }: {
         <p className={`text-sm font-medium ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>{label}</p>
         <p className={`text-xs mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{desc}</p>
       </div>
-      <button onClick={() => onChange(!value)} className="flex-shrink-0">
-        {value
-          ? <ToggleRight size={32} className="text-[#7F8BAD]" />
-          : <ToggleLeft  size={32} className={dk ? 'text-[#5C5E62]' : 'text-[#D0D1D2]'} />
-        }
-      </button>
+      <Toggle checked={value} onChange={() => onChange(!value)} theme={theme} />
     </div>
   )
 }
@@ -548,18 +557,25 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <motion.div
+      className="max-w-3xl mx-auto"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }}
+    >
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className={`text-2xl font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>{t.settings}</h1>
           <p className={`text-sm mt-1 ${dk ? 'text-[#5C5E62]' : 'text-[#5C5E62]'}`}>{competition.name}</p>
         </div>
-        <button
+        <motion.button
           onClick={() => onUpdate(draft)}
           className="flex items-center gap-2 px-5 py-2.5 bg-[#7F8BAD] text-white rounded font-medium text-sm hover:bg-[#6D799B] transition-colors duration-[330ms]"
+          whileTap={{ scale: 0.97 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
         >
           <Save size={15} />{t.save}
-        </button>
+        </motion.button>
       </div>
 
       {/* General */}
@@ -973,13 +989,15 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
       </SectionCard>
 
       <div className="flex justify-end mt-6">
-        <button
+        <motion.button
           onClick={() => onUpdate(draft)}
           className="flex items-center gap-2 px-6 py-3 bg-[#7F8BAD] text-white rounded font-medium text-sm hover:bg-[#6D799B] transition-colors duration-[330ms]"
+          whileTap={{ scale: 0.97 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
         >
           <Save size={15} />{t.save}
-        </button>
+        </motion.button>
       </div>
-    </div>
+    </motion.div>
   )
 }

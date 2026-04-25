@@ -1,9 +1,11 @@
 import { useState, useEffect, useMemo } from 'react'
 import { X, Save, Trash2, AlertCircle } from 'lucide-react'
+import { motion, AnimatePresence } from 'motion/react'
 import type { Boulder, Competition, AttemptTracking } from '../types'
 type PenaltyOverride = 'inherit' | 'penalize' | 'no_penalty'
 import type { Language } from '../translations'
 import { translations } from '../translations'
+import Toggle from './Toggle'
 
 interface BoulderModalProps {
   boulder?:         Boulder
@@ -130,12 +132,25 @@ export default function BoulderModal({
 
   return (
     <>
-      <div className="fixed inset-0 z-[400] bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className={`
-        fixed inset-x-4 top-1/2 -translate-y-1/2 z-[500] max-w-lg mx-auto
-        rounded border max-h-[90vh] overflow-y-auto
-        ${dk ? 'bg-[#121212] border-white/10' : 'bg-white border-[#EEEEEE]'}
-      `}>
+      <motion.div
+        className="fixed inset-0 z-[400] bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+      />
+      <motion.div
+        className={`
+          fixed inset-x-4 top-1/2 -translate-y-1/2 z-[500] max-w-lg mx-auto
+          rounded border max-h-[90vh] overflow-y-auto
+          ${dk ? 'bg-[#121212] border-white/10' : 'bg-white border-[#EEEEEE]'}
+        `}
+        initial={{ opacity: 0, y: 24, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 16, scale: 0.97 }}
+        transition={{ type: 'spring', stiffness: 340, damping: 28, mass: 0.9 }}
+      >
 
         {/* Header */}
         <div className={`sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b ${dk ? 'bg-[#121212] border-white/10' : 'bg-white border-[#EEEEEE]'}`}>
@@ -247,11 +262,7 @@ export default function BoulderModal({
               <p className={`text-sm font-medium ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>{t.modalJudgeReq}</p>
               <p className={`text-xs mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.modalJudgeReqDesc}</p>
             </div>
-            <button onClick={() => setIsPuntuable(p => !p)}>
-              <div className={`w-12 h-6 rounded-full transition-colors duration-[330ms] relative ${isPuntuable ? 'bg-[#7F8BAD]' : dk ? 'bg-white/10' : 'bg-[#D0D1D2]'}`}>
-                <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-[330ms] ${isPuntuable ? 'left-7' : 'left-1'}`} />
-              </div>
-            </button>
+            <Toggle checked={isPuntuable} onChange={() => setIsPuntuable(p => !p)} theme={theme} />
           </div>
 
           {/* Zones */}
@@ -324,8 +335,15 @@ export default function BoulderModal({
               ))}
             </div>
 
+            <AnimatePresence>
             {penaltyOverride === 'penalize' && (
-              <div className="mt-3 pl-1">
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }}
+                style={{ overflow: 'hidden' }}
+                className="mt-3 pl-1">
                 <label className={labelCls}>{t.modalPenaltyValueLabel}</label>
                 <div className="flex items-center gap-3">
                   <input
@@ -351,8 +369,9 @@ export default function BoulderModal({
                 <p className={`text-[10px] mt-1.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
                   {t.modalPenaltyValueHint(competition.penaltyValue, competition.penaltyType)}
                 </p>
-              </div>
+              </motion.div>
             )}
+            </AnimatePresence>
           </div>
 
           {/* Dynamic pot override */}
@@ -421,7 +440,7 @@ export default function BoulderModal({
             </button>
           </div>
         </div>
-      </div>
+      </motion.div>
     </>
   )
 }

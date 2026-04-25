@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
+import { motion } from 'motion/react'
 import { createPortal } from 'react-dom'
 import { Search, Shield, User, Trash2, ChevronDown, X, Save, Hash, AlertCircle, MoreHorizontal, Ban, ShieldOff } from 'lucide-react'
 import UserAvatar from '../components/UserAvatar'
@@ -298,7 +299,12 @@ export default function UsersPage({ competitors, competition, currentUser, theme
   const competitorCount = competitors.filter(c => c.role !== 'judge' && c.role !== 'organizer' && c.id !== competition.ownerId).length
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <motion.div
+      className="max-w-3xl mx-auto"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }}
+    >
       {viewOnly && (
         <div className={`flex items-center gap-3 px-4 py-3 rounded border mb-5 ${dk ? 'bg-purple-400/5 border-purple-400/15 text-purple-300' : 'bg-purple-50 border-purple-100 text-purple-700'}`}>
           <Shield size={14} className="flex-shrink-0" />
@@ -379,9 +385,12 @@ export default function UsersPage({ competitors, competition, currentUser, theme
               const isEven = index % 2 === 0
               const isMe   = competitor.id === currentUser.id
               return (
-                <div
+                <motion.div
                   key={competitor.id}
                   className={`grid grid-cols-[1fr_auto_auto_36px] gap-3 px-5 py-3.5 items-center border-t transition-colors duration-[330ms] ${dk ? `border-white/5 ${isEven ? 'bg-transparent' : 'bg-white/[0.02]'}` : `border-[#EEEEEE] ${isEven ? 'bg-white' : 'bg-[#F4F4F4]/50'}`}`}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ type: 'spring', stiffness: 320, damping: 26, mass: 0.8, delay: index * 0.045 }}
                 >
                   <button onClick={() => setSelectedUser(competitor)} className="flex items-center gap-3 min-w-0 text-left hover:opacity-80 transition-opacity">
                     <div className={`w-8 h-8 rounded flex items-center justify-center flex-shrink-0 overflow-hidden ${dk ? 'bg-white/5' : 'bg-[#F4F4F4]'}`}>
@@ -414,7 +423,7 @@ export default function UsersPage({ competitors, competition, currentUser, theme
                       className={`p-2 rounded transition-colors duration-[330ms] text-xs font-medium ${dk ? 'text-[#5C5E62] hover:text-[#D0D1D2] hover:bg-white/5' : 'text-[#D0D1D2] hover:text-[#5C5E62] hover:bg-[#F4F4F4]'}`}
                     ><MoreHorizontal size={15} /></button>
                   </div>
-                </div>
+                </motion.div>
               )
             })}
           </div>
@@ -500,6 +509,6 @@ export default function UsersPage({ competitors, competition, currentUser, theme
         />
       )}
 
-    </div>
+    </motion.div>
   )
 }

@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef } from 'react'
+import { motion, AnimatePresence } from 'motion/react'
 import { Trophy, Zap, Target, X, Download, FileText, Link2, ChevronDown as ChevDown } from 'lucide-react'
 
 import type { Competition, Competitor, RankResult } from '../types'
@@ -438,7 +439,12 @@ export default function LeaderboardPage({
     !best || r.flashCount > best.flashCount ? r : best, null)
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <motion.div
+      className="max-w-5xl mx-auto"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }}
+    >
 
       {/* Header */}
       <div className="mb-6 flex items-start justify-between gap-4">
@@ -585,7 +591,7 @@ export default function LeaderboardPage({
         </div>
       ) : (
         <div className="space-y-1">
-          {visible.map((result) => {
+          {visible.map((result, index) => {
             const isTop3    = result.rank <= 3
             const isOpen    = openRowId === result.competitorId
             const rowColors = isTop3 && result.rank === 1
@@ -593,9 +599,12 @@ export default function LeaderboardPage({
               : dk ? 'bg-white/[0.02] border-white/8 hover:bg-white/[0.04]' : 'bg-white border-[#EEEEEE] hover:border-[#D0D1D2]'
 
             return (
-              <div
+              <motion.div
                 key={result.competitorId}
                 className={`rounded border overflow-hidden transition-colors duration-[330ms] ${rowColors}`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ type: 'spring', stiffness: 320, damping: 26, mass: 0.8, delay: index * 0.045 }}
               >
                 {/* Main row */}
                 <div className="flex items-center gap-4 px-5 py-4">
@@ -673,31 +682,40 @@ export default function LeaderboardPage({
                 </div>
 
                 {/* Expandable stats — mobile only */}
-                {isOpen && (
-                  <div className={`md:hidden grid grid-cols-4 border-t px-5 py-3 gap-2 ${dk ? 'border-white/8' : 'border-[#EEEEEE]'}`}>
-                    <div className="text-center">
-                      <p className={`text-sm font-medium ${dk ? 'text-green-400' : 'text-green-600'}`}>{result.totalTops}</p>
-                      <p className={`text-[9px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.tops}</p>
-                    </div>
-                    <div className="text-center">
-                      <p className={`text-sm font-medium ${dk ? 'text-purple-400' : 'text-purple-600'}`}>{result.totalZones ?? 0}</p>
-                      <p className={`text-[9px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.zones}</p>
-                    </div>
-                    <div className="text-center">
-                      <p className={`text-sm font-medium ${dk ? 'text-[#8E8E8E]' : 'text-[#5C5E62]'}`}>{result.totalAttempts}</p>
-                      <p className={`text-[9px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.leaderboardTries}</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-sm font-medium text-amber-500">{result.flashCount}</p>
-                      <p className={`text-[9px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>⚡</p>
-                    </div>
-                  </div>
-                )}
-              </div>
+                <AnimatePresence>
+                  {isOpen && (
+                    <motion.div
+                      className={`md:hidden grid grid-cols-4 border-t px-5 py-3 gap-2 ${dk ? 'border-white/8' : 'border-[#EEEEEE]'}`}
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }}
+                      style={{ overflow: 'hidden' }}
+                    >
+                      <div className="text-center">
+                        <p className={`text-sm font-medium ${dk ? 'text-green-400' : 'text-green-600'}`}>{result.totalTops}</p>
+                        <p className={`text-[9px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.tops}</p>
+                      </div>
+                      <div className="text-center">
+                        <p className={`text-sm font-medium ${dk ? 'text-purple-400' : 'text-purple-600'}`}>{result.totalZones ?? 0}</p>
+                        <p className={`text-[9px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.zones}</p>
+                      </div>
+                      <div className="text-center">
+                        <p className={`text-sm font-medium ${dk ? 'text-[#8E8E8E]' : 'text-[#5C5E62]'}`}>{result.totalAttempts}</p>
+                        <p className={`text-[9px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.leaderboardTries}</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-sm font-medium text-amber-500">{result.flashCount}</p>
+                        <p className={`text-[9px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>⚡</p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
             )
           })}
         </div>
       )}
-    </div>
+    </motion.div>
   )
 }
