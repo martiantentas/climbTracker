@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
-import ascendiaLogo from '../assets/Ascendia.png'
+import ascendiaLogo from '../assets/Ascendr.png'
 import type { Language } from '../translations'
 import { translations } from '../translations'
 
@@ -48,7 +48,7 @@ export default function TermsPage({ lang }: { lang: Language }) {
       {/* Nav */}
       <nav style={{ position: 'sticky', top: 0, zIndex: 50, background: 'rgba(18,18,18,0.9)', backdropFilter: 'blur(20px)', borderBottom: `1px solid ${C.border}` }}>
         <div style={{ maxWidth: 800, margin: '0 auto', padding: '0 24px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <img src={ascendiaLogo} alt="Ascendia" style={{ height: 26, objectFit: 'contain' }} />
+          <img src={ascendiaLogo} alt="Ascendr" style={{ height: 26, objectFit: 'contain' }} />
           <button
             onClick={() => navigate(-1)}
             style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: C.txtLow, fontSize: 13, fontWeight: 500, cursor: 'pointer', padding: '6px 10px', borderRadius: 6, transition: 'color 0.33s' }}
@@ -75,17 +75,17 @@ export default function TermsPage({ lang }: { lang: Language }) {
         {/* Acceptance */}
         <Section title="1. Acceptance of Terms">
           <P>
-            By accessing or using the Ascendia platform — including creating a user account, participating in a competition, or purchasing a plan as an organiser — you agree to be bound by these Terms and Conditions, together with the Privacy Policy and Legal Notice published on this site.
+            By accessing or using the Ascendr platform — including creating a user account, participating in a competition, or purchasing a plan as an organiser — you agree to be bound by these Terms and Conditions, together with the Privacy Policy and Legal Notice published on this site.
           </P>
           <P>
-            If you do not agree with any part of these Terms, you must not use the Ascendia service. These Terms apply to all users, including competition organisers, judges, and participants.
+            If you do not agree with any part of these Terms, you must not use the Ascendr service. These Terms apply to all users, including competition organisers, judges, and participants.
           </P>
         </Section>
 
         {/* Service description */}
         <Section title="2. Service Description">
           <P>
-            Ascendia is a Software-as-a-Service (SaaS) platform for the organisation and management of boulder climbing competitions. The platform enables:
+            Ascendr is a Software-as-a-Service (SaaS) platform for the organisation and management of boulder climbing competitions. The platform enables:
           </P>
           <ul style={{ paddingLeft: 20, margin: '0 0 10px', display: 'flex', flexDirection: 'column', gap: 6 }}>
             {[
@@ -98,14 +98,14 @@ export default function TermsPage({ lang }: { lang: Language }) {
             ))}
           </ul>
           <P>
-            Ascendia is provided on an "as-is" basis. We reserve the right to modify, suspend, or discontinue any part of the service at any time, with reasonable notice where possible.
+            Ascendr is provided on an "as-is" basis. We reserve the right to modify, suspend, or discontinue any part of the service at any time, with reasonable notice where possible.
           </P>
         </Section>
 
         {/* Account registration */}
         <Section title="3. Account Registration">
           <P>
-            To use Ascendia, you must register an account by providing a valid email address, a display name, and creating a password. You warrant that:
+            To use Ascendr, you must register an account by providing a valid email address, a display name, and creating a password. You warrant that:
           </P>
           <ul style={{ paddingLeft: 20, margin: '0 0 10px', display: 'flex', flexDirection: 'column', gap: 6 }}>
             {[
@@ -133,7 +133,7 @@ export default function TermsPage({ lang }: { lang: Language }) {
               'Organisers must obtain any necessary consents from participants before entering their personal data (name, gender, category) into the platform.',
               'Organisers are responsible for communicating to participants how their data will be used, including publication of results on public leaderboard pages.',
               'Organisers must comply with all applicable sporting federation rules, safety regulations, and local law when running events.',
-              'Ascendia is a software tool — it does not assume liability for decisions made by organisers or the conduct of events.',
+              'Ascendr is a software tool — it does not assume liability for decisions made by organisers or the conduct of events.',
             ].map(item => (
               <li key={item} style={{ fontSize: 14, color: C.txtMid, lineHeight: 1.7 }}>{item}</li>
             ))}
@@ -143,12 +143,12 @@ export default function TermsPage({ lang }: { lang: Language }) {
         {/* Pricing */}
         <Section title="5. Plans, Pricing, and Payment">
           <P>
-            Ascendia is offered on a per-event subscription basis. Published prices are in euros (€) and include applicable VAT.
+            Ascendr is offered on a per-event subscription basis. Published prices are in euros (€) and include applicable VAT.
           </P>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, margin: '16px 0' }}>
             {([
-              ['Standard — €99 / event', 'Up to 300 participants. Includes live leaderboard, flexible scoring, analytics, judge and self-scoring modes, and extra capacity bundles at €0.12 per participant above 300.'],
-              ['Premium — €199 / event', 'Up to 500 participants. Includes all Standard features plus white-label logo, custom accent colour, and branded theme colours. Overage at €0.10 per participant above 500.'],
+              ['Standard — €129 / event', 'Up to 300 participants. Includes live leaderboard, flexible scoring, analytics, judge and self-scoring modes, and extra capacity bundles at €0.12 per participant above 300.'],
+              ['Premium — €209 / event', 'Up to 500 participants. Includes all Standard features plus white-label logo, custom accent colour, and branded theme colours. Overage at €0.10 per participant above 500.'],
             ] as [string, string][]).map(([plan, desc]) => (
               <div key={plan} style={{ background: 'rgba(255,255,255,0.02)', border: `1px solid ${C.border}`, borderRadius: 8, padding: '14px 18px' }}>
                 <p style={{ fontSize: 13, fontWeight: 700, color: C.txt, margin: '0 0 5px' }}>{plan}</p>
@@ -157,7 +157,7 @@ export default function TermsPage({ lang }: { lang: Language }) {
             ))}
           </div>
           <P>
-            Payment is due before a competition is set to Live status. Ascendia uses a third-party payment processor; by completing a payment you also agree to that processor's terms. Ascendia does not store full payment card details.
+            Payment is due before a competition is set to Live status. Ascendr uses a third-party payment processor; by completing a payment you also agree to that processor's terms. Ascendr does not store full payment card details.
           </P>
           <P>
             <strong style={{ color: C.txt }}>Refund policy:</strong> Competition plans are non-refundable once the competition has been published (status set to Live). If you encounter a technical issue that prevents the service from functioning as described, contact us within 7 days and we will investigate and offer a remedy at our discretion.
@@ -167,7 +167,7 @@ export default function TermsPage({ lang }: { lang: Language }) {
         {/* Acceptable use */}
         <Section title="6. Acceptable Use">
           <P>
-            You agree not to use Ascendia to:
+            You agree not to use Ascendr to:
           </P>
           <ul style={{ paddingLeft: 20, margin: '0 0 10px', display: 'flex', flexDirection: 'column', gap: 6 }}>
             {[
@@ -177,7 +177,7 @@ export default function TermsPage({ lang }: { lang: Language }) {
               'Introduce malware, viruses, or any code designed to disrupt or damage the service.',
               'Scrape or harvest data from the platform in an automated manner without our written consent.',
               'Use the service to harass, defame, or harm any individual.',
-              'Reverse-engineer, decompile, or attempt to extract the source code of Ascendia.',
+              'Reverse-engineer, decompile, or attempt to extract the source code of Ascendr.',
             ].map(item => (
               <li key={item} style={{ fontSize: 14, color: C.txtMid, lineHeight: 1.7 }}>{item}</li>
             ))}
@@ -190,17 +190,17 @@ export default function TermsPage({ lang }: { lang: Language }) {
         {/* IP */}
         <Section title="7. Intellectual Property">
           <P>
-            All intellectual property rights in the Ascendia platform — including the software, design, logos, and documentation — are and remain the property of the owner. These Terms do not grant you any rights other than a limited, non-exclusive, non-transferable licence to use the service for its intended purpose during the term of your subscription.
+            All intellectual property rights in the Ascendr platform — including the software, design, logos, and documentation — are and remain the property of the owner. These Terms do not grant you any rights other than a limited, non-exclusive, non-transferable licence to use the service for its intended purpose during the term of your subscription.
           </P>
           <P>
-            Content created by users (such as competition names, boulder descriptions, and result data) remains the property of the respective user or organiser. By posting content on the platform, you grant Ascendia a worldwide, royalty-free licence to host, reproduce, and display that content solely for the purpose of operating the service.
+            Content created by users (such as competition names, boulder descriptions, and result data) remains the property of the respective user or organiser. By posting content on the platform, you grant Ascendr a worldwide, royalty-free licence to host, reproduce, and display that content solely for the purpose of operating the service.
           </P>
         </Section>
 
         {/* Limitation of liability */}
         <Section title="8. Limitation of Liability">
           <P>
-            To the maximum extent permitted by law, Ascendia shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including loss of profits, data, or goodwill, arising from your use of or inability to use the service.
+            To the maximum extent permitted by law, Ascendr shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including loss of profits, data, or goodwill, arising from your use of or inability to use the service.
           </P>
           <P>
             Our total aggregate liability to you in respect of any claims under or in connection with these Terms shall not exceed the amount paid by you for the competition plan giving rise to the claim in the twelve months preceding the claim.
@@ -259,7 +259,7 @@ export default function TermsPage({ lang }: { lang: Language }) {
 
       {/* Footer */}
       <footer style={{ borderTop: `1px solid ${C.border}`, padding: '24px', textAlign: 'center' }}>
-        <p style={{ fontSize: 12, color: C.txtLow, margin: 0 }}>© 2026 Ascendia · All rights reserved</p>
+        <p style={{ fontSize: 12, color: C.txtLow, margin: 0 }}>© 2026 Ascendr · All rights reserved</p>
       </footer>
     </div>
   )

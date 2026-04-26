@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
-import ascendiaLogo from '../assets/Ascendia.png'
+import ascendiaLogo from '../assets/Ascendr.png'
 import type { Language } from '../translations'
 import { translations } from '../translations'
 
@@ -48,7 +48,7 @@ export default function LegalNoticePage({ lang }: { lang: Language }) {
       {/* Nav */}
       <nav style={{ position: 'sticky', top: 0, zIndex: 50, background: 'rgba(18,18,18,0.9)', backdropFilter: 'blur(20px)', borderBottom: `1px solid ${C.border}` }}>
         <div style={{ maxWidth: 800, margin: '0 auto', padding: '0 24px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <img src={ascendiaLogo} alt="Ascendia" style={{ height: 26, objectFit: 'contain' }} />
+          <img src={ascendiaLogo} alt="Ascendr" style={{ height: 26, objectFit: 'contain' }} />
           <button
             onClick={() => navigate(-1)}
             style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: C.txtLow, fontSize: 13, fontWeight: 500, cursor: 'pointer', padding: '6px 10px', borderRadius: 6, transition: 'color 0.33s' }}
@@ -79,7 +79,7 @@ export default function LegalNoticePage({ lang }: { lang: Language }) {
           </P>
           <div style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${C.border}`, borderRadius: 10, padding: '20px 24px', marginTop: 16, display: 'grid', rowGap: 12 }}>
             {([
-              ['Trading name',   'Ascendia'],
+              ['Trading name',   'Ascendr'],
               ['Owner',          "[Owner's full name or company name]"],
               ['NIF / CIF',      '[NIF or CIF]'],
               ['Address',        '[Street, number, city, postal code, Spain]'],
@@ -97,30 +97,30 @@ export default function LegalNoticePage({ lang }: { lang: Language }) {
         {/* Purpose */}
         <Section title="2. Purpose of the Website">
           <P>
-            Ascendia is an online platform designed for the organisation and management of boulder climbing competitions. It allows competition organisers to create events, manage participants, configure scoring rules, and publish live and final results. Participants may register for competitions, log ascents, and view rankings via invite code.
+            Ascendr is an online platform designed for the organisation and management of boulder climbing competitions. It allows competition organisers to create events, manage participants, configure scoring rules, and publish live and final results. Participants may register for competitions, log ascents, and view rankings via invite code.
           </P>
           <P>
-            Access to the Ascendia platform requires the creation of a user account. Certain result pages are publicly accessible without an account.
+            Access to the Ascendr platform requires the creation of a user account. Certain result pages are publicly accessible without an account.
           </P>
         </Section>
 
         {/* Intellectual Property */}
         <Section title="3. Intellectual and Industrial Property">
           <P>
-            All content published on this website — including but not limited to text, images, graphics, logos, icons, software, source code, and the overall visual design — is the exclusive property of the owner of Ascendia or its licensors, and is protected by Spanish and EU intellectual property law.
+            All content published on this website — including but not limited to text, images, graphics, logos, icons, software, source code, and the overall visual design — is the exclusive property of the owner of Ascendr or its licensors, and is protected by Spanish and EU intellectual property law.
           </P>
           <P>
             Reproduction, distribution, public communication, or transformation of any of this content, in whole or in part, for commercial purposes is expressly prohibited without the prior written consent of the owner.
           </P>
           <P>
-            The Ascendia name and logo are trademarks of the owner. No licence or right to use them is granted without express written authorisation.
+            The Ascendr name and logo are trademarks of the owner. No licence or right to use them is granted without express written authorisation.
           </P>
         </Section>
 
         {/* Exclusion of liability */}
         <Section title="4. Limitation of Liability">
           <P>
-            Ascendia makes reasonable efforts to ensure the accuracy and availability of this service, but does not warrant uninterrupted or error-free operation. The owner shall not be liable for:
+            Ascendr makes reasonable efforts to ensure the accuracy and availability of this service, but does not warrant uninterrupted or error-free operation. The owner shall not be liable for:
           </P>
           <ul style={{ paddingLeft: 20, margin: '0 0 10px', display: 'flex', flexDirection: 'column', gap: 6 }}>
             {[
@@ -137,7 +137,7 @@ export default function LegalNoticePage({ lang }: { lang: Language }) {
         {/* Links */}
         <Section title="5. External Links">
           <P>
-            This website may contain links to external websites operated by third parties. Ascendia has no control over such websites and accepts no responsibility for their content, privacy practices, or availability. The inclusion of a link does not imply any endorsement by Ascendia.
+            This website may contain links to external websites operated by third parties. Ascendr has no control over such websites and accepts no responsibility for their content, privacy practices, or availability. The inclusion of a link does not imply any endorsement by Ascendr.
           </P>
         </Section>
 
@@ -159,7 +159,7 @@ export default function LegalNoticePage({ lang }: { lang: Language }) {
 
       {/* Footer */}
       <footer style={{ borderTop: `1px solid ${C.border}`, padding: '24px', textAlign: 'center' }}>
-        <p style={{ fontSize: 12, color: C.txtLow, margin: 0 }}>© 2026 Ascendia · All rights reserved</p>
+        <p style={{ fontSize: 12, color: C.txtLow, margin: 0 }}>© 2026 Ascendr · All rights reserved</p>
       </footer>
     </div>
   )

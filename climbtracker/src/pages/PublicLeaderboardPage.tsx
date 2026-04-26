@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Trophy, Target, Zap, ArrowLeft, Share2, Check, Radio, Sun, Moon } from 'lucide-react'
 import { motion } from 'motion/react'
-import ascendiaLogo from '../assets/Ascendia.png'
+import ascendiaLogo from '../assets/Ascendr.png'
 
 import type { Competition, Competitor, Boulder, Completion } from '../types'
 import { calculateRankings } from '../utils/scoring'
@@ -151,7 +151,7 @@ export default function PublicLeaderboardPage({
       <nav className={`border-b backdrop-blur sticky top-0 z-50 transition-colors duration-300 ${dk ? 'border-white/[0.06] bg-[#121212]/90' : 'border-[#EEEEEE] bg-white/90'}`}>
         <div className="max-w-3xl mx-auto px-5 h-14 flex items-center justify-between gap-4">
           <div className="flex items-center gap-2 min-w-0">
-            <img src={ascendiaLogo} alt="Ascendia" className="h-6 w-auto object-contain flex-shrink-0" />
+            <img src={ascendiaLogo} alt="Ascendr" className="h-6 w-auto object-contain flex-shrink-0" />
             <span className={`text-sm hidden sm:inline ${dk ? 'text-[#393C41]' : 'text-[#D0D1D2]'}`}>·</span>
             <span className={`text-sm truncate hidden sm:inline ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{competition.name}</span>
           </div>
@@ -314,7 +314,7 @@ export default function PublicLeaderboardPage({
         {/* ── Footer ── */}
         <div className={`mt-12 text-center text-xs ${dk ? 'text-[#393C41]' : 'text-[#D0D1D2]'}`}>
           <div className="flex items-center justify-center gap-1.5 mb-1">
-            <img src={ascendiaLogo} alt="Ascendia" className="h-4 w-auto object-contain opacity-40" />
+            <img src={ascendiaLogo} alt="Ascendr" className="h-4 w-auto object-contain opacity-40" />
             <span className="font-medium">{t.publicPoweredBy}</span>
           </div>
           {isLive && <span>{t.publicRealTime}</span>}

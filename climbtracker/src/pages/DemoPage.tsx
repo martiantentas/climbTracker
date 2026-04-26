@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, CheckCircle, ShieldCheck } from 'lucide-react'
-import ascendiaLogo from '../assets/Ascendia.png'
+import ascendiaLogo from '../assets/Ascendr.png'
 import type { Language } from '../translations'
 import { translations } from '../translations'
 
@@ -89,7 +89,7 @@ export default function DemoPage({ lang }: DemoPageProps) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!validate()) return
-    const subject = encodeURIComponent('Ascendia – Demo Request')
+    const subject = encodeURIComponent('Ascendr – Demo Request')
     const body = encodeURIComponent(
       `Name: ${name}\nCompany: ${company || '—'}\nEmail: ${email}\nPhone: ${phone || '—'}\n\n${message}`
     )
@@ -120,7 +120,7 @@ export default function DemoPage({ lang }: DemoPageProps) {
       {/* Nav */}
       <nav style={{ position: 'sticky', top: 0, zIndex: 50, background: 'rgba(18,18,18,0.9)', backdropFilter: 'blur(20px)', borderBottom: `1px solid ${C.border}` }}>
         <div style={{ maxWidth: 800, margin: '0 auto', padding: '0 24px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <img src={ascendiaLogo} alt="Ascendia" style={{ height: 26, objectFit: 'contain' }} />
+          <img src={ascendiaLogo} alt="Ascendr" style={{ height: 26, objectFit: 'contain' }} />
           <button
             onClick={() => navigate(-1)}
             style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: C.txtLow, fontSize: 13, fontWeight: 500, cursor: 'pointer', padding: '6px 10px', borderRadius: 6, transition: 'color 0.33s', fontFamily: C.font }}
@@ -277,7 +277,7 @@ export default function DemoPage({ lang }: DemoPageProps) {
 
       {/* Footer */}
       <footer style={{ borderTop: `1px solid ${C.border}`, padding: '24px', textAlign: 'center' }}>
-        <p style={{ fontSize: 12, color: C.txtLow, margin: 0 }}>© 2026 Ascendia · All rights reserved</p>
+        <p style={{ fontSize: 12, color: C.txtLow, margin: 0 }}>© 2026 Ascendr · All rights reserved</p>
       </footer>
     </div>
   )

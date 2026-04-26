@@ -1,61 +1,23 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'motion/react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { useGoogleLogin } from '@react-oauth/google'
 import { Eye, EyeOff, ArrowLeft, CheckCircle2 } from 'lucide-react'
-import ascendiaLogo from '../assets/Ascendia.png'
-import type { Competitor, Competition } from '../types'
-import { MOCK_COMPETITORS, MOCK_COMPETITION } from '../constants'
+import ascendrLogo from '../assets/Ascendr.png'
 import type { Language } from '../translations'
 import { translations } from '../translations'
 import BackgroundBeams from '../components/BackgroundBeams'
 import LoadingSpinner from '../components/LoadingSpinner'
+import { signIn, signUp, signInWithGoogle } from '../lib/auth'
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
 interface AuthPageProps {
-  onLogin: (user: Competitor) => void
   theme:   'light' | 'dark'
   lang:    Language
   setLang: (l: Language) => void
 }
 
 type Tab = 'signin' | 'signup'
-
-// ─── MOCK USER STORE ──────────────────────────────────────────────────────────
-
-const MOCK_PASSWORDS: Record<string, string> = {
-  'admin@climbtracker.com': 'admin123',
-  'alex@example.com':       'alex123',
-  'janja@example.com':      'janja123',
-  'adam@example.com':       'adam123',
-  'brooke@example.com':     'brooke123',
-}
-
-const REGISTERED_USERS: Competitor[] = [...MOCK_COMPETITORS]
-
-function findUser(email: string): Competitor | undefined {
-  return REGISTERED_USERS.find(u => u.email.toLowerCase() === email.toLowerCase())
-}
-
-function registerUser(user: Competitor, password: string): Competitor {
-  REGISTERED_USERS.push(user)
-  MOCK_PASSWORDS[user.email.toLowerCase()] = password
-  return user
-}
-
-export function updateAuthUser(updated: Competitor, oldEmail: string): void {
-  const idx = REGISTERED_USERS.findIndex(u => u.email.toLowerCase() === oldEmail.toLowerCase())
-  if (idx !== -1) REGISTERED_USERS[idx] = updated
-  const newEmail = updated.email.toLowerCase()
-  const old = oldEmail.toLowerCase()
-  if (newEmail !== old && MOCK_PASSWORDS[old]) {
-    MOCK_PASSWORDS[newEmail] = MOCK_PASSWORDS[old]
-    delete MOCK_PASSWORDS[old]
-  }
-}
-
-import PostRegistrationModal from '../components/PostRegistrationModal'
 
 // ─── FIELD ────────────────────────────────────────────────────────────────────
 
@@ -102,65 +64,20 @@ function Field({ label, type, value, onChange, error, placeholder, right }: {
 
 // ─── AUTH PAGE ────────────────────────────────────────────────────────────────
 
-export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProps) {
+export default function AuthPage({ theme: _theme, lang, setLang }: AuthPageProps) {
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const tr = translations[lang]
 
-  const [tab,        setTab]        = useState<Tab>(params.get('tab') === 'signup' ? 'signup' : 'signin')
-  const [email,      setEmail]      = useState('')
-  const [password,   setPassword]   = useState('')
-  const [firstName,  setFirstName]  = useState('')
-  const [lastName,   setLastName]   = useState('')
-  const [gdpr,       setGdpr]       = useState(false)
-  const [errors,     setErrors]     = useState<Record<string, string>>({})
-  const [loading,    setLoading]    = useState(false)
-  const [success,    setSuccess]    = useState(false)
-  const [pendingUser, setPendingUser] = useState<Competitor | null>(null)
-
-  const loginWithGoogle = useGoogleLogin({
-    onSuccess: async tokenResponse => {
-      setLoading(true)
-      try {
-        const info = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-        }).then(r => r.json()) as {
-          sub: string; name: string; given_name?: string
-          family_name?: string; email: string; picture?: string
-        }
-
-        const existing = findUser(info.email)
-        const user: Competitor = existing ?? (() => {
-          const first = info.given_name  ?? info.name.split(' ')[0] ?? ''
-          const last  = info.family_name ?? info.name.split(' ').slice(1).join(' ') ?? ''
-          const created: Competitor = {
-            id:          `g-${info.sub}`,
-            firstName:   first,
-            lastName:    last,
-            displayName: info.name,
-            email:       info.email.toLowerCase(),
-            avatar:      info.picture,
-            gender:      '',
-            categoryId:  '',
-            traitIds:    [],
-            bibNumber:   0,
-            role:        'competitor',
-          } as any
-          registerUser(created, '')
-          return created
-        })()
-
-        setSuccess(true)
-        setTimeout(() => { onLogin(user); navigate('/competitions', { replace: true }) }, 600)
-      } catch {
-        setErrors({ _global: 'Google sign-in failed. Please try again.' })
-        setLoading(false)
-      }
-    },
-    onError: () => {
-      setErrors({ _global: 'Google sign-in was cancelled or failed.' })
-    },
-  })
+  const [tab,       setTab]       = useState<Tab>(params.get('tab') === 'signup' ? 'signup' : 'signin')
+  const [email,     setEmail]     = useState('')
+  const [password,  setPassword]  = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName,  setLastName]  = useState('')
+  const [gdpr,      setGdpr]      = useState(false)
+  const [errors,    setErrors]    = useState<Record<string, string>>({})
+  const [loading,   setLoading]   = useState(false)
+  const [success,   setSuccess]   = useState(false)
 
   useEffect(() => {
     const t = params.get('tab')
@@ -182,62 +99,47 @@ export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProp
     return Object.keys(e).length === 0
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     if (!validate()) return
     setLoading(true)
+    setErrors({})
 
-    setTimeout(() => {
-      if (tab === 'signin') {
-        const user = findUser(email)
-        const pass = MOCK_PASSWORDS[email.toLowerCase()]
-        if (!user || pass !== password) {
-          setErrors({ _global: tr.authInvalidCreds })
-          setLoading(false)
-          return
-        }
-        setSuccess(true)
-        setTimeout(() => { onLogin(user); navigate('/competitions', { replace: true }) }, 600)
-      } else {
-        const existing = findUser(email)
-        if (existing) {
-          setErrors({ email: tr.authEmailExists })
-          setLoading(false)
-          return
-        }
-        const newUser: Competitor = {
-          id:          `u-${Date.now()}`,
-          firstName:   firstName.trim(),
-          lastName:    lastName.trim(),
-          displayName: `${firstName.trim()} ${lastName.trim().charAt(0)}.`,
-          email:       email.trim().toLowerCase(),
-          gender:      '',
-          categoryId:  '',
-          traitIds:    [],
-          bibNumber:   0,
-          role:        'competitor',
-        } as any
-        registerUser(newUser, password)
-        setSuccess(true)
-        setTimeout(() => { setPendingUser(newUser); setLoading(false) }, 600)
+    if (tab === 'signin') {
+      const { error } = await signIn(email.trim(), password)
+      if (error) {
+        setErrors({ _global: error.message === 'Invalid login credentials'
+          ? tr.authInvalidCreds
+          : error.message })
+        setLoading(false)
+        return
       }
-    }, 800)
+      // onAuthStateChange in App.tsx handles setting currentUser + navigation
+      setSuccess(true)
+
+    } else {
+      const displayName = `${firstName.trim()} ${lastName.trim()}`
+      const { error } = await signUp(email.trim(), password, displayName)
+      if (error) {
+        const isDuplicate = error.message.toLowerCase().includes('already registered')
+          || error.message.toLowerCase().includes('already exists')
+        setErrors({ _global: isDuplicate ? tr.authEmailExists : error.message })
+        setLoading(false)
+        return
+      }
+      // With email confirmation OFF, session is created immediately → onAuthStateChange fires
+      setSuccess(true)
+    }
   }
 
-  if (pendingUser) {
-    return (
-      <PostRegistrationModal
-        user={pendingUser}
-        competition={MOCK_COMPETITION}
-        theme={theme}
-        lang={lang}
-        onComplete={updated => {
-          setPendingUser(null)
-          onLogin(updated)
-          navigate('/competitions', { replace: true })
-        }}
-      />
-    )
+  async function handleGoogle() {
+    setLoading(true)
+    const { error } = await signInWithGoogle()
+    if (error) {
+      setErrors({ _global: 'Google sign-in failed. Please try again.' })
+      setLoading(false)
+    }
+    // On success, browser is redirected to Google and back — no further action here
   }
 
   return (
@@ -248,7 +150,7 @@ export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProp
         <BackgroundBeams />
 
         <div className="flex items-center gap-2.5 relative">
-          <img src={ascendiaLogo} alt="Ascendia" className="h-8 w-auto object-contain" />
+          <img src={ascendrLogo} alt="Ascendr" className="h-8 w-auto object-contain" />
         </div>
 
         <div className="relative">
@@ -270,7 +172,7 @@ export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProp
           </div>
         </div>
 
-        <p className="text-xs text-[#393C41] relative">© 2025 Ascendia</p>
+        <p className="text-xs text-[#393C41] relative">© 2026 Ascendr</p>
       </div>
 
       {/* Right panel — form */}
@@ -306,7 +208,7 @@ export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProp
         </div>
 
         <div className="flex items-center gap-2 mb-9">
-          <img src={ascendiaLogo} alt="Ascendia" className="h-8 w-auto object-contain" />
+          <img src={ascendrLogo} alt="Ascendr" className="h-8 w-auto object-contain" />
         </div>
 
         {/* Tab toggle */}
@@ -451,13 +353,7 @@ export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProp
             <div className="grid grid-cols-2 gap-3">
               <motion.button
                 type="button"
-                onClick={() => {
-                  if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) {
-                    alert('Google login is not configured yet.')
-                    return
-                  }
-                  loginWithGoogle()
-                }}
+                onClick={handleGoogle}
                 disabled={loading}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.96 }}
@@ -497,19 +393,6 @@ export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProp
                 {tab === 'signin' ? tr.authSignUp : tr.authSignIn}
               </motion.button>
             </p>
-
-            {/* Dev shortcuts */}
-            <div className="mt-4 p-4 rounded border bg-white/[0.03] border-white/[0.06]">
-              <p className="text-[11px] font-medium text-[#393C41] mb-2.5">{tr.authDevShortcuts}</p>
-              <div className="flex gap-2 flex-wrap">
-                <button type="button" onClick={() => { setEmail('admin@climbtracker.com'); setPassword('admin123'); setTab('signin') }} className="text-[11px] px-3 py-1 rounded bg-[#7F8BAD]/10 border border-[#7F8BAD]/20 text-[#7F8BAD] font-medium hover:bg-[#7F8BAD]/20 transition-colors duration-[330ms]">
-                  Admin
-                </button>
-                <button type="button" onClick={() => { setEmail('alex@example.com'); setPassword('alex123'); setTab('signin') }} className="text-[11px] px-3 py-1 rounded bg-green-400/10 border border-green-400/20 text-green-400 font-medium hover:bg-green-400/20 transition-colors duration-[330ms]">
-                  {tr.competitor}
-                </button>
-              </div>
-            </div>
           </form>
         )}
       </motion.div>

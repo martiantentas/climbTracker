@@ -6,12 +6,12 @@ import {
   ArrowRight, Check, ChevronDown, Trophy,
   Layers, Sparkles,
 } from 'lucide-react'
-import ascendiaLogo from '../assets/Ascendia.png'
+import ascendiaLogo from '../assets/Ascendr.png'
 import type { Language } from '../translations'
 import { translations } from '../translations'
 
-import MarsCanvas from '../components/MarsCanvas'
-import DotGrid   from '../components/DotGrid'
+import MarsCanvas  from '../components/MarsCanvas'
+import DotPattern  from '../components/DotPattern'
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
 
@@ -105,7 +105,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 9, cursor: 'pointer' }} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <img src={ascendiaLogo} alt="Ascendia" style={{ height: 30, width: 'auto', objectFit: 'contain' }} />
+            <img src={ascendiaLogo} alt="Ascendr" style={{ height: 30, width: 'auto', objectFit: 'contain' }} />
           </div>
 
           <div className="hide-mobile" style={{ display: 'flex', gap: 4 }}>
@@ -350,7 +350,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
 
       {/* ══ PRICING ══════════════════════════════════════════════════════════ */}
       <div style={{ position: 'relative', background: C.bg, overflow: 'hidden' }}>
-        <DotGrid color="#7F8BAD" spacing={26} radius={140} />
+        <DotPattern baseColor="#2a2f3d" glowColor="#7F8BAD" gap={26} dotSize={2} proximity={140} waveSpeed={0.4} />
       <section id="pricing" style={{ padding: '100px 24px', maxWidth: 960, margin: '0 auto', position: 'relative', zIndex: 1 }}>
         <div style={{ textAlign: 'center', marginBottom: 64 }}>
           <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: C.accent, marginBottom: 14 }}>Pricing</p>
@@ -365,7 +365,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
           <div className="lp-card" style={{ ...glass, background: '#121212', padding: 40, display: 'flex', flexDirection: 'column' }}>
             <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.txtMid, marginBottom: 16 }}>{t.pricingStd}</p>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 4 }}>
-              <span style={{ fontSize: 52, fontWeight: 200, color: C.txt, fontFamily: C.mono, lineHeight: 1 }}>€99</span>
+              <span style={{ fontSize: 52, fontWeight: 200, color: C.txt, fontFamily: C.mono, lineHeight: 1 }}>€129</span>
               <span style={{ fontSize: 14, color: C.txtLow }}>{t.pricingPerEvent}</span>
             </div>
             <p style={{ fontSize: 12, color: C.txtLow, marginBottom: 28 }}>+€0.12 per participant above 300</p>
@@ -392,7 +392,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
               </span>
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 4 }}>
-              <span style={{ fontSize: 52, fontWeight: 200, color: C.txt, fontFamily: C.mono, lineHeight: 1 }}>€199</span>
+              <span style={{ fontSize: 52, fontWeight: 200, color: C.txt, fontFamily: C.mono, lineHeight: 1 }}>€209</span>
               <span style={{ fontSize: 14, color: C.txtLow }}>{t.pricingPerEvent}</span>
             </div>
             <p style={{ fontSize: 12, color: C.txtLow, marginBottom: 28 }}>+€0.10 per participant above 500</p>
@@ -456,7 +456,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
       {/* ══ FOOTER ═══════════════════════════════════════════════════════════ */}
       <footer style={{ background: C.bgAlt, borderTop: `1px solid ${C.border}`, padding: '32px 24px' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
-          <img src={ascendiaLogo} alt="Ascendia" style={{ height: 26, width: 'auto', objectFit: 'contain' }} />
+          <img src={ascendiaLogo} alt="Ascendr" style={{ height: 26, width: 'auto', objectFit: 'contain' }} />
           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
             {([
               [t.bookDemo,    '/demo'],
@@ -473,7 +473,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
               >{label}</button>
             ))}
           </div>
-          <p style={{ fontSize: 12, color: C.txtLow, margin: 0 }}>© 2026 Ascendia</p>
+          <p style={{ fontSize: 12, color: C.txtLow, margin: 0 }}>© 2026 Ascendr</p>
         </div>
       </footer>
 

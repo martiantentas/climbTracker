@@ -41,12 +41,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const resend = new Resend(apiKey)
     await resend.emails.send({
-      from:    'Ascendia Demo <demo@openbloc.cat>',
+      from:    'Ascendr Demo <demo@ascendr.top>',
       to:      'blocopen@gmail.com',
       replyTo: email,
       subject: `Demo Request – ${name}${company ? ` (${company})` : ''}`,
       text: [
-        'New demo request via openbloc.cat',
+        'New demo request via ascendr.top',
         '',
         `Name:    ${name}`,
         `Company: ${company  || '—'}`,

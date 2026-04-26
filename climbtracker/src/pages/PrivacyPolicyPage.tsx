@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
-import ascendiaLogo from '../assets/Ascendia.png'
+import ascendiaLogo from '../assets/Ascendr.png'
 import type { Language } from '../translations'
 import { translations } from '../translations'
 
@@ -57,7 +57,7 @@ export default function PrivacyPolicyPage({ lang }: { lang: Language }) {
       {/* Nav */}
       <nav style={{ position: 'sticky', top: 0, zIndex: 50, background: 'rgba(18,18,18,0.9)', backdropFilter: 'blur(20px)', borderBottom: `1px solid ${C.border}` }}>
         <div style={{ maxWidth: 800, margin: '0 auto', padding: '0 24px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <img src={ascendiaLogo} alt="Ascendia" style={{ height: 26, objectFit: 'contain' }} />
+          <img src={ascendiaLogo} alt="Ascendr" style={{ height: 26, objectFit: 'contain' }} />
           <button
             onClick={() => navigate(-1)}
             style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: C.txtLow, fontSize: 13, fontWeight: 500, cursor: 'pointer', padding: '6px 10px', borderRadius: 6, transition: 'color 0.33s' }}
@@ -84,10 +84,10 @@ export default function PrivacyPolicyPage({ lang }: { lang: Language }) {
         {/* Intro */}
         <Section title="1. Data Controller">
           <P>
-            Ascendia collects and processes personal data in its capacity as data controller within the meaning of the General Data Protection Regulation (EU) 2016/679 (GDPR) and Organic Law 3/2018 of 5 December on the Protection of Personal Data and Guarantee of Digital Rights (LOPDGDD).
+            Ascendr collects and processes personal data in its capacity as data controller within the meaning of the General Data Protection Regulation (EU) 2016/679 (GDPR) and Organic Law 3/2018 of 5 December on the Protection of Personal Data and Guarantee of Digital Rights (LOPDGDD).
           </P>
           <div style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${C.border}`, borderRadius: 10, padding: '20px 24px', marginTop: 16, display: 'grid', rowGap: 12 }}>
-            <InfoChip label="Trading name"  value="Ascendia" />
+            <InfoChip label="Trading name"  value="Ascendr" />
             <InfoChip label="Owner"         value={"[Owner's full name or company name]"} />
             <InfoChip label="NIF / CIF"     value="[NIF or CIF]" />
             <InfoChip label="Address"       value="[Street, number, city, postal code, Spain]" />
@@ -98,7 +98,7 @@ export default function PrivacyPolicyPage({ lang }: { lang: Language }) {
         {/* What we collect */}
         <Section title="2. Personal Data We Collect">
           <P>
-            We collect only the data that is necessary to provide the Ascendia service. Depending on how you use the platform, this may include:
+            We collect only the data that is necessary to provide the Ascendr service. Depending on how you use the platform, this may include:
           </P>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 8 }}>
@@ -119,7 +119,7 @@ export default function PrivacyPolicyPage({ lang }: { lang: Language }) {
         {/* No cookies */}
         <Section title="3. Cookies and Tracking Technologies">
           <P>
-            <strong style={{ color: C.txt }}>Ascendia does not use third-party cookies, advertising trackers, or cross-site analytics tools.</strong> We do not share browsing data with any advertising or data brokerage networks.
+            <strong style={{ color: C.txt }}>Ascendr does not use third-party cookies, advertising trackers, or cross-site analytics tools.</strong> We do not share browsing data with any advertising or data brokerage networks.
           </P>
           <P>
             The platform may use browser <em>localStorage</em> to store user preferences (such as language selection) locally on your device. This data never leaves your browser and is not transmitted to our servers.
@@ -133,7 +133,7 @@ export default function PrivacyPolicyPage({ lang }: { lang: Language }) {
         <Section title="4. Purposes and Legal Basis for Processing">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 4 }}>
             {([
-              ['Account management & service delivery', 'To create and maintain your user account and provide access to the Ascendia platform.', 'Performance of contract — Art. 6(1)(b) GDPR'],
+              ['Account management & service delivery', 'To create and maintain your user account and provide access to the Ascendr platform.', 'Performance of contract — Art. 6(1)(b) GDPR'],
               ['Competition participation',             'To register you in competitions, assign BIB numbers, record scores, and display your results on rankings.', 'Performance of contract — Art. 6(1)(b) GDPR'],
               ['Public leaderboards',                   'Competition results (name, BIB, score) may be displayed on public results pages linked by the competition organiser.', 'Legitimate interest — Art. 6(1)(f) GDPR'],
               ['Security & abuse prevention',          'Server logs and session data are processed to detect and prevent unauthorised access.', 'Legitimate interest — Art. 6(1)(f) GDPR'],
@@ -167,12 +167,12 @@ export default function PrivacyPolicyPage({ lang }: { lang: Language }) {
         {/* Recipients */}
         <Section title="6. Data Recipients and International Transfers">
           <P>
-            Ascendia does not sell your personal data to third parties. Your data may be shared only with:
+            Ascendr does not sell your personal data to third parties. Your data may be shared only with:
           </P>
           <ul style={{ paddingLeft: 20, margin: '0 0 10px', display: 'flex', flexDirection: 'column', gap: 6 }}>
             {[
               'Hosting and infrastructure providers that process data on our behalf under appropriate data processing agreements.',
-              'Payment processors for the processing of competition fees (payment data is handled directly by the payment provider and is not stored by Ascendia).',
+              'Payment processors for the processing of competition fees (payment data is handled directly by the payment provider and is not stored by Ascendr).',
               'Public authorities, when required by law.',
             ].map(item => (
               <li key={item} style={{ fontSize: 14, color: C.txtMid, lineHeight: 1.7 }}>{item}</li>
@@ -213,7 +213,7 @@ export default function PrivacyPolicyPage({ lang }: { lang: Language }) {
         {/* Minors */}
         <Section title="8. Minors">
           <P>
-            The Ascendia platform is not directed at children under 14 years of age. We do not knowingly collect personal data from children under 14. If you believe a minor has provided us with personal data without appropriate consent, please contact us so we can delete it promptly.
+            The Ascendr platform is not directed at children under 14 years of age. We do not knowingly collect personal data from children under 14. If you believe a minor has provided us with personal data without appropriate consent, please contact us so we can delete it promptly.
           </P>
         </Section>
 
@@ -228,7 +228,7 @@ export default function PrivacyPolicyPage({ lang }: { lang: Language }) {
 
       {/* Footer */}
       <footer style={{ borderTop: `1px solid ${C.border}`, padding: '24px', textAlign: 'center' }}>
-        <p style={{ fontSize: 12, color: C.txtLow, margin: 0 }}>© 2026 Ascendia · All rights reserved</p>
+        <p style={{ fontSize: 12, color: C.txtLow, margin: 0 }}>© 2026 Ascendr · All rights reserved</p>
       </footer>
     </div>
   )

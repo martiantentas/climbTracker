@@ -1,5 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { HashRouter, Routes, Route, Navigate, useNavigate, useParams, useLocation } from 'react-router-dom'
+import { supabase } from './lib/supabase'
+import { getProfile, upsertProfile, supabaseUserToCompetitor, signOutUser } from './lib/auth'
 
 import type { Competition, Boulder, Competitor, Completion, Badge } from './types'
 import { CompetitionStatus, ScoringType } from './types'
@@ -27,7 +29,7 @@ import AnalyticsPage from './pages/AnalyticsPage'
 import JoinPage          from './pages/JoinPage'
 import EventProfilePage  from './pages/EventProfilePage'
 import LandingPage       from './pages/LandingPage'
-import AuthPage, { updateAuthUser } from './pages/AuthPage'
+import AuthPage from './pages/AuthPage'
 import PaymentModal          from './components/PaymentModal'
 import PostRegistrationModal from './components/PostRegistrationModal'
 import PublicLeaderboardPage from './pages/PublicLeaderboardPage'
@@ -163,18 +165,25 @@ function AppInner() {
 
   const t = translations[lang]
 
-  const [currentUser, setCurrentUserRaw] = useState<Competitor | null>(() => {
-    try {
-      const stored = localStorage.getItem('ct-user')
-      return stored ? (JSON.parse(stored) as Competitor) : null
-    } catch { return null }
-  })
+  const [currentUser,  setCurrentUser]  = useState<Competitor | null>(null)
+  const [authLoading,  setAuthLoading]  = useState(true)
 
-  function setCurrentUser(user: Competitor | null) {
-    setCurrentUserRaw(user)
-    if (user) localStorage.setItem('ct-user', JSON.stringify(user))
-    else localStorage.removeItem('ct-user')
-  }
+  // ── Supabase auth subscription ────────────────────────────────────────────
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        if (session?.user) {
+          const profile  = await getProfile(session.user.id)
+          setCurrentUser(supabaseUserToCompetitor(session.user, profile))
+        } else {
+          setCurrentUser(null)
+        }
+        setAuthLoading(false)
+      }
+    )
+    return () => subscription.unsubscribe()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const [competitions, setCompetitionsRaw] = useState<Competition[]>(() => {
     try { const s = localStorage.getItem('ct-competitions'); return s ? JSON.parse(s) : [MOCK_COMPETITION] } catch { return [MOCK_COMPETITION] }
@@ -731,11 +740,19 @@ function AppInner() {
   }
 
   // ── Unauthenticated shell: Landing + Auth ─────────────────────────────────
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#121212] flex items-center justify-center">
+        <div className="w-6 h-6 rounded-full border-2 border-[#7F8BAD] border-t-transparent animate-spin" />
+      </div>
+    )
+  }
+
   if (!currentUser) {
     return (
       <Routes>
         <Route path="/"                element={<LandingPage lang={lang} setLang={handleSetLang} />} />
-        <Route path="auth"             element={<AuthPage onLogin={u => { setCurrentUser(u); if (!localStorage.getItem('ct-pending-join')) goto('/competitions', { replace: true }) }} theme={theme} lang={lang} setLang={handleSetLang} />} />
+        <Route path="auth"             element={<AuthPage theme={theme} lang={lang} setLang={handleSetLang} />} />
         <Route path="join/:code"       element={<GuestJoinRedirect lang={lang} />} />
         <Route path="results/:compId"  element={<PublicLeaderboardPage competitions={competitions} competitorsMap={competitorsMap} bouldersMap={bouldersMap} completionsMap={completionsMap} />} />
         <Route path="legal"            element={<LegalNoticePage lang={lang} />} />
@@ -841,7 +858,7 @@ function AppInner() {
               return (isReg || isOwn) ? comp.branding : undefined
             })()}
           onOpenMenu={() => setIsMenuOpen(true)}
-          onLogout={() => { setCurrentUser(null); goto('/', { replace: true }) }}
+          onLogout={() => { signOutUser(); goto('/', { replace: true }) }}
         />
 
         <MobileMenu
@@ -856,7 +873,7 @@ function AppInner() {
               const isOwn = comp?.ownerId === currentUser?.id
               return (isReg || isOwn) ? comp.branding : undefined
             })()}
-          onLogout={() => { setCurrentUser(null); goto('/', { replace: true }) }}
+          onLogout={() => { signOutUser(); goto('/', { replace: true }) }}
         />
 
         <main className="max-w-7xl mx-auto px-4 md:px-6 py-8">
@@ -908,7 +925,12 @@ function AppInner() {
                 badges={badgesByCompetitor.get(currentUser.id) ?? []}
                 onJoinByCode={handleJoinByCode}
                 onSave={updated => {
-                  updateAuthUser(updated, currentUser.email)
+                  upsertProfile(updated.id, {
+                    display_name: updated.displayName,
+                    avatar_url:   updated.avatar,
+                    emoji:        (updated as any).emoji,
+                    trait_ids:    updated.traitIds,
+                  })
                   setCurrentUser(updated)
                   setCompetitorsMap(prev => {
                     const next = { ...prev }

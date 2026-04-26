@@ -15,7 +15,7 @@ import {
   Users,
   CalendarDays,
 } from 'lucide-react'
-import ascendiaLogo from '../assets/Ascendia.png'
+import ascendiaLogo from '../assets/Ascendr.png'
 
 import type { Competitor, Competition } from '../types'
 import type { Language } from '../translations'
@@ -131,7 +131,7 @@ export default function MobileMenu({
             <div className="flex items-center gap-3">
               {branding?.logoDataUrl
                 ? <img src={branding.logoDataUrl} alt="logo" className="h-8 w-auto object-contain" />
-                : <img src={ascendiaLogo} alt="Ascendia" className="h-8 w-auto object-contain" />
+                : <img src={ascendiaLogo} alt="Ascendr" className="h-8 w-auto object-contain" />
               }
             </div>
             <motion.button

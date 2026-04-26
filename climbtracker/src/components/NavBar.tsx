@@ -6,7 +6,7 @@ import type { Competitor, Competition } from '../types'
 import { getStatusColor } from '../App'
 import type { Language } from '../translations'
 import { translations } from '../translations'
-import logo from '../assets/Ascendia.png'
+import logo from '../assets/Ascendr.png'
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -117,7 +117,7 @@ export default function NavBar({
         >
           {branding?.logoDataUrl
             ? <img src={branding.logoDataUrl} alt="logo" className="h-8 w-auto object-contain" />
-            : <img src={logo} alt="Ascendia" className="h-8 w-auto object-contain" />
+            : <img src={logo} alt="Ascendr" className="h-8 w-auto object-contain" />
           }
         </motion.div>
 

@@ -19,7 +19,7 @@ type Tier = 'standard' | 'premium'
 const TIERS = {
   standard: {
     label:       'Standard',
-    basePrice:   99,
+    basePrice:   129,
     baseUsers:   300,
     overageRate: 0.12,
     features: [
@@ -32,7 +32,7 @@ const TIERS = {
   },
   premium: {
     label:       'Premium',
-    basePrice:   199,
+    basePrice:   209,
     baseUsers:   500,
     overageRate: 0.10,
     features: [
@@ -171,7 +171,7 @@ export default function PaymentModal({
                       <div className="flex items-baseline justify-between mb-1.5">
                         <span className="text-sm font-medium text-[#EEEEEE]">Standard</span>
                         <div className="text-right">
-                          <span className="text-lg font-medium text-[#EEEEEE] font-mono">from €99</span>
+                          <span className="text-lg font-medium text-[#EEEEEE] font-mono">from €129</span>
                           <span className="text-xs text-[#5C5E62] ml-1">/event</span>
                         </div>
                       </div>
@@ -209,7 +209,7 @@ export default function PaymentModal({
                           </span>
                         </div>
                         <div className="text-right">
-                          <span className="text-lg font-medium text-[#EEEEEE] font-mono">from €199</span>
+                          <span className="text-lg font-medium text-[#EEEEEE] font-mono">from €209</span>
                           <span className="text-xs text-[#5C5E62] ml-1">/event</span>
                         </div>
                       </div>
@@ -307,7 +307,7 @@ export default function PaymentModal({
           {step === 'promo' && (
             <>
               <p className="text-sm text-[#5C5E62] mb-5 leading-relaxed">
-                Enter your promo code below. Valid codes are managed by Ascendia administrators.
+                Enter your promo code below. Valid codes are managed by Ascendr administrators.
               </p>
               <div className="flex gap-2.5 mb-4">
                 <input
