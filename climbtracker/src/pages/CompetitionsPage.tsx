@@ -446,7 +446,7 @@ export default function CompetitionsPage({
 
       {myComps.length > 0 && (
         <div className="mb-8">
-          <SectionHeading label="Competitions I organise" />
+          <SectionHeading label={t.compMine} />
           <div className="space-y-2">
             {myComps.map((c, index) => (
               <motion.div
@@ -464,7 +464,7 @@ export default function CompetitionsPage({
 
       {joined.length > 0 && (
         <div className="mb-8">
-          <SectionHeading label="Competitions I'm competing in" />
+          <SectionHeading label={t.compRegistered} />
           <div className="space-y-2">
             {joined.map((c, index) => (
               <motion.div
@@ -482,7 +482,7 @@ export default function CompetitionsPage({
 
       {available.length > 0 && (
         <div className="mb-8">
-          <SectionHeading label="Available to join" />
+          <SectionHeading label={t.compAvailable} />
           <div className="space-y-2">
             {available.map((comp, index) => (
               <motion.div

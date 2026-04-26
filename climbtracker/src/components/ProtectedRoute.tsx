@@ -7,26 +7,30 @@ export type RequiredRole = 'any' | 'judge_or_organizer' | 'organizer'
 interface ProtectedRouteProps {
   currentUser:     Competitor | null
   isOrganizer:     boolean
+  isJudge:         boolean
   canAccessComp:   boolean
   required:        RequiredRole
   children:        React.ReactNode
   onAccessDenied?: (msg: string) => void
+  lang:            string
 }
 
+// All access decisions are based solely on competition-specific flags computed in
+// AppInner (isOrganizer, isJudge, canAccessComp). The global currentUser.role is
+// intentionally ignored here — it can be stale/mismatched when a user participates
+// in multiple competitions with different roles.
 function hasAccess(
   user:          Competitor | null,
   isOrganizer:   boolean,
+  isJudge:       boolean,
   canAccessComp: boolean,
   required:      RequiredRole,
 ): boolean {
   if (!user) return false
-  // Organizers and judges always bypass the 'any' registration check —
-  // they manage the competition and must never be locked out of any page.
-  const isOrgOrJudge = isOrganizer || user.role === 'organizer' || user.role === 'judge'
   switch (required) {
-    case 'any':                return isOrgOrJudge || canAccessComp
-    case 'judge_or_organizer': return isOrgOrJudge
-    case 'organizer':          return isOrganizer || user.role === 'organizer'
+    case 'any':                return isOrganizer || isJudge || canAccessComp
+    case 'judge_or_organizer': return isOrganizer || isJudge
+    case 'organizer':          return isOrganizer
   }
 }
 
@@ -39,12 +43,14 @@ const DENIAL_MESSAGES: Record<RequiredRole, string> = {
 export default function ProtectedRoute({
   currentUser,
   isOrganizer,
+  isJudge,
   canAccessComp,
   required,
   children,
   onAccessDenied,
+  lang,
 }: ProtectedRouteProps) {
-  const allowed  = hasAccess(currentUser, isOrganizer, canAccessComp, required)
+  const allowed  = hasAccess(currentUser, isOrganizer, isJudge, canAccessComp, required)
   const firedRef = useRef(false)
 
   useEffect(() => {
@@ -55,9 +61,7 @@ export default function ProtectedRoute({
   }, [allowed, onAccessDenied, required])
 
   if (!allowed) {
-    // /competitions is always reachable for any logged-in user regardless of
-    // role or registration status, so it is the safe fallback for all cases.
-    return <Navigate to="/competitions" replace />
+    return <Navigate to={`/${lang}/competitions`} replace />
   }
 
   return <>{children}</>

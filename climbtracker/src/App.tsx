@@ -69,19 +69,23 @@ interface GuardProps {
   required:        'any' | 'judge_or_organizer' | 'organizer'
   currentUser:     Competitor | null
   isOrganizer:     boolean
+  isJudge:         boolean
   canAccessComp:   boolean
   onAccessDenied:  (msg: string) => void
   children:        React.ReactNode
+  lang:            string
 }
 
-function Guard({ required, currentUser, isOrganizer, canAccessComp, onAccessDenied, children }: GuardProps) {
+function Guard({ required, currentUser, isOrganizer, isJudge, canAccessComp, onAccessDenied, children, lang }: GuardProps) {
   return (
     <ProtectedRoute
       currentUser={currentUser}
       isOrganizer={isOrganizer}
+      isJudge={isJudge}
       canAccessComp={canAccessComp}
       required={required}
       onAccessDenied={onAccessDenied}
+      lang={lang}
     >
       {children}
     </ProtectedRoute>
@@ -530,8 +534,9 @@ function AppInner() {
       const nextBib = deduped.filter(c => c.bibNumber > 0).length > 0
         ? Math.max(...deduped.map(c => c.bibNumber)) + 1
         : 101
-      const entry = { ...user, bibNumber: nextBib, traitIds: traitIds ?? user.traitIds ?? [] } as any
-      if (gender) entry.gender = gender
+      // Always join as competitor — only organizers can grant elevated roles afterwards
+      const entry = { ...user, bibNumber: nextBib, traitIds: traitIds ?? user.traitIds ?? [], role: 'competitor' as const }
+      if (gender) (entry as any).gender = gender
       return { ...prev, [compId]: [...deduped, entry] }
     })
     setActiveCompId(compId)
@@ -883,7 +888,7 @@ function AppInner() {
             <Route path="event-profile" element={
               (isOrganizer || isJudge)
                 ? <Navigate to={`/${lang}/competitions`} replace />
-                : <Guard required="any" currentUser={currentUser} isOrganizer={isOrganizer} canAccessComp={canAccessActiveComp} onAccessDenied={showToast}>
+                : <Guard required="any" currentUser={currentUser} isOrganizer={isOrganizer} isJudge={isJudge} canAccessComp={canAccessActiveComp} onAccessDenied={showToast} lang={lang}>
                     <EventProfilePage
                       competition={activeCompetition}
                       boulders={activeBoulders}
@@ -915,7 +920,7 @@ function AppInner() {
             } />
 
             <Route path="leaderboard" element={
-              <Guard required="any" currentUser={currentUser} isOrganizer={isOrganizer} canAccessComp={canAccessActiveComp} onAccessDenied={showToast}>
+              <Guard required="any" currentUser={currentUser} isOrganizer={isOrganizer} isJudge={isJudge} canAccessComp={canAccessActiveComp} onAccessDenied={showToast} lang={lang}>
                 <LeaderboardPage rankings={rankings} competitors={activeCompetitors} competition={activeCompetition} theme={theme} lang={lang} isOrganizer={isOrganizer} currentUserId={currentUser.id} />
               </Guard>
             } />
@@ -923,7 +928,7 @@ function AppInner() {
             <Route path="results/:compId" element={<PublicLeaderboardPage competitions={competitions} competitorsMap={competitorsMap} bouldersMap={bouldersMap} completionsMap={completionsMap} />} />
 
             <Route path="rules" element={
-              <Guard required="any" currentUser={currentUser} isOrganizer={isOrganizer} canAccessComp={canAccessActiveComp} onAccessDenied={showToast}>
+              <Guard required="any" currentUser={currentUser} isOrganizer={isOrganizer} isJudge={isJudge} canAccessComp={canAccessActiveComp} onAccessDenied={showToast} lang={lang}>
                 <RulesPage competition={activeCompetition} isOrganizer={isOrganizer} theme={theme} lang={lang} onUpdate={updateCompetition} />
               </Guard>
             } />
@@ -964,7 +969,7 @@ function AppInner() {
             } />
 
             <Route path="settings" element={
-              <Guard required="organizer" currentUser={currentUser} isOrganizer={isOrganizer} canAccessComp={canAccessActiveComp} onAccessDenied={showToast}>
+              <Guard required="organizer" currentUser={currentUser} isOrganizer={isOrganizer} isJudge={isJudge} canAccessComp={canAccessActiveComp} onAccessDenied={showToast} lang={lang}>
                 <SettingsPage competition={activeCompetition} theme={theme} lang={lang} onUpdate={updateCompetition} competitorCount={activeCompetitorCount} />
               </Guard>
             } />

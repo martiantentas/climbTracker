@@ -1695,8 +1695,8 @@ export const translations = {
     editDetails:       'Editar Detalls',
 
     compMine:            'Competicions que organitzo',
-    compRegistered:      'Competicions en les quals competeixes',
-    compAvailable:       'Competicions disponibles per unir-se',
+    compRegistered:      'Competicions en les que competeixes',
+    compAvailable:       'Competicions disponibles',
     compCurrentlyActive: 'Actualment actiu',
     compFull:            "Aquest esdeveniment és ple — no hi ha més places.",
     compPasswordBadge:   'Contrasenya',
