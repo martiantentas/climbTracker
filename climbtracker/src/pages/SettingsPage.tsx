@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'motion/react'
 import {
   Save, Plus, Trash2, Globe, Check,
@@ -528,9 +529,54 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
     } as any))
   }, [comp.subscription, comp.tier, comp.participantLimit, comp.additionalCapacity, comp.branding])
 
+  // ── Dirty tracking ──────────────────────────────────────────────────────────
+  const [isDirty, setIsDirty] = useState(false)
+
+  // Reset dirty when switching competitions
+  useEffect(() => { setIsDirty(false) }, [competition.id])
+
   function set<K extends keyof Competition>(key: K, value: Competition[K]) {
     setDraft(prev => ({ ...prev, [key]: value }))
+    setIsDirty(true)
   }
+
+  function handleSave() {
+    onUpdate(draft)
+    setIsDirty(false)
+  }
+
+  // Block in-app navigation (HashRouter) when there are unsaved changes.
+  // Intercept clicks in the capture phase — before React Router sees them —
+  // so we can prevent the navigation and show the confirmation modal.
+  const navigate = useNavigate()
+  const [showBlockModal, setShowBlockModal] = useState(false)
+  const [pendingPath, setPendingPath]       = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!isDirty) return
+    const handler = (e: MouseEvent) => {
+      const anchor = (e.target as Element).closest('a[href]') as HTMLAnchorElement | null
+      if (!anchor) return
+      const href = anchor.getAttribute('href') ?? ''
+      // Only intercept internal hash-router links (e.g. "#/en/leaderboard")
+      if (!href.startsWith('#/')) return
+      e.preventDefault()
+      e.stopPropagation()
+      // Strip the leading "#" — navigate() expects the path portion
+      setPendingPath(href.slice(1))
+      setShowBlockModal(true)
+    }
+    document.addEventListener('click', handler, true) // capture phase
+    return () => document.removeEventListener('click', handler, true)
+  }, [isDirty])
+
+  // Block browser tab close / refresh
+  useEffect(() => {
+    if (!isDirty) return
+    const handler = (e: BeforeUnloadEvent) => { e.preventDefault() }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [isDirty])
 
   const [newTraitName, setNewTraitName] = useState('')
 
@@ -580,7 +626,7 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
           <p className={`text-sm mt-1 ${dk ? 'text-[#5C5E62]' : 'text-[#5C5E62]'}`}>{competition.name}</p>
         </div>
         <motion.button
-          onClick={() => onUpdate(draft)}
+          onClick={handleSave}
           className="flex items-center gap-2 px-5 py-2.5 bg-[#7F8BAD] text-white rounded font-medium text-sm hover:bg-[#6D799B] transition-colors duration-[330ms]"
           whileTap={{ scale: 0.97 }}
           transition={{ type: 'spring', stiffness: 400, damping: 25 }}
@@ -726,8 +772,8 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
 
         {draft.scoringType === ScoringType.DYNAMIC && (
           <div className="grid grid-cols-2 gap-4 mb-6">
-            <InputField label={t.dynamicPot}  value={draft.dynamicPot ?? 1000}        type="number" theme={theme} onChange={v => set('dynamicPot', Number(v))}          hint="Total points shared per boulder" />
-            <InputField label={t.minPoints}   value={draft.minDynamicPoints ?? 0}     type="number" theme={theme} onChange={v => set('minDynamicPoints', Number(v))}     hint="Minimum points per completion" />
+            <InputField label={t.dynamicPot}  value={draft.dynamicPot ?? 1000}        type="number" theme={theme} onChange={v => set('dynamicPot', Math.round(Number(v)))}          hint="Total points shared per boulder" />
+            <InputField label={t.minPoints}   value={draft.minDynamicPoints ?? 0}     type="number" theme={theme} onChange={v => set('minDynamicPoints', Math.round(Number(v)))}     hint="Minimum points per completion" />
           </div>
         )}
 
@@ -868,7 +914,7 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
                   label={draft.penaltyType === 'percent' ? t.penaltyValuePct : t.penaltyValuePts}
                   value={draft.penaltyValue} type="number"
                   theme={theme}
-                  onChange={v => set('penaltyValue', Number(v))}
+                  onChange={v => set('penaltyValue', Math.round(Number(v)))}
                 />
               </div>
               <InputField
@@ -961,11 +1007,11 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
               <div className="flex items-center gap-2">
                 <div className="flex-1">
                   <label className={`text-[10px] font-medium mb-1 block ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.topPts}</label>
-                  <input type="number" value={d.basePoints} onChange={e => updateDifficulty(d.id, 'basePoints', Number(e.target.value))} className={`${inputClass} py-2`} />
+                  <input type="number" value={d.basePoints} onChange={e => updateDifficulty(d.id, 'basePoints', Math.round(Number(e.target.value)))} className={`${inputClass} py-2`} />
                 </div>
                 <div className="flex-1">
                   <label className={`text-[10px] font-medium mb-1 block ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.zonePts}</label>
-                  <input type="number" value={d.zonePoints} onChange={e => updateDifficulty(d.id, 'zonePoints', Number(e.target.value))} className={`${inputClass} py-2`} />
+                  <input type="number" value={d.zonePoints} onChange={e => updateDifficulty(d.id, 'zonePoints', Math.round(Number(e.target.value)))} className={`${inputClass} py-2`} />
                 </div>
                 <motion.button
                   onClick={() => removeDifficulty(d.id)}
@@ -1017,7 +1063,7 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
 
       <div className="flex justify-end mt-6">
         <motion.button
-          onClick={() => onUpdate(draft)}
+          onClick={handleSave}
           className="flex items-center gap-2 px-6 py-3 bg-[#7F8BAD] text-white rounded font-medium text-sm hover:bg-[#6D799B] transition-colors duration-[330ms]"
           whileTap={{ scale: 0.97 }}
           transition={{ type: 'spring', stiffness: 400, damping: 25 }}
@@ -1025,6 +1071,56 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
           <Save size={15} />{t.save}
         </motion.button>
       </div>
+
+      {/* ── Unsaved-changes blocker modal ───────────────────────────────────── */}
+      <AnimatePresence>
+        {showBlockModal && (
+          <>
+            <motion.div
+              className="fixed inset-0 z-[500] bg-black/60"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              transition={{ duration: 0.18 }}
+              onClick={() => setShowBlockModal(false)}
+            />
+            <motion.div
+              className={`fixed inset-x-4 top-1/2 -translate-y-1/2 z-[501] max-w-sm mx-auto rounded border p-6 ${dk ? 'bg-[#121212] border-white/10' : 'bg-white border-[#EEEEEE]'}`}
+              initial={{ opacity: 0, scale: 0.96, y: '-48%' }}
+              animate={{ opacity: 1, scale: 1,    y: '-50%' }}
+              exit={{   opacity: 0, scale: 0.96, y: '-48%' }}
+              transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+            >
+              <p className={`text-sm font-medium mb-1 ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
+                {t.unsavedTitle}
+              </p>
+              <p className={`text-xs mb-5 leading-relaxed ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
+                {t.unsavedMsg}
+              </p>
+              <div className="flex gap-2 justify-end">
+                <motion.button
+                  onClick={() => setShowBlockModal(false)}
+                  className={`px-4 py-2 rounded text-xs font-medium transition-colors duration-[330ms] ${dk ? 'bg-white/5 text-[#D0D1D2] hover:bg-white/10' : 'bg-[#F4F4F4] text-[#393C41] hover:bg-[#EEEEEE]'}`}
+                  whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.96 }}
+                  transition={{ type: 'spring', stiffness: 420, damping: 26 }}
+                >
+                  {t.unsavedStay}
+                </motion.button>
+                <motion.button
+                  onClick={() => {
+                    setShowBlockModal(false)
+                    setIsDirty(false)
+                    if (pendingPath !== null) navigate(pendingPath)
+                  }}
+                  className="px-4 py-2 rounded text-xs font-medium bg-red-400 text-white hover:bg-red-500 transition-colors duration-[330ms]"
+                  whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.96 }}
+                  transition={{ type: 'spring', stiffness: 420, damping: 26 }}
+                >
+                  {t.unsavedLeave}
+                </motion.button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </motion.div>
   )
 }

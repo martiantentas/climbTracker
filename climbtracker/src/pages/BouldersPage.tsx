@@ -95,9 +95,9 @@ export default function BouldersPage({
     if (!completion || !shouldPenalize || completion.attempts <= 1) return ''
     const extra = completion.attempts - 1
     if (competition.penaltyType === 'fixed') {
-      return `−${extra * competition.penaltyValue} pts`
+      return `−${Math.round(extra * competition.penaltyValue)} pts`
     }
-    return `−${extra * competition.penaltyValue}%`
+    return `−${Math.round(extra * competition.penaltyValue)}%`
   }
 
   const myTotalScore = useMemo(() => {

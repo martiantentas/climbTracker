@@ -52,7 +52,7 @@ function calcTraditionalPoints(
       }
     }
 
-    points += Math.max(topPoints, comp.minScorePerBoulder)
+    points += Math.max(Math.round(topPoints), comp.minScorePerBoulder)
   }
 
   return Math.max(points, 0)
@@ -141,10 +141,10 @@ export function calcBoulderPoints(
         // Compound decay: each extra attempt reduces by penaltyValue% of the running total
         topPoints = topPoints * Math.pow(1 - penaltyValue / 100, completion.attempts - 1)
       }
-      topPoints = Math.max(topPoints, competition.minDynamicPoints ?? 0)
+      topPoints = Math.max(Math.round(topPoints), competition.minDynamicPoints ?? 0)
     }
 
-    return Math.max(topPoints + zonePoints, 0) + flashBonus
+    return Math.max(Math.round(topPoints) + zonePoints, 0) + flashBonus
   }
 
   // Traditional: zones + top + penalties all handled together
@@ -173,7 +173,7 @@ function calcCompetitorScore(
     ? scores.slice(0, competition.topKBoulders)
     : scores
 
-  return counted.reduce((sum, s) => sum + s, 0)
+  return Math.round(counted.reduce((sum, s) => sum + s, 0))
 }
 
 // ─── FULL RANKINGS ────────────────────────────────────────────────────────────

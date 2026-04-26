@@ -29,7 +29,7 @@ float th(vec2 p){ return fbm(p)*9.5-1.5; }
 
 void main(){
   // Slow scroll: 4 units/sec, negative → approaching
-  float tz = uTime * 4.0;
+  float tz = uTime * 8.0;
   vec2  nc = vec2(position.x/48.0, (position.z-tz)/48.0);
   float h  = th(nc);
   vH = h;
