@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'motion/react'
-import { Plus, Trophy, MapPin, Calendar, Key, Trash2, LogIn, Settings, X, Lock, Copy, Check, Shield, Clock, QrCode, BarChart2 } from 'lucide-react'
+import { Plus, Trophy, MapPin, Calendar, Key, Trash2, LogIn, Settings, X, Lock, Copy, Check, Shield, Clock, QrCode, BarChart2, Layers } from 'lucide-react'
 import type { Competition, Competitor } from '../types'
 import { CompetitionStatus } from '../types'
 import { getStatusColor } from '../App'
@@ -18,11 +18,13 @@ interface CompetitionsPageProps {
   lang:            Language
   onEnter:         (compId: string) => void
   onManage:        (compId: string) => void
+  onClone:         (compId: string) => void
   onCreate:        (name: string, location: string, description: string) => void
   onDelete:        (compId: string) => void
   onLeave:         (compId: string) => void
   onJoinByCode:    (code: string, password?: string, traitIds?: string[], gender?: string) => boolean | 'full'
   isRegistered:    (compId: string) => boolean
+  competitorsMap:  Record<string, Competitor[]>
   onJoinSuccess?:  (comp: Competition) => void
   getCompRole?:    (compId: string) => string | null
   waitlistMap?:    Record<string, Competitor[]>
@@ -106,8 +108,8 @@ function CreateModal({ theme, lang, onSave, onClose }: {
 
 export default function CompetitionsPage({
   competitions, activeCompId, currentUser, theme, lang,
-  onEnter, onManage, onCreate, onDelete, onLeave, onJoinByCode, isRegistered, onJoinSuccess,
-  getCompRole, waitlistMap = {}, onLeaveWaitlist,
+  onEnter, onManage, onClone, onCreate, onDelete, onLeave, onJoinByCode, isRegistered, competitorsMap,
+  onJoinSuccess, getCompRole, waitlistMap = {}, onLeaveWaitlist,
 }: CompetitionsPageProps) {
   const t  = translations[lang]
   const dk = theme === 'dark'
@@ -117,6 +119,7 @@ export default function CompetitionsPage({
   const [codeError,          setCodeError]          = useState(false)
   const [joinFull,           setJoinFull]           = useState(false)
   const [confirmDelete,      setConfirmDelete]      = useState<string | null>(null)
+  const [confirmClone,       setConfirmClone]       = useState<string | null>(null)
   const [copiedId,           setCopiedId]           = useState<string | null>(null)
   const [justActivated,      setJustActivated]      = useState<string | null>(null)
   const [pendingDeleteComp,  setPendingDeleteComp]  = useState<Competition | null>(null)
@@ -124,12 +127,23 @@ export default function CompetitionsPage({
   const [passwordError,      setPasswordError]      = useState(false)
   const [qrComp,             setQrComp]             = useState<Competition | null>(null)
 
+  // Returns true when the competition has a participant cap and it's reached
+  function isCompFull(comp: Competition): boolean {
+    const limit = (comp as any).participantLimit
+    if (!limit) return false
+    const list = competitorsMap[comp.id] ?? []
+    const count = list.filter(c => c.role === 'competitor' || !c.role).length
+    return count >= limit + ((comp as any).additionalCapacity ?? 0)
+  }
+
   const myComps   = competitions.filter(c => c.ownerId === currentUser.id)
   const joined    = competitions.filter(c => c.ownerId !== currentUser.id && isRegistered(c.id))
+  // Visible to outsiders only when LIVE and public — DRAFT/FINISHED/ARCHIVED never appear here
   const available = competitions.filter(c =>
-    c.ownerId !== currentUser.id && !isRegistered(c.id) &&
-    (c.status === CompetitionStatus.LIVE || c.status === CompetitionStatus.FINISHED) &&
-    ((c as any).visibility !== 'private')
+    c.ownerId !== currentUser.id &&
+    !isRegistered(c.id) &&
+    c.status === CompetitionStatus.LIVE &&
+    (c as any).visibility !== 'private'
   )
 
   function activate(compId: string) {
@@ -299,6 +313,33 @@ export default function CompetitionsPage({
               >
                 <Settings size={12} />{t.manageEvent}
               </motion.button>
+
+              {confirmClone === comp.id ? (
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs ${dk ? 'text-[#8E8E8E]' : 'text-[#5C5E62]'}`}>{t.cloneConfirm}</span>
+                  <motion.button
+                    onClick={() => { onClone(comp.id); setConfirmClone(null) }}
+                    whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
+                    transition={{ type: 'spring', stiffness: 420, damping: 26 }}
+                    className="px-3 py-2 rounded text-xs font-medium bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms]"
+                  >{t.cloneConfirmYes}</motion.button>
+                  <motion.button
+                    onClick={() => setConfirmClone(null)}
+                    whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
+                    transition={{ type: 'spring', stiffness: 420, damping: 26 }}
+                    className={`px-3 py-2 rounded text-xs font-medium transition-colors duration-[330ms] ${dk ? 'bg-white/5 text-[#8E8E8E]' : 'bg-[#F4F4F4] text-[#5C5E62]'}`}
+                  >{t.cancel}</motion.button>
+                </div>
+              ) : (
+                <motion.button
+                  onClick={() => setConfirmClone(comp.id)}
+                  whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
+                  transition={{ type: 'spring', stiffness: 420, damping: 26 }}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded text-xs font-medium transition-colors duration-[330ms] ${dk ? 'bg-white/5 text-[#8E8E8E] hover:bg-white/10 border border-white/10' : 'bg-[#F4F4F4] text-[#5C5E62] hover:bg-[#EEEEEE] border border-[#EEEEEE]'}`}
+                >
+                  <Layers size={12} /> {t.cloneEvent}
+                </motion.button>
+              )}
 
               <motion.button
                 onClick={() => copyLink(comp)}
@@ -500,12 +541,28 @@ export default function CompetitionsPage({
                     <span className="inline-flex items-center gap-1 mt-1 text-[9px] font-medium text-amber-400"><Lock size={8} /> Password required</span>
                   )}
                 </div>
-                <button
-                  onClick={() => handleJoinAvailable(comp)}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-[#7F8BAD] text-white rounded font-medium text-xs hover:bg-[#6D799B] transition-colors duration-[330ms] flex-shrink-0"
-                >
-                  <LogIn size={13} />{t.joinByCodeAction}
-                </button>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {isCompFull(comp) ? (
+                    <span className={`px-3 py-2 rounded text-xs font-medium border ${dk ? 'bg-white/5 border-white/10 text-[#5C5E62]' : 'bg-[#F4F4F4] border-[#EEEEEE] text-[#8E8E8E]'}`}>
+                      {t.compFull.split('—')[0].trim()}
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => handleJoinAvailable(comp)}
+                      className="flex items-center gap-1.5 px-4 py-2 bg-[#7F8BAD] text-white rounded font-medium text-xs hover:bg-[#6D799B] transition-colors duration-[330ms]"
+                    >
+                      <LogIn size={13} />{t.joinByCodeAction}
+                    </button>
+                  )}
+                  <a
+                    href={`${window.location.origin}${window.location.pathname}#/${lang}/results/${comp.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded text-xs font-medium transition-colors duration-[330ms] ${dk ? 'bg-white/5 text-[#8E8E8E] hover:bg-white/10 border border-white/10' : 'bg-[#F4F4F4] text-[#5C5E62] hover:bg-[#EEEEEE] border border-[#EEEEEE]'}`}
+                  >
+                    <BarChart2 size={12} />{t.publicViewResults}
+                  </a>
+                </div>
               </motion.div>
             ))}
           </div>

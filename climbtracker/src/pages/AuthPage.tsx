@@ -381,23 +381,23 @@ export default function AuthPage({ onLogin, theme, lang, setLang }: AuthPageProp
 
             {tab === 'signup' && (
               <div className="flex flex-col gap-1.5">
-                <label className="flex items-start gap-3 cursor-pointer group">
+                <label htmlFor="gdpr-check" className="flex items-start gap-3 cursor-pointer group">
                   <div className="relative flex-shrink-0 mt-0.5">
                     <input
+                      id="gdpr-check"
                       type="checkbox"
                       checked={gdpr}
                       onChange={e => setGdpr(e.target.checked)}
                       className="sr-only"
                     />
                     <div
-                      className={`w-4 h-4 rounded border flex items-center justify-center transition-colors duration-200 ${
+                      className={`w-4 h-4 rounded border flex items-center justify-center transition-colors duration-200 pointer-events-none ${
                         gdpr
                           ? 'bg-[#7F8BAD] border-[#7F8BAD]'
                           : errors.gdpr
                           ? 'border-red-500/60 bg-transparent'
                           : 'border-white/20 bg-transparent group-hover:border-[#7F8BAD]/50'
                       }`}
-                      onClick={() => setGdpr(v => !v)}
                     >
                       {gdpr && (
                         <svg width="9" height="7" viewBox="0 0 9 7" fill="none">

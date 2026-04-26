@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'motion/react'
+import { motion, AnimatePresence, useScroll } from 'motion/react'
 import {
   Save, Plus, Trash2, Globe, Check,
   ChevronDown, ChevronUp, Lock, Users, Package,
@@ -603,6 +603,8 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
     set('difficultyLevels', (draft.difficultyLevels ?? []).map(d => d.id === id ? { ...d, [field]: value } : d))
   }
 
+  const { scrollYProgress } = useScroll()
+
   const inputClass   = `w-full px-4 py-3 rounded border outline-none text-sm transition-colors duration-[330ms] ${dk ? 'bg-white/5 border-white/10 text-[#EEEEEE] focus:border-[#7F8BAD]/50' : 'bg-white border-[#EEEEEE] text-[#121212] focus:border-[#7F8BAD]'}`
   const labelCls     = `block text-xs font-medium mb-2 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`
 
@@ -620,6 +622,22 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }}
     >
+      {/* Scroll progress bar — fixed at top of viewport */}
+      <motion.div
+        style={{
+          scaleX:          scrollYProgress,
+          position:        'fixed',
+          top:             0,
+          left:            0,
+          right:           0,
+          height:          3,
+          originX:         0,
+          backgroundColor: '#7F8BAD',
+          zIndex:          999,
+          opacity:         0.85,
+        }}
+      />
+
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className={`text-2xl font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>{t.settings}</h1>

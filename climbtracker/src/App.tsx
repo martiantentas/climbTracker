@@ -454,12 +454,20 @@ function AppInner() {
       additionalCapacity: u.additionalCapacity  ?? p?.additionalCapacity,
       branding:           u.branding            ?? p?.branding,
     } as any
-    // Gate: Draft → LIVE requires a subscription (payment or promo)
-    const goingLive      = prev?.status === 'DRAFT' && merged.status === 'LIVE'
-    const hasSubscription = !!merged.subscription
-    if (goingLive && !hasSubscription) {
-      setPaymentComp(merged) // open payment modal instead
-      return
+    // Gate: any transition TO live requires a valid subscription.
+    // Re-runs (previously FINISHED/ARCHIVED) or expired end dates always prompt
+    // a fresh payment — the old subscription cannot be reused.
+    const transitioningToLive = merged.status === 'LIVE' && prev?.status !== 'LIVE'
+    if (transitioningToLive) {
+      const isExpired = prev?.endDate
+        ? Date.now() > new Date(prev.endDate).getTime() + 86_400_000
+        : false
+      const isRerun = prev?.status === 'FINISHED' || prev?.status === 'ARCHIVED'
+      const needsNewPayment = isRerun || isExpired
+      if (!merged.subscription || needsNewPayment) {
+        setPaymentComp({ ...merged, subscription: undefined } as any)
+        return
+      }
     }
     setCompetitions(p => p.map(c => c.id === merged.id ? merged : c))
     showToast(t.successSaved)
@@ -488,6 +496,37 @@ function AppInner() {
     setBouldersMap(prev    => ({ ...prev, [newId]: [] }))
     setCompletionsMap(prev => ({ ...prev, [newId]: [] }))
     setCompetitorsMap(prev => ({ ...prev, [newId]: [] }))
+    setActiveCompId(newId)
+    showToast(t.successSaved)
+  }
+
+  function handleCloneCompetition(sourceId: string) {
+    if (!currentUser) return
+    const source = competitions.find(c => c.id === sourceId)
+    if (!source) return
+    const newId = `comp-${Date.now()}`
+    const cloned: Competition = {
+      ...source,
+      id:           newId,
+      ownerId:      currentUser.id,
+      status:       CompetitionStatus.DRAFT,
+      inviteCode:   generateInviteCode(),
+      // Reset billing — must pay to go live again
+      subscription:       undefined,
+      tier:               undefined,
+      participantLimit:   undefined,
+      additionalCapacity: undefined,
+      branding:           undefined,
+      // Reset dates to today + tomorrow
+      startDate: new Date().toISOString(),
+      endDate:   new Date(Date.now() + 86_400_000).toISOString(),
+    } as any
+    // Only keep the owner; clear all participants, boulders, and completions
+    const ownerEntry = { ...currentUser, bibNumber: 101, role: 'competitor' as const }
+    setCompetitions(prev => [...prev, cloned])
+    setBouldersMap(prev    => ({ ...prev, [newId]: [] }))
+    setCompletionsMap(prev => ({ ...prev, [newId]: [] }))
+    setCompetitorsMap(prev => ({ ...prev, [newId]: [ownerEntry] }))
     setActiveCompId(newId)
     showToast(t.successSaved)
   }
@@ -849,12 +888,14 @@ function AppInner() {
                 onEnter={setActiveCompId} onCreate={handleCreateCompetition}
                 onDelete={handleDeleteCompetition} onLeave={handleLeaveCompetition}
                 onJoinByCode={handleJoinByCode} isRegistered={isUserRegistered}
+                competitorsMap={competitorsMap}
                 getCompRole={(compId) => {
                   if (!currentUser) return null
                   const entry = (competitorsMap[compId] ?? []).find(c => c.id === currentUser.id)
                   return entry?.role ?? null
                 }}
                 onManage={(compId) => { setActiveCompId(compId); setTimeout(() => goto('/settings'), 0) }}
+                onClone={handleCloneCompetition}
                 onJoinSuccess={(comp) => {
                   setJoinProfileComp(comp)
                 }}
