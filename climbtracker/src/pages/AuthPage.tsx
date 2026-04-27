@@ -69,7 +69,8 @@ export default function AuthPage({ theme: _theme, lang, setLang }: AuthPageProps
   const [params] = useSearchParams()
   const tr = translations[lang]
 
-  const [tab,       setTab]       = useState<Tab>(params.get('tab') === 'signup' ? 'signup' : 'signin')
+  const [tab,            setTab]            = useState<Tab>(params.get('tab') === 'signup' ? 'signup' : 'signin')
+  const [confirmPending, setConfirmPending] = useState(false)
   const [email,     setEmail]     = useState('')
   const [password,  setPassword]  = useState('')
   const [firstName, setFirstName] = useState('')
@@ -99,36 +100,47 @@ export default function AuthPage({ theme: _theme, lang, setLang }: AuthPageProps
     return Object.keys(e).length === 0
   }
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: { preventDefault(): void }) {
     e.preventDefault()
     if (!validate()) return
     setLoading(true)
     setErrors({})
 
-    if (tab === 'signin') {
-      const { error } = await signIn(email.trim(), password)
-      if (error) {
-        setErrors({ _global: error.message === 'Invalid login credentials'
-          ? tr.authInvalidCreds
-          : error.message })
-        setLoading(false)
-        return
-      }
-      // onAuthStateChange in App.tsx handles setting currentUser + navigation
-      setSuccess(true)
+    try {
+      if (tab === 'signin') {
+        const { error } = await signIn(email.trim(), password)
+        if (error) {
+          setErrors({ _global: error.message === 'Invalid login credentials'
+            ? tr.authInvalidCreds
+            : error.message })
+          return
+        }
+        // onAuthStateChange in App.tsx handles setting currentUser + navigation
+        setSuccess(true)
 
-    } else {
-      const displayName = `${firstName.trim()} ${lastName.trim()}`
-      const { error } = await signUp(email.trim(), password, displayName)
-      if (error) {
-        const isDuplicate = error.message.toLowerCase().includes('already registered')
-          || error.message.toLowerCase().includes('already exists')
-        setErrors({ _global: isDuplicate ? tr.authEmailExists : error.message })
-        setLoading(false)
-        return
+      } else {
+        const displayName = `${firstName.trim()} ${lastName.trim()}`
+        const { data, error } = await signUp(email.trim(), password, displayName)
+        if (error) {
+          const isDuplicate = error.message.toLowerCase().includes('already registered')
+            || error.message.toLowerCase().includes('already exists')
+          setErrors({ _global: isDuplicate ? tr.authEmailExists : error.message })
+          return
+        }
+        if (!data.session) {
+          // Email confirmation is ON — show "check your inbox" success state
+          setConfirmPending(true)
+          setSuccess(true)
+          return
+        }
+        // Session created immediately (email confirmation OFF) → onAuthStateChange fires
+        setSuccess(true)
       }
-      // With email confirmation OFF, session is created immediately → onAuthStateChange fires
-      setSuccess(true)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'An unexpected error occurred.'
+      setErrors({ _global: msg })
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -244,12 +256,25 @@ export default function AuthPage({ theme: _theme, lang, setLang }: AuthPageProps
         </p>
 
         {success ? (
-          <div className="flex flex-col items-center gap-4 py-10">
+          <div className="flex flex-col items-center gap-4 py-10 text-center">
             <CheckCircle2 size={48} className="text-[#7F8BAD]" />
             <p className="text-lg font-medium text-[#EEEEEE]">
-              {tab === 'signin' ? tr.welcomeBack : tr.authAccountCreated}
+              {confirmPending ? tr.authAccountCreated : (tab === 'signin' ? tr.welcomeBack : tr.authAccountCreated)}
             </p>
-            <p className="text-sm text-[#5C5E62]">{tr.authRedirecting}</p>
+            <p className="text-sm text-[#5C5E62]">
+              {confirmPending
+                ? 'Check your inbox and click the confirmation link to activate your account.'
+                : tr.authRedirecting}
+            </p>
+            {confirmPending && (
+              <button
+                type="button"
+                onClick={() => { setSuccess(false); setConfirmPending(false); setTab('signin') }}
+                className="mt-2 text-sm text-[#7F8BAD] hover:text-[#6D799B] underline underline-offset-2 transition-colors duration-[330ms]"
+              >
+                Back to sign in
+              </button>
+            )}
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">

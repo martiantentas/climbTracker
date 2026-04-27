@@ -1,14 +1,16 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { HashRouter, Routes, Route, Navigate, useNavigate, useParams, useLocation } from 'react-router-dom'
 import { supabase } from './lib/supabase'
 import { getProfile, upsertProfile, supabaseUserToCompetitor, signOutUser } from './lib/auth'
+import {
+  loadAllUserData, upsertCompetition, deleteCompetition,
+  upsertBoulders, upsertCompletion, deleteCompletion,
+  upsertMember, deleteMember,
+} from './lib/db'
 
 import type { Competition, Boulder, Competitor, Completion, Badge } from './types'
 import { CompetitionStatus, ScoringType } from './types'
-import {
-  MOCK_COMPETITION, MOCK_BOULDERS, MOCK_COMPETITORS,
-  MOCK_COMPLETIONS, INITIAL_DIFFICULTIES,
-} from './constants'
+import { INITIAL_DIFFICULTIES } from './constants'
 import { calculateRankings } from './utils/scoring'
 import type { Language } from './translations'
 import { translations } from './translations'
@@ -168,70 +170,114 @@ function AppInner() {
   const [currentUser,  setCurrentUser]  = useState<Competitor | null>(null)
   const [authLoading,  setAuthLoading]  = useState(true)
 
+  // Raw Supabase user — set synchronously in onAuthStateChange so we never
+  // make API calls inside the navigator lock that Supabase holds during the callback.
+  const [authUser, setAuthUser] = useState<{ id: string; email?: string; user_metadata?: Record<string, string> } | null>(null)
+
+  // Tracks the user ID we last triggered a data-load for. Used to skip redundant
+  // SIGNED_IN events fired for the same user (tab focus, post-OAuth double-fires, etc.)
+  // Without this, setDataLoading(true) would be called again but authUser?.id wouldn't
+  // change, so the second useEffect wouldn't re-run → dataLoading stuck true forever.
+  const authUserIdRef = useRef<string | null>(null)
+
+  const [competitions,   setCompetitions]   = useState<Competition[]>([])
+  const [activeCompId,   setActiveCompId]   = useState<string>(() => {
+    try { return localStorage.getItem('ct-active-comp') ?? '' } catch { return '' }
+  })
+  const [bouldersMap,    setBouldersMap]    = useState<Record<string, Boulder[]>>({})
+  const [completionsMap, setCompletionsMap] = useState<Record<string, Completion[]>>({})
+  const [competitorsMap, setCompetitorsMap] = useState<Record<string, Competitor[]>>({})
+  const [waitlistMap,    setWaitlistMap]    = useState<Record<string, Competitor[]>>({})
+  const [dataLoading,    setDataLoading]    = useState(false)
+
   // ── Supabase auth subscription ────────────────────────────────────────────
+  // IMPORTANT: the callback must be SYNCHRONOUS. Supabase holds a navigator lock
+  // while calling this callback; any awaited Supabase API call inside it will try
+  // to re-acquire the same lock → NavigatorLockAcquireTimeoutError deadlock.
+  // We only store the raw auth user here; all API work happens in the effect below.
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        if (session?.user) {
-          const profile  = await getProfile(session.user.id)
-          setCurrentUser(supabaseUserToCompetitor(session.user, profile))
-        } else {
-          setCurrentUser(null)
+      (_event, session) => {
+        // After the OAuth callback, strip the code/state params so the URL stays clean.
+        if (window.location.search) {
+          const p = new URLSearchParams(window.location.search)
+          if (p.has('code') || p.has('error')) {
+            const clean = new URL(window.location.href)
+            ;['code', 'state', 'error', 'error_code', 'error_description'].forEach(k => clean.searchParams.delete(k))
+            window.history.replaceState({}, '', clean.toString())
+          }
         }
-        setAuthLoading(false)
+
+        // TOKEN_REFRESHED: JWT rotated in the background — no user/data change.
+        if (_event === 'TOKEN_REFRESHED') return
+
+        if (session?.user) {
+          // Same user re-authenticated (tab focus, post-OAuth double-fire, etc.) — skip.
+          // If we set dataLoading(true) here, the second effect won't re-run (authUser?.id
+          // is unchanged) and dataLoading would be stuck true forever → infinite spinner.
+          if (session.user.id === authUserIdRef.current) return
+          authUserIdRef.current = session.user.id
+          setDataLoading(true)   // show spinner before the data effect fires
+          setAuthUser(session.user)
+        } else {
+          authUserIdRef.current = null
+          setAuthUser(null)
+          setCurrentUser(null)
+          setCompetitions([])
+          setBouldersMap({})
+          setCompletionsMap({})
+          setCompetitorsMap({})
+          setWaitlistMap({})
+          setDataLoading(false)
+          setAuthLoading(false)
+        }
       }
     )
+
     return () => subscription.unsubscribe()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const [competitions, setCompetitionsRaw] = useState<Competition[]>(() => {
-    try { const s = localStorage.getItem('ct-competitions'); return s ? JSON.parse(s) : [MOCK_COMPETITION] } catch { return [MOCK_COMPETITION] }
-  })
-  const [activeCompId, setActiveCompIdRaw] = useState<string>(() => {
-    try { return localStorage.getItem('ct-active-comp') ?? MOCK_COMPETITION.id } catch { return MOCK_COMPETITION.id }
-  })
-  const [bouldersMap, setBouldersMapRaw] = useState<Record<string, Boulder[]>>(() => {
-    try { const s = localStorage.getItem('ct-boulders'); return s ? JSON.parse(s) : { [MOCK_COMPETITION.id]: MOCK_BOULDERS } } catch { return { [MOCK_COMPETITION.id]: MOCK_BOULDERS } }
-  })
-  const [completionsMap, setCompletionsMapRaw] = useState<Record<string, Completion[]>>(() => {
-    try { const s = localStorage.getItem('ct-completions'); return s ? JSON.parse(s) : { [MOCK_COMPETITION.id]: MOCK_COMPLETIONS } } catch { return { [MOCK_COMPETITION.id]: MOCK_COMPLETIONS } }
-  })
-  const [competitorsMap, setCompetitorsMapRaw] = useState<Record<string, Competitor[]>>(() => {
-    try { const s = localStorage.getItem('ct-competitors'); return s ? JSON.parse(s) : { [MOCK_COMPETITION.id]: MOCK_COMPETITORS } } catch { return { [MOCK_COMPETITION.id]: MOCK_COMPETITORS } }
-  })
-  const [waitlistMap, setWaitlistMap] = useState<Record<string, Competitor[]>>(() => {
-    try { const s = localStorage.getItem('ct-waitlist'); return s ? JSON.parse(s) : {} } catch { return {} }
-  })
-
-  // Persist all app state to localStorage on every change
-  useEffect(() => { localStorage.setItem('ct-competitions', JSON.stringify(competitions)) },   [competitions])
-  useEffect(() => { localStorage.setItem('ct-active-comp', activeCompId) },                   [activeCompId])
-  useEffect(() => { localStorage.setItem('ct-boulders',    JSON.stringify(bouldersMap)) },    [bouldersMap])
-  useEffect(() => { localStorage.setItem('ct-completions', JSON.stringify(completionsMap)) }, [completionsMap])
-  useEffect(() => { localStorage.setItem('ct-competitors', JSON.stringify(competitorsMap)) }, [competitorsMap])
-  useEffect(() => { localStorage.setItem('ct-waitlist',    JSON.stringify(waitlistMap)) },    [waitlistMap])
-
-  // Sync state when another tab/window writes to localStorage (enables real-time public results)
+  // ── Data loading — runs after the auth lock is released ───────────────────
+  // Triggered by authUser changing (sign-in / sign-out). Runs outside the
+  // navigator lock so Supabase API calls work without deadlocking.
   useEffect(() => {
-    function onStorage(e: StorageEvent) {
-      try {
-        if (e.key === 'ct-competitions' && e.newValue) setCompetitionsRaw(JSON.parse(e.newValue))
-        if (e.key === 'ct-boulders'     && e.newValue) setBouldersMapRaw(JSON.parse(e.newValue))
-        if (e.key === 'ct-completions'  && e.newValue) setCompletionsMapRaw(JSON.parse(e.newValue))
-        if (e.key === 'ct-competitors'  && e.newValue) setCompetitorsMapRaw(JSON.parse(e.newValue))
-      } catch { /* ignore malformed data */ }
-    }
-    window.addEventListener('storage', onStorage)
-    return () => window.removeEventListener('storage', onStorage)
-  }, [])
+    if (!authUser) return
+    let cancelled = false
 
-  // Stable setters (proxy the raw setters so call-sites don't change)
-  const setCompetitions   = setCompetitionsRaw
-  const setActiveCompId   = setActiveCompIdRaw
-  const setBouldersMap    = setBouldersMapRaw
-  const setCompletionsMap = setCompletionsMapRaw
-  const setCompetitorsMap = setCompetitorsMapRaw
+    Promise.allSettled([
+      getProfile(authUser.id),
+      loadAllUserData(authUser.id),
+    ]).then(([profileResult, dataResult]) => {
+      if (cancelled) return
+      const profile  = profileResult.status === 'fulfilled' ? profileResult.value  : null
+      const userData = dataResult.status    === 'fulfilled' ? dataResult.value      : null
+      if (dataResult.status === 'rejected') {
+        console.error('[auth] loadAllUserData failed:', dataResult.reason)
+      }
+      setCurrentUser(supabaseUserToCompetitor(authUser, profile))
+      if (userData) {
+        setCompetitions(userData.comps)
+        setBouldersMap(userData.boulders)
+        setCompletionsMap(userData.completions)
+        setCompetitorsMap(userData.members)
+        setWaitlistMap(userData.waitlists)
+        setActiveCompId(prev =>
+          prev && userData.comps.some(c => c.id === prev) ? prev : userData.comps[0]?.id ?? ''
+        )
+      }
+      setDataLoading(false)
+      setAuthLoading(false)
+    })
+
+    return () => { cancelled = true }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authUser?.id])
+
+  // Persist active competition selection as a UI preference
+  useEffect(() => {
+    if (activeCompId) localStorage.setItem('ct-active-comp', activeCompId)
+  }, [activeCompId])
 
   // After login commits to state, redirect to any pending invite join.
   // Must be a useEffect (not inline in the login callback) because navigate()
@@ -418,29 +464,47 @@ function AppInner() {
   ) {
     if (!activeCompetition || activeCompetition.isLocked) return
     if (activeCompetition.status === CompetitionStatus.FINISHED) return
+
+    const compId  = activeCompetition.id
+    const current = completionsMap[compId] ?? []
+    const existing = current.find(c => c.competitorId === competitorId && c.boulderId === boulderId)
+
     setCompletionsMap(prev => {
-      const current  = prev[activeCompetition.id] ?? []
-      const existing = current.find(c => c.competitorId === competitorId && c.boulderId === boulderId)
+      const cur = prev[compId] ?? []
+      const ex  = cur.find(c => c.competitorId === competitorId && c.boulderId === boulderId)
       let updated: Completion[]
-      if (existing) {
+      if (ex) {
         if (forceStatus === false) {
-          updated = current.filter(c => !(c.competitorId === competitorId && c.boulderId === boulderId))
+          updated = cur.filter(c => !(c.competitorId === competitorId && c.boulderId === boulderId))
         } else {
-          updated = current.map(c => c.competitorId === competitorId && c.boulderId === boulderId ? { ...c, attempts: Math.max(1, attempts) } : c)
+          updated = cur.map(c => c.competitorId === competitorId && c.boulderId === boulderId ? { ...c, attempts: Math.max(1, attempts) } : c)
         }
       } else {
         updated = forceStatus === true
-          ? [...current, { competitorId, boulderId, attempts: Math.max(1, attempts), timestamp: Date.now(), hasZone: false, zoneAttempts: 0, zonesReached: 0, topValidated: true }]
-          : current
+          ? [...cur, { competitorId, boulderId, attempts: Math.max(1, attempts), timestamp: Date.now(), hasZone: false, zoneAttempts: 0, zonesReached: 0, topValidated: true }]
+          : cur
       }
-      return { ...prev, [activeCompetition.id]: updated }
+      return { ...prev, [compId]: updated }
     })
+
+    // Persist to Supabase
+    if (existing) {
+      if (forceStatus === false) {
+        deleteCompletion(compId, competitorId, boulderId).catch(err => console.error('[db] deleteCompletion:', err))
+      } else {
+        upsertCompletion(compId, { ...existing, attempts: Math.max(1, attempts) }).catch(err => console.error('[db] upsertCompletion:', err))
+      }
+    } else if (forceStatus === true) {
+      const entry: Completion = { competitorId, boulderId, attempts: Math.max(1, attempts), timestamp: Date.now(), hasZone: false, zoneAttempts: 0, zonesReached: 0, topValidated: true }
+      upsertCompletion(compId, entry).catch(err => console.error('[db] upsertCompletion:', err))
+    }
   }
 
   function updateBoulders(newBoulders: Boulder[]) {
     if (!activeCompetition) return
     setBouldersMap(prev => ({ ...prev, [activeCompetition.id]: newBoulders }))
     showToast(t.successSaved)
+    upsertBoulders(activeCompetition.id, newBoulders).catch(err => console.error('[db] upsertBoulders:', err))
   }
 
   function updateCompetition(updated: Competition) {
@@ -480,6 +544,10 @@ function AppInner() {
     }
     setCompetitions(p => p.map(c => c.id === merged.id ? merged : c))
     showToast(t.successSaved)
+    upsertCompetition(merged).catch(err => {
+      console.error('[db] updateCompetition:', err)
+      showToast(`Save failed: ${err?.message ?? err}`)
+    })
   }
 
   function handleCreateCompetition(name: string, location: string, description: string) {
@@ -501,12 +569,21 @@ function AppInner() {
       visibility: 'private' as const,
       attemptTracking: 'fixed_options', maxFixedAttempts: 4,
     }
+    const ownerEntry = { ...currentUser, bibNumber: 0, role: 'organizer' as const }
     setCompetitions(prev => [...prev, newComp])
     setBouldersMap(prev    => ({ ...prev, [newId]: [] }))
     setCompletionsMap(prev => ({ ...prev, [newId]: [] }))
-    setCompetitorsMap(prev => ({ ...prev, [newId]: [] }))
+    setCompetitorsMap(prev => ({ ...prev, [newId]: [ownerEntry] }))
     setActiveCompId(newId)
     showToast(t.successSaved)
+    // Save competition then add owner to competition_members so DB-level organizer
+    // policies (which check competition_members.role = 'organizer') work correctly.
+    upsertCompetition(newComp)
+      .then(() => upsertMember(newId, currentUser.id, { role: 'organizer', status: 'active', bib_number: 0 }))
+      .catch(err => {
+        console.error('[db] createCompetition:', err)
+        showToast(`Save failed: ${err?.message ?? err}`)
+      })
   }
 
   function handleCloneCompetition(sourceId: string) {
@@ -520,17 +597,14 @@ function AppInner() {
       ownerId:      currentUser.id,
       status:       CompetitionStatus.DRAFT,
       inviteCode:   generateInviteCode(),
-      // Reset billing — must pay to go live again
       subscription:       undefined,
       tier:               undefined,
       participantLimit:   undefined,
       additionalCapacity: undefined,
       branding:           undefined,
-      // Reset dates to today + tomorrow
       startDate: new Date().toISOString(),
       endDate:   new Date(Date.now() + 86_400_000).toISOString(),
     } as any
-    // Only keep the owner; clear all participants, boulders, and completions
     const ownerEntry = { ...currentUser, bibNumber: 101, role: 'competitor' as const }
     setCompetitions(prev => [...prev, cloned])
     setBouldersMap(prev    => ({ ...prev, [newId]: [] }))
@@ -538,6 +612,9 @@ function AppInner() {
     setCompetitorsMap(prev => ({ ...prev, [newId]: [ownerEntry] }))
     setActiveCompId(newId)
     showToast(t.successSaved)
+    upsertCompetition(cloned)
+      .then(() => upsertMember(newId, currentUser.id, { role: 'competitor', status: 'active', bib_number: 101 }))
+      .catch(err => console.error('[db] cloneCompetition:', err))
   }
 
   function handleDeleteCompetition(compId: string) {
@@ -546,6 +623,7 @@ function AppInner() {
     setCompletionsMap(prev => { const n = { ...prev }; delete n[compId]; return n })
     setCompetitorsMap(prev => { const n = { ...prev }; delete n[compId]; return n })
     if (activeCompId === compId) setActiveCompId(competitions.find(c => c.id !== compId)?.id ?? '')
+    deleteCompetition(compId).catch(err => console.error('[db] deleteCompetition:', err))
   }
 
   // ── Core join logic (shared) ──────────────────────────────────────────────
@@ -563,32 +641,43 @@ function AppInner() {
         return false
       }
     }
+    let nextBib = 101
     setCompetitorsMap(prev => {
       const list = prev[compId] ?? []
-      // Remove any existing duplicates for this user (defensive dedup)
       const deduped = list.filter((c, idx) =>
         c.id !== user.id || idx === list.findIndex(x => x.id === user.id)
       )
       if (deduped.some(c => c.id === user.id)) {
-        // Already registered — update traits/gender if provided
         const updates: Partial<Competitor> = {}
         if (traitIds) updates.traitIds = traitIds
         if (gender)   (updates as any).gender = gender
         if (Object.keys(updates).length) {
+          // Update traits/gender in Supabase
+          upsertMember(compId, user.id, {
+            trait_ids: traitIds ?? undefined,
+            gender:    gender    ?? undefined,
+          }).catch(err => console.error('[db] joinCompetition update:', err))
           return { ...prev, [compId]: deduped.map(c => c.id === user.id ? { ...c, ...updates } : c) }
         }
         return prev
       }
-      const nextBib = deduped.filter(c => c.bibNumber > 0).length > 0
+      nextBib = deduped.filter(c => c.bibNumber > 0).length > 0
         ? Math.max(...deduped.map(c => c.bibNumber)) + 1
         : 101
-      // Always join as competitor — only organizers can grant elevated roles afterwards
       const entry = { ...user, bibNumber: nextBib, traitIds: traitIds ?? user.traitIds ?? [], role: 'competitor' as const }
       if (gender) (entry as any).gender = gender
       return { ...prev, [compId]: [...deduped, entry] }
     })
     setActiveCompId(compId)
     showToast(t.welcomeBack)
+    // Persist the new member
+    upsertMember(compId, user.id, {
+      role:      'competitor',
+      status:    'active',
+      bib_number: nextBib,
+      trait_ids: traitIds ?? user.traitIds ?? [],
+      gender:    gender ?? null,
+    }).catch(err => console.error('[db] joinCompetition insert:', err))
     return true
   }
 
@@ -621,16 +710,20 @@ function AppInner() {
       return { ...prev, [compId]: [...list, currentUser] }
     })
     showToast(t.waitlistJoined)
+    upsertMember(compId, currentUser.id, { role: 'competitor', status: 'waitlisted' })
+      .catch(err => console.error('[db] joinWaitlist:', err))
   }
 
   function handleLeaveWaitlist(compId: string) {
     if (!currentUser) return
     setWaitlistMap(prev => ({ ...prev, [compId]: (prev[compId] ?? []).filter(c => c.id !== currentUser.id) }))
+    deleteMember(compId, currentUser.id).catch(err => console.error('[db] leaveWaitlist:', err))
   }
 
   function handleLeaveCompetition(compId: string) {
     if (!currentUser) return
     setCompetitorsMap(prev => ({ ...prev, [compId]: (prev[compId] ?? []).filter(c => c.id !== currentUser.id) }))
+    deleteMember(compId, currentUser.id).catch(err => console.error('[db] leaveCompetition:', err))
     // Auto-promote the first waitlisted competitor into the now-free spot
     const waitlist = waitlistMap[compId] ?? []
     if (waitlist.length > 0) {
@@ -640,6 +733,8 @@ function AppInner() {
         const nextBib = list.filter(c => c.bibNumber > 0).length > 0
           ? Math.max(...list.map(c => c.bibNumber)) + 1
           : 101
+        upsertMember(compId, promoted.id, { status: 'active', bib_number: nextBib })
+          .catch(err => console.error('[db] promoteWaitlist:', err))
         return { ...prev, [compId]: [...list, { ...promoted, bibNumber: nextBib }] }
       })
       setWaitlistMap(prev => ({ ...prev, [compId]: remaining }))
@@ -654,63 +749,53 @@ function AppInner() {
     if (!activeCompetition) return
     setCompetitorsMap(prev => ({ ...prev, [activeCompetition.id]: (prev[activeCompetition.id] ?? []).map(c => c.id === competitorId ? { ...c, role } : c) }))
     showToast(t.successSaved)
+    upsertMember(activeCompetition.id, competitorId, { role }).catch(err => console.error('[db] updateRole:', err))
   }
 
   function handleRemoveUser(competitorId: string) {
     if (!activeCompetition) return
     setCompetitorsMap(prev => ({ ...prev, [activeCompetition.id]: (prev[activeCompetition.id] ?? []).filter(c => c.id !== competitorId) }))
     showToast(t.successSaved)
+    deleteMember(activeCompetition.id, competitorId).catch(err => console.error('[db] removeUser:', err))
   }
 
   function handleUnbanUser(email: string) {
     if (!activeCompetition) return
-    setCompetitions(prev => prev.map(comp =>
-      comp.id === activeCompetition.id
-        ? { ...comp, bannedEmails: (comp.bannedEmails ?? []).filter(e => e !== email.toLowerCase()) }
-        : comp
-    ))
+    const updated = { ...activeCompetition, bannedEmails: (activeCompetition.bannedEmails ?? []).filter(e => e !== email.toLowerCase()) } as Competition
+    setCompetitions(prev => prev.map(comp => comp.id === activeCompetition.id ? updated : comp))
     showToast(t.successSaved)
+    upsertCompetition(updated).catch(err => console.error('[db] unbanUser:', err))
   }
 
   function handleBanUser(competitorId: string) {
     if (!activeCompetition) return
     const competitor = (competitorsMap[activeCompetition.id] ?? []).find(c => c.id === competitorId)
     if (!competitor) return
-    // Remove from competitors list
     setCompetitorsMap(prev => ({ ...prev, [activeCompetition.id]: (prev[activeCompetition.id] ?? []).filter(c => c.id !== competitorId) }))
-    // Add email to bannedEmails
-    setCompetitions(prev => prev.map(comp =>
-      comp.id === activeCompetition.id
-        ? { ...comp, bannedEmails: [...(comp.bannedEmails ?? []), competitor.email.toLowerCase()] }
-        : comp
-    ))
+    const updated = { ...activeCompetition, bannedEmails: [...(activeCompetition.bannedEmails ?? []), competitor.email.toLowerCase()] } as Competition
+    setCompetitions(prev => prev.map(comp => comp.id === activeCompetition.id ? updated : comp))
     showToast(t.successSaved)
+    deleteMember(activeCompetition.id, competitorId)
+      .then(() => upsertCompetition(updated))
+      .catch(err => console.error('[db] banUser:', err))
   }
 
   function handleUpdateBib(competitorId: string, bib: number) {
     if (!activeCompetition) return
     setCompetitorsMap(prev => ({ ...prev, [activeCompetition.id]: (prev[activeCompetition.id] ?? []).map(c => c.id === competitorId ? { ...c, bibNumber: bib } : c) }))
     showToast(t.successSaved)
+    upsertMember(activeCompetition.id, competitorId, { bib_number: bib }).catch(err => console.error('[db] updateBib:', err))
   }
 
   function handleUpdateCompetitorTraits(competitorId: string, traitIds: string[]) {
     if (!activeCompetition) return
     setCompetitorsMap(prev => {
       const list = prev[activeCompetition.id] ?? []
-      // Deduplicate by id, keeping the first entry, then update traits
       const seen = new Set<string>()
-      const deduped = list.filter(c => {
-        if (seen.has(c.id)) return false
-        seen.add(c.id)
-        return true
-      })
-      return {
-        ...prev,
-        [activeCompetition.id]: deduped.map(c =>
-          c.id === competitorId ? { ...c, traitIds } : c
-        ),
-      }
+      const deduped = list.filter(c => { if (seen.has(c.id)) return false; seen.add(c.id); return true })
+      return { ...prev, [activeCompetition.id]: deduped.map(c => c.id === competitorId ? { ...c, traitIds } : c) }
     })
+    upsertMember(activeCompetition.id, competitorId, { trait_ids: traitIds }).catch(err => console.error('[db] updateTraits:', err))
   }
 
   function handleLogScore(
@@ -719,28 +804,30 @@ function AppInner() {
     judgeId: string, zonesReached: number,
   ) {
     if (!activeCompetition || activeCompetition.isLocked) return
+    const compId = activeCompetition.id
+    const entry: Completion = {
+      competitorId, boulderId, attempts, timestamp: Date.now(),
+      hasZone, zoneAttempts, zonesReached,
+      zoneValidatedBy: judgeId,
+      topValidated: isTop,
+      topValidatedBy: isTop ? judgeId : undefined,
+      topValidatedAt: isTop ? Date.now() : undefined,
+    }
     setCompletionsMap(prev => {
-      const current  = prev[activeCompetition.id] ?? []
+      const current = prev[compId] ?? []
       const existing = current.find(c => c.competitorId === competitorId && c.boulderId === boulderId)
-      const entry: Completion = {
-        competitorId, boulderId, attempts, timestamp: Date.now(),
-        hasZone, zoneAttempts, zonesReached,
-        zoneValidatedBy: judgeId,
-        topValidated: isTop,
-        topValidatedBy: isTop ? judgeId : undefined,
-        topValidatedAt: isTop ? Date.now() : undefined,
-      }
       return {
         ...prev,
-        [activeCompetition.id]: existing
+        [compId]: existing
           ? current.map(c => c.competitorId === competitorId && c.boulderId === boulderId ? entry : c)
           : [...current, entry],
       }
     })
+    upsertCompletion(compId, entry).catch(err => console.error('[db] logScore:', err))
   }
 
   // ── Unauthenticated shell: Landing + Auth ─────────────────────────────────
-  if (authLoading) {
+  if (authLoading || dataLoading) {
     return (
       <div className="min-h-screen bg-[#121212] flex items-center justify-center">
         <div className="w-6 h-6 rounded-full border-2 border-[#7F8BAD] border-t-transparent animate-spin" />
@@ -764,10 +851,63 @@ function AppInner() {
     )
   }
 
+  // ── No competitions yet (new user or all deleted) ────────────────────────
+  // Render a full shell with NavBar so the user has access to profile / logout.
   if (!activeCompetition) {
     return (
-      <div style={{ minHeight: '100vh', background: '#121212' }} className="flex items-center justify-center">
-        <p className="text-slate-400">No competition found.</p>
+      <div className={`min-h-screen ${theme === 'dark' ? 'bg-[#121212] text-[#EEEEEE]' : 'bg-white text-[#121212]'}`}>
+        <NavBar
+          theme={theme} setTheme={setTheme} lang={lang} setLang={handleSetLang}
+          currentUser={currentUser}
+          isOrganizer={false} isJudge={false} canAccessComp={false}
+          onOpenMenu={() => setIsMenuOpen(true)}
+          onLogout={() => { setCurrentUser(null); signOutUser(); goto('/', { replace: true }) }}
+        />
+        <MobileMenu
+          isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)}
+          theme={theme} lang={lang} currentUser={currentUser}
+          isOrganizer={false} isJudge={false}
+          canAccessComp={false}
+          onLogout={() => { setCurrentUser(null); signOutUser(); goto('/', { replace: true }) }}
+        />
+        <main className="max-w-7xl mx-auto px-4 md:px-6 py-8">
+          <Routes>
+            <Route path="competitions" element={
+              <CompetitionsPage
+                competitions={[]} activeCompId={activeCompId}
+                currentUser={currentUser} theme={theme} lang={lang}
+                onEnter={setActiveCompId} onCreate={handleCreateCompetition}
+                onDelete={handleDeleteCompetition} onLeave={handleLeaveCompetition}
+                onJoinByCode={handleJoinByCode} isRegistered={isUserRegistered}
+                competitorsMap={competitorsMap}
+                getCompRole={() => null}
+                onManage={() => {}}
+                onClone={handleCloneCompetition}
+                onJoinSuccess={() => {}}
+              />
+            } />
+            <Route path="profile" element={
+              <ProfilePage
+                currentUser={currentUser} theme={theme} lang={lang}
+                badges={[]}
+                onJoinByCode={handleJoinByCode}
+                onSave={updated => {
+                  upsertProfile(updated.id, {
+                    display_name: updated.displayName,
+                    avatar_url:   updated.avatar,
+                    emoji:        (updated as any).emoji,
+                    trait_ids:    updated.traitIds,
+                  })
+                  setCurrentUser(updated)
+                }}
+              />
+            } />
+            <Route path="legal"   element={<LegalNoticePage lang={lang} />} />
+            <Route path="privacy" element={<PrivacyPolicyPage lang={lang} />} />
+            <Route path="terms"   element={<TermsPage lang={lang} />} />
+            <Route path="*"       element={<Navigate to={`/${lang}/competitions`} replace />} />
+          </Routes>
+        </main>
       </div>
     )
   }
@@ -825,6 +965,7 @@ function AppInner() {
               setCompetitions(p => p.map(c => c.id === published.id ? published : c))
               setPaymentComp(null)
               showToast('🎉 Competition is now Live!')
+              upsertCompetition(published).catch(err => console.error('[db] paymentSuccess:', err))
             }}
           />
         )}
@@ -858,7 +999,7 @@ function AppInner() {
               return (isReg || isOwn) ? comp.branding : undefined
             })()}
           onOpenMenu={() => setIsMenuOpen(true)}
-          onLogout={() => { signOutUser(); goto('/', { replace: true }) }}
+          onLogout={() => { setCurrentUser(null); signOutUser(); goto('/', { replace: true }) }}
         />
 
         <MobileMenu
@@ -873,7 +1014,7 @@ function AppInner() {
               const isOwn = comp?.ownerId === currentUser?.id
               return (isReg || isOwn) ? comp.branding : undefined
             })()}
-          onLogout={() => { signOutUser(); goto('/', { replace: true }) }}
+          onLogout={() => { setCurrentUser(null); signOutUser(); goto('/', { replace: true }) }}
         />
 
         <main className="max-w-7xl mx-auto px-4 md:px-6 py-8">
@@ -970,16 +1111,18 @@ function AppInner() {
 
             {/* ── Boulders (home) ── */}
             <Route path="/" element={
-              (isOrganizer || isJudge || canAccessActiveComp)
-                ? <BouldersPage
-                    competition={activeCompetition} boulders={activeBoulders}
-                    completions={activeCompletions} currentUser={currentUser}
-                    isOrganizer={isOrganizer}
-                    theme={theme} lang={lang}
-                    canSelfScore={!isJudge && activeCompetition.canSelfScore}
-                    onToggle={handleToggleCompletion} onUpdateBoulders={updateBoulders}
-                  />
-                : <Navigate to={`/${lang}/competitions`} replace />
+              !activeCompetition
+                ? <Navigate to={`/${lang}/competitions`} replace />
+                : (isOrganizer || isJudge || canAccessActiveComp)
+                  ? <BouldersPage
+                      competition={activeCompetition} boulders={activeBoulders}
+                      completions={activeCompletions} currentUser={currentUser}
+                      isOrganizer={isOrganizer}
+                      theme={theme} lang={lang}
+                      canSelfScore={!isJudge && activeCompetition.canSelfScore}
+                      onToggle={handleToggleCompletion} onUpdateBoulders={updateBoulders}
+                    />
+                  : <Navigate to={`/${lang}/competitions`} replace />
             } />
 
             <Route path="leaderboard" element={

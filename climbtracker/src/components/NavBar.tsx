@@ -15,8 +15,8 @@ interface NavBarProps {
   setTheme:          (t: 'light' | 'dark') => void
   lang:              Language
   setLang:           (l: Language) => void
-  currentUser:       Competitor
-  activeCompetition: Competition
+  currentUser:        Competitor
+  activeCompetition?: Competition
   isOrganizer:       boolean
   isJudge?:          boolean
   canAccessComp?:    boolean
@@ -122,7 +122,7 @@ export default function NavBar({
         </motion.div>
 
         {/* ── Status dot + competition name ── */}
-        {canAccessComp && (
+        {canAccessComp && activeCompetition && (
           <div className="hidden md:flex items-center gap-2 flex-shrink-0 px-3 py-1.5">
             <div
               className="w-2 h-2 rounded-full flex-shrink-0"

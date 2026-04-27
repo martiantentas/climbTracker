@@ -29,7 +29,7 @@ interface MobileMenuProps {
   theme:          'light' | 'dark'
   lang:           Language
   currentUser:    Competitor
-  competition:    Competition
+  competition?:   Competition
   isOrganizer:    boolean
   isJudge?:       boolean
   canAccessComp?: boolean
@@ -206,12 +206,14 @@ export default function MobileMenu({
               </Link>
             </motion.div>
 
-            <div className={`
-              text-xs font-medium px-3 py-2 rounded mb-2
-              ${theme === 'dark' ? 'bg-white/5 text-[#5C5E62]' : 'bg-[#F4F4F4] text-[#5C5E62]'}
-            `}>
-              {competition.name}
-            </div>
+            {competition && (
+              <div className={`
+                text-xs font-medium px-3 py-2 rounded mb-2
+                ${theme === 'dark' ? 'bg-white/5 text-[#5C5E62]' : 'bg-[#F4F4F4] text-[#5C5E62]'}
+              `}>
+                {competition.name}
+              </div>
+            )}
 
             <motion.button
               onClick={() => { onLogout(); onClose() }}

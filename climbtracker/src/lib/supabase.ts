@@ -14,9 +14,10 @@ export const supabase = createClient<Database>(
   supabaseAnon ?? 'anon-placeholder',
   {
     auth: {
-      persistSession:    true,
-      autoRefreshToken:  true,
-      detectSessionInUrl: true,
+      persistSession:     true,
+      autoRefreshToken:   true,
+      detectSessionInUrl: true,  // Let Supabase auto-exchange the PKCE code on callback
+      flowType:           'pkce', // Explicit PKCE — required for state validation to work
     },
   }
 )

@@ -571,7 +571,10 @@ export default function CompetitionsPage({
 
       {competitions.length === 0 && (
         <div className={`text-center py-20 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-          <p className="text-4xl mb-4">🏆</p>
+          <svg className="mx-auto mb-4 w-12 h-12" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <polygon points="24,6 44,42 4,42" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round"/>
+            <polygon points="24,18 34,36 14,36" fill="currentColor" opacity="0.35"/>
+          </svg>
           <p className="font-medium text-sm mb-2">{t.noCompetitions}</p>
           <motion.button
             onClick={() => setShowCreate(true)}
