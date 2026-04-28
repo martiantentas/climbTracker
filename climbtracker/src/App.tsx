@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useMemo, useEffect, useRef, lazy, Suspense } from 'react'
 import { HashRouter, Routes, Route, Navigate, useNavigate, useParams, useLocation } from 'react-router-dom'
 import { supabase } from './lib/supabase'
 import { getProfile, upsertProfile, supabaseUserToCompetitor, signOutUser } from './lib/auth'
@@ -19,25 +19,36 @@ import Toast from './components/Toast'
 import UndoToast from './components/UndoToast'
 import MobileMenu from './components/MobileMenu'
 import ProtectedRoute from './components/ProtectedRoute'
-import BouldersPage from './pages/BouldersPage'
-import LeaderboardPage from './pages/LeaderboardPage'
-import RulesPage from './pages/RulesPage'
-import ProfilePage from './pages/ProfilePage'
-import CompetitionsPage from './pages/CompetitionsPage'
-import UsersPage from './pages/UsersPage'
-import SettingsPage from './pages/SettingsPage'
-import JudgingPage from './pages/JudgingPage'
-import AnalyticsPage from './pages/AnalyticsPage'
-import JoinPage          from './pages/JoinPage'
-import EventProfilePage  from './pages/EventProfilePage'
-import LandingPage       from './pages/LandingPage'
-import AuthPage from './pages/AuthPage'
-import PostRegistrationModal from './components/PostRegistrationModal'
-import PublicLeaderboardPage from './pages/PublicLeaderboardPage'
-import LegalNoticePage       from './pages/LegalNoticePage'
-import PrivacyPolicyPage     from './pages/PrivacyPolicyPage'
-import TermsPage             from './pages/TermsPage'
-import DemoPage              from './pages/DemoPage'
+
+// ─── LAZY PAGE IMPORTS (code-split per route) ─────────────────────────────────
+const BouldersPage          = lazy(() => import('./pages/BouldersPage'))
+const LeaderboardPage       = lazy(() => import('./pages/LeaderboardPage'))
+const RulesPage             = lazy(() => import('./pages/RulesPage'))
+const ProfilePage           = lazy(() => import('./pages/ProfilePage'))
+const CompetitionsPage      = lazy(() => import('./pages/CompetitionsPage'))
+const UsersPage             = lazy(() => import('./pages/UsersPage'))
+const SettingsPage          = lazy(() => import('./pages/SettingsPage'))
+const JudgingPage           = lazy(() => import('./pages/JudgingPage'))
+const AnalyticsPage         = lazy(() => import('./pages/AnalyticsPage'))
+const JoinPage              = lazy(() => import('./pages/JoinPage'))
+const EventProfilePage      = lazy(() => import('./pages/EventProfilePage'))
+const LandingPage           = lazy(() => import('./pages/LandingPage'))
+const AuthPage              = lazy(() => import('./pages/AuthPage'))
+const PostRegistrationModal = lazy(() => import('./components/PostRegistrationModal'))
+const PublicLeaderboardPage = lazy(() => import('./pages/PublicLeaderboardPage'))
+const LegalNoticePage       = lazy(() => import('./pages/LegalNoticePage'))
+const PrivacyPolicyPage     = lazy(() => import('./pages/PrivacyPolicyPage'))
+const TermsPage             = lazy(() => import('./pages/TermsPage'))
+const DemoPage              = lazy(() => import('./pages/DemoPage'))
+
+// Minimal spinner shown while a lazy chunk is loading
+function PageSpinner() {
+  return (
+    <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="w-5 h-5 rounded-full border-2 border-[#7F8BAD] border-t-transparent animate-spin" />
+    </div>
+  )
+}
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
@@ -440,7 +451,8 @@ function AppInner() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     if (params.has('payment_success')) {
-      const type = params.get('type')
+      const type   = params.get('type')
+      const compId = params.get('comp_id')
       const msg =
         type === 'bundle'  ? 'Capacity added! Your competition now has more slots.' :
         type === 'upgrade' ? 'Upgraded to Premium! Branding tools are now unlocked.' :
@@ -450,6 +462,29 @@ function AppInner() {
       const clean = new URL(window.location.href)
       clean.search = ''
       window.history.replaceState({}, '', clean.toString())
+
+      // Re-fetch the competition from Supabase to pick up the webhook's changes.
+      // The webhook may not have fired yet when the page loads, so we try
+      // immediately and once more after 3 s to cover that race condition.
+      if (compId) {
+        async function refetchComp() {
+          const { data } = await supabase
+            .from('competitions')
+            .select('data')
+            .eq('id', compId!)
+            .maybeSingle()
+          if (data?.data) {
+            const comp = data.data as unknown as Competition
+            setCompetitions(prev =>
+              prev.some(c => c.id === compId)
+                ? prev.map(c => c.id === compId ? comp : c)
+                : prev
+            )
+          }
+        }
+        refetchComp()
+        setTimeout(refetchComp, 3000)
+      }
     } else if (params.has('payment_cancelled')) {
       showToast('Payment cancelled — no charge was made.')
       const clean = new URL(window.location.href)
@@ -1022,17 +1057,19 @@ function AppInner() {
 
   if (!currentUser) {
     return (
-      <Routes>
-        <Route path="/"                element={<LandingPage lang={lang} setLang={handleSetLang} />} />
-        <Route path="auth"             element={<AuthPage theme={theme} lang={lang} setLang={handleSetLang} />} />
-        <Route path="join/:code"       element={<GuestJoinRedirect lang={lang} />} />
-        <Route path="results/:compId"  element={<PublicLeaderboardPage competitions={competitions} competitorsMap={competitorsMap} bouldersMap={bouldersMap} completionsMap={completionsMap} />} />
-        <Route path="legal"            element={<LegalNoticePage lang={lang} />} />
-        <Route path="privacy"          element={<PrivacyPolicyPage lang={lang} />} />
-        <Route path="terms"            element={<TermsPage lang={lang} />} />
-        <Route path="demo"             element={<DemoPage lang={lang} />} />
-        <Route path="*"                element={<Navigate to={`/${lang}`} replace />} />
-      </Routes>
+      <Suspense fallback={<PageSpinner />}>
+        <Routes>
+          <Route path="/"                element={<LandingPage lang={lang} setLang={handleSetLang} />} />
+          <Route path="auth"             element={<AuthPage theme={theme} lang={lang} setLang={handleSetLang} />} />
+          <Route path="join/:code"       element={<GuestJoinRedirect lang={lang} />} />
+          <Route path="results/:compId"  element={<PublicLeaderboardPage competitions={competitions} competitorsMap={competitorsMap} bouldersMap={bouldersMap} completionsMap={completionsMap} />} />
+          <Route path="legal"            element={<LegalNoticePage lang={lang} />} />
+          <Route path="privacy"          element={<PrivacyPolicyPage lang={lang} />} />
+          <Route path="terms"            element={<TermsPage lang={lang} />} />
+          <Route path="demo"             element={<DemoPage lang={lang} />} />
+          <Route path="*"                element={<Navigate to={`/${lang}`} replace />} />
+        </Routes>
+      </Suspense>
     )
   }
 
@@ -1056,58 +1093,60 @@ function AppInner() {
           onLogout={() => { setCurrentUser(null); signOutUser(); goto('/', { replace: true }) }}
         />
         <main className="max-w-7xl mx-auto px-4 md:px-6 py-8">
-          <Routes>
-            <Route path="competitions" element={
-              <CompetitionsPage
-                competitions={[]} activeCompId={activeCompId}
-                currentUser={currentUser} theme={theme} lang={lang}
-                onEnter={setActiveCompId} onCreate={handleCreateCompetition}
-                onDelete={handleDeleteCompetition} onLeave={handleLeaveCompetition}
-                onJoinByCode={handleJoinByCode} isRegistered={isUserRegistered}
-                competitorsMap={competitorsMap}
-                getCompRole={() => null}
-                onManage={() => {}}
-                onClone={handleCloneCompetition}
-                onJoinSuccess={() => {}}
-              />
-            } />
-            <Route path="profile" element={
-              <ProfilePage
-                currentUser={currentUser} theme={theme} lang={lang}
-                badges={[]}
-                onJoinByCode={handleJoinByCode}
-                onSave={updated => {
-                  upsertProfile(updated.id, {
-                    display_name: updated.displayName,
-                    avatar_url:   updated.avatar,
-                    emoji:        (updated as any).emoji,
-                    trait_ids:    updated.traitIds,
-                  })
-                  setCurrentUser(updated)
-                }}
-              />
-            } />
-            {/* Join route must be present even when the user has no competitions yet */}
-            <Route path="join/:code" element={
-              <JoinPage
-                competitions={competitions}
-                currentUser={currentUser}
-                theme={theme}
-                lang={lang}
-                isRegistered={isUserRegistered}
-                onJoin={handleJoinByCompId}
-                waitlistMap={waitlistMap}
-                onJoinWaitlist={handleJoinWaitlist}
-                onLeaveWaitlist={handleLeaveWaitlist}
-              />
-            } />
-            <Route path="results/:compId" element={<PublicLeaderboardPage competitions={competitions} competitorsMap={competitorsMap} bouldersMap={bouldersMap} completionsMap={completionsMap} />} />
-            <Route path="demo"    element={<DemoPage lang={lang} />} />
-            <Route path="legal"   element={<LegalNoticePage lang={lang} />} />
-            <Route path="privacy" element={<PrivacyPolicyPage lang={lang} />} />
-            <Route path="terms"   element={<TermsPage lang={lang} />} />
-            <Route path="*"       element={<Navigate to={`/${lang}/competitions`} replace />} />
-          </Routes>
+          <Suspense fallback={<PageSpinner />}>
+            <Routes>
+              <Route path="competitions" element={
+                <CompetitionsPage
+                  competitions={[]} activeCompId={activeCompId}
+                  currentUser={currentUser} theme={theme} lang={lang}
+                  onEnter={setActiveCompId} onCreate={handleCreateCompetition}
+                  onDelete={handleDeleteCompetition} onLeave={handleLeaveCompetition}
+                  onJoinByCode={handleJoinByCode} isRegistered={isUserRegistered}
+                  competitorsMap={competitorsMap}
+                  getCompRole={() => null}
+                  onManage={() => {}}
+                  onClone={handleCloneCompetition}
+                  onJoinSuccess={() => {}}
+                />
+              } />
+              <Route path="profile" element={
+                <ProfilePage
+                  currentUser={currentUser} theme={theme} lang={lang}
+                  badges={[]}
+                  onJoinByCode={handleJoinByCode}
+                  onSave={updated => {
+                    upsertProfile(updated.id, {
+                      display_name: updated.displayName,
+                      avatar_url:   updated.avatar,
+                      emoji:        (updated as any).emoji,
+                      trait_ids:    updated.traitIds,
+                    })
+                    setCurrentUser(updated)
+                  }}
+                />
+              } />
+              {/* Join route must be present even when the user has no competitions yet */}
+              <Route path="join/:code" element={
+                <JoinPage
+                  competitions={competitions}
+                  currentUser={currentUser}
+                  theme={theme}
+                  lang={lang}
+                  isRegistered={isUserRegistered}
+                  onJoin={handleJoinByCompId}
+                  waitlistMap={waitlistMap}
+                  onJoinWaitlist={handleJoinWaitlist}
+                  onLeaveWaitlist={handleLeaveWaitlist}
+                />
+              } />
+              <Route path="results/:compId" element={<PublicLeaderboardPage competitions={competitions} competitorsMap={competitorsMap} bouldersMap={bouldersMap} completionsMap={completionsMap} />} />
+              <Route path="demo"    element={<DemoPage lang={lang} />} />
+              <Route path="legal"   element={<LegalNoticePage lang={lang} />} />
+              <Route path="privacy" element={<PrivacyPolicyPage lang={lang} />} />
+              <Route path="terms"   element={<TermsPage lang={lang} />} />
+              <Route path="*"       element={<Navigate to={`/${lang}/competitions`} replace />} />
+            </Routes>
+          </Suspense>
         </main>
       </div>
     )
@@ -1203,6 +1242,7 @@ function AppInner() {
         />
 
         <main className="max-w-7xl mx-auto px-4 md:px-6 py-8">
+          <Suspense fallback={<PageSpinner />}>
           <Routes>
 
             {/* Redirect /auth to app if already logged in */}
@@ -1374,6 +1414,7 @@ function AppInner() {
             {/* Catch-all */}
             <Route path="*" element={<Navigate to={`/${lang}/competitions`} replace />} />
           </Routes>
+          </Suspense>
         </main>
       </div>
     </>

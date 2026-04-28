@@ -5,6 +5,21 @@ import { createClient } from '@supabase/supabase-js'
 // Disable body parsing so we receive the raw bytes for Stripe signature verification
 export const config = { api: { bodyParser: false } }
 
+// ─── RAW BODY HELPER ──────────────────────────────────────────────────────────
+// Uses the Node.js event API instead of `for await` — more reliable on Vercel's
+// Node.js runtime where the async iterator may not behave as expected.
+
+function getRawBody(req: VercelRequest): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = []
+    req.on('data', (chunk: unknown) => {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk as string))
+    })
+    req.on('end',   () => resolve(Buffer.concat(chunks)))
+    req.on('error', reject)
+  })
+}
+
 // ─── HANDLER ──────────────────────────────────────────────────────────────────
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -16,16 +31,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const serviceKey    = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!secretKey || !webhookSecret || !supabaseUrl || !serviceKey) {
-    console.error('[stripe-webhook] Missing env vars')
+    console.error('[stripe-webhook] Missing env vars:', {
+      hasSecretKey:     !!secretKey,
+      hasWebhookSecret: !!webhookSecret,
+      hasSupabaseUrl:   !!supabaseUrl,
+      hasServiceKey:    !!serviceKey,
+    })
     return res.status(500).end()
   }
 
-  // Buffer the raw request body (required for Stripe signature verification)
-  const chunks: Buffer[] = []
-  for await (const chunk of req as AsyncIterable<Buffer>) {
-    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+  const rawBody = await getRawBody(req)
+
+  if (!rawBody.length) {
+    console.error('[stripe-webhook] Empty raw body — cannot verify Stripe signature')
+    return res.status(400).send('Empty body')
   }
-  const rawBody = Buffer.concat(chunks)
 
   const sig = req.headers['stripe-signature']
   if (!sig) return res.status(400).send('Missing stripe-signature header')
@@ -53,20 +73,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const supabase = createClient(supabaseUrl, serviceKey)
 
-    // Record the payment (shared for all purchase types)
-    const { error: paymentErr } = await supabase.from('payments').insert({
-      competition_id:    competitionId,
-      user_id:           userId,
-      stripe_session_id: session.id,
-      stripe_payment_id: typeof session.payment_intent === 'string' ? session.payment_intent : null,
-      amount_cents:      session.amount_total,
-      currency:          session.currency,
-      status:            'paid',
-      tier:              meta.tier ?? type,
-    })
-    if (paymentErr) console.error('[stripe-webhook] payments insert:', paymentErr)
-
-    // Fetch current competition
+    // ── Fetch current competition ──────────────────────────────────────────
     const { data: compRow, error: fetchErr } = await supabase
       .from('competitions')
       .select('data')
@@ -74,7 +81,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .single()
 
     if (fetchErr || !compRow?.data) {
-      console.error('[stripe-webhook] competition fetch:', fetchErr)
+      console.error('[stripe-webhook] competition fetch:', fetchErr, '| id:', competitionId)
       return res.status(500).json({ error: 'Competition not found' })
     }
 
@@ -82,7 +89,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let updated: Record<string, unknown>
 
     if (type === 'base_plan') {
-      // Activate the competition and set tier + participant limit
       const { tier, participantCount } = meta
       const baseLimit = tier === 'premium' ? 500 : 300
       updated = {
@@ -94,16 +100,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
     } else if (type === 'bundle') {
-      // Add purchased slots on top of any existing additional capacity
-      const addedSlots        = Number(meta.slots ?? 0)
-      const existingCapacity  = Number(comp.additionalCapacity ?? 0)
+      const addedSlots       = Number(meta.slots ?? 0)
+      const existingCapacity = Number(comp.additionalCapacity ?? 0)
       updated = {
         ...comp,
         additionalCapacity: existingCapacity + addedSlots,
       }
 
     } else if (type === 'upgrade') {
-      // Upgrade tier to premium (keep existing participant limit)
       updated = {
         ...comp,
         subscription: 'premium',
@@ -115,12 +119,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: `Unknown type: ${type}` })
     }
 
+    // ── Update competition — keep top-level columns in sync with data blob ──
+    // upsertCompetition() writes status + visibility as dedicated columns;
+    // the webhook must mirror that or public/status queries return stale values.
     const { error: updateErr } = await supabase
       .from('competitions')
-      .update({ data: updated })
+      .update({
+        data:       updated,
+        status:     String(updated.status     ?? comp.status     ?? 'DRAFT'),
+        visibility: String(updated.visibility ?? comp.visibility ?? 'private'),
+      })
       .eq('id', competitionId)
 
-    if (updateErr) console.error('[stripe-webhook] competition update:', updateErr)
+    if (updateErr) {
+      console.error('[stripe-webhook] competition update:', updateErr)
+      return res.status(500).json({ error: 'Failed to update competition' })
+    }
+
+    console.log('[stripe-webhook] competition updated:', competitionId, type)
+
+    // ── Record the payment (non-fatal if it fails) ──────────────────────────
+    const { error: paymentErr } = await supabase.from('payments').insert({
+      competition_id:    competitionId,
+      user_id:           userId,
+      stripe_session_id: session.id,
+      stripe_payment_id: typeof session.payment_intent === 'string' ? session.payment_intent : null,
+      amount_cents:      session.amount_total ?? 0,
+      currency:          session.currency     ?? 'eur',
+      status:            'paid',
+      tier:              meta.tier ?? type,
+      participant_limit: Number(meta.participantCount) || 0,
+    })
+    if (paymentErr) console.error('[stripe-webhook] payments insert:', paymentErr)
   }
 
   return res.status(200).json({ received: true })
