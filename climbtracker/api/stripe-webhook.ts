@@ -84,12 +84,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (type === 'base_plan') {
       // Activate the competition and set tier + participant limit
       const { tier, participantCount } = meta
+      const baseLimit = tier === 'premium' ? 500 : 300
       updated = {
         ...comp,
         status:           'LIVE',
         subscription:     tier,
         tier,
-        participantLimit: Number(participantCount ?? 0) || undefined,
+        participantLimit: Number(participantCount) || baseLimit,
       }
 
     } else if (type === 'bundle') {
