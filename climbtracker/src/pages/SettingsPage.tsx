@@ -567,6 +567,28 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
     } as any))
   }, [comp.subscription, comp.tier, comp.participantLimit, comp.additionalCapacity, comp.branding])
 
+  // ── Publish state (inline Stripe redirect for unpaid competitions) ───────────
+  const [publishLoading, setPublishLoading] = useState<'standard' | 'premium' | null>(null)
+  const [publishError,   setPublishError]   = useState('')
+
+  async function handlePublish(tier: 'standard' | 'premium') {
+    setPublishLoading(tier)
+    setPublishError('')
+    try {
+      await stripeRedirect({
+        type:             'base_plan',
+        competitionId:    competition.id,
+        competitionName:  competition.name,
+        tier,
+        participantCount: competitorCount,
+        userId:           (competition as any).ownerId,
+      })
+    } catch (e) {
+      setPublishError(e instanceof Error ? e.message : 'Something went wrong')
+      setPublishLoading(null)
+    }
+  }
+
   // ── Dirty tracking ──────────────────────────────────────────────────────────
   const [isDirty, setIsDirty] = useState(false)
 
