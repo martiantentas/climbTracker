@@ -451,39 +451,46 @@ function AppInner() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     if (params.has('payment_success')) {
-      const type   = params.get('type')
-      const compId = params.get('comp_id')
-      const msg =
-        type === 'bundle'  ? 'Capacity added! Your competition now has more slots.' :
-        type === 'upgrade' ? 'Upgraded to Premium! Branding tools are now unlocked.' :
-                             'Payment confirmed! Your competition is now Live.'
-      showToast(msg)
-      // Clean the query string so the toast doesn't fire again on refresh
+      const sessionId = params.get('session_id')
+      const compId    = params.get('comp_id')
+      const type      = params.get('type')
+
+      // Clean the query string immediately so the effect doesn't re-fire on refresh
       const clean = new URL(window.location.href)
       clean.search = ''
       window.history.replaceState({}, '', clean.toString())
 
-      // Re-fetch the competition from Supabase to pick up the webhook's changes.
-      // The webhook may not have fired yet when the page loads, so we try
-      // immediately and once more after 3 s to cover that race condition.
-      if (compId) {
-        async function refetchComp() {
-          const { data } = await supabase
-            .from('competitions')
-            .select('data')
-            .eq('id', compId!)
-            .maybeSingle()
-          if (data?.data) {
-            const comp = data.data as unknown as Competition
-            setCompetitions(prev =>
-              prev.some(c => c.id === compId)
-                ? prev.map(c => c.id === compId ? comp : c)
-                : prev
-            )
-          }
-        }
-        refetchComp()
-        setTimeout(refetchComp, 3000)
+      // Call verify-payment: confirms payment with Stripe, updates the DB,
+      // and returns the updated competition so we can patch local state right away.
+      if (sessionId && compId) {
+        fetch('/api/verify-payment', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ sessionId }),
+        })
+          .then(r => r.json())
+          .then((data: { success?: boolean; competition?: Record<string, unknown>; error?: string }) => {
+            if (data.success && data.competition) {
+              const updated = data.competition as unknown as Competition
+              setCompetitions(prev =>
+                prev.some(c => c.id === compId)
+                  ? prev.map(c => c.id === compId ? updated : c)
+                  : prev
+              )
+              const msg =
+                type === 'bundle'  ? 'Capacity added! Your competition now has more slots.' :
+                type === 'upgrade' ? 'Upgraded to Premium! Branding tools are now unlocked.' :
+                                     'Payment confirmed! Your competition is now Live.'
+              showToast(msg)
+            } else {
+              console.error('[verify-payment] server error:', data.error)
+              showToast('Payment received but status update failed — please refresh.')
+            }
+          })
+          .catch(err => {
+            console.error('[verify-payment] network error:', err)
+            showToast('Payment received but status update failed — please refresh.')
+          })
       }
     } else if (params.has('payment_cancelled')) {
       showToast('Payment cancelled — no charge was made.')
