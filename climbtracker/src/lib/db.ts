@@ -30,23 +30,37 @@ function memberRowToCompetitor(row: {
 // ─── COMPETITIONS ─────────────────────────────────────────────────────────────
 
 export async function fetchUserCompetitions(userId: string): Promise<Competition[]> {
-  // Competitions the user owns
-  const { data: owned, error: e1 } = await supabase
-    .from('competitions')
-    .select('data')
-    .eq('owner_id', userId)
-    .order('created_at', { ascending: false })
-  if (e1) throw e1
+  // Run all three queries in parallel
+  const [ownedRes, membershipsRes, publicRes] = await Promise.all([
+    // Competitions the user owns
+    supabase
+      .from('competitions')
+      .select('data')
+      .eq('owner_id', userId)
+      .order('created_at', { ascending: false }),
 
-  // Competition IDs where the user is an active member (not owner)
-  const { data: memberships, error: e2 } = await supabase
-    .from('competition_members')
-    .select('competition_id')
-    .eq('user_id', userId)
-    .eq('status', 'active')
-  if (e2) throw e2
+    // Competition IDs where the user is an active member (not owner)
+    supabase
+      .from('competition_members')
+      .select('competition_id')
+      .eq('user_id', userId)
+      .eq('status', 'active'),
 
-  const memberIds = (memberships ?? []).map(m => m.competition_id)
+    // Public competitions anyone can discover
+    supabase
+      .from('competitions')
+      .select('data')
+      .eq('visibility', 'public')
+      .neq('owner_id', userId)
+      .order('created_at', { ascending: false }),
+  ])
+
+  if (ownedRes.error)       throw ownedRes.error
+  if (membershipsRes.error) throw membershipsRes.error
+  // Public query failures are non-fatal — degrade gracefully
+  const publicComps = publicRes.data ?? []
+
+  const memberIds = (membershipsRes.data ?? []).map(m => m.competition_id)
 
   let memberComps: Competition[] = []
   if (memberIds.length > 0) {
@@ -60,10 +74,17 @@ export async function fetchUserCompetitions(userId: string): Promise<Competition
     memberComps = (data ?? []).map(r => r.data as unknown as Competition)
   }
 
-  return [
-    ...(owned ?? []).map(r => r.data as unknown as Competition),
+  // Deduplicate: owned > member > public
+  const seen = new Set<string>()
+  const result: Competition[] = []
+  for (const comp of [
+    ...(ownedRes.data ?? []).map(r => r.data as unknown as Competition),
     ...memberComps,
-  ]
+    ...publicComps.map(r => r.data as unknown as Competition),
+  ]) {
+    if (!seen.has(comp.id)) { seen.add(comp.id); result.push(comp) }
+  }
+  return result
 }
 
 export async function upsertCompetition(comp: Competition): Promise<void> {
@@ -83,6 +104,16 @@ export async function upsertCompetition(comp: Competition): Promise<void> {
 export async function deleteCompetition(compId: string): Promise<void> {
   const { error } = await supabase.from('competitions').delete().eq('id', compId)
   if (error) throw error
+}
+
+export async function fetchCompetitionByInviteCode(code: string): Promise<Competition | null> {
+  const { data, error } = await supabase
+    .from('competitions')
+    .select('data')
+    .eq('invite_code', code.toUpperCase())
+    .maybeSingle()
+  if (error || !data) return null
+  return data.data as unknown as Competition
 }
 
 // ─── BOULDERS ─────────────────────────────────────────────────────────────────

@@ -5,6 +5,7 @@ import type { Competition, Competitor } from '../types'
 import type { Language } from '../translations'
 import { translations } from '../translations'
 import PasswordModal from '../components/PasswordModal'
+import { fetchCompetitionByInviteCode } from '../lib/db'
 
 interface JoinPageProps {
   competitions:     Competition[]
@@ -12,7 +13,7 @@ interface JoinPageProps {
   theme:            'light' | 'dark'
   lang:             Language
   isRegistered:     (compId: string) => boolean
-  onJoin:           (compId: string, password?: string, traitIds?: string[], gender?: string) => boolean | 'full'
+  onJoin:           (compId: string, password?: string, traitIds?: string[], gender?: string, externalComp?: Competition) => boolean | 'full'
   waitlistMap:      Record<string, Competitor[]>
   onJoinWaitlist:   (compId: string) => void
   onLeaveWaitlist:  (compId: string) => void
@@ -33,7 +34,25 @@ export default function JoinPage({
   const t         = translations[lang]
   const dk        = theme === 'dark'
 
-  const comp          = competitions.find(c => c.inviteCode === code?.toUpperCase())
+  // Competition found in local state (user already owns or is a member)
+  const localComp = competitions.find(c => c.inviteCode === code?.toUpperCase())
+
+  // Competition fetched from DB (user has never seen this competition before)
+  const [fetchedComp,  setFetchedComp]  = useState<Competition | null>(null)
+  const [fetchLoading, setFetchLoading] = useState(!localComp)
+
+  // If not in local state, look it up by invite code in the DB
+  useEffect(() => {
+    if (localComp || !code) { setFetchLoading(false); return }
+    setFetchLoading(true)
+    fetchCompetitionByInviteCode(code)
+      .then(found => { setFetchedComp(found); setFetchLoading(false) })
+      .catch(() => setFetchLoading(false))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code, localComp?.id])
+
+  const comp          = localComp ?? fetchedComp
+  const isExternal    = !localComp && !!fetchedComp   // came from DB, not local state
   const needsPassword = !!comp?.joinPassword
   const hasTraits     = (comp?.traits?.length ?? 0) > 0
   const requireTraits = comp?.requireTraits ?? false
@@ -52,6 +71,15 @@ export default function JoinPage({
   useEffect(() => {
     if (comp && isRegistered(comp.id)) navigate(`/${lang}`, { replace: true })
   }, [comp, isRegistered, navigate, lang])
+
+  // ── Loading state while fetching from DB ─────────────────────────────────
+  if (fetchLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="w-6 h-6 rounded-full border-2 border-[#7F8BAD] border-t-transparent animate-spin" />
+      </div>
+    )
+  }
 
   // ── Unknown code ─────────────────────────────────────────────────────────
   if (!comp) {
@@ -83,7 +111,7 @@ export default function JoinPage({
   }
 
   function attemptJoin(password?: string) {
-    const result = onJoin(comp!.id, password, selectedTraitIds, gender || undefined)
+    const result = onJoin(comp!.id, password, selectedTraitIds, gender || undefined, isExternal ? comp! : undefined)
     if (result === true) {
       setJoined(true)
       setShowPasswordModal(false)

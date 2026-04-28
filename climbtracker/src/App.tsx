@@ -5,7 +5,8 @@ import { getProfile, upsertProfile, supabaseUserToCompetitor, signOutUser } from
 import {
   loadAllUserData, upsertCompetition, deleteCompetition,
   upsertBoulders, upsertCompletion, deleteCompletion,
-  upsertMember, deleteMember,
+  upsertMember, deleteMember, fetchMembers, fetchBoulders, fetchCompletions,
+  fetchCompetitionByInviteCode,
 } from './lib/db'
 
 import type { Competition, Boulder, Competitor, Completion, Badge } from './types'
@@ -278,6 +279,149 @@ function AppInner() {
   useEffect(() => {
     if (activeCompId) localStorage.setItem('ct-active-comp', activeCompId)
   }, [activeCompId])
+
+  // ── Real-time subscription — all tables for the active competition ────────
+  // One channel, four listeners. Patches local state in place so every connected
+  // client (competitor, judge, organizer) sees updates without a full reload.
+  useEffect(() => {
+    if (!activeCompId || !currentUser) return
+
+    const channel = supabase
+      .channel(`comp:${activeCompId}`)
+
+      // ── completions ────────────────────────────────────────────────────────
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'completions', filter: `competition_id=eq.${activeCompId}` }, (payload) => {
+        if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+          const completion = payload.new.data as unknown as Completion
+          if (!completion) return
+          setCompletionsMap(prev => {
+            const cur = prev[activeCompId] ?? []
+            const idx = cur.findIndex(c => c.competitorId === completion.competitorId && c.boulderId === completion.boulderId)
+            return { ...prev, [activeCompId]: idx >= 0 ? cur.map((c, i) => i === idx ? completion : c) : [...cur, completion] }
+          })
+        } else if (payload.eventType === 'DELETE') {
+          const old = payload.old as { competitor_id: string; boulder_id: string }
+          setCompletionsMap(prev => ({ ...prev, [activeCompId]: (prev[activeCompId] ?? []).filter(c => !(c.competitorId === old.competitor_id && c.boulderId === old.boulder_id)) }))
+        }
+      })
+
+      // ── boulders ───────────────────────────────────────────────────────────
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'boulders', filter: `competition_id=eq.${activeCompId}` }, (payload) => {
+        if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+          const boulder = payload.new.data as unknown as Boulder
+          if (!boulder) return
+          setBouldersMap(prev => {
+            const cur = prev[activeCompId] ?? []
+            const idx = cur.findIndex(b => b.id === boulder.id)
+            return { ...prev, [activeCompId]: idx >= 0 ? cur.map((b, i) => i === idx ? boulder : b) : [...cur, boulder] }
+          })
+        } else if (payload.eventType === 'DELETE') {
+          const old = payload.old as { id: string }
+          setBouldersMap(prev => ({ ...prev, [activeCompId]: (prev[activeCompId] ?? []).filter(b => b.id !== old.id) }))
+        }
+      })
+
+      // ── competition (settings / status changes) ────────────────────────────
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'competitions', filter: `id=eq.${activeCompId}` }, (payload) => {
+        const updated = payload.new.data as unknown as Competition
+        if (!updated) return
+        setCompetitions(prev => prev.map(c => c.id === activeCompId ? updated : c))
+      })
+
+      // ── competition_members ────────────────────────────────────────────────
+      // INSERT needs profile data not present in the row, so we refetch all members.
+      // UPDATE and DELETE have enough info to patch in place.
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'competition_members', filter: `competition_id=eq.${activeCompId}` }, () => {
+        fetchMembers(activeCompId).then(members => setCompetitorsMap(prev => ({ ...prev, [activeCompId]: members }))).catch(console.error)
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'competition_members', filter: `competition_id=eq.${activeCompId}` }, (payload) => {
+        const row = payload.new as { user_id: string; role: string; status: string; bib_number: number | null; trait_ids: string[]; gender: string | null }
+        setCompetitorsMap(prev => ({
+          ...prev,
+          [activeCompId]: (prev[activeCompId] ?? []).map(c => c.id === row.user_id ? { ...c, role: row.role as Competitor['role'], bibNumber: row.bib_number ?? c.bibNumber, traitIds: row.trait_ids ?? c.traitIds } : c),
+        }))
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'competition_members', filter: `competition_id=eq.${activeCompId}` }, (payload) => {
+        const old = payload.old as { user_id: string }
+        setCompetitorsMap(prev => ({ ...prev, [activeCompId]: (prev[activeCompId] ?? []).filter(c => c.id !== old.user_id) }))
+      })
+
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeCompId, currentUser?.id])
+
+  // ── User-level & public competitions subscription ─────────────────────────
+  // Two listeners on one channel:
+  // 1. competition_members INSERT for this user — fires when an organizer adds
+  //    them directly or they join on another device. Hydrates the full comp data.
+  // 2. competitions INSERT with visibility=public — fires when any public
+  //    competition is created so all users see it appear immediately.
+  useEffect(() => {
+    if (!currentUser) return
+
+    const channel = supabase
+      .channel(`user-memberships:${currentUser.id}`)
+
+      // ── Added to any competition ───────────────────────────────────────────
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'competition_members',
+        filter: `user_id=eq.${currentUser.id}`,
+      }, async (payload) => {
+        const row    = payload.new as { competition_id: string }
+        const compId = row.competition_id
+
+        const { data, error } = await supabase
+          .from('competitions')
+          .select('data')
+          .eq('id', compId)
+          .maybeSingle()
+        if (error || !data) return
+
+        const comp = data.data as unknown as Competition
+        const [boulders, completions, members] = await Promise.all([
+          fetchBoulders(compId),
+          fetchCompletions(compId),
+          fetchMembers(compId),
+        ])
+
+        setCompetitions(prev => prev.some(c => c.id === compId) ? prev : [...prev, comp])
+        setBouldersMap(prev    => ({ ...prev, [compId]: boulders }))
+        setCompletionsMap(prev => ({ ...prev, [compId]: completions }))
+        setCompetitorsMap(prev => ({ ...prev, [compId]: members }))
+      })
+
+      // ── New public competition created ─────────────────────────────────────
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'competitions',
+        filter: `visibility=eq.public`,
+      }, async (payload) => {
+        const comp = payload.new.data as unknown as Competition
+        if (!comp) return
+        // Skip competitions we already own (already in state from handleCreateCompetition)
+        if (comp.ownerId === currentUser.id) return
+        const compId = comp.id
+        const [boulders, completions, members] = await Promise.all([
+          fetchBoulders(compId),
+          fetchCompletions(compId),
+          fetchMembers(compId),
+        ])
+        setCompetitions(prev => prev.some(c => c.id === compId) ? prev : [...prev, comp])
+        setBouldersMap(prev    => ({ ...prev, [compId]: boulders }))
+        setCompletionsMap(prev => ({ ...prev, [compId]: completions }))
+        setCompetitorsMap(prev => ({ ...prev, [compId]: members }))
+      })
+
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.id])
 
   // After login commits to state, redirect to any pending invite join.
   // Must be a useEffect (not inline in the login callback) because navigate()
@@ -694,10 +838,29 @@ function AppInner() {
   }
 
   // ── handleJoinByCompId — used by JoinPage (code already resolved to ID) ──
-  function handleJoinByCompId(compId: string, password?: string, traitIds?: string[], gender?: string): boolean | 'full' {
-    const target = competitions.find(c => c.id === compId)
+  // externalComp is passed when the competition was not in local state (fetched
+  // from DB by invite code). We add it to state immediately and hydrate its
+  // boulders / completions / members in the background.
+  function handleJoinByCompId(compId: string, password?: string, traitIds?: string[], gender?: string, externalComp?: Competition): boolean | 'full' {
+    const target = competitions.find(c => c.id === compId) ?? externalComp
     if (!target || !currentUser) return false
     if (target.joinPassword && password !== target.joinPassword) return false
+
+    if (externalComp && !competitions.some(c => c.id === compId)) {
+      setCompetitions(prev => [...prev, externalComp])
+      setBouldersMap(prev    => ({ ...prev, [compId]: [] }))
+      setCompletionsMap(prev => ({ ...prev, [compId]: [] }))
+      setCompetitorsMap(prev => ({ ...prev, [compId]: [] }))
+      // Hydrate competition data in the background
+      Promise.all([fetchBoulders(compId), fetchCompletions(compId), fetchMembers(compId)])
+        .then(([boulders, completions, members]) => {
+          setBouldersMap(prev    => ({ ...prev, [compId]: boulders }))
+          setCompletionsMap(prev => ({ ...prev, [compId]: completions }))
+          setCompetitorsMap(prev => ({ ...prev, [compId]: members }))
+        })
+        .catch(err => console.error('[db] joinExternal hydrate:', err))
+    }
+
     const ok = joinCompetition(compId, currentUser, traitIds, gender)
     return ok ? true : 'full'
   }
@@ -902,6 +1065,22 @@ function AppInner() {
                 }}
               />
             } />
+            {/* Join route must be present even when the user has no competitions yet */}
+            <Route path="join/:code" element={
+              <JoinPage
+                competitions={competitions}
+                currentUser={currentUser}
+                theme={theme}
+                lang={lang}
+                isRegistered={isUserRegistered}
+                onJoin={handleJoinByCompId}
+                waitlistMap={waitlistMap}
+                onJoinWaitlist={handleJoinWaitlist}
+                onLeaveWaitlist={handleLeaveWaitlist}
+              />
+            } />
+            <Route path="results/:compId" element={<PublicLeaderboardPage competitions={competitions} competitorsMap={competitorsMap} bouldersMap={bouldersMap} completionsMap={completionsMap} />} />
+            <Route path="demo"    element={<DemoPage lang={lang} />} />
             <Route path="legal"   element={<LegalNoticePage lang={lang} />} />
             <Route path="privacy" element={<PrivacyPolicyPage lang={lang} />} />
             <Route path="terms"   element={<TermsPage lang={lang} />} />

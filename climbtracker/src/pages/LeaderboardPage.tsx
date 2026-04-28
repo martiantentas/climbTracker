@@ -120,12 +120,14 @@ function PodiumCard({
       {/* Avatar */}
       <div className={`
         w-16 h-16 rounded-full flex items-center justify-center text-3xl flex-shrink-0
-        border-2 ${s.avatarRing}
+        border-2 ${s.avatarRing} overflow-hidden
         ${dk ? 'bg-white/5' : 'bg-white'}
       `}>
-        {avatar
-          ? <span>{avatar}</span>
-          : <span className={`text-xl font-medium ${s.text}`}>{result.name.charAt(0).toUpperCase()}</span>
+        {avatar && (avatar.startsWith('http') || avatar.startsWith('data:'))
+          ? <img src={avatar} alt={result.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+          : avatar
+            ? <span>{avatar}</span>
+            : <span className={`text-xl font-medium ${s.text}`}>{result.name.charAt(0).toUpperCase()}</span>
         }
       </div>
 
@@ -622,12 +624,14 @@ export default function LeaderboardPage({
                     <RankBadge rank={result.rank} theme={theme} />
                   </div>
 
-                  <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-xl ${dk ? 'bg-white/5' : 'bg-[#F4F4F4]'}`}>
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-xl overflow-hidden ${dk ? 'bg-white/5' : 'bg-[#F4F4F4]'}`}>
                     {(() => {
-                      const live = competitors.find(c => c.id === result.competitorId) as any
-                      return live?.avatar
-                        ? <span>{live.avatar}</span>
-                        : <span className={`text-sm font-medium ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{result.name.charAt(0).toUpperCase()}</span>
+                      const av = (competitors.find(c => c.id === result.competitorId) as any)?.avatar as string | undefined
+                      if (av && (av.startsWith('http') || av.startsWith('data:')))
+                        return <img src={av} alt={result.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                      if (av)
+                        return <span>{av}</span>
+                      return <span className={`text-sm font-medium ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{result.name.charAt(0).toUpperCase()}</span>
                     })()}
                   </div>
 

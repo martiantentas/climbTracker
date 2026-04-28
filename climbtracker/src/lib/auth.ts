@@ -14,12 +14,26 @@ export function supabaseUserToCompetitor(
   user: { id: string; email?: string; user_metadata?: Record<string, string> },
   profile: Record<string, unknown> | null,
 ): Competitor {
-  const meta        = user.user_metadata ?? {}
-  const displayName = (profile?.display_name as string | null)
-    ?? (meta.full_name as string | null)
-    ?? (meta.name as string | null)
-    ?? user.email
-    ?? ''
+  const meta = user.user_metadata ?? {}
+
+  // Filter out URL-like values — Google OAuth sometimes stores the avatar URL
+  // in raw_user_meta_data fields that the profiles trigger then copies into
+  // display_name by mistake. Skip any candidate that looks like a URL.
+  const isUrl = (v: string | null | undefined): boolean =>
+    !!v && (v.startsWith('http://') || v.startsWith('https://'))
+
+  const displayName = (() => {
+    for (const candidate of [
+      profile?.display_name as string | null,
+      meta.full_name        as string | null,
+      meta.name             as string | null,
+      user.email,
+    ]) {
+      if (candidate && candidate.trim() && !isUrl(candidate)) return candidate
+    }
+    return user.email ?? ''
+  })()
+
   const parts     = displayName.trim().split(' ')
   const firstName = (meta.given_name  as string | null) ?? parts[0]  ?? ''
   const lastName  = (meta.family_name as string | null) ?? parts.slice(1).join(' ') ?? ''
@@ -30,7 +44,7 @@ export function supabaseUserToCompetitor(
     firstName,
     lastName,
     displayName,
-    avatar:      (profile?.avatar_url as string | null) ?? (meta.avatar_url as string | null) ?? undefined,
+    avatar:      (profile?.avatar_url as string | null) ?? (meta.picture as string | null) ?? (meta.avatar_url as string | null) ?? undefined,
     emoji:       (profile?.emoji as string | null) ?? undefined,
     gender:      '',
     categoryId:  '',

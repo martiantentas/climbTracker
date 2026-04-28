@@ -391,11 +391,13 @@ function CompetitorCard({
           w-10 h-10 rounded flex items-center justify-center flex-shrink-0 overflow-hidden
           ${dk ? 'bg-white/5' : 'bg-[#F4F4F4]'}
         `}>
-          {competitor.avatar
-            ? <span className="text-2xl">{competitor.avatar}</span>
-            : <span className={`text-sm font-medium ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-                {competitor.displayName.charAt(0).toUpperCase()}
-              </span>
+          {competitor.avatar && (competitor.avatar.startsWith('http') || competitor.avatar.startsWith('data:'))
+            ? <img src={competitor.avatar} alt={competitor.displayName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+            : competitor.avatar
+              ? <span className="text-2xl">{competitor.avatar}</span>
+              : <span className={`text-sm font-medium ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
+                  {competitor.displayName.charAt(0).toUpperCase()}
+                </span>
           }
         </div>
 

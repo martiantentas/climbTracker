@@ -2072,7 +2072,7 @@ export const translations = {
     rulesViewingIn:    (lang: string) => `Veient regles en: ${lang} · Els canvis es desen només en l'idioma actiu`,
 
     // ── Event profile ──────────────────────────────────────────────────────────
-    eventSettings:                 "Configuració de l'event",
+    eventSettings:                 "Configuració",
     eventProfileSelectCategory:    'Selecciona la teva categoria',
     eventProfileMyCategories:      'Les meves categories',
     eventProfileCategorySetupDesc: "Tria les categories que t'apliquen perquè l'organitzador et pugui col·locar a la classificació correcta.",
