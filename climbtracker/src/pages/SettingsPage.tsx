@@ -743,6 +743,8 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
                 [CompetitionStatus.FINISHED]: t.statusFinished,
                 [CompetitionStatus.ARCHIVED]: t.statusArchived,
               }
+              // For unpaid competitions, LIVE is replaced by the inline publish cards below
+              if (s === CompetitionStatus.LIVE && !(competition as any).subscription) return null
               return (
               <motion.button
                 key={s}
@@ -755,6 +757,58 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
               </motion.button>
             )})}
           </div>
+
+          {/* Inline publish cards — shown when the competition has no active subscription */}
+          {!(competition as any).subscription && (
+            <div className="mt-5">
+              <p className={`text-[11px] font-medium mb-1 ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>Go Live</p>
+              <p className={`text-[11px] mb-3 leading-relaxed ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
+                Choose a plan to publish this competition. One-time payment per event.
+              </p>
+              <div className="flex flex-col gap-2.5">
+                <button
+                  onClick={() => handlePublish('standard')}
+                  disabled={publishLoading !== null}
+                  className={`text-left px-4 py-3.5 rounded border transition-colors duration-[330ms] ${
+                    dk ? 'bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.05] hover:border-white/20'
+                       : 'bg-[#F4F4F4] border-[#EEEEEE] hover:bg-[#EEEEEE]'
+                  } disabled:opacity-40 disabled:cursor-not-allowed`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>Standard</span>
+                    <span className={`text-sm font-medium font-mono ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
+                      {publishLoading === 'standard' ? 'Redirecting…' : 'from €129'}
+                    </span>
+                  </div>
+                  <p className={`text-[11px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
+                    300 participants · live leaderboard · analytics · €0.12/extra
+                  </p>
+                </button>
+                <button
+                  onClick={() => handlePublish('premium')}
+                  disabled={publishLoading !== null}
+                  className={`text-left px-4 py-3.5 rounded border transition-colors duration-[330ms] ${
+                    dk ? 'bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.05] hover:border-white/20'
+                       : 'bg-[#F4F4F4] border-[#EEEEEE] hover:bg-[#EEEEEE]'
+                  } disabled:opacity-40 disabled:cursor-not-allowed`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2">
+                      <span className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>Premium</span>
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-[#7F8BAD]/20 text-[#7F8BAD]">White-label</span>
+                    </div>
+                    <span className={`text-sm font-medium font-mono ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
+                      {publishLoading === 'premium' ? 'Redirecting…' : 'from €209'}
+                    </span>
+                  </div>
+                  <p className={`text-[11px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
+                    500 participants · white-label branding · custom logo & colors · €0.10/extra
+                  </p>
+                </button>
+              </div>
+              {publishError && <p className="text-xs text-red-400 mt-3">{publishError}</p>}
+            </div>
+          )}
         </div>
 
         {/* Invite code */}

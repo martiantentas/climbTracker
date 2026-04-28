@@ -32,7 +32,6 @@ import JoinPage          from './pages/JoinPage'
 import EventProfilePage  from './pages/EventProfilePage'
 import LandingPage       from './pages/LandingPage'
 import AuthPage from './pages/AuthPage'
-import PaymentModal          from './components/PaymentModal'
 import PostRegistrationModal from './components/PostRegistrationModal'
 import PublicLeaderboardPage from './pages/PublicLeaderboardPage'
 import LegalNoticePage       from './pages/LegalNoticePage'
@@ -462,7 +461,6 @@ function AppInner() {
 
   const [toast,             setToast]             = useState<{ message: string; visible: boolean }>({ message: '', visible: false })
   const [isMenuOpen,        setIsMenuOpen]        = useState(false)
-  const [paymentComp,       setPaymentComp]       = useState<Competition | null>(null)
   const [joinProfileComp,   setJoinProfileComp]   = useState<Competition | null>(null)
   const [pendingRemoveUser, setPendingRemoveUser] = useState<Competitor | null>(null)
   const [pendingBanUser,    setPendingBanUser]    = useState<Competitor | null>(null)
@@ -706,7 +704,7 @@ function AppInner() {
       const isRerun = prev?.status === 'FINISHED' || prev?.status === 'ARCHIVED'
       const needsNewPayment = isRerun || isExpired
       if (!merged.subscription || needsNewPayment) {
-        setPaymentComp({ ...merged, subscription: undefined } as any)
+        showToast('Please choose a plan in Settings to publish this competition.')
         return
       }
     }
@@ -1154,22 +1152,6 @@ function AppInner() {
             onUndo={() => setPendingBanUser(null)}
             onCommit={() => { handleBanUser(pendingBanUser.id); setPendingBanUser(null) }}
             onDismiss={() => setPendingBanUser(null)}
-          />
-        )}
-
-        {/* Payment modal — shown when organizer tries to publish a draft competition */}
-        {paymentComp && (
-          <PaymentModal
-            competition={paymentComp}
-            competitorCount={(competitorsMap[paymentComp.id] ?? []).filter(c => c.role !== 'judge' && c.role !== 'organizer').length}
-            theme={theme}
-            onClose={() => setPaymentComp(null)}
-            onSuccess={published => {
-              setCompetitions(p => p.map(c => c.id === published.id ? published : c))
-              setPaymentComp(null)
-              showToast('🎉 Competition is now Live!')
-              upsertCompetition(published).catch(err => console.error('[db] paymentSuccess:', err))
-            }}
           />
         )}
 
