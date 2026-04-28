@@ -6,7 +6,6 @@ import {
   loadAllUserData, upsertCompetition, deleteCompetition,
   upsertBoulders, upsertCompletion, deleteCompletion,
   upsertMember, deleteMember, fetchMembers, fetchBoulders, fetchCompletions,
-  fetchCompetitionByInviteCode,
 } from './lib/db'
 
 import type { Competition, Boulder, Competitor, Completion, Badge } from './types'
@@ -435,6 +434,31 @@ function AppInner() {
     goto(`/join/${pendingCode}`, { replace: true })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser?.id])
+
+  // Detect return from Stripe Checkout (success or cancel).
+  // Stripe redirects to the plain URL (not the hash), so query params are in
+  // window.location.search even though HashRouter doesn't see them.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.has('payment_success')) {
+      const type = params.get('type')
+      const msg =
+        type === 'bundle'  ? 'Capacity added! Your competition now has more slots.' :
+        type === 'upgrade' ? 'Upgraded to Premium! Branding tools are now unlocked.' :
+                             'Payment confirmed! Your competition is now Live.'
+      showToast(msg)
+      // Clean the query string so the toast doesn't fire again on refresh
+      const clean = new URL(window.location.href)
+      clean.search = ''
+      window.history.replaceState({}, '', clean.toString())
+    } else if (params.has('payment_cancelled')) {
+      showToast('Payment cancelled — no charge was made.')
+      const clean = new URL(window.location.href)
+      clean.search = ''
+      window.history.replaceState({}, '', clean.toString())
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const [toast,             setToast]             = useState<{ message: string; visible: boolean }>({ message: '', visible: false })
   const [isMenuOpen,        setIsMenuOpen]        = useState(false)

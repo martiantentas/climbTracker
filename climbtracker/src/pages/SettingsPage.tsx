@@ -11,7 +11,6 @@ import type { Competition, DifficultyLevel } from '../types'
 import { CompetitionStatus, ScoringType } from '../types'
 import type { Language } from '../translations'
 import { translations } from '../translations'
-import CheckoutModal from '../components/CheckoutModal'
 
 interface SettingsPageProps {
   competition:     Competition
@@ -90,11 +89,32 @@ function InputField({ label, value, type = 'text', theme, onChange, hint, min, m
 // ─── BUNDLE DEFINITIONS ───────────────────────────────────────────────────────
 
 const BUNDLES = [
-  { id: '150', label: '150 extra participants', users: 150, price: 14.99 },
-  { id: '300', label: '300 extra participants', users: 300, price: 29.99 },
+  { id: '150', label: '150 extra participants', users: 150, price: 19.99 },
+  { id: '300', label: '300 extra participants', users: 300, price: 34.99 },
 ] as const
 
-const PROMO_GRANT = 100 // free participants granted by a valid promo code
+const CUSTOM_RATE    = 0.105  // €0.105 per slot, >500 only
+const CUSTOM_MIN     = 501
+const PROMO_GRANT    = 100    // free participants granted by a valid promo code
+
+async function stripeRedirect(body: Record<string, unknown>) {
+  const res = await fetch('/api/create-checkout-session', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(body),
+  })
+
+  let data: { url?: string; error?: string } = {}
+  try {
+    data = await res.json()
+  } catch {
+    // Response body is empty or not JSON — likely a server-side crash
+    throw new Error(`Server error (${res.status}). Check that Stripe env vars are set in Vercel.`)
+  }
+
+  if (!res.ok || !data.url) throw new Error(data.error ?? 'Could not create checkout session')
+  window.location.href = data.url
+}
 
 function BillingSection({ competition, competitorCount, theme, lang, onUpdate }: {
   competition:     Competition
@@ -112,34 +132,29 @@ function BillingSection({ competition, competitorCount, theme, lang, onUpdate }:
   const remaining       = Math.max(0, totalCapacity - competitorCount)
   const isFull          = competitorCount >= totalCapacity
 
-  const [customQty,    setCustomQty]    = useState(500)
+  const [customQty,    setCustomQty]    = useState(CUSTOM_MIN)
   const [promoCode,    setPromoCode]    = useState('')
   const [promoError,   setPromoError]   = useState('')
   const [promoValid,   setPromoValid]   = useState(false)
   const [promoApplied, setPromoApplied] = useState(false)
+  const [buyLoading,   setBuyLoading]   = useState<string | null>(null)  // bundle id or 'custom'
+  const [buyError,     setBuyError]     = useState('')
 
-  // Checkout state — null means closed
-  const [checkout, setCheckout] = useState<{
-    title:    string
-    subtitle: string
-    amount:   number
-    ctaLabel: string
-    users:    number
-  } | null>(null)
-
-  function openBundleCheckout(users: number, label: string, price: number) {
-    setCheckout({
-      title:    label,
-      subtitle: t.bundleOneTime,
-      amount:   price,
-      ctaLabel: t.addParticipants(users),
-      users,
-    })
-  }
-
-  function onBundlePaid() {
-    if (!checkout) return
-    onUpdate({ ...competition, additionalCapacity: extraCapacity + checkout.users } as any)
+  async function handleBuyBundle(slots: number, bundleId: string) {
+    setBuyLoading(bundleId)
+    setBuyError('')
+    try {
+      await stripeRedirect({
+        type:            'bundle',
+        competitionId:   competition.id,
+        competitionName: competition.name,
+        slots,
+        userId:          (competition as any).ownerId,
+      })
+    } catch (e) {
+      setBuyError(e instanceof Error ? e.message : 'Something went wrong')
+      setBuyLoading(null)
+    }
   }
 
   function applyPromo() {
@@ -205,52 +220,83 @@ function BillingSection({ competition, competitorCount, theme, lang, onUpdate }:
         {t.bundlesNote}
       </p>
 
-      {/* Bundles */}
-      <div className="flex flex-col gap-2.5 mb-6">
+      {/* Fixed bundles */}
+      <div className="flex flex-col gap-2.5 mb-4">
         {BUNDLES.map(b => (
           <div key={b.id} className={`flex items-center justify-between px-4 py-3.5 rounded border ${dk ? 'bg-white/[0.02] border-white/[0.06]' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
             <div>
               <p className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>{b.label}</p>
-              <p className={`text-[11px] mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>€{b.price.toFixed(2)} · one-time</p>
+              <p className={`text-[11px] mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
+                €{b.price.toFixed(2)} · one-time · €{(b.price / b.users).toFixed(3)}/slot
+              </p>
             </div>
             <motion.button
-              onClick={() => openBundleCheckout(b.users, b.label, b.price)}
-              className="px-4 py-2 rounded text-xs font-medium bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms]"
-              whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
+              onClick={() => handleBuyBundle(b.users, b.id)}
+              disabled={buyLoading === b.id}
+              className="px-4 py-2 rounded text-xs font-medium bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms] disabled:opacity-40 disabled:cursor-not-allowed min-w-[80px] text-center"
+              whileHover={buyLoading ? {} : { scale: 1.04 }} whileTap={buyLoading ? {} : { scale: 0.94 }}
               transition={{ type: 'spring', stiffness: 420, damping: 26 }}
             >
-              {t.addLabel} {b.users}
+              {buyLoading === b.id ? '…' : `${t.addLabel} ${b.users}`}
             </motion.button>
           </div>
         ))}
 
-        {/* Custom 500+ */}
-        <div className={`flex items-center justify-between px-4 py-3.5 rounded border ${dk ? 'bg-white/[0.02] border-white/[0.06]' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
-          <div className="flex-1">
-            <p className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>{t.customBundle}</p>
-            <p className={`text-[11px] mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
-              €0.12/participant · min 500 · total €{(customQty * 0.12).toFixed(2)}
-            </p>
+        {/* Custom bundle >500 — dynamic pricing */}
+        <div className={`px-4 py-4 rounded border ${dk ? 'bg-white/[0.02] border-white/[0.06]' : 'bg-[#F4F4F4] border-[#EEEEEE]'}`}>
+          <div className="flex items-start justify-between gap-4 mb-3">
+            <div>
+              <p className={`text-sm font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>{t.customBundle}</p>
+              <p className={`text-[11px] mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
+                €{CUSTOM_RATE.toFixed(3)}/participant · minimum {CUSTOM_MIN}
+              </p>
+            </div>
+            {/* Live price badge */}
+            <div className={`flex-shrink-0 text-right`}>
+              <p className={`text-lg font-medium font-mono leading-none ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
+                €{(customQty * CUSTOM_RATE).toFixed(2)}
+              </p>
+              <p className={`text-[10px] mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>total</p>
+            </div>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
+
+          {/* Slider + number input */}
+          <div className="flex items-center gap-3 mb-3">
+            <input
+              type="range"
+              min={CUSTOM_MIN}
+              max={5000}
+              step={50}
+              value={customQty}
+              onChange={e => setCustomQty(Number(e.target.value))}
+              className="flex-1 accent-[#7F8BAD]"
+            />
             <input
               type="number"
-              min={500}
+              min={CUSTOM_MIN}
               value={customQty}
-              onChange={e => setCustomQty(Math.max(500, Number(e.target.value)))}
+              onChange={e => setCustomQty(Math.max(CUSTOM_MIN, Number(e.target.value) || CUSTOM_MIN))}
               className={inputCls}
             />
-            <motion.button
-              onClick={() => openBundleCheckout(customQty, `${t.customBundle} — ${customQty}`, customQty * 0.12)}
-              className="px-4 py-2 rounded text-xs font-medium bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms]"
-              whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
-              transition={{ type: 'spring', stiffness: 420, damping: 26 }}
-            >
-              {t.addLabel}
-            </motion.button>
           </div>
+
+          <motion.button
+            onClick={() => handleBuyBundle(customQty, 'custom')}
+            disabled={buyLoading === 'custom'}
+            className="w-full py-2.5 rounded text-xs font-medium bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms] disabled:opacity-40 disabled:cursor-not-allowed"
+            whileHover={buyLoading ? {} : { scale: 1.01 }} whileTap={buyLoading ? {} : { scale: 0.98 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 26 }}
+          >
+            {buyLoading === 'custom'
+              ? 'Redirecting to Stripe…'
+              : `${t.addLabel} ${customQty} participants — €${(customQty * CUSTOM_RATE).toFixed(2)}`}
+          </motion.button>
         </div>
       </div>
+
+      {buyError && (
+        <p className="text-xs text-red-400 mb-4">{buyError}</p>
+      )}
 
       {/* Divider */}
       <div className={`h-px mb-6 ${dk ? 'bg-white/[0.06]' : 'bg-[#EEEEEE]'}`} />
@@ -289,10 +335,7 @@ function BillingSection({ competition, competitorCount, theme, lang, onUpdate }:
             {promoValid && (
               <div className={`px-4 py-3 rounded border text-xs bg-green-400/10 border-green-400/20 text-green-400 mb-3 flex items-center justify-between`}>
                 <span className="flex items-center gap-2"><Check size={13} strokeWidth={3} /> {t.promoValid(PROMO_GRANT)}</span>
-                <button
-                  onClick={redeemPromo}
-                  className="font-medium underline hover:no-underline transition-all"
-                >
+                <button onClick={redeemPromo} className="font-medium underline hover:no-underline transition-all">
                   {t.redeem}
                 </button>
               </div>
@@ -300,18 +343,6 @@ function BillingSection({ competition, competitorCount, theme, lang, onUpdate }:
           </>
         )}
       </div>
-
-      {/* Bundle checkout modal */}
-      {checkout && (
-        <CheckoutModal
-          title={checkout.title}
-          subtitle={checkout.subtitle}
-          amount={checkout.amount}
-          ctaLabel={checkout.ctaLabel}
-          onClose={() => setCheckout(null)}
-          onSuccess={() => { onBundlePaid(); setCheckout(null) }}
-        />
-      )}
     </SectionCard>
   )
 }
@@ -386,7 +417,24 @@ function BrandingSection({ competition, theme, lang, onUpdate }: {
     )
   }
 
-  const [showUpgradeCheckout, setShowUpgradeCheckout] = useState(false)
+  const [upgradeLoading, setUpgradeLoading] = useState(false)
+  const [upgradeError,   setUpgradeError]   = useState('')
+
+  async function handleUpgrade() {
+    setUpgradeLoading(true)
+    setUpgradeError('')
+    try {
+      await stripeRedirect({
+        type:            'upgrade',
+        competitionId:   competition.id,
+        competitionName: competition.name,
+        userId:          (competition as any).ownerId,
+      })
+    } catch (e) {
+      setUpgradeError(e instanceof Error ? e.message : 'Something went wrong')
+      setUpgradeLoading(false)
+    }
+  }
 
   if (!isPremium) {
     return (
@@ -400,31 +448,21 @@ function BrandingSection({ competition, theme, lang, onUpdate }: {
             <p className={`text-xs leading-relaxed mb-4 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
               {t.brandingLocked}
             </p>
+            {upgradeError && <p className="text-xs text-red-400 mb-3">{upgradeError}</p>}
             <motion.button
-              onClick={() => setShowUpgradeCheckout(true)}
-              className="flex items-center gap-2 px-5 py-2.5 bg-[#7F8BAD] text-white rounded text-sm font-medium hover:bg-[#6D799B] transition-colors duration-[330ms]"
-              whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
+              onClick={handleUpgrade}
+              disabled={upgradeLoading}
+              className="flex items-center gap-2 px-5 py-2.5 bg-[#7F8BAD] text-white rounded text-sm font-medium hover:bg-[#6D799B] transition-colors duration-[330ms] disabled:opacity-40 disabled:cursor-not-allowed"
+              whileHover={upgradeLoading ? {} : { scale: 1.04 }}
+              whileTap={upgradeLoading ? {} : { scale: 0.94 }}
               transition={{ type: 'spring', stiffness: 420, damping: 26 }}
             >
-              <Sparkles size={14} /> {t.upgradePremiumBtn}
+              <Sparkles size={14} />
+              {upgradeLoading ? 'Redirecting to Stripe…' : t.upgradePremiumBtn}
             </motion.button>
           </div>
         </SectionCard>
 
-        {showUpgradeCheckout && (
-          <CheckoutModal
-            title={t.upgradePremium}
-            subtitle={t.upgradeDesc}
-            amount={50}
-            ctaLabel={t.upgradePremium}
-            showPromo
-            onClose={() => setShowUpgradeCheckout(false)}
-            onSuccess={() => {
-              onUpdate({ ...competition, tier: 'premium', subscription: 'premium' } as any)
-              setShowUpgradeCheckout(false)
-            }}
-          />
-        )}
       </>
     )
   }

@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { X, Check, Tag, CreditCard, Lock, Zap, ArrowLeft, Sparkles, Palette } from 'lucide-react'
+import { X, Check, Lock, Zap, ArrowLeft, Sparkles, Palette } from 'lucide-react'
+// Check is used in the plan feature lists below
 import type { Competition } from '../types'
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
@@ -59,58 +60,46 @@ export default function PaymentModal({
   competition,
   competitorCount,
   onClose,
-  onSuccess,
+  onSuccess: _onSuccess,  // kept in props for API compat; result now comes via Stripe webhook
 }: PaymentModalProps) {
-  const [step,           setStep]           = useState<'plan' | 'confirm' | 'promo' | 'payment'>('plan')
+  const [step,           setStep]           = useState<'plan' | 'confirm' | 'payment'>('plan')
   const [tier,           setTier]           = useState<Tier>('standard')
   const [confirmedCount, setConfirmedCount] = useState(Math.max(competitorCount, 1))
-  const [promoCode,      setPromoCode]      = useState('')
-  const [promoError,     setPromoError]     = useState('')
-  const [promoValid,     setPromoValid]     = useState(false)
   const [loading,        setLoading]        = useState(false)
-  const [cardNum,        setCardNum]        = useState('')
-  const [cardExp,        setCardExp]        = useState('')
-  const [cardCvv,        setCardCvv]        = useState('')
-  const [cardName,       setCardName]       = useState('')
+  const [stripeError,    setStripeError]    = useState('')
 
-  function applyPromo() {
-    if (promoCode.trim().length >= 6) {
-      setPromoValid(true)
-      setPromoError('')
-    } else {
-      setPromoError('Invalid promo code.')
-    }
-  }
-
-  function handlePublish() {
+  async function handleStripeRedirect() {
     setLoading(true)
-    setTimeout(() => {
-      const updated: Competition = {
-        ...competition,
-        status:           'LIVE' as any,
-        subscription:     tier,
-        tier,
-        participantLimit: confirmedCount,
-      } as any
-      onSuccess(updated)
-    }, 1200)
-  }
-
-  function formatCard(val: string) {
-    return val.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim()
-  }
-  function formatExp(val: string) {
-    return val.replace(/\D/g, '').slice(0, 4).replace(/(\d{2})(\d)/, '$1/$2')
+    setStripeError('')
+    try {
+      const res = await fetch('/api/create-checkout-session', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type:            'base_plan',
+          competitionId:   competition.id,
+          competitionName: competition.name,
+          tier,
+          participantCount: confirmedCount,
+          userId: (competition as any).ownerId,
+        }),
+      })
+      const data = await res.json() as { url?: string; error?: string }
+      if (!res.ok || !data.url) {
+        setStripeError(data.error ?? 'Could not create checkout session.')
+        setLoading(false)
+        return
+      }
+      window.location.href = data.url
+    } catch {
+      setStripeError('Network error. Please try again.')
+      setLoading(false)
+    }
   }
 
   const total      = calcTotal(confirmedCount, tier)
   const tierConfig = TIERS[tier]
   const overage    = Math.max(0, confirmedCount - tierConfig.baseUsers)
-
-  const inputCls = `
-    w-full px-4 py-3.5 rounded border outline-none text-sm transition-colors duration-[330ms]
-    bg-white/5 border-white/10 text-[#EEEEEE] placeholder:text-[#5C5E62] focus:border-[#7F8BAD]/50
-  `
 
   const btnBack = `
     flex items-center gap-1.5 py-3.5 px-4 rounded text-sm font-medium border transition-colors duration-[330ms]
@@ -303,52 +292,10 @@ export default function PaymentModal({
             </>
           )}
 
-          {/* STEP: Promo code */}
-          {step === 'promo' && (
-            <>
-              <p className="text-sm text-[#5C5E62] mb-5 leading-relaxed">
-                Enter your promo code below. Valid codes are managed by Ascendr administrators.
-              </p>
-              <div className="flex gap-2.5 mb-4">
-                <input
-                  value={promoCode}
-                  onChange={e => setPromoCode(e.target.value.toUpperCase())}
-                  placeholder="YOURCODE"
-                  className={`${inputCls} font-mono tracking-widest`}
-                />
-                <button
-                  onClick={applyPromo}
-                  className="px-5 py-3.5 rounded text-sm font-medium bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms] flex-shrink-0"
-                >
-                  Apply
-                </button>
-              </div>
-              {promoError && <p className="text-xs text-red-400 mb-4">{promoError}</p>}
-              {promoValid && (
-                <div className="px-4 py-3 rounded border bg-green-400/10 border-green-400/30 text-sm text-green-400 mb-4 flex items-center gap-2">
-                  <Check size={15} /> Promo code applied — free access granted!
-                </div>
-              )}
-              <div className="flex gap-2.5">
-                <button onClick={() => setStep('payment')} className={btnBack}>
-                  <ArrowLeft size={14} /> Back
-                </button>
-                {promoValid && (
-                  <button
-                    onClick={handlePublish}
-                    disabled={loading}
-                    className="flex-[2] py-3.5 rounded text-sm font-medium bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms] disabled:opacity-40"
-                  >
-                    {loading ? 'Publishing…' : 'Publish for Free'}
-                  </button>
-                )}
-              </div>
-            </>
-          )}
-
-          {/* STEP: Payment */}
+          {/* STEP: Payment — redirects to Stripe Checkout */}
           {step === 'payment' && (
             <>
+              {/* Order summary */}
               <div className="px-4 py-3 rounded border bg-[#7F8BAD]/[0.06] border-[#7F8BAD]/15 mb-6 flex justify-between items-center">
                 <div>
                   <span className="text-xs text-[#5C5E62] block mb-0.5">{tierConfig.label} · {confirmedCount} participants</span>
@@ -364,44 +311,12 @@ export default function PaymentModal({
                 <span className="text-lg font-medium text-[#7F8BAD] font-mono">€{total.toFixed(2)}</span>
               </div>
 
-              <div className="flex flex-col gap-4 mb-6">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-medium text-[#5C5E62]">Card Number</label>
-                  <div className="relative">
-                    <input
-                      value={cardNum}
-                      onChange={e => setCardNum(formatCard(e.target.value))}
-                      placeholder="1234 5678 9012 3456"
-                      className={`${inputCls} pr-12 font-mono tracking-wider`}
-                    />
-                    <CreditCard size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#393C41]" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[11px] font-medium text-[#5C5E62]">Expires</label>
-                    <input value={cardExp} onChange={e => setCardExp(formatExp(e.target.value))} placeholder="MM/YY" className={`${inputCls} font-mono`} />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[11px] font-medium text-[#5C5E62]">CVV</label>
-                    <input value={cardCvv} onChange={e => setCardCvv(e.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="···" className={`${inputCls} font-mono`} />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[11px] font-medium text-[#5C5E62]">Name</label>
-                    <input value={cardName} onChange={e => setCardName(e.target.value)} placeholder="A. Honnold" className={inputCls} />
-                  </div>
-                </div>
-              </div>
-
-              <button
-                onClick={() => setStep('promo')}
-                className="flex items-center gap-2 text-[#7F8BAD] text-sm font-medium mb-5 hover:text-[#6D799B] transition-colors duration-[330ms]"
-              >
-                <Tag size={14} /> Have a promo code?
-              </button>
+              {stripeError && (
+                <p className="text-xs text-red-400 mb-4">{stripeError}</p>
+              )}
 
               <div className="flex items-center gap-2 mb-5 text-xs text-[#393C41]">
-                <Lock size={11} /> Payments are processed securely. Card data is never stored.
+                <Lock size={11} /> You'll be redirected to Stripe's secure checkout. Card data is never stored by Ascendr.
               </div>
 
               <div className="flex gap-2.5">
@@ -409,7 +324,7 @@ export default function PaymentModal({
                   <ArrowLeft size={14} /> Back
                 </button>
                 <button
-                  onClick={handlePublish}
+                  onClick={handleStripeRedirect}
                   disabled={loading}
                   className={`
                     flex-[2] py-3.5 rounded text-sm font-medium transition-colors duration-[330ms]
@@ -419,7 +334,7 @@ export default function PaymentModal({
                     }
                   `}
                 >
-                  {loading ? 'Publishing…' : `Pay €${total.toFixed(2)} & Go Live`}
+                  {loading ? 'Redirecting to Stripe…' : `Pay €${total.toFixed(2)} & Go Live`}
                 </button>
               </div>
             </>
