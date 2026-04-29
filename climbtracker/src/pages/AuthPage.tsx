@@ -14,7 +14,7 @@ interface GsiCredentialResponse { credential: string }
 interface GoogleAccounts {
   accounts: {
     id: {
-      initialize(cfg: { client_id: string; callback: (r: GsiCredentialResponse) => void }): void
+      initialize(cfg: { client_id: string; nonce?: string; callback: (r: GsiCredentialResponse) => void }): void
       prompt(fn?: (n: { isNotDisplayed(): boolean; isSkippedMoment(): boolean }) => void): void
     }
   }
@@ -34,7 +34,7 @@ type Tab = 'signin' | 'signup' | 'forgot' | 'reset'
 
 const REDIRECT_URL = import.meta.env.DEV
   ? 'http://localhost:5173'
-  : 'https://ascendr.top'
+  : window.location.origin
 
 // ─── FIELD ────────────────────────────────────────────────────────────────────
 
@@ -176,15 +176,27 @@ export default function AuthPage({ theme: _theme, lang, setLang, initialTab, onR
     const g = (window as unknown as { google?: GoogleAccounts }).google
 
     if (clientId && g) {
+      // Generate a nonce — Google receives the SHA-256 hash, Supabase receives the raw value.
+      // Without this, Supabase rejects the id_token in production ("nonce":"not_provided").
+      const rawNonce    = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2,'0')).join('')
+      const hashBuffer  = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(rawNonce))
+      const hashedNonce = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2,'0')).join('')
+
       // GSI path: Google authenticates against ascendr.top directly, no Supabase redirect.
       // The consent screen shows "to continue to ascendr.top" instead of supabase.co.
       g.accounts.id.initialize({
         client_id: clientId,
+        nonce:     hashedNonce,
         callback: async ({ credential }) => {
-          const { error } = await signInWithGoogleToken(credential)
+          const { error } = await signInWithGoogleToken(credential, rawNonce)
           if (error) {
-            setErrors({ _global: 'Google sign-in failed. Please try again.' })
-            setLoading(false)
+            // Network / CORS error (e.g. www subdomain) → fall back to OAuth redirect
+            signInWithGoogle().then(({ error: e2 }) => {
+              if (e2) {
+                setErrors({ _global: 'Google sign-in failed. Please try again.' })
+                setLoading(false)
+              }
+            })
           }
           // On success, onAuthStateChange in App.tsx fires and handles navigation
         },

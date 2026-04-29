@@ -3,9 +3,11 @@ import type { Competitor } from '../types'
 
 // ─── REDIRECT URL ─────────────────────────────────────────────────────────────
 
+// Use the current origin so both ascendr.top and www.ascendr.top work without
+// having to hardcode every domain variant.
 const REDIRECT_URL = import.meta.env.DEV
   ? 'http://localhost:5173'
-  : 'https://ascendr.top'
+  : window.location.origin
 
 // ─── USER MAPPING ─────────────────────────────────────────────────────────────
 // Maps a Supabase user + profiles row into the app's Competitor shape.
@@ -110,9 +112,9 @@ export async function signInWithGoogle() {
 }
 
 // Used with Google Identity Services (GSI) to avoid the Supabase intermediate
-// redirect. The credential is a Google-issued JWT obtained via window.google.accounts.id.
-export async function signInWithGoogleToken(token: string) {
-  return supabase.auth.signInWithIdToken({ provider: 'google', token })
+// redirect. Pass the raw nonce here and the SHA-256 hashed nonce to GSI.
+export async function signInWithGoogleToken(token: string, nonce?: string) {
+  return supabase.auth.signInWithIdToken({ provider: 'google', token, nonce })
 }
 
 export async function signOutUser() {
