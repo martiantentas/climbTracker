@@ -109,6 +109,12 @@ export async function signInWithGoogle() {
   })
 }
 
+// Used with Google Identity Services (GSI) to avoid the Supabase intermediate
+// redirect. The credential is a Google-issued JWT obtained via window.google.accounts.id.
+export async function signInWithGoogleToken(token: string) {
+  return supabase.auth.signInWithIdToken({ provider: 'google', token })
+}
+
 export async function signOutUser() {
   return supabase.auth.signOut()
 }

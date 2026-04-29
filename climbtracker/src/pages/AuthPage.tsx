@@ -7,7 +7,18 @@ import type { Language } from '../translations'
 import { translations } from '../translations'
 import BackgroundBeams from '../components/BackgroundBeams'
 import LoadingSpinner from '../components/LoadingSpinner'
-import { signIn, signUp, signInWithGoogle, resetPasswordForEmail, updatePassword } from '../lib/auth'
+import { signIn, signUp, signInWithGoogle, signInWithGoogleToken, resetPasswordForEmail, updatePassword } from '../lib/auth'
+
+// Minimal type for the GSI library loaded via <script> in index.html
+interface GsiCredentialResponse { credential: string }
+interface GoogleAccounts {
+  accounts: {
+    id: {
+      initialize(cfg: { client_id: string; callback: (r: GsiCredentialResponse) => void }): void
+      prompt(fn?: (n: { isNotDisplayed(): boolean; isSkippedMoment(): boolean }) => void): void
+    }
+  }
+}
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -159,12 +170,45 @@ export default function AuthPage({ theme: _theme, lang, setLang, initialTab, onR
 
   async function handleGoogle() {
     setLoading(true)
-    const { error } = await signInWithGoogle()
-    if (error) {
-      setErrors({ _global: 'Google sign-in failed. Please try again.' })
-      setLoading(false)
+    setErrors({})
+
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined
+    const g = (window as unknown as { google?: GoogleAccounts }).google
+
+    if (clientId && g) {
+      // GSI path: Google authenticates against ascendr.top directly, no Supabase redirect.
+      // The consent screen shows "to continue to ascendr.top" instead of supabase.co.
+      g.accounts.id.initialize({
+        client_id: clientId,
+        callback: async ({ credential }) => {
+          const { error } = await signInWithGoogleToken(credential)
+          if (error) {
+            setErrors({ _global: 'Google sign-in failed. Please try again.' })
+            setLoading(false)
+          }
+          // On success, onAuthStateChange in App.tsx fires and handles navigation
+        },
+      })
+      g.accounts.id.prompt((notification) => {
+        // One Tap blocked (dismissed before, ITP, private browsing) → fall back to redirect
+        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+          signInWithGoogle().then(({ error }) => {
+            if (error) {
+              setErrors({ _global: 'Google sign-in failed. Please try again.' })
+              setLoading(false)
+            }
+          })
+        }
+      })
+    } else {
+      // Fallback: standard OAuth redirect (shows supabase.co — used if GSI script
+      // hasn't loaded yet or VITE_GOOGLE_CLIENT_ID is not set)
+      const { error } = await signInWithGoogle()
+      if (error) {
+        setErrors({ _global: 'Google sign-in failed. Please try again.' })
+        setLoading(false)
+      }
     }
-    // On success, browser is redirected to Google and back — no further action here
   }
 
   async function handleForgot(e: { preventDefault(): void }) {

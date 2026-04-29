@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+
+  <!-- Landing page -->
+  <url>
+    <loc>https://ascendr.top/</loc>
+    <lastmod>2026-04-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://ascendr.top/#/en"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://ascendr.top/#/es"/>
+    <xhtml:link rel="alternate" hreflang="ca" href="https://ascendr.top/#/ca"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ascendr.top/"/>
+  </url>
+
+  <!-- Auth -->
+  <url>
+    <loc>https://ascendr.top/#/en/auth</loc>
+    <lastmod>2026-04-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <!-- Legal -->
+  <url>
+    <loc>https://ascendr.top/#/en/privacy</loc>
+    <lastmod>2026-04-29</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://ascendr.top/#/en/terms</loc>
+    <lastmod>2026-04-29</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://ascendr.top/#/en/legal</loc>
+    <lastmod>2026-04-29</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+
+</urlset>

@@ -159,6 +159,19 @@ function AppInner() {
 
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
 
+  // Strip OAuth PKCE params (?code=&state=) from the address bar immediately on
+  // mount — before Supabase finishes the code exchange (~1-2 s). Supabase reads
+  // the params synchronously at createClient() time, so removing them here is safe.
+  useEffect(() => {
+    if (!window.location.search) return
+    const p = new URLSearchParams(window.location.search)
+    if (p.has('code') || p.has('error')) {
+      const clean = new URL(window.location.href)
+      ;['code', 'state', 'error', 'error_code', 'error_description'].forEach(k => clean.searchParams.delete(k))
+      window.history.replaceState({}, '', clean.toString())
+    }
+  }, [])
+
   // Keep localStorage and <html lang> in sync
   useEffect(() => {
     localStorage.setItem('ct-lang', lang)

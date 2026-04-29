@@ -146,13 +146,13 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
       <main>
 
       {/* ══ HERO ═════════════════════════════════════════════════════════════ */}
-      <section ref={heroRef} style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '100px 24px 80px', position: 'relative', overflow: 'hidden', background: '#100401' }}>
-        {/* Mars terrain canvas */}
+      <section ref={heroRef} style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '100px 24px 80px', position: 'relative', overflow: 'hidden', background: '#3d2520' }}>
+        {/* Infinite tiling Mars terrain canvas */}
         <MarsCanvas />
-        {/* Radial vignette so text stays readable */}
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 90% 70% at 50% 45%, rgba(16,4,1,0.10) 0%, rgba(16,4,1,0.58) 100%)', pointerEvents: 'none' }} />
+        {/* Radial vignette — keeps hero text readable against the terrain */}
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 80% 60% at 50% 42%, rgba(20,8,4,0.05) 0%, rgba(20,8,4,0.55) 100%)', pointerEvents: 'none' }} />
         {/* Bottom gradient — seamless blend into the page background */}
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '38%', background: 'linear-gradient(to bottom, transparent 0%, rgba(18,18,18,0.6) 40%, #121212 100%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '40%', background: 'linear-gradient(to bottom, transparent 0%, rgba(18,18,18,0.7) 45%, #121212 100%)', pointerEvents: 'none' }} />
 
         <div style={{ maxWidth: 720, textAlign: 'center', position: 'relative', zIndex: 1 }}>
           <div className="anim-1" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 28, padding: '5px 14px', borderRadius: 999, border: `1px solid ${C.accent}30`, background: `${C.accent}0D`, fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.accent }}>
