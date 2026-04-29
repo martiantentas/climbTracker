@@ -1,23 +1,29 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'motion/react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Eye, EyeOff, ArrowLeft, CheckCircle2 } from 'lucide-react'
+import { Eye, EyeOff, ArrowLeft, CheckCircle2, Mail } from 'lucide-react'
 import ascendrLogo from '../assets/Ascendr.png'
 import type { Language } from '../translations'
 import { translations } from '../translations'
 import BackgroundBeams from '../components/BackgroundBeams'
 import LoadingSpinner from '../components/LoadingSpinner'
-import { signIn, signUp, signInWithGoogle } from '../lib/auth'
+import { signIn, signUp, signInWithGoogle, resetPasswordForEmail, updatePassword } from '../lib/auth'
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
 interface AuthPageProps {
-  theme:   'light' | 'dark'
-  lang:    Language
-  setLang: (l: Language) => void
+  theme:            'light' | 'dark'
+  lang:             Language
+  setLang:          (l: Language) => void
+  initialTab?:      Tab
+  onResetComplete?: () => void
 }
 
-type Tab = 'signin' | 'signup'
+type Tab = 'signin' | 'signup' | 'forgot' | 'reset'
+
+const REDIRECT_URL = import.meta.env.DEV
+  ? 'http://localhost:5173'
+  : 'https://ascendr.top'
 
 // ─── FIELD ────────────────────────────────────────────────────────────────────
 
@@ -64,21 +70,28 @@ function Field({ label, type, value, onChange, error, placeholder, right }: {
 
 // ─── AUTH PAGE ────────────────────────────────────────────────────────────────
 
-export default function AuthPage({ theme: _theme, lang, setLang }: AuthPageProps) {
+export default function AuthPage({ theme: _theme, lang, setLang, initialTab, onResetComplete }: AuthPageProps) {
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const tr = translations[lang]
 
-  const [tab,            setTab]            = useState<Tab>(params.get('tab') === 'signup' ? 'signup' : 'signin')
+  const [tab,            setTab]            = useState<Tab>(initialTab ?? (params.get('tab') === 'signup' ? 'signup' : 'signin'))
   const [confirmPending, setConfirmPending] = useState(false)
-  const [email,     setEmail]     = useState('')
-  const [password,  setPassword]  = useState('')
-  const [firstName, setFirstName] = useState('')
-  const [lastName,  setLastName]  = useState('')
-  const [gdpr,      setGdpr]      = useState(false)
-  const [errors,    setErrors]    = useState<Record<string, string>>({})
-  const [loading,   setLoading]   = useState(false)
-  const [success,   setSuccess]   = useState(false)
+  const [email,          setEmail]          = useState('')
+  const [password,       setPassword]       = useState('')
+  const [firstName,      setFirstName]      = useState('')
+  const [lastName,       setLastName]       = useState('')
+  const [gdpr,           setGdpr]           = useState(false)
+  const [errors,         setErrors]         = useState<Record<string, string>>({})
+  const [loading,        setLoading]        = useState(false)
+  const [success,        setSuccess]        = useState(false)
+  const [forgotSent,     setForgotSent]     = useState(false)
+  const [newPassword,    setNewPassword]    = useState('')
+  const [confirmPass,    setConfirmPass]    = useState('')
+
+  useEffect(() => {
+    if (initialTab) setTab(initialTab)
+  }, [initialTab])
 
   useEffect(() => {
     const t = params.get('tab')
@@ -154,6 +167,40 @@ export default function AuthPage({ theme: _theme, lang, setLang }: AuthPageProps
     // On success, browser is redirected to Google and back — no further action here
   }
 
+  async function handleForgot(e: { preventDefault(): void }) {
+    e.preventDefault()
+    if (!email.trim()) { setErrors({ email: tr.authErrEmail }); return }
+    setLoading(true)
+    setErrors({})
+    try {
+      const { error } = await resetPasswordForEmail(email.trim(), REDIRECT_URL)
+      if (error) { setErrors({ _global: error.message }); return }
+      setForgotSent(true)
+    } catch (err: unknown) {
+      setErrors({ _global: err instanceof Error ? err.message : 'An unexpected error occurred.' })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleReset(e: { preventDefault(): void }) {
+    e.preventDefault()
+    if (newPassword !== confirmPass) { setErrors({ confirmPass: tr.authPasswordMismatch }); return }
+    if (newPassword.length < 6)      { setErrors({ newPassword: tr.authErrPasswordLen });   return }
+    setLoading(true)
+    setErrors({})
+    try {
+      const { error } = await updatePassword(newPassword)
+      if (error) { setErrors({ _global: error.message }); return }
+      setSuccess(true)
+      setTimeout(() => { onResetComplete?.() }, 1800)
+    } catch (err: unknown) {
+      setErrors({ _global: err instanceof Error ? err.message : 'An unexpected error occurred.' })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[#121212] flex">
 
@@ -223,31 +270,118 @@ export default function AuthPage({ theme: _theme, lang, setLang }: AuthPageProps
           <img src={ascendrLogo} alt="Ascendr" className="h-8 w-auto object-contain" />
         </div>
 
-        {/* Tab toggle */}
-        <div className="flex bg-white/5 rounded p-1 mb-9 relative">
-          {(['signin', 'signup'] as Tab[]).map(tab_ => (
-            <motion.button
-              key={tab_}
-              onClick={() => setTab(tab_)}
-              whileTap={{ scale: 0.96 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 28 }}
-              className="flex-1 py-2.5 rounded text-sm font-medium transition-colors duration-[330ms] relative z-10"
-              style={{ color: tab === tab_ ? 'white' : undefined }}
-            >
-              {tab === tab_ && (
-                <motion.div
-                  layoutId="auth-tab-indicator"
-                  className="absolute inset-0 rounded bg-[#7F8BAD]"
-                  transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                />
-              )}
-              <span className={`relative z-10 ${tab === tab_ ? 'text-white' : 'text-[#5C5E62]'}`}>
-                {tab_ === 'signin' ? tr.authSignIn : tr.authCreateAccount}
-              </span>
-            </motion.button>
-          ))}
-        </div>
+        {/* Tab toggle — only for signin/signup */}
+        {(tab === 'signin' || tab === 'signup') && (
+          <div className="flex bg-white/5 rounded p-1 mb-9 relative">
+            {(['signin', 'signup'] as Tab[]).map(tab_ => (
+              <motion.button
+                key={tab_}
+                onClick={() => setTab(tab_)}
+                whileTap={{ scale: 0.96 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+                className="flex-1 py-2.5 rounded text-sm font-medium transition-colors duration-[330ms] relative z-10"
+                style={{ color: tab === tab_ ? 'white' : undefined }}
+              >
+                {tab === tab_ && (
+                  <motion.div
+                    layoutId="auth-tab-indicator"
+                    className="absolute inset-0 rounded bg-[#7F8BAD]"
+                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                  />
+                )}
+                <span className={`relative z-10 ${tab === tab_ ? 'text-white' : 'text-[#5C5E62]'}`}>
+                  {tab_ === 'signin' ? tr.authSignIn : tr.authCreateAccount}
+                </span>
+              </motion.button>
+            ))}
+          </div>
+        )}
 
+        {/* ── FORGOT PASSWORD ─────────────────────────────────────────────── */}
+        {tab === 'forgot' && (
+          <>
+            <h1 className="text-2xl font-medium text-[#EEEEEE] mb-1.5">{tr.authForgotTitle}</h1>
+            <p className="text-sm text-[#5C5E62] mb-8">{tr.authForgotDesc}</p>
+
+            {forgotSent ? (
+              <div className="flex flex-col items-center gap-4 py-10 text-center">
+                <Mail size={48} className="text-[#7F8BAD]" />
+                <p className="text-lg font-medium text-[#EEEEEE]">{tr.authForgotCheckEmail}</p>
+                <p className="text-sm text-[#5C5E62]">{tr.authForgotSentDesc} <span className="text-[#EEEEEE]">{email}</span></p>
+                <button
+                  type="button"
+                  onClick={() => { setForgotSent(false); setTab('signin') }}
+                  className="mt-2 text-sm text-[#7F8BAD] hover:text-[#6D799B] underline underline-offset-2 transition-colors duration-[330ms]"
+                >
+                  {tr.authForgotBackSignIn}
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleForgot} className="flex flex-col gap-4">
+                {errors._global && (
+                  <div className="px-4 py-3 rounded border bg-red-500/10 border-red-500/30 text-sm text-red-400">
+                    {errors._global}
+                  </div>
+                )}
+                <Field label={tr.authEmailAddr} type="email" value={email} onChange={setEmail} error={errors.email} placeholder="you@example.com" />
+                <motion.button
+                  type="submit"
+                  disabled={loading}
+                  className={`mt-2 py-4 rounded text-sm font-medium transition-colors duration-[330ms] ${loading ? 'bg-[#7F8BAD]/30 text-[#5C5E62] cursor-not-allowed' : 'bg-[#7F8BAD] text-white hover:bg-[#6D799B] cursor-pointer'}`}
+                  whileTap={{ scale: 0.97 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                >
+                  {loading ? <LoadingSpinner size={22} color="#fff" /> : tr.authForgotBtn}
+                </motion.button>
+                <button
+                  type="button"
+                  onClick={() => setTab('signin')}
+                  className="text-center text-sm text-[#7F8BAD] hover:text-[#6D799B] transition-colors duration-[330ms]"
+                >
+                  {tr.authForgotBackSignIn}
+                </button>
+              </form>
+            )}
+          </>
+        )}
+
+        {/* ── RESET PASSWORD ───────────────────────────────────────────────── */}
+        {tab === 'reset' && (
+          <>
+            <h1 className="text-2xl font-medium text-[#EEEEEE] mb-1.5">{tr.authResetTitle}</h1>
+            <p className="text-sm text-[#5C5E62] mb-8">{tr.authResetDesc}</p>
+
+            {success ? (
+              <div className="flex flex-col items-center gap-4 py-10 text-center">
+                <CheckCircle2 size={48} className="text-[#7F8BAD]" />
+                <p className="text-lg font-medium text-[#EEEEEE]">{tr.authResetSuccess}</p>
+              </div>
+            ) : (
+              <form onSubmit={handleReset} className="flex flex-col gap-4">
+                {errors._global && (
+                  <div className="px-4 py-3 rounded border bg-red-500/10 border-red-500/30 text-sm text-red-400">
+                    {errors._global}
+                  </div>
+                )}
+                <Field label={tr.authResetNewPass}    type="password" value={newPassword} onChange={setNewPassword} error={errors.newPassword} placeholder="········" />
+                <Field label={tr.authResetConfirmPass} type="password" value={confirmPass} onChange={setConfirmPass} error={errors.confirmPass} placeholder="········" />
+                <motion.button
+                  type="submit"
+                  disabled={loading}
+                  className={`mt-2 py-4 rounded text-sm font-medium transition-colors duration-[330ms] ${loading ? 'bg-[#7F8BAD]/30 text-[#5C5E62] cursor-not-allowed' : 'bg-[#7F8BAD] text-white hover:bg-[#6D799B] cursor-pointer'}`}
+                  whileTap={{ scale: 0.97 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                >
+                  {loading ? <LoadingSpinner size={22} color="#fff" /> : tr.authResetBtn}
+                </motion.button>
+              </form>
+            )}
+          </>
+        )}
+
+        {/* ── SIGN IN / SIGN UP ────────────────────────────────────────────── */}
+        {(tab === 'signin' || tab === 'signup') && (
+        <>
         <h1 className="text-2xl font-medium text-[#EEEEEE] mb-1.5">
           {tab === 'signin' ? tr.authWelcomeBack : tr.authGetStarted}
         </h1>
@@ -301,7 +435,7 @@ export default function AuthPage({ theme: _theme, lang, setLang }: AuthPageProps
               placeholder="········"
               right={
                 tab === 'signin'
-                  ? <button type="button" className="text-[11px] font-medium text-[#7F8BAD] hover:text-[#6D799B] transition-colors duration-[330ms]">{tr.authForgot}</button>
+                  ? <button type="button" onClick={() => setTab('forgot')} className="text-[11px] font-medium text-[#7F8BAD] hover:text-[#6D799B] transition-colors duration-[330ms]">{tr.authForgot}</button>
                   : undefined
               }
             />
@@ -419,6 +553,8 @@ export default function AuthPage({ theme: _theme, lang, setLang }: AuthPageProps
               </motion.button>
             </p>
           </form>
+        )}
+        </>
         )}
       </motion.div>
 

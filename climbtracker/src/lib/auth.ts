@@ -112,3 +112,11 @@ export async function signInWithGoogle() {
 export async function signOutUser() {
   return supabase.auth.signOut()
 }
+
+export async function resetPasswordForEmail(email: string, redirectTo: string) {
+  return supabase.auth.resetPasswordForEmail(email, { redirectTo })
+}
+
+export async function updatePassword(password: string) {
+  return supabase.auth.updateUser({ password })
+}
