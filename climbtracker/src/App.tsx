@@ -203,6 +203,16 @@ function AppInner() {
   // change, so the second useEffect wouldn't re-run → dataLoading stuck true forever.
   const authUserIdRef = useRef<string | null>(null)
 
+  // Set of competition IDs whose completions have already been fetched.
+  // Prevents redundant DB reads when the user switches back to a competition
+  // they already loaded, and avoids double-fetching when Realtime keeps things live.
+  const loadedCompletionsRef = useRef<Set<string>>(new Set())
+
+  // Pending debounce timers for completion writes, keyed by "competitorId:boulderId".
+  // Rapid taps (incrementing attempts, judge double-validating) are collapsed into
+  // a single DB write after 400 ms of inactivity, reducing write storms under load.
+  const pendingWriteTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
+
   const [competitions,   setCompetitions]   = useState<Competition[]>([])
   const [activeCompId,   setActiveCompId]   = useState<string>(() => {
     try { return localStorage.getItem('ct-active-comp') ?? '' } catch { return '' }
@@ -268,9 +278,13 @@ function AppInner() {
     if (!authUser) return
     let cancelled = false
 
+    // Pass the current activeCompId so loadAllUserData pre-fetches completions
+    // for the competition that will be visible immediately after login.
+    const currentActiveId = activeCompId || (localStorage.getItem('ct-active-comp') ?? '')
+
     Promise.allSettled([
       getProfile(authUser.id),
-      loadAllUserData(authUser.id),
+      loadAllUserData(authUser.id, currentActiveId),
     ]).then(([profileResult, dataResult]) => {
       if (cancelled) return
       const profile  = profileResult.status === 'fulfilled' ? profileResult.value  : null
@@ -280,13 +294,15 @@ function AppInner() {
       }
       setCurrentUser(supabaseUserToCompetitor(authUser, profile))
       if (userData) {
+        // Mark the pre-fetched competition so the lazy loader skips it.
+        loadedCompletionsRef.current = new Set(userData.activeId ? [userData.activeId] : [])
         setCompetitions(userData.comps)
         setBouldersMap(userData.boulders)
         setCompletionsMap(userData.completions)
         setCompetitorsMap(userData.members)
         setWaitlistMap(userData.waitlists)
         setActiveCompId(prev =>
-          prev && userData.comps.some(c => c.id === prev) ? prev : userData.comps[0]?.id ?? ''
+          prev && userData.comps.some(c => c.id === prev) ? prev : (userData.activeId || userData.comps[0]?.id || '')
         )
       }
       setDataLoading(false)
@@ -301,6 +317,19 @@ function AppInner() {
   useEffect(() => {
     if (activeCompId) localStorage.setItem('ct-active-comp', activeCompId)
   }, [activeCompId])
+
+  // Lazy-load completions when the user switches to a competition whose completions
+  // haven't been fetched yet.  loadAllUserData only pre-fetches the active comp on
+  // login; everything else is deferred until it's actually needed.
+  useEffect(() => {
+    if (!activeCompId || !currentUser) return
+    if (loadedCompletionsRef.current.has(activeCompId)) return
+    loadedCompletionsRef.current.add(activeCompId)
+    fetchCompletions(activeCompId)
+      .then(cs => setCompletionsMap(prev => ({ ...prev, [activeCompId]: cs })))
+      .catch(err => console.error('[db] lazy fetchCompletions:', err))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeCompId, currentUser?.id])
 
   // ── Real-time subscription — all tables for the active competition ────────
   // One channel, four listeners. Patches local state in place so every connected
@@ -370,7 +399,29 @@ function AppInner() {
 
       .subscribe()
 
-    return () => { supabase.removeChannel(channel) }
+    // ── Realtime health-check ─────────────────────────────────────────────────
+    // If the channel drops (network blip, plan limit hit, server restart) events
+    // stop flowing and the leaderboard goes stale with no visible error.
+    // Every 20 s we check the channel state; if it's not 'joined' we fall back
+    // to a REST poll so scores stay accurate even without a live connection.
+    const healthCheck = setInterval(() => {
+      // RealtimeChannel exposes .state but isn't in the public TS types yet
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((channel as any).state !== 'joined') {
+        console.warn('[realtime] channel not joined — polling fallback')
+        Promise.all([
+          fetchCompletions(activeCompId)
+            .then(cs => setCompletionsMap(prev => ({ ...prev, [activeCompId]: cs }))),
+          fetchBoulders(activeCompId)
+            .then(bs => setBouldersMap(prev => ({ ...prev, [activeCompId]: bs }))),
+        ]).catch(err => console.error('[realtime] poll fallback failed:', err))
+      }
+    }, 20_000)
+
+    return () => {
+      clearInterval(healthCheck)
+      supabase.removeChannel(channel)
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeCompId, currentUser?.id])
 
@@ -410,6 +461,8 @@ function AppInner() {
           fetchMembers(compId),
         ])
 
+        // Mark as loaded so the lazy-load effect doesn't fetch again on switch
+        loadedCompletionsRef.current.add(compId)
         setCompetitions(prev => prev.some(c => c.id === compId) ? prev : [...prev, comp])
         setBouldersMap(prev    => ({ ...prev, [compId]: boulders }))
         setCompletionsMap(prev => ({ ...prev, [compId]: completions }))
@@ -433,6 +486,7 @@ function AppInner() {
           fetchCompletions(compId),
           fetchMembers(compId),
         ])
+        loadedCompletionsRef.current.add(compId)
         setCompetitions(prev => prev.some(c => c.id === compId) ? prev : [...prev, comp])
         setBouldersMap(prev    => ({ ...prev, [compId]: boulders }))
         setCompletionsMap(prev => ({ ...prev, [compId]: completions }))
@@ -708,16 +762,32 @@ function AppInner() {
       return { ...prev, [compId]: updated }
     })
 
-    // Persist to Supabase
+    // Persist to Supabase — upserts are debounced per boulder so rapid taps
+    // (attempt count increments, double-taps) collapse into a single DB write.
+    // Deletes are sent immediately since they're always intentional.
+    const writeKey = `${competitorId}:${boulderId}`
     if (existing) {
       if (forceStatus === false) {
+        const t = pendingWriteTimers.current.get(writeKey)
+        if (t) { clearTimeout(t); pendingWriteTimers.current.delete(writeKey) }
         deleteCompletion(compId, competitorId, boulderId).catch(err => console.error('[db] deleteCompletion:', err))
       } else {
-        upsertCompletion(compId, { ...existing, attempts: Math.max(1, attempts) }).catch(err => console.error('[db] upsertCompletion:', err))
+        const entry = { ...existing, attempts: Math.max(1, attempts) }
+        const t = pendingWriteTimers.current.get(writeKey)
+        if (t) clearTimeout(t)
+        pendingWriteTimers.current.set(writeKey, setTimeout(() => {
+          pendingWriteTimers.current.delete(writeKey)
+          upsertCompletion(compId, entry).catch(err => console.error('[db] upsertCompletion:', err))
+        }, 400))
       }
     } else if (forceStatus === true) {
       const entry: Completion = { competitorId, boulderId, attempts: Math.max(1, attempts), timestamp: Date.now(), hasZone: false, zoneAttempts: 0, zonesReached: 0, topValidated: true }
-      upsertCompletion(compId, entry).catch(err => console.error('[db] upsertCompletion:', err))
+      const t = pendingWriteTimers.current.get(writeKey)
+      if (t) clearTimeout(t)
+      pendingWriteTimers.current.set(writeKey, setTimeout(() => {
+        pendingWriteTimers.current.delete(writeKey)
+        upsertCompletion(compId, entry).catch(err => console.error('[db] upsertCompletion:', err))
+      }, 400))
     }
   }
 
@@ -1063,7 +1133,13 @@ function AppInner() {
           : [...current, entry],
       }
     })
-    upsertCompletion(compId, entry).catch(err => console.error('[db] logScore:', err))
+    const writeKey = `${competitorId}:${boulderId}`
+    const t = pendingWriteTimers.current.get(writeKey)
+    if (t) clearTimeout(t)
+    pendingWriteTimers.current.set(writeKey, setTimeout(() => {
+      pendingWriteTimers.current.delete(writeKey)
+      upsertCompletion(compId, entry).catch(err => console.error('[db] logScore:', err))
+    }, 400))
   }
 
   // ── Unauthenticated shell: Landing + Auth ─────────────────────────────────
