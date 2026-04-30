@@ -41,8 +41,10 @@ create index on public.boulders(competition_id);
 create table public.competition_members (
   competition_id text        not null references public.competitions(id) on delete cascade,
   user_id        uuid        not null references auth.users(id) on delete cascade,
-  role           text        not null default 'competitor',  -- competitor | judge | organizer
-  status         text        not null default 'active',      -- active | waitlisted
+  role           text        not null default 'competitor'
+                             check (role in ('competitor', 'judge', 'organizer')),
+  status         text        not null default 'active'
+                             check (status in ('active', 'waitlisted')),
   bib_number     integer,
   trait_ids      text[]      not null default '{}',
   gender         text,
@@ -163,16 +165,22 @@ create policy "organizer_insert" on public.competition_members
   );
 
 -- UPDATE: self or organizer modifies a row.
+-- WITH CHECK ensures new values are always valid enum values regardless of caller.
+-- Self role/status escalation is blocked separately by the trigger below.
 create policy "organizer_update" on public.competition_members
   for update using (
     user_id = auth.uid()
     or exists (
       select 1 from public.competition_members cm2
-      where cm2.competition_id = competition_id
+      where cm2.competition_id = competition_members.competition_id
         and cm2.user_id = auth.uid()
         and cm2.role = 'organizer'
         and cm2.status = 'active'
     )
+  )
+  with check (
+    role   in ('competitor', 'judge', 'organizer')
+    and status in ('active', 'waitlisted')
   );
 
 -- DELETE: self-leave or organizer removes a member.
@@ -187,6 +195,30 @@ create policy "organizer_delete" on public.competition_members
         and cm2.status = 'active'
     )
   );
+
+-- Trigger: prevent self role/status escalation.
+-- RLS alone cannot express "you may update your own row but only if you don't
+-- touch role/status (unless you're already an organizer)."  A BEFORE UPDATE
+-- trigger handles this without any cross-table subquery or RLS recursion.
+--
+--   • Self-update + NOT currently organizer → role and status are silently
+--     preserved (attacker sees a success but values don't change).
+--   • Self-update + IS currently organizer → all changes allowed (step-down OK).
+--   • Updating another user's row → not reached by this trigger path.
+create or replace function public.prevent_self_role_status_change()
+returns trigger language plpgsql as $$
+begin
+  if new.user_id = auth.uid() and old.role <> 'organizer' then
+    new.role   := old.role;
+    new.status := old.status;
+  end if;
+  return new;
+end;
+$$;
+
+create trigger trg_prevent_self_role_status_change
+  before update on public.competition_members
+  for each row execute function public.prevent_self_role_status_change();
 
 -- completions: readable by competition members; writable by the competitor or judges/organizers
 create policy "completion_read" on public.completions
