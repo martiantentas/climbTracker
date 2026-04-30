@@ -82,6 +82,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
         .anim-3 { animation: fadeUp 0.6s 0.2s ease both; }
         .anim-4 { animation: fadeUp 0.6s 0.32s ease both; }
         .chevron-pulse { animation: pulse-slow 3s ease-in-out infinite; }
+        #features, #workflow, #pricing { scroll-margin-top: 64px; }
         .lp-card { transition: border-color 0.33s, transform 0.33s; }
         .lp-card:hover { border-color: rgba(127,139,173,0.35) !important; transform: translateY(-2px); }
         .btn-primary:hover { background: #6D799B !important; }
@@ -109,12 +110,13 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
           </div>
 
           <div className="hide-mobile" style={{ display: 'flex', gap: 4 }}>
-            {([[t.navFeatures, '#features'], [t.navHowWorks, '#workflow'], [t.navPricing, '#pricing']] as [string, string][]).map(([label, href]) => (
-              <a key={href} href={href}
-                style={{ fontSize: 13, fontWeight: 500, color: C.txtLow, textDecoration: 'none', padding: '6px 14px', borderRadius: 6, transition: 'color 0.33s, background 0.33s' }}
+            {([[t.navFeatures, 'features'], [t.navHowWorks, 'workflow'], [t.navPricing, 'pricing']] as [string, string][]).map(([label, id]) => (
+              <button key={id}
+                onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })}
+                style={{ fontSize: 13, fontWeight: 500, color: C.txtLow, background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px 14px', borderRadius: 6, transition: 'color 0.33s, background 0.33s', fontFamily: C.font }}
                 onMouseEnter={e => { e.currentTarget.style.color = C.txt; e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
                 onMouseLeave={e => { e.currentTarget.style.color = C.txtLow; e.currentTarget.style.background = 'transparent' }}
-              >{label}</a>
+              >{label}</button>
             ))}
           </div>
 
