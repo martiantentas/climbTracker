@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { Resend } from 'resend'
-import { guardJsonRequest } from './_auth'
+import { guardJsonRequest } from './_auth.js'
 
 // Strip CR/LF/tab characters that could be used for header injection in
 // fields that flow into the subject or other single-line headers.

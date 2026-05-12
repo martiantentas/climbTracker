@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import Stripe from 'stripe'
-import { verifyUser, guardJsonRequest } from './_auth'
+import { verifyUser, guardJsonRequest } from './_auth.js'
 
 // ─── HANDLER ──────────────────────────────────────────────────────────────────
 // READ-ONLY endpoint called by the client on return from Stripe Checkout.

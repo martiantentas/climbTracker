@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import Stripe from 'stripe'
-import { verifyUser, guardJsonRequest } from './_auth'
+import { verifyUser, guardJsonRequest } from './_auth.js'
 
 // ─── PRICING CONSTANTS ────────────────────────────────────────────────────────
 
@@ -62,7 +62,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const compEnc = encodeURIComponent(competitionId)
 
   // Build line item, metadata, and success URL based on the purchase type
-  let lineItem: Stripe.Checkout.Session.CreateParams.LineItem
+  let lineItem: Stripe.Checkout.SessionCreateParams.LineItem
   let metadata: Record<string, string>
   let successUrl: string
 
