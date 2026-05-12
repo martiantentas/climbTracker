@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef, lazy, Suspense } from 'react'
 import { HashRouter, Routes, Route, Navigate, useNavigate, useParams, useLocation } from 'react-router-dom'
-import { supabase } from './lib/supabase'
+import { supabase, authedFetchInit } from './lib/supabase'
 import { getProfile, upsertProfile, supabaseUserToCompetitor, signOutUser } from './lib/auth'
 import {
   loadAllUserData, upsertCompetition, deleteCompetition,
@@ -53,7 +53,16 @@ function PageSpinner() {
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
 function generateInviteCode(): string {
-  return Math.random().toString(36).substring(2, 8).toUpperCase()
+  // Use crypto.getRandomValues — Math.random is predictable and could let an
+  // attacker brute-force private invite codes once one is known.
+  // Crockford-style base32 alphabet (no I/L/O/U → fewer typos and ambiguities).
+  const alphabet = 'ABCDEFGHJKMNPQRSTVWXYZ23456789'
+  const len      = 10
+  const bytes    = new Uint8Array(len)
+  crypto.getRandomValues(bytes)
+  let out = ''
+  for (let i = 0; i < len; i++) out += alphabet[bytes[i] % alphabet.length]
+  return out
 }
 
 function darkenHex(hex: string, amount: number): string {
@@ -530,13 +539,13 @@ function AppInner() {
       // Call verify-payment: confirms payment with Stripe, updates the DB,
       // and returns the updated competition so we can patch local state right away.
       if (sessionId && compId) {
-        fetch('/api/verify-payment', {
-          method:  'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ sessionId }),
+        authedFetchInit({
+          method: 'POST',
+          body:   JSON.stringify({ sessionId }),
         })
+          .then(init => fetch('/api/verify-payment', init))
           .then(r => r.json())
-          .then((data: { success?: boolean; competition?: Record<string, unknown>; error?: string }) => {
+          .then((data: { success?: boolean; pending?: boolean; competition?: Record<string, unknown>; error?: string }) => {
             if (data.success && data.competition) {
               const updated = data.competition as unknown as Competition
               setCompetitions(prev =>
@@ -544,11 +553,15 @@ function AppInner() {
                   ? prev.map(c => c.id === compId ? updated : c)
                   : prev
               )
-              const msg =
-                type === 'bundle'  ? 'Capacity added! Your competition now has more slots.' :
-                type === 'upgrade' ? 'Upgraded to Premium! Branding tools are now unlocked.' :
-                                     'Payment confirmed! Your competition is now Live.'
-              showToast(msg)
+              if (data.pending) {
+                showToast('Payment received — finalising… your update will appear shortly.')
+              } else {
+                const msg =
+                  type === 'bundle'  ? 'Capacity added! Your competition now has more slots.' :
+                  type === 'upgrade' ? 'Upgraded to Premium! Branding tools are now unlocked.' :
+                                       'Payment confirmed! Your competition is now Live.'
+                showToast(msg)
+              }
             } else {
               console.error('[verify-payment] server error:', data.error)
               showToast('Payment received but status update failed — please refresh.')

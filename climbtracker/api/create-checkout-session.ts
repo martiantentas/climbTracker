@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import Stripe from 'stripe'
+import { verifyUser, guardJsonRequest } from './_auth'
 
 // ─── PRICING CONSTANTS ────────────────────────────────────────────────────────
 
@@ -29,15 +30,32 @@ function productId(key: string): string | undefined {
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
+  if (!guardJsonRequest(req, res)) return
 
   const secretKey = process.env.STRIPE_SECRET_KEY
   if (!secretKey) return res.status(500).json({ error: 'Stripe not configured' })
 
-  const { type, competitionId, competitionName, userId } = req.body ?? {}
+  // Require a valid Supabase session — userId is derived from the JWT, never trusted from the body.
+  const auth = await verifyUser(req)
+  if ('error' in auth) return res.status(auth.status).json({ error: auth.error })
+  const { user, supabase } = auth
+  const userId = user.id
 
-  if (!type || !competitionId || !userId) {
+  const { type, competitionId, competitionName } = req.body ?? {}
+
+  if (!type || !competitionId) {
     return res.status(400).json({ error: 'Missing required fields' })
   }
+
+  // Ownership check: only the competition owner can pay for / upgrade it.
+  const { data: ownerRow, error: ownerErr } = await supabase
+    .from('competitions')
+    .select('owner_id')
+    .eq('id', competitionId)
+    .single()
+
+  if (ownerErr || !ownerRow) return res.status(404).json({ error: 'Competition not found' })
+  if (ownerRow.owner_id !== userId) return res.status(403).json({ error: 'Not the competition owner' })
 
   const stripe  = new Stripe(secretKey)
   const appUrl  = process.env.APP_URL ?? 'https://ascendr.top'

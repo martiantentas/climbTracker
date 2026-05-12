@@ -11,6 +11,7 @@ import type { Competition, DifficultyLevel } from '../types'
 import { CompetitionStatus, ScoringType } from '../types'
 import type { Language } from '../translations'
 import { translations } from '../translations'
+import { authedFetchInit } from '../lib/supabase'
 
 interface SettingsPageProps {
   competition:     Competition
@@ -98,11 +99,10 @@ const CUSTOM_MIN     = 501
 const PROMO_GRANT    = 100    // free participants granted by a valid promo code
 
 async function stripeRedirect(body: Record<string, unknown>) {
-  const res = await fetch('/api/create-checkout-session', {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify(body),
-  })
+  const res = await fetch('/api/create-checkout-session', await authedFetchInit({
+    method: 'POST',
+    body:   JSON.stringify(body),
+  }))
 
   let data: { url?: string; error?: string } = {}
   try {
@@ -149,7 +149,6 @@ function BillingSection({ competition, competitorCount, theme, lang, onUpdate }:
         competitionId:   competition.id,
         competitionName: competition.name,
         slots,
-        userId:          (competition as any).ownerId,
       })
     } catch (e) {
       setBuyError(e instanceof Error ? e.message : 'Something went wrong')
@@ -428,7 +427,6 @@ function BrandingSection({ competition, theme, lang, onUpdate }: {
         type:            'upgrade',
         competitionId:   competition.id,
         competitionName: competition.name,
-        userId:          (competition as any).ownerId,
       })
     } catch (e) {
       setUpgradeError(e instanceof Error ? e.message : 'Something went wrong')
@@ -581,7 +579,6 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
         competitionName:  competition.name,
         tier,
         participantCount: competitorCount,
-        userId:           (competition as any).ownerId,
       })
     } catch (e) {
       setPublishError(e instanceof Error ? e.message : 'Something went wrong')

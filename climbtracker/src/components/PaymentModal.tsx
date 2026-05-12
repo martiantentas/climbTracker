@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { X, Check, Lock, Zap, ArrowLeft, Sparkles, Palette } from 'lucide-react'
 // Check is used in the plan feature lists below
 import type { Competition } from '../types'
+import { authedFetchInit } from '../lib/supabase'
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -72,18 +73,16 @@ export default function PaymentModal({
     setLoading(true)
     setStripeError('')
     try {
-      const res = await fetch('/api/create-checkout-session', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch('/api/create-checkout-session', await authedFetchInit({
+        method: 'POST',
         body: JSON.stringify({
-          type:            'base_plan',
-          competitionId:   competition.id,
-          competitionName: competition.name,
+          type:             'base_plan',
+          competitionId:    competition.id,
+          competitionName:  competition.name,
           tier,
           participantCount: confirmedCount,
-          userId: (competition as any).ownerId,
         }),
-      })
+      }))
       const data = await res.json() as { url?: string; error?: string }
       if (!res.ok || !data.url) {
         setStripeError(data.error ?? 'Could not create checkout session.')
