@@ -100,9 +100,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       console.error('[stripe-webhook] invalid type:', type)
       return res.status(400).json({ error: `Unknown type: ${type}` })
     }
-    console.error('[stripe-webhook] apply_purchase failed:', msg)
-    // Return 500 so Stripe retries — the transaction rolled back, no state mutated.
-    return res.status(500).json({ error: 'Failed to apply purchase' })
+    console.error('[stripe-webhook] apply_purchase failed:', {
+      message: rpcErr.message,
+      code:    (rpcErr as { code?: string }).code,
+      details: (rpcErr as { details?: string }).details,
+      hint:    (rpcErr as { hint?: string }).hint,
+      comp:    compTag,
+      type,
+    })
+    return res.status(500).json({ error: 'Failed to apply purchase', detail: rpcErr.message })
   }
 
   console.log('[stripe-webhook]', result, '|', { comp: compTag, type, sid: session.id.slice(0, 12) })

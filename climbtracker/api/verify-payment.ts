@@ -3,17 +3,15 @@ import Stripe from 'stripe'
 import { verifyUser, guardJsonRequest } from './_auth.js'
 
 // ─── HANDLER ──────────────────────────────────────────────────────────────────
-// READ-ONLY endpoint called by the client on return from Stripe Checkout.
-// It does NOT mutate competition state — that is the webhook's responsibility.
-// Its job is to:
+// Called by the client on return from Stripe Checkout.
 //   1. Verify the Supabase session (so a stranger can't replay a session_id).
 //   2. Verify the session was paid with Stripe.
 //   3. Confirm the buyer matches the calling user.
-//   4. Return the latest competition row so the UI can patch local state
-//      without waiting on the realtime subscription.
-//
-// If the webhook hasn't applied the purchase yet, we return `pending: true`
-// so the client can show a brief "processing..." state and refresh.
+//   4. Apply the purchase via the idempotent apply_purchase() RPC. The webhook
+//      calls the same RPC; whichever fires first wins, the other one no-ops
+//      thanks to the unique constraint on payments.stripe_session_id. This
+//      removes a single-point-of-failure on the webhook delivery path.
+//   5. Return the updated competition so the UI can patch local state.
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).end()
@@ -52,13 +50,39 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const competitionId = meta.competitionId
   if (!competitionId) return res.status(400).json({ error: 'Missing competitionId in session' })
 
-  // Look up the payment row — if present, the webhook has applied the purchase.
-  const { data: payment } = await supabase
-    .from('payments')
-    .select('id, status')
-    .eq('stripe_session_id', sessionId)
-    .maybeSingle()
+  const type = meta.type
+  if (!type) return res.status(400).json({ error: 'Missing purchase type in session' })
 
+  // ── Apply the purchase via the same RPC the webhook uses ─────────────────
+  // The RPC is idempotent (unique constraint on stripe_session_id) so this is
+  // safe to run even if the webhook already applied it — second caller gets
+  // 'duplicate' and the DB state is unchanged.
+  const { data: rpcResult, error: rpcErr } = await supabase.rpc('apply_purchase', {
+    p_competition_id:    competitionId,
+    p_user_id:           user.id,
+    p_session_id:        session.id,
+    p_payment_intent:    typeof session.payment_intent === 'string' ? session.payment_intent : null,
+    p_amount_cents:      session.amount_total ?? 0,
+    p_currency:          session.currency     ?? 'eur',
+    p_purchase_type:     type,
+    p_tier:              meta.tier ?? null,
+    p_participant_count: Number(meta.participantCount) || 0,
+    p_slots:             Number(meta.slots) || 0,
+  })
+
+  if (rpcErr) {
+    const msg = rpcErr.message ?? ''
+    if (msg.includes('competition_not_found')) {
+      return res.status(404).json({ error: 'Competition not found' })
+    }
+    if (msg.includes('invalid purchase_type')) {
+      return res.status(400).json({ error: `Unknown type: ${type}` })
+    }
+    console.error('[verify-payment] apply_purchase failed:', msg)
+    return res.status(500).json({ error: 'Failed to apply purchase' })
+  }
+
+  // Fetch the freshly-updated competition so the client can patch local state.
   const { data: compRow, error: fetchErr } = await supabase
     .from('competitions')
     .select('data')
@@ -71,7 +95,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   return res.status(200).json({
     success:     true,
-    pending:     !payment,                // webhook hasn't run yet
+    applied:     rpcResult === 'applied',
+    duplicate:   rpcResult === 'duplicate',
     competition: compRow.data,
   })
 }

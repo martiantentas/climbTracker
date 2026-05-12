@@ -582,7 +582,7 @@ function AppInner() {
         })
           .then(init => fetch('/api/verify-payment', init))
           .then(r => r.json())
-          .then((data: { success?: boolean; pending?: boolean; competition?: Record<string, unknown>; error?: string }) => {
+          .then((data: { success?: boolean; applied?: boolean; duplicate?: boolean; competition?: Record<string, unknown>; error?: string }) => {
             if (data.success && data.competition) {
               const updated = data.competition as unknown as Competition
               setCompetitions(prev =>
@@ -590,15 +590,11 @@ function AppInner() {
                   ? prev.map(c => c.id === compId ? updated : c)
                   : prev
               )
-              if (data.pending) {
-                showToast('Payment received — finalising… your update will appear shortly.')
-              } else {
-                const msg =
-                  type === 'bundle'  ? 'Capacity added! Your competition now has more slots.' :
-                  type === 'upgrade' ? 'Upgraded to Premium! Branding tools are now unlocked.' :
-                                       'Payment confirmed! Your competition is now Live.'
-                showToast(msg)
-              }
+              const msg =
+                type === 'bundle'  ? 'Capacity added! Your competition now has more slots.' :
+                type === 'upgrade' ? 'Upgraded to Premium! Branding tools are now unlocked.' :
+                                     'Payment confirmed! Your competition is now Live.'
+              showToast(msg)
             } else {
               console.error('[verify-payment] server error:', data.error)
               showToast('Payment received but status update failed — please refresh.')
