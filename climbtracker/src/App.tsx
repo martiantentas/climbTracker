@@ -220,7 +220,44 @@ function AppInner() {
   // Pending debounce timers for completion writes, keyed by "competitorId:boulderId".
   // Rapid taps (incrementing attempts, judge double-validating) are collapsed into
   // a single DB write after 400 ms of inactivity, reducing write storms under load.
-  const pendingWriteTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
+  // Map value carries both the timer handle AND the deferred work so we can
+  // flush pending writes synchronously (e.g. on tab close) — without this,
+  // a score logged in the last 400ms of the session is silently lost.
+  const pendingWriteTimers = useRef<Map<string, { timer: ReturnType<typeof setTimeout>; flush: () => void }>>(new Map())
+
+  // Schedule a debounced completion write. Replaces any pending write for the
+  // same key so rapid taps coalesce. The work is stored alongside the timer
+  // so it can be flushed synchronously on tab close.
+  function scheduleCompletionWrite(writeKey: string, work: () => void) {
+    const existing = pendingWriteTimers.current.get(writeKey)
+    if (existing) clearTimeout(existing.timer)
+    const timer = setTimeout(() => {
+      pendingWriteTimers.current.delete(writeKey)
+      work()
+    }, 400)
+    pendingWriteTimers.current.set(writeKey, { timer, flush: work })
+  }
+
+  // Flush any pending score writes when the tab is about to close or hidden.
+  // `visibilitychange` covers mobile (Safari fires pagehide, not beforeunload).
+  useEffect(() => {
+    function flushAll() {
+      for (const { timer, flush } of pendingWriteTimers.current.values()) {
+        clearTimeout(timer)
+        try { flush() } catch { /* swallow — best-effort flush */ }
+      }
+      pendingWriteTimers.current.clear()
+    }
+    function onHide() { if (document.visibilityState === 'hidden') flushAll() }
+    window.addEventListener('beforeunload',   flushAll)
+    window.addEventListener('pagehide',       flushAll)
+    document.addEventListener('visibilitychange', onHide)
+    return () => {
+      window.removeEventListener('beforeunload',   flushAll)
+      window.removeEventListener('pagehide',       flushAll)
+      document.removeEventListener('visibilitychange', onHide)
+    }
+  }, [])
 
   const [competitions,   setCompetitions]   = useState<Competition[]>([])
   const [activeCompId,   setActiveCompId]   = useState<string>(() => {
@@ -782,25 +819,19 @@ function AppInner() {
     if (existing) {
       if (forceStatus === false) {
         const t = pendingWriteTimers.current.get(writeKey)
-        if (t) { clearTimeout(t); pendingWriteTimers.current.delete(writeKey) }
+        if (t) { clearTimeout(t.timer); pendingWriteTimers.current.delete(writeKey) }
         deleteCompletion(compId, competitorId, boulderId).catch(err => console.error('[db] deleteCompletion:', err))
       } else {
         const entry = { ...existing, attempts: Math.max(1, attempts) }
-        const t = pendingWriteTimers.current.get(writeKey)
-        if (t) clearTimeout(t)
-        pendingWriteTimers.current.set(writeKey, setTimeout(() => {
-          pendingWriteTimers.current.delete(writeKey)
+        scheduleCompletionWrite(writeKey, () =>
           upsertCompletion(compId, entry).catch(err => console.error('[db] upsertCompletion:', err))
-        }, 400))
+        )
       }
     } else if (forceStatus === true) {
       const entry: Completion = { competitorId, boulderId, attempts: Math.max(1, attempts), timestamp: Date.now(), hasZone: false, zoneAttempts: 0, zonesReached: 0, topValidated: true }
-      const t = pendingWriteTimers.current.get(writeKey)
-      if (t) clearTimeout(t)
-      pendingWriteTimers.current.set(writeKey, setTimeout(() => {
-        pendingWriteTimers.current.delete(writeKey)
+      scheduleCompletionWrite(writeKey, () =>
         upsertCompletion(compId, entry).catch(err => console.error('[db] upsertCompletion:', err))
-      }, 400))
+      )
     }
   }
 
@@ -1147,12 +1178,9 @@ function AppInner() {
       }
     })
     const writeKey = `${competitorId}:${boulderId}`
-    const t = pendingWriteTimers.current.get(writeKey)
-    if (t) clearTimeout(t)
-    pendingWriteTimers.current.set(writeKey, setTimeout(() => {
-      pendingWriteTimers.current.delete(writeKey)
+    scheduleCompletionWrite(writeKey, () =>
       upsertCompletion(compId, entry).catch(err => console.error('[db] logScore:', err))
-    }, 400))
+    )
   }
 
   // ── Unauthenticated shell: Landing + Auth ─────────────────────────────────

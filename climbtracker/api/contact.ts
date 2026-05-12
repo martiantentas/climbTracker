@@ -70,11 +70,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ error: 'Email service not configured' })
   }
 
+  // Recipient is configurable via env so we can switch inboxes without a deploy.
+  const recipient = process.env.CONTACT_RECIPIENT_EMAIL ?? 'blocopen@gmail.com'
+  const sender    = process.env.CONTACT_SENDER ?? 'Ascendr Demo <demo@ascendr.top>'
+
   try {
     const resend = new Resend(apiKey)
     await resend.emails.send({
-      from:    'Ascendr Demo <demo@ascendr.top>',
-      to:      'blocopen@gmail.com',
+      from:    sender,
+      to:      recipient,
       replyTo: email,
       subject: `Demo Request – ${name}${company ? ` (${company})` : ''}`,
       text: [

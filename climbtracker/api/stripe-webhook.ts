@@ -64,110 +64,47 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { type, competitionId, userId } = meta
 
   if (!type || !competitionId || !userId) {
-    console.error('[stripe-webhook] Missing metadata in session:', session.id)
+    console.error('[stripe-webhook] Missing metadata in session:', session.id.slice(0, 12))
     return res.status(400).json({ error: 'Missing metadata' })
   }
 
+  // Short, low-entropy log prefix so logs aren't a leak vector for enumeration.
+  const compTag = competitionId.slice(0, 8)
+
   const supabase = createClient(supabaseUrl, serviceKey)
 
-  // ── Idempotency gate: insert payment row first ─────────────────────────────
-  // The unique index on stripe_session_id means a retry will return a conflict
-  // here, and we'll know not to apply the mutation a second time.
-  const { data: inserted, error: insertErr } = await supabase
-    .from('payments')
-    .insert({
-      competition_id:    competitionId,
-      user_id:           userId,
-      stripe_session_id: session.id,
-      stripe_payment_id: typeof session.payment_intent === 'string' ? session.payment_intent : null,
-      amount_cents:      session.amount_total ?? 0,
-      currency:          session.currency     ?? 'eur',
-      status:            'paid',
-      tier:              meta.tier ?? type,
-      participant_limit: Number(meta.participantCount) || 0,
-    })
-    .select('id')
-    .maybeSingle()
+  // ── Apply the purchase atomically via RPC ─────────────────────────────────
+  // The RPC handles idempotency (unique constraint on stripe_session_id) and
+  // the payment insert + competition update run inside a single transaction.
+  const { data: result, error: rpcErr } = await supabase.rpc('apply_purchase', {
+    p_competition_id:    competitionId,
+    p_user_id:           userId,
+    p_session_id:        session.id,
+    p_payment_intent:    typeof session.payment_intent === 'string' ? session.payment_intent : null,
+    p_amount_cents:      session.amount_total ?? 0,
+    p_currency:          session.currency     ?? 'eur',
+    p_purchase_type:     type,
+    p_tier:              meta.tier ?? null,
+    p_participant_count: Number(meta.participantCount) || 0,
+    p_slots:             Number(meta.slots) || 0,
+  })
 
-  if (insertErr) {
-    // Duplicate (Stripe retry) — the row already exists; ack and skip.
-    if ((insertErr as { code?: string }).code === '23505') {
-      console.log('[stripe-webhook] duplicate delivery, skipping:', session.id)
-      return res.status(200).json({ received: true, duplicate: true })
+  if (rpcErr) {
+    const msg = rpcErr.message ?? ''
+    if (msg.includes('competition_not_found')) {
+      console.error('[stripe-webhook] competition not found:', compTag)
+      // 200 + no retry: the competition was deleted; retrying won't help.
+      return res.status(200).json({ received: true, error: 'competition_not_found' })
     }
-    console.error('[stripe-webhook] payments insert failed:', insertErr.message)
-    // Return 500 so Stripe retries; we have not yet mutated state.
-    return res.status(500).json({ error: 'Failed to record payment' })
-  }
-
-  if (!inserted) {
-    // Shouldn't happen, but treat as duplicate and ack.
-    console.log('[stripe-webhook] insert returned no row, treating as duplicate')
-    return res.status(200).json({ received: true })
-  }
-
-  // ── Fetch competition and apply the purchase ───────────────────────────────
-  const { data: compRow, error: fetchErr } = await supabase
-    .from('competitions')
-    .select('data')
-    .eq('id', competitionId)
-    .single()
-
-  if (fetchErr || !compRow?.data) {
-    console.error('[stripe-webhook] competition fetch failed:', fetchErr?.message)
-    // Roll back the payment row so the next delivery can retry the full flow.
-    await supabase.from('payments').delete().eq('id', inserted.id)
-    return res.status(500).json({ error: 'Competition not found' })
-  }
-
-  const comp = compRow.data as Record<string, unknown>
-  let updated: Record<string, unknown>
-
-  if (type === 'base_plan') {
-    const { tier, participantCount } = meta
-    const baseLimit = tier === 'premium' ? 500 : 300
-    updated = {
-      ...comp,
-      status:           'LIVE',
-      subscription:     tier,
-      tier,
-      participantLimit: Number(participantCount) || baseLimit,
+    if (msg.includes('invalid purchase_type')) {
+      console.error('[stripe-webhook] invalid type:', type)
+      return res.status(400).json({ error: `Unknown type: ${type}` })
     }
-  } else if (type === 'bundle') {
-    const addedSlots       = Number(meta.slots ?? 0)
-    const existingCapacity = Number(comp.additionalCapacity ?? 0)
-    updated = {
-      ...comp,
-      additionalCapacity: existingCapacity + addedSlots,
-    }
-  } else if (type === 'upgrade') {
-    updated = {
-      ...comp,
-      subscription: 'premium',
-      tier:         'premium',
-    }
-  } else {
-    console.error('[stripe-webhook] Unknown purchase type:', type)
-    await supabase.from('payments').delete().eq('id', inserted.id)
-    return res.status(400).json({ error: `Unknown type: ${type}` })
+    console.error('[stripe-webhook] apply_purchase failed:', msg)
+    // Return 500 so Stripe retries — the transaction rolled back, no state mutated.
+    return res.status(500).json({ error: 'Failed to apply purchase' })
   }
 
-  const { error: updateErr } = await supabase
-    .from('competitions')
-    .update({
-      data:       updated,
-      status:     String(updated.status     ?? comp.status     ?? 'DRAFT'),
-      visibility: String(updated.visibility ?? comp.visibility ?? 'private'),
-    })
-    .eq('id', competitionId)
-
-  if (updateErr) {
-    console.error('[stripe-webhook] competition update failed:', updateErr.message)
-    // Roll back payment row so Stripe retry can re-attempt.
-    await supabase.from('payments').delete().eq('id', inserted.id)
-    return res.status(500).json({ error: 'Failed to update competition' })
-  }
-
-  console.log('[stripe-webhook] applied:', { competitionId, type, sessionId: session.id })
-  return res.status(200).json({ received: true })
+  console.log('[stripe-webhook]', result, '|', { comp: compTag, type, sid: session.id.slice(0, 12) })
+  return res.status(200).json({ received: true, result })
 }
