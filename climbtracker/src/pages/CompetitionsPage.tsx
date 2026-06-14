@@ -22,7 +22,7 @@ interface CompetitionsPageProps {
   onCreate:        (name: string, location: string, description: string) => void
   onDelete:        (compId: string) => void
   onLeave:         (compId: string) => void
-  onJoinByCode:    (code: string, password?: string, traitIds?: string[], gender?: string) => boolean | 'full'
+  onJoinByCode:    (code: string, password?: string, traitIds?: string[], gender?: string) => Promise<boolean | 'full'>
   isRegistered:    (compId: string) => boolean
   competitorsMap:  Record<string, Competitor[]>
   onJoinSuccess?:  (comp: Competition) => void
@@ -157,7 +157,7 @@ export default function CompetitionsPage({
     if (onJoinSuccess) onJoinSuccess(comp)
   }
 
-  function handleJoinCode(e: React.FormEvent) {
+  async function handleJoinCode(e: React.FormEvent) {
     e.preventDefault()
     setCodeError(false)
     setJoinFull(false)
@@ -166,25 +166,25 @@ export default function CompetitionsPage({
     if (target.joinPassword) {
       setPendingComp(target); setPasswordError(false)
     } else {
-      const ok = onJoinByCode(joinCode.trim().toUpperCase())
+      const ok = await onJoinByCode(joinCode.trim().toUpperCase())
       if (ok === true) { setJoinCode(''); afterJoin(target) }
       else if (ok === 'full') setJoinFull(true)
       else setCodeError(true)
     }
   }
 
-  function handlePasswordConfirm(password: string) {
+  async function handlePasswordConfirm(password: string) {
     if (!pendingComp) return
-    const ok = onJoinByCode(pendingComp.inviteCode, password)
+    const ok = await onJoinByCode(pendingComp.inviteCode, password)
     if (ok === true) { afterJoin(pendingComp); setPendingComp(null); setJoinCode(''); setPasswordError(false) }
     else if (ok === 'full') { setPendingComp(null); setJoinFull(true) }
     else setPasswordError(true)
   }
 
-  function handleJoinAvailable(comp: Competition) {
+  async function handleJoinAvailable(comp: Competition) {
     setJoinFull(false)
     if (comp.joinPassword) { setPendingComp(comp); setPasswordError(false) }
-    else { const ok = onJoinByCode(comp.inviteCode); if (ok === true) afterJoin(comp); else if (ok === 'full') setJoinFull(true) }
+    else { const ok = await onJoinByCode(comp.inviteCode); if (ok === true) afterJoin(comp); else if (ok === 'full') setJoinFull(true) }
   }
 
   function copyLink(comp: Competition) {

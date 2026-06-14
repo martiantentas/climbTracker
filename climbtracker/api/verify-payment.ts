@@ -43,7 +43,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const meta = session.metadata ?? {}
-  if (meta.userId && meta.userId !== user.id) {
+  if (!meta.userId || meta.userId !== user.id) {
     return res.status(403).json({ error: 'Session does not belong to this user' })
   }
 

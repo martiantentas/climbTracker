@@ -775,9 +775,12 @@ function AppInner() {
 
   // ── Actions ──────────────────────────────────────────────────────────────────
 
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   function showToast(message: string) {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
     setToast({ message, visible: true })
-    setTimeout(() => setToast({ message: '', visible: false }), 3000)
+    toastTimerRef.current = setTimeout(() => setToast({ message: '', visible: false }), 3000)
   }
 
   function handleToggleCompletion(
@@ -1016,22 +1019,40 @@ function AppInner() {
   // The code is the invite code string.
   // password is optional; if the competition has joinPassword set and the
   // supplied password doesn't match, returns false so the UI can show an error.
-  function handleJoinByCode(code: string, password?: string, traitIds?: string[], gender?: string): boolean | 'full' {
+  async function handleJoinByCode(code: string, password?: string, traitIds?: string[], gender?: string): Promise<boolean | 'full'> {
     const target = competitions.find(c => c.inviteCode === code.toUpperCase())
     if (!target || !currentUser) return false
-    if (target.joinPassword && password !== target.joinPassword) return false
-    const ok = joinCompetition(target.id, currentUser, traitIds, gender)
-    return ok ? true : 'full'
+    // Owner: compare directly (they have the plaintext in state).
+    // Non-owner: password was stripped server-side; validate via RPC.
+    if (target.joinPassword) {
+      if (password !== target.joinPassword) return false
+    } else if ((target as any)._hasJoinPassword) {
+      const { data: ok } = await supabase.rpc('verify_join_password', {
+        p_competition_id: target.id,
+        p_password: password ?? '',
+      })
+      if (!ok) return false
+    }
+    const result = joinCompetition(target.id, currentUser, traitIds, gender)
+    return result ? true : 'full'
   }
 
   // ── handleJoinByCompId — used by JoinPage (code already resolved to ID) ──
   // externalComp is passed when the competition was not in local state (fetched
   // from DB by invite code). We add it to state immediately and hydrate its
   // boulders / completions / members in the background.
-  function handleJoinByCompId(compId: string, password?: string, traitIds?: string[], gender?: string, externalComp?: Competition): boolean | 'full' {
+  async function handleJoinByCompId(compId: string, password?: string, traitIds?: string[], gender?: string, externalComp?: Competition): Promise<boolean | 'full'> {
     const target = competitions.find(c => c.id === compId) ?? externalComp
     if (!target || !currentUser) return false
-    if (target.joinPassword && password !== target.joinPassword) return false
+    if (target.joinPassword) {
+      if (password !== target.joinPassword) return false
+    } else if ((target as any)._hasJoinPassword) {
+      const { data: ok } = await supabase.rpc('verify_join_password', {
+        p_competition_id: target.id,
+        p_password: password ?? '',
+      })
+      if (!ok) return false
+    }
 
     if (externalComp && !competitions.some(c => c.id === compId)) {
       setCompetitions(prev => [...prev, externalComp])
@@ -1163,8 +1184,12 @@ function AppInner() {
       topValidatedBy: isTop ? judgeId : undefined,
       topValidatedAt: isTop ? Date.now() : undefined,
     }
+    const isClearAction = attempts === 0 && !isTop && !hasZone && zonesReached === 0
     setCompletionsMap(prev => {
       const current = prev[compId] ?? []
+      if (isClearAction) {
+        return { ...prev, [compId]: current.filter(c => !(c.competitorId === competitorId && c.boulderId === boulderId)) }
+      }
       const existing = current.find(c => c.competitorId === competitorId && c.boulderId === boulderId)
       return {
         ...prev,
@@ -1174,9 +1199,15 @@ function AppInner() {
       }
     })
     const writeKey = `${competitorId}:${boulderId}`
-    scheduleCompletionWrite(writeKey, () =>
-      upsertCompletion(compId, entry).catch(err => console.error('[db] logScore:', err))
-    )
+    if (isClearAction) {
+      const t = pendingWriteTimers.current.get(writeKey)
+      if (t) { clearTimeout(t.timer); pendingWriteTimers.current.delete(writeKey) }
+      deleteCompletion(compId, competitorId, boulderId).catch(err => console.error('[db] clearScore:', err))
+    } else {
+      scheduleCompletionWrite(writeKey, () =>
+        upsertCompletion(compId, entry).catch(err => console.error('[db] logScore:', err))
+      )
+    }
   }
 
   // ── Unauthenticated shell: Landing + Auth ─────────────────────────────────

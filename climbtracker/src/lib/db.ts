@@ -337,7 +337,19 @@ export async function loadAllUserData(
   waitlists:   Record<string, Competitor[]>
   activeId:    string   // the competition whose completions were pre-fetched
 }> {
-  const comps = await fetchUserCompetitions(userId)
+  const rawComps = await fetchUserCompetitions(userId)
+
+  // Strip sensitive fields from competitions the user doesn't own.
+  // joinPassword must never reach a non-owner's browser — password check is server-side.
+  // bannedEmails leaks moderation data; ban enforcement belongs in the join RPC.
+  const comps: Competition[] = rawComps.map(comp => {
+    if (comp.ownerId === userId) return comp
+    const c = comp as any
+    const hasPassword = !!c.joinPassword
+    const { joinPassword: _jp, bannedEmails: _be, ...safe } = c
+    return { ...safe, _hasJoinPassword: hasPassword } as unknown as Competition
+  })
+
   if (comps.length === 0) {
     return { comps: [], boulders: {}, completions: {}, members: {}, waitlists: {}, activeId: '' }
   }

@@ -113,7 +113,6 @@ export function calcBoulderPoints(
   competition:    Competition,
   allCompletions: Completion[],
 ): number {
-  const zonePoints = calcZonePoints(completion, boulder, competition)
   // Flash bonus — per-boulder value takes priority; falls back to event-level setting
   const eventFlash = competition.flashBonusEnabled ? (competition.flashBonusPoints ?? 0) : 0
   const flashBonus = (completion.topValidated && completion.attempts === 1)
@@ -121,6 +120,7 @@ export function calcBoulderPoints(
     : 0
 
   if (competition.scoringType === ScoringType.DYNAMIC) {
+    const zonePoints = calcZonePoints(completion, boulder, competition)
     if (!completion.topValidated) return zonePoints
 
     // Base share of the dynamic pot for this boulder

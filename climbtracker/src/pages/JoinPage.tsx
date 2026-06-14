@@ -13,7 +13,7 @@ interface JoinPageProps {
   theme:            'light' | 'dark'
   lang:             Language
   isRegistered:     (compId: string) => boolean
-  onJoin:           (compId: string, password?: string, traitIds?: string[], gender?: string, externalComp?: Competition) => boolean | 'full'
+  onJoin:           (compId: string, password?: string, traitIds?: string[], gender?: string, externalComp?: Competition) => Promise<boolean | 'full'>
   waitlistMap:      Record<string, Competitor[]>
   onJoinWaitlist:   (compId: string) => void
   onLeaveWaitlist:  (compId: string) => void
@@ -110,8 +110,8 @@ export default function JoinPage({
     )
   }
 
-  function attemptJoin(password?: string) {
-    const result = onJoin(comp!.id, password, selectedTraitIds, gender || undefined, isExternal ? comp! : undefined)
+  async function attemptJoin(password?: string) {
+    const result = await onJoin(comp!.id, password, selectedTraitIds, gender || undefined, isExternal ? comp! : undefined)
     if (result === true) {
       setJoined(true)
       setShowPasswordModal(false)

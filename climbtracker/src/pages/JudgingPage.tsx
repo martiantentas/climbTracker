@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { Search, ChevronDown, ChevronUp, Target, CheckCircle2, XCircle, ShieldCheck, Plus, Minus, Star, Mountain } from 'lucide-react'
 
@@ -89,7 +89,7 @@ function BoulderJudgingRow({
   const [zoneAttempts,  setZoneAttempts]  = useState(completion?.zoneAttempts  ?? 0)
   const [isTop,         setIsTop]         = useState(completion?.topValidated  ?? false)
 
-  useMemo(() => {
+  useEffect(() => {
     setAttempts(completion?.attempts      ?? 0)
     setZonesReached(completion?.zonesReached ?? 0)
     setZoneAttempts(completion?.zoneAttempts  ?? 0)
@@ -111,6 +111,7 @@ function BoulderJudgingRow({
       : 'bg-[#F4F4F4] border-[#EEEEEE]'
 
   function handleSave() {
+    if (isTop && attempts < 1) return  // prevent logging a top with 0 attempts
     onLog(attempts, hasZone, zoneAttempts, isTop, zonesReached)
   }
 

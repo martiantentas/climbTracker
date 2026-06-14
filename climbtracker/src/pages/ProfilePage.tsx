@@ -15,7 +15,7 @@ interface ProfilePageProps {
   theme:        'light' | 'dark'
   lang:         Language
   badges:       Badge[]
-  onJoinByCode: (code: string) => boolean | 'full'
+  onJoinByCode: (code: string) => Promise<boolean | 'full'>
   onSave:       (updated: Competitor) => void
 }
 
@@ -112,12 +112,12 @@ export default function ProfilePage({
     setIsEditing(false)
   }
 
-  function handleJoinCode(e: React.FormEvent) {
+  async function handleJoinCode(e: React.FormEvent) {
     e.preventDefault()
     setCodeError(false)
     setCodeFull(false)
     setCodeSuccess(false)
-    const result = onJoinByCode(joinCode.trim().toUpperCase())
+    const result = await onJoinByCode(joinCode.trim().toUpperCase())
     if (result === true) {
       setCodeSuccess(true)
       setJoinCode('')

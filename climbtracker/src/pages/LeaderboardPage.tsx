@@ -327,6 +327,14 @@ export default function LeaderboardPage({
     setShowDownload(false)
   }
 
+  function escHtml(s: string | number | undefined | null): string {
+    return String(s ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+  }
+
   function exportPDF() {
     const rows = visible.map(r => {
       const cats = competitorCategoryMap.get(r.competitorId) ?? []
@@ -334,21 +342,21 @@ export default function LeaderboardPage({
       const gend = live?.gender ?? (r as any).gender ?? ''
       return `<tr>
         <td style="padding:6px 10px;border-bottom:1px solid #eee;font-weight:600">#${r.rank}</td>
-        <td style="padding:6px 10px;border-bottom:1px solid #eee">${r.name}</td>
-        <td style="padding:6px 10px;border-bottom:1px solid #eee">${r.bib}</td>
-        <td style="padding:6px 10px;border-bottom:1px solid #eee">${cats.join(', ')}</td>
-        <td style="padding:6px 10px;border-bottom:1px solid #eee">${gend}</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #eee">${escHtml(r.name)}</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #eee">${escHtml(r.bib)}</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #eee">${escHtml(cats.join(', '))}</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #eee">${escHtml(gend)}</td>
         <td style="padding:6px 10px;border-bottom:1px solid #eee;font-weight:600;color:#7F8BAD">${r.totalPoints}</td>
         <td style="padding:6px 10px;border-bottom:1px solid #eee">${r.totalTops}</td>
         <td style="padding:6px 10px;border-bottom:1px solid #eee">${r.totalAttempts}</td>
         <td style="padding:6px 10px;border-bottom:1px solid #eee">${r.flashCount}</td>
       </tr>`
     }).join('')
-    const html = `<!DOCTYPE html><html><head><title>${competition.name} — Results</title>
+    const html = `<!DOCTYPE html><html><head><title>${escHtml(competition.name)} — Results</title>
     <style>body{font-family:system-ui,sans-serif;padding:32px;color:#121212}h1{font-size:24px;font-weight:500;margin-bottom:4px}p{color:#5C5E62;margin-bottom:24px}table{width:100%;border-collapse:collapse}th{text-align:left;padding:8px 10px;background:#F4F4F4;font-size:11px;color:#5C5E62;border-bottom:2px solid #EEEEEE}</style>
     </head><body>
-    <h1>${competition.name}</h1>
-    <p>${competition.location} · ${new Date(competition.startDate).toLocaleDateString()}</p>
+    <h1>${escHtml(competition.name)}</h1>
+    <p>${escHtml(competition.location)} · ${new Date(competition.startDate).toLocaleDateString()}</p>
     <table><thead><tr><th>Rank</th><th>Name</th><th>BIB</th><th>Category</th><th>Gender</th><th>Points</th><th>Tops</th><th>Attempts</th><th>Flashes</th></tr></thead>
     <tbody>${rows}</tbody></table></body></html>`
     const blob = new Blob([html], { type: 'text/html' })
