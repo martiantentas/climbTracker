@@ -10,7 +10,8 @@ import ascendiaLogo from '../assets/Ascendr.png'
 import type { Language } from '../translations'
 import { translations } from '../translations'
 
-import DotPattern  from '../components/DotPattern'
+import DotPattern    from '../components/DotPattern'
+import PlexusCanvas  from '../components/PlexusCanvas'
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
 
@@ -148,7 +149,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
 
       {/* ══ HERO ═════════════════════════════════════════════════════════════ */}
       <section ref={heroRef} style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '100px 24px 80px', position: 'relative', overflow: 'hidden', background: C.bg }}>
-        {!isMobile && <DotPattern baseColor="#1e2230" glowColor={C.accent} gap={26} dotSize={2} proximity={140} waveSpeed={0.3} />}
+        {!isMobile && <PlexusCanvas />}
         {/* Bottom gradient — seamless blend into the page background */}
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '40%', background: 'linear-gradient(to bottom, transparent 0%, rgba(18,18,18,0.7) 45%, #121212 100%)', pointerEvents: 'none' }} />
 
