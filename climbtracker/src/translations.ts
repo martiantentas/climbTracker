@@ -538,15 +538,15 @@ export const translations = {
     organizersLabel:      'organizers',
 
     // ── Landing page ───────────────────────────────────────────────────────────
-    landingTagline:    'Professional Bouldering Competition Software',
+    landingTagline:    'Climbing Competition Software',
     landingHero1:      'Score smarter.',
     landingHero2:      'Climb harder.',
     landingHeroDesc:   'Replace spreadsheets with live scoring, real-time leaderboards, and a seamless competitor experience — built for serious bouldering events.',
     landingStart:      'Start your first event',
     landingHowWorks:   'How it works',
     landingFeatures:   'Features',
-    landingFeatTitle:  'Everything an organizer',
-    landingFeatTitle2: 'actually needs.',
+    landingFeatTitle:  'Everything you need,',
+    landingFeatTitle2: 'in one platform.',
     landingSignIn:     'Sign in',
     landingGetStarted: 'Get started',
 
@@ -580,7 +580,7 @@ export const translations = {
     workStep4desc: 'Review completion rates, flash counts, and category standings. Export results or share the public leaderboard link.',
 
     // Pricing
-    pricingTitle:   'Simple, transparent',
+    pricingTitle:   'Simple, transparent:',
     pricingTitle2:  'pay per event.',
     pricingDesc:    'No monthly subscriptions. No seat fees. One price per event — scale capacity as you grow.',
     pricingStd:     'Standard',
@@ -1001,7 +1001,7 @@ export const translations = {
     authFirstName:       'Nombre',
     authLastName:        'Apellidos',
     authEmailAddr:       'Correo electrónico',
-    authForgot:              '¿OLVIDASTE?',
+    authForgot:              '¿Olvidaste?',
     authForgotTitle:         'Restablecer contraseña',
     authForgotDesc:          'Introduce tu correo y te enviaremos un enlace para restablecer tu contraseña.',
     authForgotBtn:           'Enviar enlace',
@@ -1249,15 +1249,15 @@ export const translations = {
     organizersLabel:      'organizadores',
 
     // ── Landing page ───────────────────────────────────────────────────────────
-    landingTagline:    'Software Profesional para Competiciones de Bloque',
+    landingTagline:    'Software para Competiciones de Escalada',
     landingHero1:      'Puntúa más inteligente.',
     landingHero2:      'Escala más fuerte.',
     landingHeroDesc:   'Sustituye las hojas de cálculo por puntuación en vivo, clasificaciones en tiempo real y una experiencia sin fricciones — para competiciones de bloque serias.',
     landingStart:      'Organiza tu primer evento',
     landingHowWorks:   'Cómo funciona',
     landingFeatures:   'Funcionalidades',
-    landingFeatTitle:  'Todo lo que un organizador',
-    landingFeatTitle2: 'realmente necesita.',
+    landingFeatTitle:  'Todo lo que necesitas,',
+    landingFeatTitle2: 'en una sola plataforma.',
     landingSignIn:     'Iniciar sesión',
     landingGetStarted: 'Comenzar',
 
@@ -1288,7 +1288,7 @@ export const translations = {
     workStep4title:'Analiza y exporta',
     workStep4desc: 'Revisa las tasas de encadenamiento, conteos de flash y clasificaciones por categoría. Exporta resultados o comparte el enlace de la clasificación pública.',
 
-    pricingTitle:    'Simple y transparente',
+    pricingTitle:    'Simple y transparente:',
     pricingTitle2:   'pago por evento.',
     pricingDesc:     'Sin suscripciones mensuales. Sin tarifas por plaza. Un precio por evento — escala la capacidad a medida que creces.',
     pricingStd:      'Estándar',
@@ -1706,7 +1706,7 @@ export const translations = {
     authFirstName:       'Nom',
     authLastName:        'Cognoms',
     authEmailAddr:       'Correu electrònic',
-    authForgot:              'OBLIDAT?',
+    authForgot:              'Oblidat?',
     authForgotTitle:         'Restablir contrasenya',
     authForgotDesc:          "Introdueix el teu correu i t'enviarem un enllaç per restablir la contrasenya.",
     authForgotBtn:           'Enviar enllaç',
@@ -1954,15 +1954,15 @@ export const translations = {
     organizersLabel:      'organitzadors',
 
     // ── Landing page ───────────────────────────────────────────────────────────
-    landingTagline:    'Software Professional per a Competicions de Bloc',
+    landingTagline:    "Software per a Competicions d'escalada",
     landingHero1:      'Digitalitza la',
     landingHero2:      'teva competició',
     landingHeroDesc:   'Monitoritza la competició en temps real: classificacions en directe, informes, anàlisi i gestió avançada d\'usuaris.',
     landingStart:      'Accedeix',
     landingHowWorks:   'Com funciona?',
     landingFeatures:   'Funcionalitats',
-    landingFeatTitle:  'Tot el que la teva',
-    landingFeatTitle2: 'competició necessita',
+    landingFeatTitle:  'Tot el que necessites,',
+    landingFeatTitle2: 'en una sola plataforma.',
     landingSignIn:     'Iniciar sessió',
     landingGetStarted: 'Registrar-se',
 
@@ -1981,8 +1981,8 @@ export const translations = {
     featBranding:     'Reflecteix la teva marca',
     featBrandingDesc: "Personalitza la pàgina web amb el teu logotip i els colors corporatius del teu rocòdrom o entitat.",
 
-    workflowTitle: 'De la idea al',
-    workflowTitle2:'top.',
+    workflowTitle: "De l'inici al",
+    workflowTitle2:'podi.',
     workflowDesc:  'Quatre passos, des de zero, per a tenir l\'esdeveniment configurat i en marxa.',
     workStep1title:'Crea i configura l\'esdeveniment',
     workStep1desc: 'Afegeix els blocs, configura el format de puntuació i els nivells de dificultat, edita els rols dels usuaris i prepara-ho tot abans de la competició',
@@ -1993,7 +1993,7 @@ export const translations = {
     workStep4title:'Analitza i exporta els resultats',
     workStep4desc: "Revisa el rendiment dels participants, els blocs amb més taxa d'encadenament o més ascensos al flash, aizí com les classificacions per categoria.",
 
-    pricingTitle:    'Simple i transparent,',
+    pricingTitle:    'Simple i transparent:',
     pricingTitle2:   'paga per esdeveniment.',
     pricingDesc:     'Sense subscripcions mensuals, ni costos ocults. Escala la capacitat a mesura que ho necessitis, amb paquets de participants addicionals.',
     pricingStd:      'Estàndard',

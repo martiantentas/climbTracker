@@ -204,7 +204,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
             <h3 style={{ fontSize: 24, fontWeight: 300, letterSpacing: '-0.02em', color: C.txt, margin: '0 0 10px' }}>{t.featLiveTitle}</h3>
             <p style={{ color: C.txtLow, fontSize: 14, lineHeight: 1.6, maxWidth: 360, margin: '0 0 28px' }}>{t.featLiveDesc}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {[['1', 'Adam O.', '840 pts', true], ['2', 'Alex H.', '720 pts', false], ['3', 'Janja G.', '680 pts', false]].map(([rank, name, pts, hi]) => (
+              {[['1', 'Mikel R.', '840 pts', true], ['2', 'Sara P.', '720 pts', false], ['3', 'Marc V.', '680 pts', false]].map(([rank, name, pts, hi]) => (
                 <div key={String(rank)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', borderRadius: 8, background: hi ? `${C.accent}12` : 'rgba(255,255,255,0.025)', border: `1px solid ${hi ? `${C.accent}30` : C.border}` }}>
                   <span style={{ fontSize: 11, fontWeight: 700, color: hi ? C.accent : C.txtLow, width: 18 }}>{rank}</span>
                   <span style={{ flex: 1, fontSize: 13, fontWeight: 500, color: C.txt }}>{name}</span>
