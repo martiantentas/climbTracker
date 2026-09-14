@@ -23,7 +23,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
   const navigate = useNavigate()
   const heroRef  = useRef<HTMLDivElement>(null)
   const t = translations[lang]
-
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
 
   const goAuth = (tab: 'signin' | 'signup') => navigate(`/${lang}/auth?tab=${tab}`)
 
@@ -105,7 +105,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 9, cursor: 'pointer' }} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <img src={ascendiaLogo} alt="Ascendr" style={{ height: 30, width: 'auto', objectFit: 'contain' }} />
+            <img src={ascendiaLogo} alt="Ascendr" style={{ height: 30, width: 'auto', objectFit: 'contain' }} fetchPriority="high" />
           </div>
 
           <div className="hide-mobile" style={{ display: 'flex', gap: 4 }}>
@@ -148,7 +148,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
 
       {/* ══ HERO ═════════════════════════════════════════════════════════════ */}
       <section ref={heroRef} style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '100px 24px 80px', position: 'relative', overflow: 'hidden', background: C.bg }}>
-        <DotPattern baseColor="#1e2230" glowColor={C.accent} gap={26} dotSize={2} proximity={140} waveSpeed={0.3} />
+        {!isMobile && <DotPattern baseColor="#1e2230" glowColor={C.accent} gap={26} dotSize={2} proximity={140} waveSpeed={0.3} />}
         {/* Bottom gradient — seamless blend into the page background */}
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '40%', background: 'linear-gradient(to bottom, transparent 0%, rgba(18,18,18,0.7) 45%, #121212 100%)', pointerEvents: 'none' }} />
 
@@ -348,7 +348,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
 
       {/* ══ PRICING ══════════════════════════════════════════════════════════ */}
       <div style={{ position: 'relative', background: C.bg, overflow: 'hidden' }}>
-        <DotPattern baseColor="#2a2f3d" glowColor="#7F8BAD" gap={26} dotSize={2} proximity={140} waveSpeed={0.4} />
+        {!isMobile && <DotPattern baseColor="#2a2f3d" glowColor="#7F8BAD" gap={26} dotSize={2} proximity={140} waveSpeed={0.4} />}
       <section id="pricing" style={{ padding: '100px 24px', maxWidth: 960, margin: '0 auto', position: 'relative', zIndex: 1 }}>
         <div style={{ textAlign: 'center', marginBottom: 64 }}>
           <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: C.accent, marginBottom: 14 }}>Pricing</p>

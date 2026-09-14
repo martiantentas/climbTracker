@@ -46,6 +46,7 @@ export function DotPattern({
   const mouseRef     = useRef({ x: -1000, y: -1000 })
   const animationRef = useRef<number>(0)
   const startTimeRef = useRef(Date.now())
+  const visibleRef   = useRef(true)
 
   const baseRgb = useMemo(() => hexToRgb(baseColor), [baseColor])
   const glowRgb = useMemo(() => hexToRgb(glowColor), [glowColor])
@@ -89,6 +90,7 @@ export function DotPattern({
   const draw = useCallback(() => {
     const canvas = canvasRef.current
     if (!canvas) return
+    if (!visibleRef.current) { animationRef.current = 0; return }
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
@@ -163,6 +165,22 @@ export function DotPattern({
   useEffect(() => {
     animationRef.current = requestAnimationFrame(draw)
     return () => { if (animationRef.current) cancelAnimationFrame(animationRef.current) }
+  }, [draw])
+
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        visibleRef.current = entry.isIntersecting
+        if (entry.isIntersecting && !animationRef.current) {
+          animationRef.current = requestAnimationFrame(draw)
+        }
+      },
+      { threshold: 0 },
+    )
+    observer.observe(container)
+    return () => observer.disconnect()
   }, [draw])
 
   useEffect(() => {
