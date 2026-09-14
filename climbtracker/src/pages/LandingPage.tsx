@@ -10,7 +10,6 @@ import ascendiaLogo from '../assets/Ascendr.png'
 import type { Language } from '../translations'
 import { translations } from '../translations'
 
-import MarsCanvas  from '../components/MarsCanvas'
 import DotPattern  from '../components/DotPattern'
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
@@ -148,11 +147,8 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
       <main>
 
       {/* ══ HERO ═════════════════════════════════════════════════════════════ */}
-      <section ref={heroRef} style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '100px 24px 80px', position: 'relative', overflow: 'hidden', background: '#3d2520' }}>
-        {/* Infinite tiling Mars terrain canvas */}
-        <MarsCanvas />
-        {/* Radial vignette — keeps hero text readable against the terrain */}
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 80% 60% at 50% 42%, rgba(20,8,4,0.05) 0%, rgba(20,8,4,0.55) 100%)', pointerEvents: 'none' }} />
+      <section ref={heroRef} style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '100px 24px 80px', position: 'relative', overflow: 'hidden', background: C.bg }}>
+        <DotPattern baseColor="#1e2230" glowColor={C.accent} gap={26} dotSize={2} proximity={140} waveSpeed={0.3} />
         {/* Bottom gradient — seamless blend into the page background */}
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '40%', background: 'linear-gradient(to bottom, transparent 0%, rgba(18,18,18,0.7) 45%, #121212 100%)', pointerEvents: 'none' }} />
 
