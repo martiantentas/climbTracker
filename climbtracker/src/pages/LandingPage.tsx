@@ -6,7 +6,7 @@ import {
   ArrowRight, Check, ChevronDown, Trophy,
   Layers, Sparkles,
 } from 'lucide-react'
-import ascendiaLogo from '../assets/Ascendr.png'
+import ascendiaLogo from '../assets/Ascendr.webp'
 import type { Language } from '../translations'
 import { translations } from '../translations'
 
@@ -106,7 +106,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 9, cursor: 'pointer' }} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <img src={ascendiaLogo} alt="Ascendr" style={{ height: 30, width: 'auto', objectFit: 'contain' }} fetchPriority="high" />
+            <img src={ascendiaLogo} alt="Ascendr" width="120" height="120" style={{ height: 30, width: 'auto', objectFit: 'contain' }} fetchPriority="high" />
           </div>
 
           <div className="hide-mobile" style={{ display: 'flex', gap: 4 }}>
@@ -455,7 +455,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
       {/* ══ FOOTER ═══════════════════════════════════════════════════════════ */}
       <footer style={{ background: C.bgAlt, borderTop: `1px solid ${C.border}`, padding: '32px 24px' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
-          <img src={ascendiaLogo} alt="Ascendr" style={{ height: 26, width: 'auto', objectFit: 'contain' }} />
+          <img src={ascendiaLogo} alt="Ascendr" width="120" height="120" style={{ height: 26, width: 'auto', objectFit: 'contain' }} />
           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
             {([
               [t.bookDemo,    '/demo'],

@@ -15,7 +15,7 @@ import {
   Users,
   CalendarDays,
 } from 'lucide-react'
-import ascendiaLogo from '../assets/Ascendr.png'
+import ascendiaLogo from '../assets/Ascendr.webp'
 
 import type { Competitor, Competition } from '../types'
 import type { Language } from '../translations'

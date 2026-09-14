@@ -1,0 +1,30 @@
+# Ascendr
+
+Ascendr is a web application for organizing and tracking bouldering competitions. It provides live scoring, real-time leaderboards, analytics, and participant management for climbing events of any size.
+
+## Pages
+
+- [Home](https://ascendr.top/) — Product overview and pricing
+- [Privacy Policy](https://ascendr.top/#/en/privacy)
+- [Terms of Service](https://ascendr.top/#/en/terms)
+- [Legal Notice](https://ascendr.top/#/en/legal)
+
+## Features
+
+- Real-time leaderboards with Dynamic Pot and Traditional scoring modes
+- Zone scoring and attempt penalties
+- Judge validation workflows: self-scoring, judge approval, or judge-only
+- Participant registration via invite codes or direct links
+- Analytics and per-boulder statistics
+- White-label branding (Premium plan)
+- Multi-language support: English, Spanish, Catalan
+
+## Pricing
+
+- Standard: €129 per event (up to 300 participants)
+- Premium: €209 per event (up to 500 participants, white-label branding)
+- Extra capacity bundles available at any time
+
+## Contact
+
+Visit [ascendr.top](https://ascendr.top) for more information.

@@ -6,7 +6,7 @@ import type { Competitor, Competition } from '../types'
 import { getStatusColor } from '../App'
 import type { Language } from '../translations'
 import { translations } from '../translations'
-import logo from '../assets/Ascendr.png'
+import logo from '../assets/Ascendr.webp'
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 

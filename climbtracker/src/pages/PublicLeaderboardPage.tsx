@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Trophy, Target, Zap, ArrowLeft, Share2, Check, Radio, Sun, Moon } from 'lucide-react'
 import { motion } from 'motion/react'
-import ascendiaLogo from '../assets/Ascendr.png'
+import ascendiaLogo from '../assets/Ascendr.webp'
 
 import type { Competition, Competitor, Boulder, Completion } from '../types'
 import { calculateRankings } from '../utils/scoring'

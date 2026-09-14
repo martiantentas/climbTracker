@@ -2,14 +2,14 @@ import { useState, useEffect } from 'react'
 import { motion } from 'motion/react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Eye, EyeOff, ArrowLeft, CheckCircle2, Mail } from 'lucide-react'
-import ascendrLogo from '../assets/Ascendr.png'
+import ascendrLogo from '../assets/Ascendr.webp'
 import type { Language } from '../translations'
 import { translations } from '../translations'
 import BackgroundBeams from '../components/BackgroundBeams'
 import LoadingSpinner from '../components/LoadingSpinner'
 import { signIn, signUp, signInWithGoogle, signInWithGoogleToken, resetPasswordForEmail, updatePassword } from '../lib/auth'
 
-// Minimal type for the GSI library loaded via <script> in index.html
+// Minimal type for the GSI library (loaded on-demand when this page mounts)
 interface GsiCredentialResponse { credential: string }
 interface GoogleAccounts {
   accounts: {
@@ -99,6 +99,17 @@ export default function AuthPage({ theme: _theme, lang, setLang, initialTab, onR
   const [forgotSent,     setForgotSent]     = useState(false)
   const [newPassword,    setNewPassword]    = useState('')
   const [confirmPass,    setConfirmPass]    = useState('')
+
+  useEffect(() => {
+    // Load Google Identity Services only when AuthPage is mounted
+    const GSI_URL = 'https://accounts.google.com/gsi/client'
+    if (!document.querySelector(`script[src="${GSI_URL}"]`)) {
+      const s = document.createElement('script')
+      s.src = GSI_URL
+      s.async = true
+      document.head.appendChild(s)
+    }
+  }, [])
 
   useEffect(() => {
     if (initialTab) setTab(initialTab)
@@ -265,7 +276,7 @@ export default function AuthPage({ theme: _theme, lang, setLang, initialTab, onR
         <BackgroundBeams />
 
         <div className="flex items-center gap-2.5 relative">
-          <img src={ascendrLogo} alt="Ascendr" className="h-8 w-auto object-contain" />
+          <img src={ascendrLogo} alt="Ascendr" width="120" height="120" className="h-8 w-auto object-contain" />
         </div>
 
         <div className="relative">
@@ -323,7 +334,7 @@ export default function AuthPage({ theme: _theme, lang, setLang, initialTab, onR
         </div>
 
         <div className="flex items-center gap-2 mb-9">
-          <img src={ascendrLogo} alt="Ascendr" className="h-8 w-auto object-contain" />
+          <img src={ascendrLogo} alt="Ascendr" width="120" height="120" className="h-8 w-auto object-contain" />
         </div>
 
         {/* Tab toggle — only for signin/signup */}
