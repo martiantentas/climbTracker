@@ -540,7 +540,7 @@ export const translations = {
     // ── Landing page ───────────────────────────────────────────────────────────
     landingTagline:    'Climbing Competition Software',
     landingHero1:      'Live scoring',
-    landingHero2:      'for bouldering competitions.',
+    landingHero2:      'for climbing comps.',
     landingHeroDesc:   'Replace spreadsheets with live scoring, real-time leaderboards, and a seamless competitor experience — built for serious bouldering events.',
     landingStart:      'Start your first event',
     landingHowWorks:   'How it works',
@@ -1251,7 +1251,7 @@ export const translations = {
     // ── Landing page ───────────────────────────────────────────────────────────
     landingTagline:    'Software para Competiciones de Escalada',
     landingHero1:      'Puntuación en directo',
-    landingHero2:      'para competiciones de bloque.',
+    landingHero2:      'para opens de escalada.',
     landingHeroDesc:   'Sustituye las hojas de cálculo por puntuación en vivo, clasificaciones en tiempo real y una experiencia sin fricciones — para competiciones de bloque serias.',
     landingStart:      'Organiza tu primer evento',
     landingHowWorks:   'Cómo funciona',
@@ -1956,7 +1956,7 @@ export const translations = {
     // ── Landing page ───────────────────────────────────────────────────────────
     landingTagline:    "Software per a Competicions d'escalada",
     landingHero1:      'Puntuació en directe',
-    landingHero2:      'per a competicions de bloc.',
+    landingHero2:      "per a opens d'escalada.",
     landingHeroDesc:   'Monitoritza la competició en temps real: classificacions en directe, informes, anàlisi i gestió avançada d\'usuaris.',
     landingStart:      'Accedeix',
     landingHowWorks:   'Com funciona?',
