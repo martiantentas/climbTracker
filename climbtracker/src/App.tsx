@@ -15,6 +15,7 @@ import { calculateRankings } from './utils/scoring'
 import type { Language } from './translations'
 import { translations } from './translations'
 import NavBar from './components/NavBar'
+import CookieBanner from './components/CookieBanner'
 import Toast from './components/Toast'
 import UndoToast from './components/UndoToast'
 import MobileMenu from './components/MobileMenu'
@@ -148,12 +149,14 @@ function LangRouter() {
   return <AppInner />
 }
 
+// Pushes page_view events to dataLayer on every HashRouter route change.
+// In GTM, create a Custom Event trigger for "page_view" and attach it to
+// the GA4 Configuration tag (with analytics_storage consent check enabled).
 function GtagRouteTracker() {
   const location = useLocation()
   useEffect(() => {
-    const g = (window as unknown as { gtag?: (...a: unknown[]) => void }).gtag
-    if (typeof g !== 'function') return
-    g('event', 'page_view', {
+    ;(window as unknown as { dataLayer: unknown[] }).dataLayer?.push({
+      event:         'page_view',
       page_path:     location.pathname + location.search,
       page_location: window.location.href,
     })
@@ -165,6 +168,7 @@ export default function App() {
   return (
     <HashRouter>
       <GtagRouteTracker />
+      <CookieBanner />
       <Routes>
         <Route path="/" element={<RootRedirect />} />
         <Route path="/:lang/*" element={<LangRouter />} />

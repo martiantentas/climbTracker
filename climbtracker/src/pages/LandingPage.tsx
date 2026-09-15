@@ -12,6 +12,7 @@ import { translations } from '../translations'
 
 import DotPattern    from '../components/DotPattern'
 import PlexusCanvas  from '../components/PlexusCanvas'
+import { openCookiePreferences } from '../components/CookieBanner'
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
 
@@ -471,6 +472,12 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
                 onMouseLeave={e => { e.currentTarget.style.color = C.txtLow; e.currentTarget.style.background = 'transparent' }}
               >{label}</button>
             ))}
+            <button
+              onClick={openCookiePreferences}
+              style={{ fontSize: 12, color: C.txtLow, background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 10px', borderRadius: 5, transition: 'color 0.33s, background 0.33s', fontFamily: C.font }}
+              onMouseEnter={e => { e.currentTarget.style.color = C.txt; e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
+              onMouseLeave={e => { e.currentTarget.style.color = C.txtLow; e.currentTarget.style.background = 'transparent' }}
+            >{lang === 'en' ? 'Cookies' : lang === 'es' ? 'Cookies' : 'Cookies'}</button>
           </div>
           <p style={{ fontSize: 12, color: C.txtLow, margin: 0 }}>© 2026 Ascendr</p>
         </div>

@@ -3,6 +3,7 @@ import { ArrowLeft } from 'lucide-react'
 import ascendiaLogo from '../assets/Ascendr.webp'
 import type { Language } from '../translations'
 import { translations } from '../translations'
+import { openCookiePreferences } from '../components/CookieBanner'
 
 // ─── SHARED STYLES ────────────────────────────────────────────────────────────
 
@@ -78,7 +79,7 @@ export default function PrivacyPolicyPage({ lang }: { lang: Language }) {
           <h1 style={{ fontSize: 36, fontWeight: 300, letterSpacing: '-0.03em', color: C.txt, margin: '0 0 12px' }}>
             Privacy <span style={{ fontWeight: 700 }}>Policy</span>
           </h1>
-          <p style={{ fontSize: 13, color: C.txtLow, margin: 0 }}>Last updated: April 2026</p>
+          <p style={{ fontSize: 13, color: C.txtLow, margin: 0 }}>Last updated: September 2026</p>
         </div>
 
         {/* Intro */}
@@ -88,10 +89,7 @@ export default function PrivacyPolicyPage({ lang }: { lang: Language }) {
           </P>
           <div style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${C.border}`, borderRadius: 10, padding: '20px 24px', marginTop: 16, display: 'grid', rowGap: 12 }}>
             <InfoChip label="Trading name"  value="Ascendr" />
-            <InfoChip label="Owner"         value={"[Owner's full name or company name]"} />
-            <InfoChip label="NIF / CIF"     value="[NIF or CIF]" />
-            <InfoChip label="Address"       value="[Street, number, city, postal code, Spain]" />
-            <InfoChip label="Contact email" value="[contact@ascendia.app]" />
+            <InfoChip label="Address"       value="Barcelona, Spain" />
           </div>
         </Section>
 
@@ -116,17 +114,67 @@ export default function PrivacyPolicyPage({ lang }: { lang: Language }) {
           </div>
         </Section>
 
-        {/* No cookies */}
+        {/* Cookies */}
         <Section title="3. Cookies and Tracking Technologies">
           <P>
-            <strong style={{ color: C.txt }}>Ascendr does not use third-party cookies, advertising trackers, or cross-site analytics tools.</strong> We do not share browsing data with any advertising or data brokerage networks.
+            Ascendr uses a limited set of cookies and local storage entries. We do not use advertising cookies or share browsing data with data brokers.
           </P>
+
+          {/* Essential */}
+          <p style={{ fontSize: 12, fontWeight: 700, color: C.accent, margin: '16px 0 8px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Technically necessary (no consent required)</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {([
+              ['Session token',               'Supabase',  'Keeps you logged in. Stored in localStorage.',                         'Session duration'],
+              ['Language preference',         'Ascendr',   'Stores your chosen language (EN/ES/CA) in localStorage.',              'Persistent'],
+              ['Cookie consent choice',       'Ascendr',   'Stores whether you accepted or rejected analytics cookies.',           '1 year'],
+            ] as [string, string, string, string][]).map(([name, prov, desc, dur]) => (
+              <div key={name} style={{ background: 'rgba(255,255,255,0.02)', border: `1px solid ${C.border}`, borderRadius: 8, padding: '12px 16px', display: 'grid', rowGap: 4 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 4 }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: C.txt }}>{name}</span>
+                  <span style={{ fontSize: 11, color: C.txtLow }}>{prov} · {dur}</span>
+                </div>
+                <p style={{ fontSize: 12, color: C.txtMid, lineHeight: 1.6, margin: 0 }}>{desc}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Analytics */}
+          <p style={{ fontSize: 12, fontWeight: 700, color: C.accent, margin: '20px 0 8px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Analytics cookies (consent required)</p>
           <P>
-            The platform may use browser <em>localStorage</em> to store user preferences (such as language selection) locally on your device. This data never leaves your browser and is not transmitted to our servers.
+            With your consent, Ascendr uses <strong style={{ color: C.txt }}>Google Analytics 4</strong> (via Google Tag Manager) to understand how visitors use the site and to improve it. No advertising or cross-site profiling is performed.
           </P>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+            {([
+              ['_ga',              'Google Analytics', 'Identifies unique users across sessions.',         '2 years'],
+              ['_ga_SL24MGJ1ZX',  'Google Analytics', 'Stores and counts page-view sessions.',            '2 years'],
+            ] as [string, string, string, string][]).map(([name, prov, desc, dur]) => (
+              <div key={name} style={{ background: 'rgba(255,255,255,0.02)', border: `1px solid ${C.border}`, borderRadius: 8, padding: '12px 16px', display: 'grid', rowGap: 4 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 4 }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: C.txt, fontFamily: "'SF Mono','Fira Code',monospace" }}>{name}</span>
+                  <span style={{ fontSize: 11, color: C.txtLow }}>{prov} · {dur}</span>
+                </div>
+                <p style={{ fontSize: 12, color: C.txtMid, lineHeight: 1.6, margin: 0 }}>{desc}</p>
+              </div>
+            ))}
+          </div>
           <P>
-            Session authentication uses technically necessary mechanisms (such as session tokens). These are essential for the service to function and do not require consent under applicable law.
+            Data collected by Google Analytics is processed by Google LLC (USA) under the EU–US Data Privacy Framework. For more information see{' '}
+            <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" style={{ color: C.accent }}>Google's Privacy Policy</a>.
           </P>
+          <div style={{ marginTop: 8 }}>
+            <button
+              onClick={openCookiePreferences}
+              style={{
+                background: 'rgba(127,139,173,0.12)', border: '1px solid rgba(127,139,173,0.3)',
+                color: '#7F8BAD', fontSize: 13, fontWeight: 600,
+                padding: '8px 18px', borderRadius: 7, cursor: 'pointer',
+                fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
+                letterSpacing: '-0.01em',
+              }}
+            >
+              Manage cookie preferences
+            </button>
+          </div>
         </Section>
 
         {/* Purposes */}
@@ -136,6 +184,7 @@ export default function PrivacyPolicyPage({ lang }: { lang: Language }) {
               ['Account management & service delivery', 'To create and maintain your user account and provide access to the Ascendr platform.', 'Performance of contract — Art. 6(1)(b) GDPR'],
               ['Competition participation',             'To register you in competitions, assign BIB numbers, record scores, and display your results on rankings.', 'Performance of contract — Art. 6(1)(b) GDPR'],
               ['Public leaderboards',                   'Competition results (name, BIB, score) may be displayed on public results pages linked by the competition organiser.', 'Legitimate interest — Art. 6(1)(f) GDPR'],
+              ['Analytics (with consent)',              'We use Google Analytics 4 to understand how the site is used and to improve the product. Analytics cookies are only set after you give explicit consent via the cookie banner.', 'Consent — Art. 6(1)(a) GDPR'],
               ['Security & abuse prevention',          'Server logs and session data are processed to detect and prevent unauthorised access.', 'Legitimate interest — Art. 6(1)(f) GDPR'],
               ['Legal compliance',                     'We retain data as required by applicable tax and legal obligations.', 'Legal obligation — Art. 6(1)(c) GDPR'],
             ] as [string, string, string][]).map(([purpose, desc, basis]) => (
@@ -171,8 +220,9 @@ export default function PrivacyPolicyPage({ lang }: { lang: Language }) {
           </P>
           <ul style={{ paddingLeft: 20, margin: '0 0 10px', display: 'flex', flexDirection: 'column', gap: 6 }}>
             {[
-              'Hosting and infrastructure providers that process data on our behalf under appropriate data processing agreements.',
-              'Payment processors for the processing of competition fees (payment data is handled directly by the payment provider and is not stored by Ascendr).',
+              'Hosting and infrastructure providers (Supabase, Vercel) that process data on our behalf under appropriate data processing agreements.',
+              'Google LLC — for analytics via Google Analytics 4 and Google Tag Manager, only when you have given consent. Data may be processed in the USA under the EU–US Data Privacy Framework.',
+              'Payment processors (Stripe) for the processing of competition fees. Payment data is handled directly by the payment provider and is not stored by Ascendr.',
               'Public authorities, when required by law.',
             ].map(item => (
               <li key={item} style={{ fontSize: 14, color: C.txtMid, lineHeight: 1.7 }}>{item}</li>
@@ -205,8 +255,8 @@ export default function PrivacyPolicyPage({ lang }: { lang: Language }) {
             ))}
           </div>
           <p style={{ fontSize: 14, color: C.txtMid, lineHeight: 1.75, margin: '16px 0 0' }}>
-            To exercise any of these rights, contact us at <span style={{ color: C.accent }}>[contact@ascendia.app]</span>. We will respond within 30 days. You also have the right to lodge a complaint with the Spanish Data Protection Authority (AEPD) at{' '}
-            <span style={{ color: C.accent }}>www.aepd.es</span>.
+            To exercise any of these rights, use the account settings within the Ascendr application or contact us via the in-app support channel. We will respond within 30 days. You also have the right to lodge a complaint with the Spanish Data Protection Authority (AEPD) at{' '}
+            <a href="https://www.aepd.es" target="_blank" rel="noopener noreferrer" style={{ color: C.accent }}>www.aepd.es</a>.
           </p>
         </Section>
 

@@ -87,16 +87,42 @@
 
     <!-- Google Identity Services is loaded on-demand by AuthPage -->
 
-    <!-- ── Google Analytics 4 ──────────────────────────────────────────────── -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-SL24MGJ1ZX"></script>
+    <!-- ── Consent Mode v2 defaults — MUST be before GTM ───────────────────── -->
+    <!-- All consent signals default to denied until the user chooses.         -->
+    <!-- Stored choices are restored synchronously so returning visitors        -->
+    <!-- are not re-prompted and GTM fires correctly on first load.             -->
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-SL24MGJ1ZX', { send_page_view: false });
+      gtag('consent', 'default', {
+        analytics_storage:   'denied',
+        ad_storage:          'denied',
+        ad_user_data:        'denied',
+        ad_personalization:  'denied',
+        wait_for_update:     500,
+      });
+      // Restore consent from previous session before GTM initialises
+      try {
+        var _c = localStorage.getItem('ascendr_cookie_consent');
+        if (_c === 'accepted') {
+          gtag('consent', 'update', { analytics_storage: 'granted' });
+        }
+      } catch(e) {}
     </script>
+
+    <!-- ── Google Tag Manager ───────────────────────────────────────────────── -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-NJBNLZ9K');</script>
+
   </head>
   <body>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NJBNLZ9K"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
