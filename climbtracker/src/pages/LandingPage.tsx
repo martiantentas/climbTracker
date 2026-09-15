@@ -99,10 +99,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
     ['White-label logo', true], ['Custom accent colour', true], ['Light & dark theme colours', true],
   ]
   const freeFeatures = [
-    'Join any competition by code',
-    'Self-log scores (when enabled)',
-    'Live leaderboard access',
-    'Public leaderboard view',
+    t.pricingFreeF1, t.pricingFreeF2, t.pricingFreeF3, t.pricingFreeF4,
   ]
 
   // Light-mode pricing warm colours (used only in !isDark)
@@ -409,8 +406,8 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
             <p style={{ fontSize: 16, color: isDark ? C.txtMid : LP.mid, lineHeight: 1.65, maxWidth: 440, margin: '0 auto' }}>{t.pricingDesc}</p>
           </div>
 
-          {/* 3-column cards */}
-          <div className="pricing-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1.08fr 1fr', gap: 16, marginBottom: 20, alignItems: 'start' }}>
+          {/* 3-column cards — stretch makes all rows same height; flex-col + margin-top:auto pushes CTAs to bottom */}
+          <div className="pricing-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1.08fr 1fr', gap: 16, marginBottom: 20, alignItems: 'stretch' }}>
 
             {/* Competitor — free */}
             <div className="pricing-card" style={{
@@ -420,13 +417,11 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
               display: 'flex', flexDirection: 'column',
               boxShadow: isDark ? 'none' : LP.shadow1,
             }}>
-              <p style={{ fontSize: 13, fontWeight: 600, color: isDark ? C.txtMid : LP.low, margin: '0 0 20px', letterSpacing: '-0.01em' }}>Competitor</p>
+              <p style={{ fontSize: 13, fontWeight: 600, color: isDark ? C.txtMid : LP.low, margin: '0 0 20px', letterSpacing: '-0.01em' }}>{t.pricingFree}</p>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 6 }}>
                 <span style={{ fontSize: 48, fontWeight: 700, color: isDark ? C.txt : LP.txt, lineHeight: 1, letterSpacing: '-0.03em' }}>€0</span>
               </div>
-              <p style={{ fontSize: 13, color: isDark ? C.txtMid : LP.mid, marginBottom: 28, lineHeight: 1.55 }}>
-                Participate in any event. Always free.
-              </p>
+              <p style={{ fontSize: 13, color: isDark ? C.txtMid : LP.mid, marginBottom: 28, lineHeight: 1.55 }}>{t.pricingFreeDesc}</p>
               <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 36px', display: 'flex', flexDirection: 'column', gap: 11, flex: 1 }}>
                 {freeFeatures.map(f => (
                   <li key={f} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: isDark ? C.txtMid : '#6A5A44' }}>
@@ -467,9 +462,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
                 <span style={{ fontSize: 48, fontWeight: 700, color: isDark ? C.txt : LP.txt, lineHeight: 1, letterSpacing: '-0.03em' }}>€129</span>
                 <span style={{ fontSize: 13, color: isDark ? C.txtMid : LP.low }}>{t.pricingPerEvent}</span>
               </div>
-              <p style={{ fontSize: 13, color: isDark ? C.txtMid : LP.mid, marginBottom: 28, lineHeight: 1.55 }}>
-                Everything you need to run a great competition.
-              </p>
+              <p style={{ fontSize: 13, color: isDark ? C.txtMid : LP.mid, marginBottom: 28, lineHeight: 1.55 }}>{t.pricingStdDesc}</p>
               <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 36px', display: 'flex', flexDirection: 'column', gap: 11, flex: 1 }}>
                 {stdFeatures.map(f => (
                   <li key={f} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: isDark ? C.txtMid : '#5A4A38' }}>
@@ -510,9 +503,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
                 <span style={{ fontSize: 48, fontWeight: 700, color: isDark ? C.txt : LP.txt, lineHeight: 1, letterSpacing: '-0.03em' }}>€209</span>
                 <span style={{ fontSize: 13, color: isDark ? C.txtMid : LP.low }}>{t.pricingPerEvent}</span>
               </div>
-              <p style={{ fontSize: 13, color: isDark ? C.txtMid : LP.mid, marginBottom: 28, lineHeight: 1.55 }}>
-                Full brand control for high-profile events.
-              </p>
+              <p style={{ fontSize: 13, color: isDark ? C.txtMid : LP.mid, marginBottom: 28, lineHeight: 1.55 }}>{t.pricingPremDesc}</p>
               <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 36px', display: 'flex', flexDirection: 'column', gap: 11, flex: 1 }}>
                 {premFeatures.map((f) => {
                   const isNew = Array.isArray(f)
