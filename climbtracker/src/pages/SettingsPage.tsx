@@ -12,6 +12,7 @@ import { CompetitionStatus, ScoringType } from '../types'
 import type { Language } from '../translations'
 import { translations } from '../translations'
 import { authedFetchInit } from '../lib/supabase'
+import { trackEvent } from '../lib/analytics'
 
 interface SettingsPageProps {
   competition:     Competition
@@ -599,6 +600,7 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
 
   function handleSave() {
     onUpdate(draft)
+    trackEvent('settings_saved', { status: draft.status, scoring_type: draft.scoringType })
     setIsDirty(false)
   }
 

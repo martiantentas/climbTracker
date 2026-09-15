@@ -6,6 +6,7 @@ import type { Boulder, Competitor, Completion, Competition } from '../types'
 import type { Language } from '../translations'
 import { translations } from '../translations'
 import { calcBoulderPoints } from '../utils/scoring'
+import { trackEvent } from '../lib/analytics'
 
 // ─── SCORE HELPER ─────────────────────────────────────────────────────────────
 // Uses the shared scoring util — identical numbers to the leaderboard.
@@ -541,6 +542,7 @@ export default function JudgingPage({
 
   function handleLog(...args: Parameters<typeof onLogScore>) {
     onLogScore(...args)
+    trackEvent('boulder_scored', { topped: args[5], has_zone: args[3] })
     showSuccess(t.judgingScoreSaved)
   }
 

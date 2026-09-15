@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef, lazy, Suspense } from 'react'
 import { HashRouter, Routes, Route, Navigate, useNavigate, useParams, useLocation } from 'react-router-dom'
 import { supabase, authedFetchInit } from './lib/supabase'
+import { trackEvent } from './lib/analytics'
 import { getProfile, upsertProfile, supabaseUserToCompetitor, signOutUser } from './lib/auth'
 import {
   loadAllUserData, upsertCompetition, deleteCompetition,
@@ -608,6 +609,7 @@ function AppInner() {
                   ? prev.map(c => c.id === compId ? updated : c)
                   : prev
               )
+              trackEvent('purchase', { transaction_id: sessionId, currency: 'EUR', purchase_type: type, tier: params.get('tier') ?? undefined })
               const msg =
                 type === 'bundle'  ? 'Capacity added! Your competition now has more slots.' :
                 type === 'upgrade' ? 'Upgraded to Premium! Branding tools are now unlocked.' :
