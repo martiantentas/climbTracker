@@ -6,15 +6,21 @@ interface Particle {
   r: number
 }
 
-const ACCENT = { r: 127, g: 139, b: 173 }   // #7F8BAD
+const DEFAULT_ACCENT = { r: 127, g: 139, b: 173 }   // #7F8BAD
 const MAX_DIST   = 170
 const BASE_SPEED = 0.35
 const MAX_SPEED  = BASE_SPEED * 2.5
 const DOT_ALPHA  = 0.65
 const LINE_ALPHA = 0.28
 
-export default function PlexusCanvas() {
+interface PlexusCanvasProps {
+  accent?: { r: number; g: number; b: number }
+}
+
+export default function PlexusCanvas({ accent = DEFAULT_ACCENT }: PlexusCanvasProps) {
   const ref = useRef<HTMLCanvasElement>(null)
+  const accentRef = useRef(accent)
+  accentRef.current = accent  // sync on every render so tick() always reads the current color
 
   useEffect(() => {
     const canvas = ref.current
@@ -95,7 +101,7 @@ export default function PlexusCanvas() {
           if (d >= MAX_DIST) continue
           const alpha = LINE_ALPHA * (1 - d / MAX_DIST)
           ctx.beginPath()
-          ctx.strokeStyle = `rgba(${ACCENT.r},${ACCENT.g},${ACCENT.b},${alpha.toFixed(3)})`
+          ctx.strokeStyle = `rgba(${accentRef.current.r},${accentRef.current.g},${accentRef.current.b},${alpha.toFixed(3)})`
           ctx.moveTo(a.x, a.y)
           ctx.lineTo(b.x, b.y)
           ctx.stroke()
@@ -106,7 +112,7 @@ export default function PlexusCanvas() {
       for (const p of particles) {
         ctx.beginPath()
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(${ACCENT.r},${ACCENT.g},${ACCENT.b},${DOT_ALPHA})`
+        ctx.fillStyle = `rgba(${accentRef.current.r},${accentRef.current.g},${accentRef.current.b},${DOT_ALPHA})`
         ctx.fill()
       }
     }
