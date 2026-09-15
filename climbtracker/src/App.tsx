@@ -148,9 +148,23 @@ function LangRouter() {
   return <AppInner />
 }
 
+function GtagRouteTracker() {
+  const location = useLocation()
+  useEffect(() => {
+    const g = (window as unknown as { gtag?: (...a: unknown[]) => void }).gtag
+    if (typeof g !== 'function') return
+    g('event', 'page_view', {
+      page_path:     location.pathname + location.search,
+      page_location: window.location.href,
+    })
+  }, [location])
+  return null
+}
+
 export default function App() {
   return (
     <HashRouter>
+      <GtagRouteTracker />
       <Routes>
         <Route path="/" element={<RootRedirect />} />
         <Route path="/:lang/*" element={<LangRouter />} />
