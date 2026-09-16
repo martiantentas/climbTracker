@@ -634,7 +634,7 @@ function AppInner() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const [toast,             setToast]             = useState<{ message: string; visible: boolean }>({ message: '', visible: false })
+  const [toast,             setToast]             = useState<{ message: string; visible: boolean; variant: 'success' | 'error' }>({ message: '', visible: false, variant: 'success' })
   const [isMenuOpen,        setIsMenuOpen]        = useState(false)
   const [joinProfileComp,   setJoinProfileComp]   = useState<Competition | null>(null)
   const [pendingRemoveUser, setPendingRemoveUser] = useState<Competitor | null>(null)
@@ -797,10 +797,10 @@ function AppInner() {
 
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  function showToast(message: string) {
+  function showToast(message: string, variant: 'success' | 'error' = 'success') {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
-    setToast({ message, visible: true })
-    toastTimerRef.current = setTimeout(() => setToast({ message: '', visible: false }), 3000)
+    setToast({ message, visible: true, variant })
+    toastTimerRef.current = setTimeout(() => setToast({ message: '', visible: false, variant: 'success' }), variant === 'error' ? 5000 : 3000)
   }
 
   function handleToggleCompletion(
@@ -839,17 +839,17 @@ function AppInner() {
       if (forceStatus === false) {
         const t = pendingWriteTimers.current.get(writeKey)
         if (t) { clearTimeout(t.timer); pendingWriteTimers.current.delete(writeKey) }
-        deleteCompletion(compId, competitorId, boulderId).catch(err => console.error('[db] deleteCompletion:', err))
+        deleteCompletion(compId, competitorId, boulderId).catch(err => { console.error('[db] deleteCompletion:', err); showToast(t.judgingScoreSaveError, 'error') })
       } else {
         const entry = { ...existing, attempts: Math.max(1, attempts) }
         scheduleCompletionWrite(writeKey, () =>
-          upsertCompletion(compId, entry).catch(err => console.error('[db] upsertCompletion:', err))
+          upsertCompletion(compId, entry).catch(err => { console.error('[db] upsertCompletion:', err); showToast(t.judgingScoreSaveError, 'error') })
         )
       }
     } else if (forceStatus === true) {
       const entry: Completion = { competitorId, boulderId, attempts: Math.max(1, attempts), timestamp: Date.now(), hasZone: false, zoneAttempts: 0, zonesReached: 0, topValidated: true }
       scheduleCompletionWrite(writeKey, () =>
-        upsertCompletion(compId, entry).catch(err => console.error('[db] upsertCompletion:', err))
+        upsertCompletion(compId, entry).catch(err => { console.error('[db] upsertCompletion:', err); showToast(t.judgingScoreSaveError, 'error') })
       )
     }
   }
@@ -1222,10 +1222,10 @@ function AppInner() {
     if (isClearAction) {
       const t = pendingWriteTimers.current.get(writeKey)
       if (t) { clearTimeout(t.timer); pendingWriteTimers.current.delete(writeKey) }
-      deleteCompletion(compId, competitorId, boulderId).catch(err => console.error('[db] clearScore:', err))
+      deleteCompletion(compId, competitorId, boulderId).catch(err => { console.error('[db] clearScore:', err); showToast(t.judgingScoreSaveError, 'error') })
     } else {
       scheduleCompletionWrite(writeKey, () =>
-        upsertCompletion(compId, entry).catch(err => console.error('[db] logScore:', err))
+        upsertCompletion(compId, entry).catch(err => { console.error('[db] logScore:', err); showToast(t.judgingScoreSaveError, 'error') })
       )
     }
   }
@@ -1354,7 +1354,7 @@ function AppInner() {
         }}
       >
 
-        <Toast message={toast.message} visible={toast.visible} theme={theme} />
+        <Toast message={toast.message} visible={toast.visible} theme={theme} variant={toast.variant} />
 
         {pendingRemoveUser && (
           <UndoToast

@@ -699,6 +699,7 @@ export const translations = {
     judgingTopLabel:           'Top',
     judgingScoreCleared:       'Score cleared',
     judgingScoreSaved:         'Score saved ✓',
+    judgingScoreSaveError:     'Score could not be saved — please try again.',
     judgingHelpText:           'Click a competitor card to expand their judge-required boulders. Use +/− to log attempts, toggle zone buttons and Top, then hit Save score.',
 
     // ── Rules page extras ──────────────────────────────────────────────────────
@@ -1412,6 +1413,7 @@ export const translations = {
     judgingTopLabel:           'Top',
     judgingScoreCleared:       'Puntuación borrada',
     judgingScoreSaved:         'Puntuación guardada ✓',
+    judgingScoreSaveError:     'No se pudo guardar la puntuación — inténtalo de nuevo.',
     judgingHelpText:           'Haz clic en un participante para ver sus boulders. Usa +/− para registrar intentos, activa zonas y Top, luego pulsa Guardar puntuación.',
 
     // ── Rules page extras ──────────────────────────────────────────────────────
@@ -2125,6 +2127,7 @@ export const translations = {
     judgingTopLabel:           'Top',
     judgingScoreCleared:       'Puntuació esborrada',
     judgingScoreSaved:         'Puntuació desada ✓',
+    judgingScoreSaveError:     'No s\'ha pogut desar la puntuació — torna a intentar-ho.',
     judgingHelpText:           'Fes clic a un participant per veure els seus boulders. Usa +/− per registrar intents, activa zones i Top, i prem Desar puntuació.',
 
     // ── Rules page extras ──────────────────────────────────────────────────────
