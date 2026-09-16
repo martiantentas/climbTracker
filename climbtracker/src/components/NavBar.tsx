@@ -142,12 +142,18 @@ export default function NavBar({
           hidden lg:flex items-center gap-0.5 p-1 rounded-lg overflow-x-auto
           ${theme === 'dark' ? 'bg-white/[0.05]' : 'bg-[#F0F0F0]'}
         `}>
-          <NavPill to={`/${lang}/competitions`} label={t.myCompetitions} theme={theme} />
+          <span data-walkthrough="competitions">
+            <NavPill to={`/${lang}/competitions`} label={t.myCompetitions} theme={theme} />
+          </span>
 
           {canAccessComp && (
             <>
-              <NavPill to={`/${lang}`}               label={t.boulders}    theme={theme} />
-              <NavPill to={`/${lang}/leaderboard`}   label={t.leaderboard} theme={theme} />
+              <span data-walkthrough="boulders">
+                <NavPill to={`/${lang}`}               label={t.boulders}    theme={theme} />
+              </span>
+              <span data-walkthrough="leaderboard">
+                <NavPill to={`/${lang}/leaderboard`}   label={t.leaderboard} theme={theme} />
+              </span>
               <NavPill to={`/${lang}/rules`}         label={t.rules}       theme={theme} />
               {!isOrganizer && !isJudge && (
                 <NavPill to={`/${lang}/event-profile`} label={t.eventSettings} theme={theme} />
@@ -204,24 +210,26 @@ export default function NavBar({
 
           {/* Settings icon — organizer only */}
           {isOrganizer && (
-            <motion.div
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.88 }}
-              transition={BTN_SPRING}
-            >
-              <Link
-                to={`/${lang}/settings`}
-                className={`
-                  p-2 rounded transition-colors duration-[330ms] flex items-center
-                  ${theme === 'dark'
-                    ? 'text-[#5C5E62] hover:text-[#EEEEEE] hover:bg-white/5'
-                    : 'text-[#5C5E62] hover:text-[#121212] hover:bg-[#F4F4F4]'
-                  }
-                `}
+            <span data-walkthrough="settings">
+              <motion.div
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.88 }}
+                transition={BTN_SPRING}
               >
-                <Settings size={17} />
-              </Link>
-            </motion.div>
+                <Link
+                  to={`/${lang}/settings`}
+                  className={`
+                    p-2 rounded transition-colors duration-[330ms] flex items-center
+                    ${theme === 'dark'
+                      ? 'text-[#5C5E62] hover:text-[#EEEEEE] hover:bg-white/5'
+                      : 'text-[#5C5E62] hover:text-[#121212] hover:bg-[#F4F4F4]'
+                    }
+                  `}
+                >
+                  <Settings size={17} />
+                </Link>
+              </motion.div>
+            </span>
           )}
 
           {/* Profile icon */}
