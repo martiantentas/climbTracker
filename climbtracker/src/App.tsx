@@ -18,6 +18,7 @@ import { translations } from './translations'
 import NavBar from './components/NavBar'
 import CookieBanner from './components/CookieBanner'
 import Toast from './components/Toast'
+import WalkthroughModal, { shouldShowWalkthrough, markWalkthroughSeen } from './components/WalkthroughModal'
 import UndoToast from './components/UndoToast'
 import MobileMenu from './components/MobileMenu'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -358,6 +359,7 @@ function AppInner() {
         console.error('[auth] loadAllUserData failed:', dataResult.reason)
       }
       setCurrentUser(supabaseUserToCompetitor(authUser, profile))
+      if (shouldShowWalkthrough('login')) setWalkthrough('login')
       if (userData) {
         // Mark the pre-fetched competition so the lazy loader skips it.
         loadedCompletionsRef.current = new Set(userData.activeId ? [userData.activeId] : [])
@@ -615,6 +617,9 @@ function AppInner() {
                 type === 'upgrade' ? 'Upgraded to Premium! Branding tools are now unlocked.' :
                                      'Payment confirmed! Your competition is now Live.'
               showToast(msg)
+              if (type !== 'bundle' && type !== 'upgrade' && shouldShowWalkthrough('purchase')) {
+                setWalkthrough('purchase')
+              }
             } else {
               console.error('[verify-payment] server error:', data.error)
               showToast('Payment received but status update failed — please refresh.')
@@ -635,6 +640,7 @@ function AppInner() {
   }, [])
 
   const [toast,             setToast]             = useState<{ message: string; visible: boolean; variant: 'success' | 'error' }>({ message: '', visible: false, variant: 'success' })
+  const [walkthrough,       setWalkthrough]       = useState<'login' | 'purchase' | null>(null)
   const [isMenuOpen,        setIsMenuOpen]        = useState(false)
   const [joinProfileComp,   setJoinProfileComp]   = useState<Competition | null>(null)
   const [pendingRemoveUser, setPendingRemoveUser] = useState<Competitor | null>(null)
@@ -1355,6 +1361,15 @@ function AppInner() {
       >
 
         <Toast message={toast.message} visible={toast.visible} theme={theme} variant={toast.variant} />
+
+        {walkthrough && (
+          <WalkthroughModal
+            variant={walkthrough}
+            theme={theme}
+            lang={lang}
+            onDismiss={() => { markWalkthroughSeen(walkthrough); setWalkthrough(null) }}
+          />
+        )}
 
         {pendingRemoveUser && (
           <UndoToast

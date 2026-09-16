@@ -723,6 +723,25 @@ export const translations = {
     eventProfileAttempts:          (n: number) => `${n} attempt${n !== 1 ? 's' : ''}`,
     eventProfileNoActivity:        'No activity yet',
     eventProfileNoActivityDesc:    'Start topping boulders to see your performance here.',
+
+    // ── Walkthrough ────────────────────────────────────────────────────────────
+    walkthroughSkip: 'Skip',
+    walkthroughNext: 'Next',
+    walkthroughDone: 'Done',
+
+    walkthroughLoginStep1Title: 'Your competitions',
+    walkthroughLoginStep1Desc:  'Find competitions near you or join with an invite link. All your events in one place.',
+    walkthroughLoginStep2Title: 'Score boulders',
+    walkthroughLoginStep2Desc:  'Mark your attempts and tops from your phone in real time — no paper scorecards needed.',
+    walkthroughLoginStep3Title: 'Live leaderboard',
+    walkthroughLoginStep3Desc:  'Watch the ranking update instantly as everyone scores. Results are visible to all.',
+
+    walkthroughPurchaseStep1Title: 'Set up your competition',
+    walkthroughPurchaseStep1Desc:  'Configure format, scoring rules, categories and capacity from the Settings page.',
+    walkthroughPurchaseStep2Title: 'Add boulders & invite climbers',
+    walkthroughPurchaseStep2Desc:  'Create your problems in the Boulders tab, then share the invite link with participants.',
+    walkthroughPurchaseStep3Title: 'Go live',
+    walkthroughPurchaseStep3Desc:  'Set the competition to Live to open scoring. Watch the leaderboard fill up in real time.',
   },
 
   // ─── SPANISH ─────────────────────────────────────────────────────────────────
@@ -1437,6 +1456,25 @@ export const translations = {
     eventProfileAttempts:          (n: number) => `${n} intento${n !== 1 ? 's' : ''}`,
     eventProfileNoActivity:        'Sin actividad todavía',
     eventProfileNoActivityDesc:    'Empieza a superar boulders para ver tu rendimiento aquí.',
+
+    // ── Walkthrough ────────────────────────────────────────────────────────────
+    walkthroughSkip: 'Saltar',
+    walkthroughNext: 'Siguiente',
+    walkthroughDone: 'Listo',
+
+    walkthroughLoginStep1Title: 'Tus competiciones',
+    walkthroughLoginStep1Desc:  'Encuentra competiciones cercanas o únete con un enlace de invitación. Todos tus eventos en un solo lugar.',
+    walkthroughLoginStep2Title: 'Puntúa bloques',
+    walkthroughLoginStep2Desc:  'Registra tus intentos y tops desde el móvil en tiempo real — sin tarjetas de puntuación en papel.',
+    walkthroughLoginStep3Title: 'Clasificación en vivo',
+    walkthroughLoginStep3Desc:  'Observa cómo se actualiza el ranking al instante a medida que todos puntúan.',
+
+    walkthroughPurchaseStep1Title: 'Configura tu competición',
+    walkthroughPurchaseStep1Desc:  'Define formato, reglas de puntuación, categorías y aforo desde la página de Ajustes.',
+    walkthroughPurchaseStep2Title: 'Añade bloques e invita escaladores',
+    walkthroughPurchaseStep2Desc:  'Crea los problemas en la pestaña Bloques y comparte el enlace de invitación con los participantes.',
+    walkthroughPurchaseStep3Title: 'Activa la competición',
+    walkthroughPurchaseStep3Desc:  'Cambia el estado a En vivo para abrir la puntuación. Verás el ranking llenarse en tiempo real.',
   },
 
   // ─── CATALAN ─────────────────────────────────────────────────────────────────
@@ -2151,5 +2189,24 @@ export const translations = {
     eventProfileAttempts:          (n: number) => `${n} intent${n !== 1 ? 's' : ''}`,
     eventProfileNoActivity:        'Sense activitat encara',
     eventProfileNoActivityDesc:    'Comença a superar boulders per veure el teu rendiment aquí.',
+
+    // ── Walkthrough ────────────────────────────────────────────────────────────
+    walkthroughSkip: 'Salta',
+    walkthroughNext: 'Següent',
+    walkthroughDone: 'Fet',
+
+    walkthroughLoginStep1Title: 'Les teves competicions',
+    walkthroughLoginStep1Desc:  'Troba competicions properes o uneix-te amb un enllaç d\'invitació. Tots els teus events en un sol lloc.',
+    walkthroughLoginStep2Title: 'Puntua blocs',
+    walkthroughLoginStep2Desc:  'Registra els teus intents i tops des del mòbil en temps real — sense targetes de puntuació en paper.',
+    walkthroughLoginStep3Title: 'Classificació en directe',
+    walkthroughLoginStep3Desc:  'Observa com s\'actualitza el rànquing a l\'instant a mesura que tothom puntua.',
+
+    walkthroughPurchaseStep1Title: 'Configura la teva competició',
+    walkthroughPurchaseStep1Desc:  'Defineix format, regles de puntuació, categories i aforament des de la pàgina d\'Ajustos.',
+    walkthroughPurchaseStep2Title: 'Afegeix blocs i convida escaladors',
+    walkthroughPurchaseStep2Desc:  'Crea els problemes a la pestanya Blocs i comparteix l\'enllaç d\'invitació amb els participants.',
+    walkthroughPurchaseStep3Title: 'Activa la competició',
+    walkthroughPurchaseStep3Desc:  'Canvia l\'estat a En directe per obrir la puntuació. Veuràs el rànquing omplir-se en temps real.',
   },
 } as const
