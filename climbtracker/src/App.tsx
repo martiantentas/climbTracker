@@ -412,6 +412,10 @@ function AppInner() {
         if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
           const completion = payload.new.data as unknown as Completion
           if (!completion) return
+          // Skip if a local write is still in-flight for this boulder — the
+          // Realtime echo would revert the optimistic UI before the write confirms.
+          const writeKey = `${completion.competitorId}:${completion.boulderId}`
+          if (pendingWriteTimers.current.has(writeKey)) return
           setCompletionsMap(prev => {
             const cur = prev[activeCompId] ?? []
             const idx = cur.findIndex(c => c.competitorId === completion.competitorId && c.boulderId === completion.boulderId)
@@ -419,6 +423,9 @@ function AppInner() {
           })
         } else if (payload.eventType === 'DELETE') {
           const old = payload.old as { competitor_id: string; boulder_id: string }
+          // Also guard deletes: if a write is pending, don't let a stale delete revert it.
+          const writeKey = `${old.competitor_id}:${old.boulder_id}`
+          if (pendingWriteTimers.current.has(writeKey)) return
           setCompletionsMap(prev => ({ ...prev, [activeCompId]: (prev[activeCompId] ?? []).filter(c => !(c.competitorId === old.competitor_id && c.boulderId === old.boulder_id)) }))
         }
       })
@@ -478,7 +485,20 @@ function AppInner() {
         console.warn('[realtime] channel not joined — polling fallback')
         Promise.all([
           fetchCompletions(activeCompId)
-            .then(cs => setCompletionsMap(prev => ({ ...prev, [activeCompId]: cs }))),
+            .then(cs => setCompletionsMap(prev => {
+              // Merge DB state but keep any entry that has a pending local write
+              const pending = pendingWriteTimers.current
+              const cur = prev[activeCompId] ?? []
+              const merged = cs.map(dbEntry => {
+                const key = `${dbEntry.competitorId}:${dbEntry.boulderId}`
+                if (pending.has(key)) {
+                  // Preserve local optimistic state — write not yet confirmed
+                  return cur.find(c => c.competitorId === dbEntry.competitorId && c.boulderId === dbEntry.boulderId) ?? dbEntry
+                }
+                return dbEntry
+              })
+              return { ...prev, [activeCompId]: merged }
+            })),
           fetchBoulders(activeCompId)
             .then(bs => setBouldersMap(prev => ({ ...prev, [activeCompId]: bs }))),
         ]).catch(err => console.error('[realtime] poll fallback failed:', err))
