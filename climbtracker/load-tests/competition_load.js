@@ -37,10 +37,10 @@ export const options = {
       executor:    'ramping-vus',
       startVUs:    0,
       stages: [
-        { duration: '30s', target: 50  }, // puja a 50 VUs
-        { duration: '1m',  target: 100 }, // puja a 100 VUs
-        { duration: '1m',  target: 200 }, // puja a 200 VUs — límit free tier WS
-        { duration: '2m',  target: 200 }, // manté 200 VUs (estrès real)
+        { duration: '30s', target: 100 }, // puja a 100 VUs
+        { duration: '1m',  target: 200 }, // puja a 200 VUs
+        { duration: '1m',  target: 400 }, // puja a 400 VUs — límit Pro tier WS
+        { duration: '2m',  target: 400 }, // manté 400 VUs (estrès real)
         { duration: '30s', target: 0   }, // baixa
       ],
     },
