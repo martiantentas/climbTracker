@@ -863,19 +863,43 @@ function AppInner() {
     const writeKey = `${competitorId}:${boulderId}`
     if (existing) {
       if (forceStatus === false) {
-        const t = pendingWriteTimers.current.get(writeKey)
-        if (t) { clearTimeout(t.timer); pendingWriteTimers.current.delete(writeKey) }
-        deleteCompletion(compId, competitorId, boulderId).catch(err => { console.error('[db] deleteCompletion:', err); showToast(t.judgingScoreSaveError, 'error') })
+        const pending = pendingWriteTimers.current.get(writeKey)
+        if (pending) { clearTimeout(pending.timer); pendingWriteTimers.current.delete(writeKey) }
+        deleteCompletion(compId, competitorId, boulderId).catch(err => {
+          console.error('[db] deleteCompletion:', err)
+          showToast(t.judgingScoreSaveError, 'error')
+          // Rollback: restore the entry that was optimistically removed
+          setCompletionsMap(prev => ({
+            ...prev,
+            [compId]: [...(prev[compId] ?? []).filter(c => !(c.competitorId === competitorId && c.boulderId === boulderId)), existing],
+          }))
+        })
       } else {
         const entry = { ...existing, attempts: Math.max(1, attempts) }
         scheduleCompletionWrite(writeKey, () =>
-          upsertCompletion(compId, entry).catch(err => { console.error('[db] upsertCompletion:', err); showToast(t.judgingScoreSaveError, 'error') })
+          upsertCompletion(compId, entry).catch(err => {
+            console.error('[db] upsertCompletion:', err)
+            showToast(t.judgingScoreSaveError, 'error')
+            // Rollback: restore previous entry state
+            setCompletionsMap(prev => ({
+              ...prev,
+              [compId]: (prev[compId] ?? []).map(c => c.competitorId === competitorId && c.boulderId === boulderId ? existing : c),
+            }))
+          })
         )
       }
     } else if (forceStatus === true) {
       const entry: Completion = { competitorId, boulderId, attempts: Math.max(1, attempts), timestamp: Date.now(), hasZone: false, zoneAttempts: 0, zonesReached: 0, topValidated: true }
       scheduleCompletionWrite(writeKey, () =>
-        upsertCompletion(compId, entry).catch(err => { console.error('[db] upsertCompletion:', err); showToast(t.judgingScoreSaveError, 'error') })
+        upsertCompletion(compId, entry).catch(err => {
+          console.error('[db] upsertCompletion:', err)
+          showToast(t.judgingScoreSaveError, 'error')
+          // Rollback: remove the optimistically added entry
+          setCompletionsMap(prev => ({
+            ...prev,
+            [compId]: (prev[compId] ?? []).filter(c => !(c.competitorId === competitorId && c.boulderId === boulderId)),
+          }))
+        })
       )
     }
   }
@@ -1244,14 +1268,38 @@ function AppInner() {
           : [...current, entry],
       }
     })
-    const writeKey = `${competitorId}:${boulderId}`
+    const prevEntry = (completionsMap[compId] ?? []).find(c => c.competitorId === competitorId && c.boulderId === boulderId)
+    const writeKey  = `${competitorId}:${boulderId}`
     if (isClearAction) {
-      const t = pendingWriteTimers.current.get(writeKey)
-      if (t) { clearTimeout(t.timer); pendingWriteTimers.current.delete(writeKey) }
-      deleteCompletion(compId, competitorId, boulderId).catch(err => { console.error('[db] clearScore:', err); showToast(t.judgingScoreSaveError, 'error') })
+      const pending = pendingWriteTimers.current.get(writeKey)
+      if (pending) { clearTimeout(pending.timer); pendingWriteTimers.current.delete(writeKey) }
+      deleteCompletion(compId, competitorId, boulderId).catch(err => {
+        console.error('[db] clearScore:', err)
+        showToast(t.judgingScoreSaveError, 'error')
+        // Rollback: restore the entry that was optimistically removed
+        if (prevEntry) {
+          setCompletionsMap(prev => ({
+            ...prev,
+            [compId]: [...(prev[compId] ?? []).filter(c => !(c.competitorId === competitorId && c.boulderId === boulderId)), prevEntry],
+          }))
+        }
+      })
     } else {
       scheduleCompletionWrite(writeKey, () =>
-        upsertCompletion(compId, entry).catch(err => { console.error('[db] logScore:', err); showToast(t.judgingScoreSaveError, 'error') })
+        upsertCompletion(compId, entry).catch(err => {
+          console.error('[db] logScore:', err)
+          showToast(t.judgingScoreSaveError, 'error')
+          // Rollback: remove the optimistically added entry, or restore previous
+          setCompletionsMap(prev => {
+            const cur = prev[compId] ?? []
+            return {
+              ...prev,
+              [compId]: prevEntry
+                ? cur.map(c => c.competitorId === competitorId && c.boulderId === boulderId ? prevEntry : c)
+                : cur.filter(c => !(c.competitorId === competitorId && c.boulderId === boulderId)),
+            }
+          })
+        })
       )
     }
   }
