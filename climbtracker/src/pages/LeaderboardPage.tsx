@@ -455,7 +455,7 @@ export default function LeaderboardPage({
 
   return (
     <motion.div
-      className="max-w-5xl mx-auto"
+      className="w-full"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }}

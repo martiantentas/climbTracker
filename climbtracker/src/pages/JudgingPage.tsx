@@ -547,7 +547,7 @@ export default function JudgingPage({
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="w-full">
 
       <motion.div
         initial={{ opacity: 0, y: 8 }}

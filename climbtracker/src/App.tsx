@@ -1350,7 +1350,7 @@ function AppInner() {
           canAccessComp={false}
           onLogout={() => { setCurrentUser(null); signOutUser(); goto('/', { replace: true }) }}
         />
-        <main className="max-w-7xl mx-auto px-4 md:px-6 py-8">
+        <main className="max-w-5xl mx-auto px-4 md:px-6 py-8">
           <Suspense fallback={<PageSpinner />}>
             <Routes>
               <Route path="competitions" element={
@@ -1508,7 +1508,7 @@ function AppInner() {
           onLogout={() => { setCurrentUser(null); signOutUser(); goto('/', { replace: true }) }}
         />
 
-        <main className="max-w-7xl mx-auto px-4 md:px-6 py-8">
+        <main className="max-w-5xl mx-auto px-4 md:px-6 py-8">
           <Suspense fallback={<PageSpinner />}>
           <Routes>
 
