@@ -44,6 +44,8 @@ export default function DemoPage({ lang }: DemoPageProps) {
   const [submitted, setSubmitted] = useState(false)
   const [errors,    setErrors]    = useState<{ name?: string; email?: string }>({})
 
+  useEffect(() => { window.scrollTo(0, 0) }, [])
+
   // ── Load & render reCAPTCHA v2 widget ─────────────────────────────────────
   useEffect(() => {
     if (!RECAPTCHA_SITE_KEY) return  // no key — gate already skipped via initial state

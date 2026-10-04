@@ -557,8 +557,14 @@ export const translations = {
     featAnalyticsDesc: 'Flash rates, completion stats, and per-category breakdowns across all boulders.',
     featFlexTitle:   'Flexible Scoring',
     featFlexDesc:    'Dynamic Pot or Traditional with zone scoring, attempt penalties (fixed or % slash), and Top-K boulder counting.',
-    featSelfLog:     'Self-Log & Judge Approval',
-    featSelfLogDesc: 'Choose self-scoring, judge approval, or judge-only modes per competition. Judges get a dedicated flow for quick top/zone validation.',
+    featSelfLog:     'Scoring Mode Control',
+    featSelfLogDesc: 'Choose self-scoring, judge approval, or judge-only mode per competition.',
+    scoringModeSelf:         'Self-Scoring',
+    scoringModeSelfDesc:     'Competitors log their own ascents directly. No judge validation required.',
+    scoringModeApproval:     'Self-Scoring + Judge Approval',
+    scoringModeApprovalDesc: 'Competitors mark attempts; a judge validates each top or zone before results are confirmed.',
+    scoringModeJudge:        'Judge Only',
+    scoringModeJudgeDesc:    'Only judges can record results. Best for official and high-stakes competitions.',
     featTraits:      'Categories & Traits',
     featTraitsDesc:  'Define custom traits (age group, level, region…) per event. Competitors select them at join time. Filter the leaderboard by any combination.',
     featInvite:      'Invite in Seconds',
@@ -610,9 +616,12 @@ export const translations = {
     contact: 'Contact',
 
     // Nav links (landing)
-    navFeatures:  'Features',
+    navFeatures:  'Characteristics',
     navHowWorks:  'How it works',
     navPricing:   'Pricing',
+
+    pricingCompCta: 'Sign in / Register',
+    pricingOrgCta:  'Register your event',
 
     // Book a demo
     bookDemo:              'Book a Demo',
@@ -1295,8 +1304,14 @@ export const translations = {
     featAnalyticsDesc:'Tasas de flash, estadísticas de encadenamiento y desglose por categoría en todos los bloques.',
     featFlexTitle:    'Puntuación Flexible',
     featFlexDesc:     'Dinámico o Tradicional con puntuación de zona, penalizaciones por intentos (fija o % slash) y conteo Top-K.',
-    featSelfLog:      'Auto-Registro y Aprobación por Árbitro',
-    featSelfLogDesc:  'Elige auto-registro, aprobación de árbitro o modo solo-árbitro por competición. Los árbitros tienen un flujo dedicado para validar tops y zonas rápidamente.',
+    featSelfLog:      'Control del Modo de Puntuación',
+    featSelfLogDesc:  'Elige auto-registro, aprobación de árbitro o modo solo-árbitro por competición.',
+    scoringModeSelf:         'Auto-Registro',
+    scoringModeSelfDesc:     'Los competidores registran sus propios ascensos directamente. Sin validación de árbitro.',
+    scoringModeApproval:     'Auto-Registro + Aprobación',
+    scoringModeApprovalDesc: 'Los competidores marcan intentos; un árbitro valida cada top o zona antes de confirmar.',
+    scoringModeJudge:        'Solo Árbitro',
+    scoringModeJudgeDesc:    'Solo los árbitros pueden registrar resultados. Ideal para competiciones oficiales.',
     featTraits:       'Categorías y Traits',
     featTraitsDesc:   'Define traits personalizados (grupo de edad, nivel, región…) por evento. Los competidores los eligen al unirse. Filtra la clasificación por cualquier combinación.',
     featInvite:       'Invitación en Segundos',
@@ -1343,9 +1358,12 @@ export const translations = {
     terms:   'Términos',
     contact: 'Contacto',
 
-    navFeatures: 'Funcionalidades',
+    navFeatures: 'Características',
     navHowWorks: 'Cómo funciona',
     navPricing:  'Precios',
+
+    pricingCompCta: 'Iniciar sesión / Registrarse',
+    pricingOrgCta:  'Registra tu evento',
 
     // Book a demo
     bookDemo:              'Reservar Demo',
@@ -2028,8 +2046,14 @@ export const translations = {
     featAnalyticsDesc:"Estadístiques d'encadenament, desglossament per boulder i filtres per categoria, entre moltes altres funcionalitats.",
     featFlexTitle:    'Puntuació Flexible:',
     featFlexDesc:     'Dinàmica o Tradicional, amb puntuació de zona, penalitzacions per intents (fixa o percentual) i recompte Top-K.',
-    featSelfLog:      'Control del registre d\'intents',
-    featSelfLogDesc:  "Auto-registre per part dels competidors, aprovació per jutge o només-jutge per competició. Els jutges disposen d'un flux dedicat per validar tops i zones.",
+    featSelfLog:      'Control del Mode de Puntuació',
+    featSelfLogDesc:  "Escull entre auto-registre, aprovació per jutge o mode únicament-jutge per cada competició.",
+    scoringModeSelf:         'Auto-registre',
+    scoringModeSelfDesc:     "Els competidors registren els seus propis ascensos directament. Sense validació per part del jutge.",
+    scoringModeApproval:     'Auto-registre + Aprovació',
+    scoringModeApprovalDesc: "Els competidors marquen els intents; un jutge valida cada top o zona abans de confirmar.",
+    scoringModeJudge:        'Només Jutge',
+    scoringModeJudgeDesc:    "Únicament els jutges poden registrar resultats. Ideal per a competicions oficials.",
     featTraits:       'Categories Personalitzables',
     featTraitsDesc:   "Defineix categories o característiques personalitzades (edat, nivell, gènere, regió…) per cada esdeveniment. Els competidors els escullen en unir-se i permet filtrar en temps real qualsevol combinació.",
     featInvite:       'Múltiples Mètodes d\'Invitació:',
@@ -2076,9 +2100,12 @@ export const translations = {
     terms:   'Termes',
     contact: 'Contacte',
 
-    navFeatures: 'Funcionalitats',
+    navFeatures: 'Característiques',
     navHowWorks: 'Com funciona?',
     navPricing:  'Preus',
+
+    pricingCompCta: 'Iniciar sessió / Registrar-se',
+    pricingOrgCta:  'Registra el teu esdeveniment',
 
     // Book a demo
     bookDemo:              'Sol·licitar una Demo',

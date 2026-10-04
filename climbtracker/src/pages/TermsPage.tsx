@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import ascendiaLogo from '../assets/Ascendr.webp'
@@ -42,6 +43,65 @@ export default function TermsPage({ lang }: { lang: Language }) {
   const navigate = useNavigate()
   const t = translations[lang]
 
+  useEffect(() => { window.scrollTo(0, 0) }, [])
+
+  const L = {
+    en: {
+      title1: 'Terms & ', title2: 'Conditions',
+      updated: 'Last updated: April 2026',
+      sections: [
+        '1. Acceptance of Terms',
+        '2. Service Description',
+        '3. Account Registration',
+        '4. Organiser Responsibilities',
+        '5. Plans, Pricing, and Payment',
+        '6. Acceptable Use',
+        '7. Intellectual Property',
+        '8. Limitation of Liability',
+        '9. Termination',
+        '10. Governing Law and Dispute Resolution',
+        '11. Changes to These Terms',
+        '12. Contact',
+      ],
+    },
+    es: {
+      title1: 'Términos y ', title2: 'Condiciones',
+      updated: 'Última actualización: abril de 2026',
+      sections: [
+        '1. Aceptación de los Términos',
+        '2. Descripción del Servicio',
+        '3. Registro de Cuenta',
+        '4. Responsabilidades del Organizador',
+        '5. Planes, Precios y Pago',
+        '6. Uso Aceptable',
+        '7. Propiedad Intelectual',
+        '8. Limitación de Responsabilidad',
+        '9. Rescisión',
+        '10. Ley Aplicable y Resolución de Conflictos',
+        '11. Cambios en estos Términos',
+        '12. Contacto',
+      ],
+    },
+    ca: {
+      title1: 'Termes i ', title2: 'Condicions',
+      updated: 'Darrera actualització: abril de 2026',
+      sections: [
+        '1. Acceptació dels Termes',
+        '2. Descripció del Servei',
+        '3. Registre de Compte',
+        "4. Responsabilitats de l'Organitzador",
+        '5. Plans, Preus i Pagament',
+        '6. Ús Acceptable',
+        '7. Propietat Intel·lectual',
+        '8. Limitació de Responsabilitat',
+        '9. Rescissió',
+        '10. Llei Aplicable i Resolució de Conflictes',
+        '11. Canvis en aquests Termes',
+        '12. Contacte',
+      ],
+    },
+  }[lang]
+
   return (
     <div style={{ background: C.bg, color: C.txt, fontFamily: C.font, minHeight: '100vh' }}>
 
@@ -67,13 +127,13 @@ export default function TermsPage({ lang }: { lang: Language }) {
         <div style={{ marginBottom: 52, paddingBottom: 32, borderBottom: `1px solid ${C.border}` }}>
           <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: C.accent, marginBottom: 12 }}>Legal</p>
           <h1 style={{ fontSize: 36, fontWeight: 300, letterSpacing: '-0.03em', color: C.txt, margin: '0 0 12px' }}>
-            Terms & <span style={{ fontWeight: 700 }}>Conditions</span>
+            {L.title1}<span style={{ fontWeight: 700 }}>{L.title2}</span>
           </h1>
-          <p style={{ fontSize: 13, color: C.txtLow, margin: 0 }}>Last updated: April 2026</p>
+          <p style={{ fontSize: 13, color: C.txtLow, margin: 0 }}>{L.updated}</p>
         </div>
 
         {/* Acceptance */}
-        <Section title="1. Acceptance of Terms">
+        <Section title={L.sections[0]}>
           <P>
             By accessing or using the Ascendr platform — including creating a user account, participating in a competition, or purchasing a plan as an organiser — you agree to be bound by these Terms and Conditions, together with the Privacy Policy and Legal Notice published on this site.
           </P>
@@ -83,7 +143,7 @@ export default function TermsPage({ lang }: { lang: Language }) {
         </Section>
 
         {/* Service description */}
-        <Section title="2. Service Description">
+        <Section title={L.sections[1]}>
           <P>
             Ascendr is a Software-as-a-Service (SaaS) platform for the organisation and management of boulder climbing competitions. The platform enables:
           </P>
@@ -103,7 +163,7 @@ export default function TermsPage({ lang }: { lang: Language }) {
         </Section>
 
         {/* Account registration */}
-        <Section title="3. Account Registration">
+        <Section title={L.sections[2]}>
           <P>
             To use Ascendr, you must register an account by providing a valid email address, a display name, and creating a password. You warrant that:
           </P>
@@ -123,7 +183,7 @@ export default function TermsPage({ lang }: { lang: Language }) {
         </Section>
 
         {/* Organiser responsibilities */}
-        <Section title="4. Organiser Responsibilities">
+        <Section title={L.sections[3]}>
           <P>
             Users who create and manage competitions ("Organisers") take on additional responsibilities:
           </P>
@@ -141,7 +201,7 @@ export default function TermsPage({ lang }: { lang: Language }) {
         </Section>
 
         {/* Pricing */}
-        <Section title="5. Plans, Pricing, and Payment">
+        <Section title={L.sections[4]}>
           <P>
             Ascendr is offered on a per-event subscription basis. Published prices are in euros (€) and include applicable VAT.
           </P>
@@ -165,7 +225,7 @@ export default function TermsPage({ lang }: { lang: Language }) {
         </Section>
 
         {/* Acceptable use */}
-        <Section title="6. Acceptable Use">
+        <Section title={L.sections[5]}>
           <P>
             You agree not to use Ascendr to:
           </P>
@@ -188,7 +248,7 @@ export default function TermsPage({ lang }: { lang: Language }) {
         </Section>
 
         {/* IP */}
-        <Section title="7. Intellectual Property">
+        <Section title={L.sections[6]}>
           <P>
             All intellectual property rights in the Ascendr platform — including the software, design, logos, and documentation — are and remain the property of the owner. These Terms do not grant you any rights other than a limited, non-exclusive, non-transferable licence to use the service for its intended purpose during the term of your subscription.
           </P>
@@ -198,7 +258,7 @@ export default function TermsPage({ lang }: { lang: Language }) {
         </Section>
 
         {/* Limitation of liability */}
-        <Section title="8. Limitation of Liability">
+        <Section title={L.sections[7]}>
           <P>
             To the maximum extent permitted by law, Ascendr shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including loss of profits, data, or goodwill, arising from your use of or inability to use the service.
           </P>
@@ -211,7 +271,7 @@ export default function TermsPage({ lang }: { lang: Language }) {
         </Section>
 
         {/* Termination */}
-        <Section title="9. Termination">
+        <Section title={L.sections[8]}>
           <P>
             You may delete your account at any time via the account settings. On deletion, your personal data will be removed in accordance with our Privacy Policy.
           </P>
@@ -224,7 +284,7 @@ export default function TermsPage({ lang }: { lang: Language }) {
         </Section>
 
         {/* Governing law */}
-        <Section title="10. Governing Law and Dispute Resolution">
+        <Section title={L.sections[9]}>
           <P>
             These Terms and Conditions are governed by Spanish law. In particular, they are subject to the General Law for the Defence of Consumers and Users (Real Decreto Legislativo 1/2007) in relation to B2C transactions.
           </P>
@@ -238,7 +298,7 @@ export default function TermsPage({ lang }: { lang: Language }) {
         </Section>
 
         {/* Changes */}
-        <Section title="11. Changes to These Terms">
+        <Section title={L.sections[10]}>
           <P>
             We may update these Terms at any time. Material changes will be notified to registered users via email or an in-app message at least 14 days before they take effect. Continued use of the service after the effective date constitutes acceptance of the updated Terms.
           </P>
@@ -248,7 +308,7 @@ export default function TermsPage({ lang }: { lang: Language }) {
         </Section>
 
         {/* Contact */}
-        <Section title="12. Contact">
+        <Section title={L.sections[11]}>
           <P>
             For any questions regarding these Terms, please contact us at{' '}
             <span style={{ color: C.accent }}>[contact@ascendia.app]</span>.

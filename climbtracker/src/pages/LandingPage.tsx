@@ -27,6 +27,8 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
   const t = translations[lang]
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
 
+  const [judgeMode, setJudgeMode] = useState(0)
+
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     try { return (localStorage.getItem(THEME_KEY) as 'light' | 'dark') || 'dark' }
     catch { return 'dark' }
@@ -137,6 +139,8 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
         .lp-lang:hover { border-color: ${isDark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.28)'}; color: ${isDark ? '#EEEEEE' : '#111111'}; }
         .nav-btn { font-size: 13px; font-weight: 500; color: ${isDark ? '#5C5E62' : '#888888'}; background: transparent; border: none; cursor: pointer; padding: 6px 14px; border-radius: 6px; transition: color 0.33s, background 0.33s; }
         .nav-btn:hover { color: ${isDark ? '#EEEEEE' : '#111111'} !important; background: ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'} !important; }
+        @keyframes lp-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .lp-border-spin { animation: lp-spin 4s linear infinite; }
         @media (max-width: 768px) {
           .hide-mobile { display: none !important; }
           .bento-grid { grid-template-columns: 1fr !important; }
@@ -151,10 +155,10 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
 
       {/* ══ NAV ══════════════════════════════════════════════════════════════ */}
       <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, background: C.navBg, backdropFilter: 'blur(20px)', borderBottom: `1px solid ${C.border}`, transition: 'background 0.3s, border-color 0.3s' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', height: 56, display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: 16 }}>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 9, cursor: 'pointer' }} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <img src={ascendiaLogo} alt="Ascendr" width="120" height="120" style={{ height: 30, width: 'auto', objectFit: 'contain' }} fetchPriority="high" />
+            <img src={ascendiaLogo} alt="Ascendr" width="120" height="120" style={{ height: 36, width: 'auto', objectFit: 'contain' }} fetchPriority="high" />
           </div>
 
           <div className="hide-mobile" style={{ display: 'flex', gap: 4 }}>
@@ -165,7 +169,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
             ))}
           </div>
 
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'flex-end' }}>
             {/* Theme toggle */}
             <button
               onClick={toggleTheme}
@@ -230,9 +234,9 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
 
       {/* ══ FEATURES ═════════════════════════════════════════════════════════ */}
       <section id="features" style={{ padding: '100px 24px', maxWidth: 1200, margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: 64 }}>
-          <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: C.accent, marginBottom: 14 }}>{t.landingFeatures}</p>
-          <h2 style={{ fontSize: 'clamp(28px, 4.5vw, 46px)', fontWeight: 300, letterSpacing: '-0.03em', color: C.txt, margin: 0 }}>
+        <div style={{ marginBottom: 64 }}>
+          <p style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: C.accent, marginBottom: 14 }}>{t.landingFeatures}</p>
+          <h2 style={{ fontSize: 'clamp(32px, 5vw, 54px)', fontWeight: 300, letterSpacing: '-0.03em', color: C.txt, margin: 0 }}>
             {t.landingFeatTitle}<br /><span style={{ fontWeight: 700 }}>{t.landingFeatTitle2}</span>
           </h2>
         </div>
@@ -242,11 +246,13 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
           {/* Live scoring */}
           <div className="lp-card span-8" style={{ ...glass, gridColumn: 'span 8', padding: 40, position: 'relative', overflow: 'hidden', minHeight: 300 }}>
             <div style={{ position: 'absolute', top: -30, right: -30, width: 200, height: 200, borderRadius: '50%', background: `radial-gradient(circle, ${C.accent}10 0%, transparent 70%)`, pointerEvents: 'none' }} />
-            <div style={{ width: 40, height: 40, borderRadius: 8, background: `${C.accent}1A`, border: `1px solid ${C.accent}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
-              <Zap size={19} color={C.accent} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 8, background: `${C.accent}1A`, border: `1px solid ${C.accent}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Zap size={19} color={C.accent} />
+              </div>
+              <h3 style={{ fontSize: 22, fontWeight: 300, letterSpacing: '-0.02em', color: C.txt, margin: 0 }}>{t.featLiveTitle}</h3>
             </div>
-            <h3 style={{ fontSize: 24, fontWeight: 300, letterSpacing: '-0.02em', color: C.txt, margin: '0 0 10px' }}>{t.featLiveTitle}</h3>
-            <p style={{ color: C.txtLow, fontSize: 14, lineHeight: 1.6, maxWidth: 360, margin: '0 0 28px' }}>{t.featLiveDesc}</p>
+            <p style={{ color: C.txtLow, fontSize: 14, lineHeight: 1.6, maxWidth: 360, margin: '0 0 28px', textAlign: 'justify' }}>{t.featLiveDesc}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {[['1', 'Mikel R.', '840 pts', true], ['2', 'Sara P.', '720 pts', false], ['3', 'Marc V.', '680 pts', false]].map(([rank, name, pts, hi]) => (
                 <div key={String(rank)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', borderRadius: 8, background: hi ? `${C.accent}12` : rowBg, border: `1px solid ${hi ? `${C.accent}30` : C.border}` }}>
@@ -261,11 +267,13 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
           {/* Analytics */}
           <div className="lp-card span-4" style={{ ...glass, gridColumn: 'span 4', padding: 36, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
-              <div style={{ width: 40, height: 40, borderRadius: 8, background: `${C.accent}1A`, border: `1px solid ${C.accent}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
-                <BarChart2 size={19} color={C.accent} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 8, background: `${C.accent}1A`, border: `1px solid ${C.accent}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <BarChart2 size={19} color={C.accent} />
+                </div>
+                <h3 style={{ fontSize: 18, fontWeight: 300, letterSpacing: '-0.02em', color: C.txt, margin: 0 }}>{t.featAnalytics}</h3>
               </div>
-              <h3 style={{ fontSize: 20, fontWeight: 300, letterSpacing: '-0.02em', color: C.txt, margin: '0 0 8px' }}>{t.featAnalytics}</h3>
-              <p style={{ color: C.txtLow, fontSize: 13, lineHeight: 1.55 }}>{t.featAnalyticsDesc}</p>
+              <p style={{ color: C.txtLow, fontSize: 13, lineHeight: 1.55, textAlign: 'justify' }}>{t.featAnalyticsDesc}</p>
             </div>
             <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 7 }}>
               {[['Flash rate', '34%', C.accent], ['Top rate', '71%', '#34d399'], ['Zone rate', '89%', '#a78bfa']].map(([label, val, color]) => (
@@ -282,11 +290,13 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
 
           {/* Flexible scoring */}
           <div className="lp-card span-4" style={{ ...glass, gridColumn: 'span 4', padding: 36 }}>
-            <div style={{ width: 40, height: 40, borderRadius: 8, background: `${C.accent}1A`, border: `1px solid ${C.accent}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
-              <Trophy size={19} color={C.accent} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 8, background: `${C.accent}1A`, border: `1px solid ${C.accent}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Trophy size={19} color={C.accent} />
+              </div>
+              <h3 style={{ fontSize: 18, fontWeight: 300, letterSpacing: '-0.02em', color: C.txt, margin: 0 }}>{t.featFlexTitle}</h3>
             </div>
-            <h3 style={{ fontSize: 20, fontWeight: 300, letterSpacing: '-0.02em', color: C.txt, margin: '0 0 8px' }}>{t.featFlexTitle}</h3>
-            <p style={{ color: C.txtLow, fontSize: 13, lineHeight: 1.55, marginBottom: 20 }}>{t.featFlexDesc}</p>
+            <p style={{ color: C.txtLow, fontSize: 13, lineHeight: 1.55, marginBottom: 20, textAlign: 'justify' }}>{t.featFlexDesc}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {['Dynamic Pot', 'Traditional', 'Zone tie-breaker', '% Slash per attempt'].map(f => (
                 <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: C.txtMid }}>
@@ -296,31 +306,45 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
             </div>
           </div>
 
-          {/* Judge modes */}
-          <div className="lp-card span-8" style={{ ...glass, gridColumn: 'span 8', padding: 40, display: 'flex', alignItems: 'center', gap: 36 }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ width: 40, height: 40, borderRadius: 8, background: `${C.accent}1A`, border: `1px solid ${C.accent}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
-                <Shield size={19} color={C.accent} />
+          {/* Judge modes — interactive */}
+          <div className="lp-card span-8" style={{ ...glass, gridColumn: 'span 8', padding: 40, display: 'flex', alignItems: 'flex-start', gap: 36 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 8, background: `${C.accent}1A`, border: `1px solid ${C.accent}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Shield size={19} color={C.accent} />
+                </div>
+                <h3 style={{ fontSize: 22, fontWeight: 300, letterSpacing: '-0.02em', color: C.txt, margin: 0 }}>{t.featSelfLog}</h3>
               </div>
-              <h3 style={{ fontSize: 24, fontWeight: 300, letterSpacing: '-0.02em', color: C.txt, margin: '0 0 10px' }}>{t.featSelfLog}</h3>
-              <p style={{ color: C.txtLow, fontSize: 14, lineHeight: 1.6 }}>{t.featSelfLogDesc}</p>
+              <p style={{ color: C.txtLow, fontSize: 14, lineHeight: 1.6, textAlign: 'justify', minHeight: 44 }}>
+                {[t.scoringModeSelfDesc, t.scoringModeApprovalDesc, t.scoringModeJudgeDesc][judgeMode]}
+              </p>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
-              {[['Self-Scoring', true], ['Judge Approval', false], ['Judge Only', false]].map(([mode, active]) => (
-                <div key={String(mode)} style={{ padding: '9px 18px', borderRadius: 7, background: active ? `${C.accent}15` : rowBg, border: `1px solid ${active ? `${C.accent}35` : C.border}`, fontSize: 12, fontWeight: 600, color: active ? C.accent : C.txtLow }}>
+              {([
+                [t.scoringModeSelf, 0],
+                [t.scoringModeApproval, 1],
+                [t.scoringModeJudge, 2],
+              ] as [string, number][]).map(([mode, idx]) => (
+                <button
+                  key={idx}
+                  onClick={() => setJudgeMode(idx)}
+                  style={{ padding: '9px 18px', borderRadius: 7, background: judgeMode === idx ? `${C.accent}15` : rowBg, border: `1px solid ${judgeMode === idx ? `${C.accent}35` : C.border}`, fontSize: 12, fontWeight: 600, color: judgeMode === idx ? C.accent : C.txtLow, cursor: 'pointer', transition: 'all 0.22s', textAlign: 'left', fontFamily: F }}
+                >
                   {mode}
-                </div>
+                </button>
               ))}
             </div>
           </div>
 
           {/* Traits */}
           <div className="lp-card span-6" style={{ ...glass, gridColumn: 'span 6', padding: 36 }}>
-            <div style={{ width: 40, height: 40, borderRadius: 8, background: `${C.accent}1A`, border: `1px solid ${C.accent}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
-              <Users size={19} color={C.accent} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 8, background: `${C.accent}1A`, border: `1px solid ${C.accent}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Users size={19} color={C.accent} />
+              </div>
+              <h3 style={{ fontSize: 18, fontWeight: 300, letterSpacing: '-0.02em', color: C.txt, margin: 0 }}>{t.featTraits}</h3>
             </div>
-            <h3 style={{ fontSize: 20, fontWeight: 300, letterSpacing: '-0.02em', color: C.txt, margin: '0 0 8px' }}>{t.featTraits}</h3>
-            <p style={{ color: C.txtLow, fontSize: 13, lineHeight: 1.55, marginBottom: 18 }}>{t.featTraitsDesc}</p>
+            <p style={{ color: C.txtLow, fontSize: 13, lineHeight: 1.55, marginBottom: 18, textAlign: 'justify' }}>{t.featTraitsDesc}</p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
               {['Open', 'U18', 'Masters', 'Women', 'Elite'].map(tag => (
                 <span key={tag} style={{ padding: '4px 10px', borderRadius: 5, background: tagBg, border: `1px solid ${C.border}`, fontSize: 11, color: C.txtMid, fontWeight: 500 }}>{tag}</span>
@@ -330,19 +354,23 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
 
           {/* Invite */}
           <div className="lp-card span-6" style={{ ...glass, gridColumn: 'span 6', padding: 36 }}>
-            <div style={{ width: 40, height: 40, borderRadius: 8, background: `${C.accent}1A`, border: `1px solid ${C.accent}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
-              <Layers size={19} color={C.accent} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 8, background: `${C.accent}1A`, border: `1px solid ${C.accent}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Layers size={19} color={C.accent} />
+              </div>
+              <h3 style={{ fontSize: 18, fontWeight: 300, letterSpacing: '-0.02em', color: C.txt, margin: 0 }}>{t.featInvite}</h3>
             </div>
-            <h3 style={{ fontSize: 20, fontWeight: 300, letterSpacing: '-0.02em', color: C.txt, margin: '0 0 8px' }}>{t.featInvite}</h3>
-            <p style={{ color: C.txtLow, fontSize: 13, lineHeight: 1.55, marginBottom: 18 }}>{t.featInviteDesc}</p>
+            <p style={{ color: C.txtLow, fontSize: 13, lineHeight: 1.55, marginBottom: 18, textAlign: 'justify' }}>{t.featInviteDesc}</p>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '8px 14px', borderRadius: 7, background: tagBg, border: `1px solid ${C.border}` }}>
               <span style={{ fontSize: 12, color: C.txtLow }}>{t.inviteCode}</span>
               <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.12em', color: C.accent, fontFamily: C.mono }}>BLDG24</span>
             </div>
           </div>
 
-          {/* White-label */}
-          <div className="lp-card span-12" style={{ ...glass, gridColumn: 'span 12', padding: 40, display: 'flex', alignItems: 'center', gap: 48, flexWrap: 'wrap', borderColor: `${C.accent}25` }}>
+          {/* White-label — animated border */}
+          <div className="span-12" style={{ gridColumn: 'span 12', position: 'relative', borderRadius: 14, padding: 2, overflow: 'hidden' }}>
+            <div className="lp-border-spin" style={{ position: 'absolute', inset: -50, background: `conic-gradient(from 0deg, transparent 0deg, ${C.accent}80 60deg, ${C.accent}40 100deg, transparent 160deg)`, pointerEvents: 'none' }} />
+          <div className="lp-card" style={{ ...glass, position: 'relative', borderRadius: 12, padding: 40, display: 'flex', alignItems: 'center', gap: 48, flexWrap: 'wrap', borderColor: `${C.accent}25` }}>
             <div style={{ flex: 1, minWidth: 260 }}>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 16, padding: '4px 12px', borderRadius: 999, background: `${C.accent}15`, border: `1px solid ${C.accent}30`, fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.accent }}>
                 <Sparkles size={10} fill={C.accent} /> {t.pricingPrem}
@@ -358,20 +386,19 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
               ))}
             </div>
           </div>
+          </div>
         </div>
       </section>
 
       {/* ══ WORKFLOW ═════════════════════════════════════════════════════════ */}
       <section id="workflow" style={{ padding: '100px 24px 0', background: C.bgAlt, borderTop: `1px solid ${C.border}`, position: 'relative' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 64, flexWrap: 'wrap', gap: 20 }}>
-            <div>
-              <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: C.accent, marginBottom: 12 }}>{t.landingHowWorks}</p>
-              <h2 style={{ fontSize: 'clamp(28px, 4.5vw, 46px)', fontWeight: 300, letterSpacing: '-0.03em', color: C.txt, margin: 0 }}>
-                {t.workflowTitle}<br /><span style={{ fontWeight: 700 }}>{t.workflowTitle2}</span>
-              </h2>
-            </div>
-            <p style={{ color: C.txtLow, maxWidth: 340, lineHeight: 1.65, fontSize: 14 }}>{t.workflowDesc}</p>
+          <div style={{ marginBottom: 64 }}>
+            <p style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: C.accent, marginBottom: 12 }}>{t.landingHowWorks}</p>
+            <h2 style={{ fontSize: 'clamp(32px, 5vw, 54px)', fontWeight: 300, letterSpacing: '-0.03em', color: C.txt, margin: '0 0 18px' }}>
+              {t.workflowTitle}<br /><span style={{ fontWeight: 700 }}>{t.workflowTitle2}</span>
+            </h2>
+            <p style={{ color: C.txtLow, maxWidth: 540, lineHeight: 1.65, fontSize: 14, margin: 0, textAlign: 'justify' }}>{t.workflowDesc}</p>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 28, position: 'relative' }}>
@@ -380,12 +407,12 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
               ['01', t.workStep1title, t.workStep1desc, C.accent],
               ['02', t.workStep2title, t.workStep2desc, '#34d399'],
               ['03', t.workStep3title, t.workStep3desc, '#f59e0b'],
-              ['04', t.workStep4title, t.workStep4desc, C.accent],
+              ['04', t.workStep4title, t.workStep4desc, '#ef4444'],
             ] as [string, string, string, string][]).map(([num, title, desc, color]) => (
               <div key={num} style={{ position: 'relative', zIndex: 1 }}>
                 <div style={{ width: 56, height: 56, borderRadius: 10, background: C.bg, border: `1px solid ${color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24, fontWeight: 700, fontSize: 16, color, fontFamily: C.mono }}>{num}</div>
                 <h3 style={{ fontSize: 15, fontWeight: 600, color: C.txt, margin: '0 0 8px', letterSpacing: '-0.01em' }}>{title}</h3>
-                <p style={{ fontSize: 13, color: C.txtLow, lineHeight: 1.6, margin: 0 }}>{desc}</p>
+                <p style={{ fontSize: 13, color: C.txtLow, lineHeight: 1.6, margin: 0, textAlign: 'justify' }}>{desc}</p>
               </div>
             ))}
           </div>
@@ -400,6 +427,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
 
         <section id="pricing" style={{ padding: '100px 24px 120px', maxWidth: 1040, margin: '0 auto', position: 'relative', zIndex: 1 }}>
           <div style={{ textAlign: 'center', marginBottom: 72 }}>
+            <p style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: isDark ? C.accent : C.accent, marginBottom: 14 }}>{t.navPricing}</p>
             <h2 style={{ fontSize: 'clamp(30px, 5vw, 52px)', fontWeight: 700, letterSpacing: '-0.03em', color: isDark ? C.txt : LP.txt, margin: '0 0 16px', lineHeight: 1.1 }}>
               {t.pricingTitle}<br />{t.pricingTitle2}
             </h2>
@@ -429,12 +457,12 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
                   </li>
                 ))}
               </ul>
-              <button onClick={() => goAuth('signup')} style={{
+              <button onClick={() => goAuth('signin')} style={{
                 background: 'none', border: 'none', cursor: 'pointer',
                 fontSize: 14, fontWeight: 600, color: isDark ? C.accent : C.accent,
                 padding: '10px 0', fontFamily: F, letterSpacing: '-0.01em', textAlign: 'left',
               }}>
-                {t.landingStart} →
+                {t.pricingCompCta} →
               </button>
             </div>
 
@@ -481,7 +509,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
                   padding: '13px 24px', borderRadius: 10, fontFamily: F,
                   letterSpacing: '-0.01em', transition: 'opacity 0.2s',
                 }}>
-                {t.landingGetStarted}
+                {t.pricingOrgCta}
               </button>
             </div>
 
@@ -528,7 +556,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
                   padding: '12px 24px', borderRadius: 10, fontFamily: F,
                   letterSpacing: '-0.01em', transition: 'all 0.2s',
                 }}>
-                {t.landingGetStarted}
+                {t.pricingOrgCta}
               </button>
             </div>
           </div>
@@ -541,7 +569,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
             display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20,
           }}>
             <div>
-              <h3 style={{ fontSize: 15, fontWeight: 600, color: isDark ? C.txt : LP.txt, margin: '0 0 4px', letterSpacing: '-0.01em' }}>{t.pricingBundles}</h3>
+              <h3 style={{ fontSize: 13, fontWeight: 600, color: isDark ? C.txt : LP.txt, margin: '0 0 4px', letterSpacing: '-0.01em' }}>{t.pricingBundles}</h3>
               <p style={{ fontSize: 13, color: isDark ? C.txtLow : LP.mid, margin: 0, lineHeight: 1.55 }}>{t.pricingBundlesDesc}</p>
             </div>
             <button onClick={() => goAuth('signup')} style={{
@@ -570,7 +598,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
               whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} transition={{ type: 'spring', stiffness: 400, damping: 24 }}>
               {t.landingStart} <ArrowRight size={16} />
             </motion.button>
-            <motion.button onClick={() => navigate(`/${lang}/demo`)} style={{ ...btnOutline, fontSize: 15, padding: '13px 32px' }}
+            <motion.button onClick={() => { navigate(`/${lang}/demo`); window.scrollTo(0, 0) }} style={{ ...btnOutline, fontSize: 15, padding: '13px 32px' }}
               onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = C.txt; (e.currentTarget as HTMLButtonElement).style.borderColor = C.accent }}
               onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = C.txtMid; (e.currentTarget as HTMLButtonElement).style.borderColor = C.border }}
               whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} transition={{ type: 'spring', stiffness: 400, damping: 24 }}>
@@ -586,14 +614,14 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
           <img src={ascendiaLogo} alt="Ascendr" width="120" height="120" style={{ height: 26, width: 'auto', objectFit: 'contain' }} />
           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
             {([
-              [t.bookDemo,    '/demo'],
+              [t.contact,     '/demo'],
               ['Legal Notice', '/legal'],
               [t.privacy,     '/privacy'],
               [t.terms,       '/terms'],
             ] as [string, string][]).map(([label, path]) => (
               <button
                 key={path}
-                onClick={() => navigate(`/${lang}${path}`)}
+                onClick={() => { navigate(`/${lang}${path}`); window.scrollTo(0, 0) }}
                 style={{ fontSize: 12, color: C.txtLow, background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 10px', borderRadius: 5, transition: 'color 0.33s, background 0.33s', fontFamily: F }}
                 onMouseEnter={e => { e.currentTarget.style.color = C.txt; e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}
                 onMouseLeave={e => { e.currentTarget.style.color = C.txtLow; e.currentTarget.style.background = 'transparent' }}

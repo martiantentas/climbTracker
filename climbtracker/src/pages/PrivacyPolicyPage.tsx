@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import ascendiaLogo from '../assets/Ascendr.webp'
@@ -52,6 +53,62 @@ export default function PrivacyPolicyPage({ lang }: { lang: Language }) {
   const navigate = useNavigate()
   const t = translations[lang]
 
+  useEffect(() => { window.scrollTo(0, 0) }, [])
+
+  const L = {
+    en: {
+      title1: 'Privacy ', title2: 'Policy',
+      updated: 'Last updated: September 2026',
+      cookieBtn: 'Manage cookie preferences',
+      chipLabels: { tradingName: 'Trading name', address: 'Address' },
+      sections: [
+        '1. Data Controller',
+        '2. Personal Data We Collect',
+        '3. Cookies and Tracking Technologies',
+        '4. Purposes and Legal Basis for Processing',
+        '5. Data Retention',
+        '6. Data Recipients and International Transfers',
+        '7. Your Rights',
+        '8. Minors',
+        '9. Changes to this Policy',
+      ],
+    },
+    es: {
+      title1: 'Política de ', title2: 'Privacidad',
+      updated: 'Última actualización: septiembre de 2026',
+      cookieBtn: 'Gestionar preferencias de cookies',
+      chipLabels: { tradingName: 'Nombre comercial', address: 'Dirección' },
+      sections: [
+        '1. Responsable del Tratamiento',
+        '2. Datos Personales que Recogemos',
+        '3. Cookies y Tecnologías de Seguimiento',
+        '4. Finalidades y Base Legal del Tratamiento',
+        '5. Conservación de Datos',
+        '6. Destinatarios y Transferencias Internacionales',
+        '7. Sus Derechos',
+        '8. Menores',
+        '9. Cambios en esta Política',
+      ],
+    },
+    ca: {
+      title1: 'Política de ', title2: 'Privacitat',
+      updated: 'Darrera actualització: setembre de 2026',
+      cookieBtn: 'Gestionar preferències de galetes',
+      chipLabels: { tradingName: 'Nom comercial', address: 'Adreça' },
+      sections: [
+        '1. Responsable del Tractament',
+        '2. Dades Personals que Recollim',
+        '3. Galetes i Tecnologies de Seguiment',
+        '4. Finalitats i Base Jurídica del Tractament',
+        '5. Conservació de Dades',
+        '6. Destinataris i Transferències Internacionals',
+        '7. Els Vostres Drets',
+        '8. Menors',
+        '9. Canvis en aquesta Política',
+      ],
+    },
+  }[lang]
+
   return (
     <div style={{ background: C.bg, color: C.txt, fontFamily: C.font, minHeight: '100vh' }}>
 
@@ -77,24 +134,24 @@ export default function PrivacyPolicyPage({ lang }: { lang: Language }) {
         <div style={{ marginBottom: 52, paddingBottom: 32, borderBottom: `1px solid ${C.border}` }}>
           <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: C.accent, marginBottom: 12 }}>Legal</p>
           <h1 style={{ fontSize: 36, fontWeight: 300, letterSpacing: '-0.03em', color: C.txt, margin: '0 0 12px' }}>
-            Privacy <span style={{ fontWeight: 700 }}>Policy</span>
+            {L.title1}<span style={{ fontWeight: 700 }}>{L.title2}</span>
           </h1>
-          <p style={{ fontSize: 13, color: C.txtLow, margin: 0 }}>Last updated: September 2026</p>
+          <p style={{ fontSize: 13, color: C.txtLow, margin: 0 }}>{L.updated}</p>
         </div>
 
         {/* Intro */}
-        <Section title="1. Data Controller">
+        <Section title={L.sections[0]}>
           <P>
             Ascendr collects and processes personal data in its capacity as data controller within the meaning of the General Data Protection Regulation (EU) 2016/679 (GDPR) and Organic Law 3/2018 of 5 December on the Protection of Personal Data and Guarantee of Digital Rights (LOPDGDD).
           </P>
           <div style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${C.border}`, borderRadius: 10, padding: '20px 24px', marginTop: 16, display: 'grid', rowGap: 12 }}>
-            <InfoChip label="Trading name"  value="Ascendr" />
-            <InfoChip label="Address"       value="Barcelona, Spain" />
+            <InfoChip label={L.chipLabels.tradingName}  value="Ascendr" />
+            <InfoChip label={L.chipLabels.address}       value="Barcelona, Spain" />
           </div>
         </Section>
 
         {/* What we collect */}
-        <Section title="2. Personal Data We Collect">
+        <Section title={L.sections[1]}>
           <P>
             We collect only the data that is necessary to provide the Ascendr service. Depending on how you use the platform, this may include:
           </P>
@@ -115,7 +172,7 @@ export default function PrivacyPolicyPage({ lang }: { lang: Language }) {
         </Section>
 
         {/* Cookies */}
-        <Section title="3. Cookies and Tracking Technologies">
+        <Section title={L.sections[2]}>
           <P>
             Ascendr uses a limited set of cookies and local storage entries. We do not use advertising cookies or share browsing data with data brokers.
           </P>
@@ -172,13 +229,13 @@ export default function PrivacyPolicyPage({ lang }: { lang: Language }) {
                 letterSpacing: '-0.01em',
               }}
             >
-              Manage cookie preferences
+              {L.cookieBtn}
             </button>
           </div>
         </Section>
 
         {/* Purposes */}
-        <Section title="4. Purposes and Legal Basis for Processing">
+        <Section title={L.sections[3]}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 4 }}>
             {([
               ['Account management & service delivery', 'To create and maintain your user account and provide access to the Ascendr platform.', 'Performance of contract — Art. 6(1)(b) GDPR'],
@@ -198,7 +255,7 @@ export default function PrivacyPolicyPage({ lang }: { lang: Language }) {
         </Section>
 
         {/* Retention */}
-        <Section title="5. Data Retention">
+        <Section title={L.sections[4]}>
           <P>
             We retain your personal data only for as long as it is necessary for the purposes described above:
           </P>
@@ -214,7 +271,7 @@ export default function PrivacyPolicyPage({ lang }: { lang: Language }) {
         </Section>
 
         {/* Recipients */}
-        <Section title="6. Data Recipients and International Transfers">
+        <Section title={L.sections[5]}>
           <P>
             Ascendr does not sell your personal data to third parties. Your data may be shared only with:
           </P>
@@ -234,7 +291,7 @@ export default function PrivacyPolicyPage({ lang }: { lang: Language }) {
         </Section>
 
         {/* Rights */}
-        <Section title="7. Your Rights">
+        <Section title={L.sections[6]}>
           <P>
             Under the GDPR and the LOPDGDD, you have the following rights regarding your personal data:
           </P>
@@ -261,14 +318,14 @@ export default function PrivacyPolicyPage({ lang }: { lang: Language }) {
         </Section>
 
         {/* Minors */}
-        <Section title="8. Minors">
+        <Section title={L.sections[7]}>
           <P>
             The Ascendr platform is not directed at children under 14 years of age. We do not knowingly collect personal data from children under 14. If you believe a minor has provided us with personal data without appropriate consent, please contact us so we can delete it promptly.
           </P>
         </Section>
 
         {/* Changes */}
-        <Section title="9. Changes to this Policy">
+        <Section title={L.sections[8]}>
           <P>
             We may update this Privacy Policy from time to time. When we do, we will revise the "Last updated" date at the top of this page. We encourage you to review this policy periodically. Material changes will be communicated to registered users via email or an in-app notice.
           </P>
