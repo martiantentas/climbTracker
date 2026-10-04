@@ -610,8 +610,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
           <h2 style={{ fontSize: 'clamp(26px, 4vw, 40px)', fontWeight: 300, letterSpacing: '-0.03em', color: C.txt, margin: '0 0 16px' }}>
             {t.ctaTitle}<br /><span style={{ fontWeight: 700 }}>{t.ctaTitle2}</span>
           </h2>
-          <p style={{ fontSize: 15, color: C.txtLow, lineHeight: 1.65, marginBottom: 36 }}>{t.ctaDesc}</p>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, flexWrap: 'wrap', marginTop: 36 }}>
             <motion.button onClick={() => goAuth('signup')} style={{ ...btnPrimary, fontSize: 15, padding: '13px 32px' }} className="btn-primary"
               whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} transition={{ type: 'spring', stiffness: 400, damping: 24 }}>
               {t.landingStart} <ArrowRight size={16} />
