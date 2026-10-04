@@ -122,7 +122,7 @@ export default function RulesPage({
   `
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="w-full">
 
       {/* ── Page header ── */}
       <div className="flex items-center justify-between mb-8">
