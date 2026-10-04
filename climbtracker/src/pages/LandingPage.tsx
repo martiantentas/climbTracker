@@ -140,16 +140,35 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
         .nav-btn { font-size: 13px; font-weight: 500; color: ${isDark ? '#5C5E62' : '#888888'}; background: transparent; border: none; cursor: pointer; padding: 6px 14px; border-radius: 6px; transition: color 0.33s, background 0.33s; }
         .nav-btn:hover { color: ${isDark ? '#EEEEEE' : '#111111'} !important; background: ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'} !important; }
         @keyframes lp-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .lp-border-spin { animation: lp-spin 4s linear infinite; }
+        .lp-brand-wrap { position: relative; border-radius: 14px; padding: 2px; overflow: hidden; }
+        .lp-brand-wrap::before {
+          content: '';
+          position: absolute;
+          width: 200vw; height: 200vw;
+          top: 50%; left: 50%;
+          transform: translate(-50%, -50%);
+          background: conic-gradient(from 0deg at 50% 50%, transparent 0deg, var(--lp-ba, #7F8BAD) 65deg, transparent 130deg);
+          animation: lp-spin 5s linear infinite;
+          pointer-events: none;
+        }
         @media (max-width: 768px) {
           .hide-mobile { display: none !important; }
-          .bento-grid { grid-template-columns: 1fr !important; }
-          .span-8 { grid-column: span 1 !important; }
-          .span-4 { grid-column: span 1 !important; }
-          .span-12 { grid-column: span 1 !important; }
-          .span-6 { grid-column: span 1 !important; }
+          .bento-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
+          .span-8, .span-4, .span-12, .span-6 { grid-column: span 1 !important; }
+          .lp-brand-wrap { grid-column: span 1 !important; }
           .hero-ctas { flex-direction: column; align-items: stretch; }
           .pricing-grid { grid-template-columns: 1fr !important; }
+          .lp-card { padding: 24px !important; }
+          #features { padding: 60px 16px !important; }
+          #workflow { padding: 60px 16px 0 !important; }
+          #pricing { padding: 60px 16px 80px !important; }
+          .lp-judge-card { flex-wrap: wrap !important; }
+          .lp-judge-tabs { flex-direction: row !important; flex-wrap: wrap !important; gap: 6px !important; }
+          .lp-judge-tabs button { flex: 1 1 calc(50% - 6px); font-size: 11px !important; padding: 7px 10px !important; }
+        }
+        @media (max-width: 480px) {
+          .lp-brand-wrap > div { flex-direction: column !important; gap: 20px !important; }
+          .lp-judge-tabs button { flex: 1 1 100%; }
         }
       `}</style>
 
@@ -307,7 +326,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
           </div>
 
           {/* Judge modes — interactive */}
-          <div className="lp-card span-8" style={{ ...glass, gridColumn: 'span 8', padding: 40, display: 'flex', alignItems: 'flex-start', gap: 36 }}>
+          <div className="lp-card lp-judge-card span-8" style={{ ...glass, gridColumn: 'span 8', padding: 40, display: 'flex', alignItems: 'flex-start', gap: 36 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
                 <div style={{ width: 40, height: 40, borderRadius: 8, background: `${C.accent}1A`, border: `1px solid ${C.accent}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -319,7 +338,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
                 {[t.scoringModeSelfDesc, t.scoringModeApprovalDesc, t.scoringModeJudgeDesc][judgeMode]}
               </p>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
+            <div className="lp-judge-tabs" style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
               {([
                 [t.scoringModeSelf, 0],
                 [t.scoringModeApproval, 1],
@@ -367,10 +386,9 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
             </div>
           </div>
 
-          {/* White-label — animated border */}
-          <div className="span-12" style={{ gridColumn: 'span 12', position: 'relative', borderRadius: 14, padding: 2, overflow: 'hidden' }}>
-            <div className="lp-border-spin" style={{ position: 'absolute', inset: -50, background: `conic-gradient(from 0deg, transparent 0deg, ${C.accent}80 60deg, ${C.accent}40 100deg, transparent 160deg)`, pointerEvents: 'none' }} />
-          <div className="lp-card" style={{ ...glass, position: 'relative', borderRadius: 12, padding: 40, display: 'flex', alignItems: 'center', gap: 48, flexWrap: 'wrap', borderColor: `${C.accent}25` }}>
+          {/* White-label — animated border sweep */}
+          <div className="span-12 lp-brand-wrap" style={{ '--lp-ba': C.accent, gridColumn: 'span 12' } as React.CSSProperties}>
+          <div className="lp-card" style={{ position: 'relative', borderRadius: 12, padding: 40, display: 'flex', alignItems: 'center', gap: 48, flexWrap: 'wrap', background: isDark ? '#1A1D24' : '#F5F4F1', border: `1px solid ${isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'}` }}>
             <div style={{ flex: 1, minWidth: 260 }}>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 16, padding: '4px 12px', borderRadius: 999, background: `${C.accent}15`, border: `1px solid ${C.accent}30`, fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.accent }}>
                 <Sparkles size={10} fill={C.accent} /> {t.pricingPrem}
