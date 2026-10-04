@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'motion/react'
 import { Plus, Trophy, MapPin, Calendar, Key, Trash2, LogIn, Settings, X, Lock, Copy, Check, Shield, Clock, QrCode, BarChart2, Layers } from 'lucide-react'
 import type { Competition, Competitor } from '../types'
@@ -111,8 +112,9 @@ export default function CompetitionsPage({
   onEnter, onManage, onClone, onCreate, onDelete, onLeave, onJoinByCode, isRegistered, competitorsMap,
   onJoinSuccess, getCompRole, waitlistMap = {}, onLeaveWaitlist,
 }: CompetitionsPageProps) {
-  const t  = translations[lang]
-  const dk = theme === 'dark'
+  const t        = translations[lang]
+  const dk       = theme === 'dark'
+  const navigate = useNavigate()
 
   const [showCreate,         setShowCreate]         = useState(false)
   const [joinCode,           setJoinCode]           = useState('')
@@ -121,7 +123,6 @@ export default function CompetitionsPage({
   const [confirmDelete,      setConfirmDelete]      = useState<string | null>(null)
   const [confirmClone,       setConfirmClone]       = useState<string | null>(null)
   const [copiedId,           setCopiedId]           = useState<string | null>(null)
-  const [justActivated,      setJustActivated]      = useState<string | null>(null)
   const [pendingDeleteComp,  setPendingDeleteComp]  = useState<Competition | null>(null)
   const [pendingComp,        setPendingComp]        = useState<Competition | null>(null)
   const [passwordError,      setPasswordError]      = useState(false)
@@ -148,8 +149,7 @@ export default function CompetitionsPage({
 
   function activate(compId: string) {
     onEnter(compId)
-    setJustActivated(compId)
-    setTimeout(() => setJustActivated(null), 700)
+    navigate(`/${lang}/boulders`)
   }
 
   function afterJoin(comp: Competition) {
@@ -205,7 +205,6 @@ export default function CompetitionsPage({
     const active        = comp.id === activeCompId
     const isMine        = comp.ownerId === currentUser.id
     const registered    = isRegistered(comp.id)
-    const activated     = comp.id === justActivated
     const waitlist      = waitlistMap[comp.id] ?? []
     const waitlistPos   = waitlist.findIndex(c => c.id === currentUser.id) + 1
     const isOnWaitlist  = waitlistPos > 0
@@ -221,7 +220,7 @@ export default function CompetitionsPage({
             ? 'bg-white/[0.03] border-white/10 hover:bg-white/[0.05] hover:border-white/20'
             : 'bg-white border-[#EEEEEE] hover:border-[#D0D1D2]'
         }
-        ${activated ? 'scale-[1.008]' : 'scale-100'}
+        scale-100
       `}>
         {/* Header */}
         <div className="flex items-start justify-between gap-3 mb-3">
@@ -430,12 +429,6 @@ export default function CompetitionsPage({
           )}
         </div>
 
-        {/* Activation strip */}
-        {activated && (
-          <div className={`mt-3 pt-3 border-t flex items-center gap-1.5 text-xs font-medium text-[#7F8BAD] ${dk ? 'border-[#7F8BAD]/20' : 'border-[#7F8BAD]/20'}`}>
-            <Check size={12} strokeWidth={3} /> Active — all pages now show this competition
-          </div>
-        )}
       </div>
     )
   }

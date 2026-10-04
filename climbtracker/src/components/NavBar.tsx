@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import { motion } from 'motion/react'
-import { Sun, Moon, User, Menu, LogOut, Settings } from 'lucide-react'
+import { Sun, Moon, User, Menu, LogOut, Settings, ChevronLeft } from 'lucide-react'
 
 import type { Competitor, Competition } from '../types'
 import { getStatusColor } from '../App'
@@ -94,7 +94,11 @@ export default function NavBar({
   onOpenMenu,
   onLogout,
 }: NavBarProps) {
-  const t = translations[lang]
+  const t  = translations[lang]
+  const loc = useLocation()
+  const pathEnd = loc.pathname.split('/').pop() || ''
+  const isCompListPage = pathEnd === 'competitions'
+  const dk = theme === 'dark'
 
   return (
     <header
@@ -121,53 +125,61 @@ export default function NavBar({
           }
         </motion.div>
 
-        {/* ── Status dot + competition name ── */}
-        {canAccessComp && activeCompetition && (
-          <div className="hidden md:flex items-center gap-2 flex-shrink-0 px-3 py-1.5">
+        {/* ── Back to competitions + comp context (competition mode only) ── */}
+        {!isCompListPage && activeCompetition && (
+          <div className="hidden md:flex items-center gap-1.5 flex-shrink-0">
+            <span data-walkthrough="competitions">
+              <Link
+                to={`/${lang}/competitions`}
+                className={`
+                  flex items-center gap-0.5 px-2 py-1.5 rounded text-xs font-medium transition-colors duration-[330ms]
+                  ${dk ? 'text-[#5C5E62] hover:text-[#EEEEEE] hover:bg-white/5' : 'text-[#5C5E62] hover:text-[#121212] hover:bg-[#F4F4F4]'}
+                `}
+              >
+                <ChevronLeft size={13} strokeWidth={2.5} />
+                <span>{t.myCompetitions}</span>
+              </Link>
+            </span>
+            <div className={`w-px h-4 ${dk ? 'bg-white/10' : 'bg-black/10'}`} />
             <div
-              className="w-2 h-2 rounded-full flex-shrink-0"
+              className="w-1.5 h-1.5 rounded-full flex-shrink-0"
               style={{ backgroundColor: getStatusColor(activeCompetition.status) }}
             />
-            <span className={`
-              text-xs font-medium whitespace-nowrap max-w-[140px] truncate
-              ${theme === 'dark' ? 'text-[#5C5E62]' : 'text-[#5C5E62]'}
-            `}>
+            <span className={`text-xs font-medium whitespace-nowrap max-w-[120px] truncate ${dk ? 'text-[#8E8E8E]' : 'text-[#5C5E62]'}`}>
               {activeCompetition.name}
             </span>
           </div>
         )}
 
-        {/* ── Centre: Nav pills ── */}
-        <nav className={`
-          hidden lg:flex items-center gap-0.5 p-1 rounded-lg overflow-x-auto
-          ${theme === 'dark' ? 'bg-white/[0.05]' : 'bg-[#F0F0F0]'}
-        `}>
-          <span data-walkthrough="competitions">
-            <NavPill to={`/${lang}/competitions`} label={t.myCompetitions} theme={theme} />
-          </span>
-
-          {canAccessComp && (
-            <>
-              <span data-walkthrough="boulders">
-                <NavPill to={`/${lang}`}               label={t.boulders}    theme={theme} />
-              </span>
-              <span data-walkthrough="leaderboard">
-                <NavPill to={`/${lang}/leaderboard`}   label={t.leaderboard} theme={theme} />
-              </span>
-              <NavPill to={`/${lang}/rules`}         label={t.rules}       theme={theme} />
-              {!isOrganizer && !isJudge && (
-                <NavPill to={`/${lang}/event-profile`} label={t.eventSettings} theme={theme} />
-              )}
-              {(isOrganizer || isJudge) && (
-                <>
-                  <NavPill to={`/${lang}/users`}     label={t.users}     theme={theme} />
-                  <NavPill to={`/${lang}/analytics`} label={t.analytics} theme={theme} />
-                  <NavPill to={`/${lang}/judging`}   label={t.judging}   theme={theme} />
-                </>
-              )}
-            </>
-          )}
-        </nav>
+        {/* ── Centre: Nav pills (competition mode only) ── */}
+        {!isCompListPage && (
+          <nav className={`
+            hidden lg:flex items-center gap-0.5 p-1 rounded-lg overflow-x-auto
+            ${dk ? 'bg-white/[0.05]' : 'bg-[#F0F0F0]'}
+          `}>
+            {canAccessComp && (
+              <>
+                <span data-walkthrough="boulders">
+                  <NavPill to={`/${lang}/boulders`}      label={t.boulders}    theme={theme} />
+                </span>
+                <span data-walkthrough="leaderboard">
+                  <NavPill to={`/${lang}/leaderboard`}   label={t.leaderboard} theme={theme} />
+                </span>
+                <NavPill to={`/${lang}/rules`}           label={t.rules}       theme={theme} />
+                {!isOrganizer && !isJudge && (
+                  <NavPill to={`/${lang}/event-profile`} label={t.eventSettings} theme={theme} />
+                )}
+                {(isOrganizer || isJudge) && (
+                  <>
+                    <NavPill to={`/${lang}/users`}     label={t.users}     theme={theme} />
+                    <NavPill to={`/${lang}/analytics`} label={t.analytics} theme={theme} />
+                    <NavPill to={`/${lang}/judging`}   label={t.judging}   theme={theme} />
+                  </>
+                )}
+              </>
+            )}
+          </nav>
+        )}
 
         {/* ── Right: Controls ── */}
         <div className="flex items-center gap-1 flex-shrink-0 ml-auto">

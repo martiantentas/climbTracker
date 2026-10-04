@@ -155,7 +155,7 @@ export default function MobileMenu({
             {canAccessComp && (
               <>
                 <div className={`h-px my-2 ${theme === 'dark' ? 'bg-white/10' : 'bg-[#EEEEEE]'}`} />
-                <MenuLink to={`/${lang}`}               icon={<LayoutGrid size={18} />}    label={t.boulders}    theme={theme} onClick={onClose} />
+                <MenuLink to={`/${lang}/boulders`}      icon={<LayoutGrid size={18} />}    label={t.boulders}    theme={theme} onClick={onClose} />
                 <MenuLink to={`/${lang}/leaderboard`}   icon={<Trophy size={18} />}        label={t.leaderboard} theme={theme} onClick={onClose} />
                 <MenuLink to={`/${lang}/rules`}         icon={<BookOpen size={18} />}      label={t.rules}       theme={theme} onClick={onClose} />
                 {!isOrganizer && !isJudge && (

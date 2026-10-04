@@ -1601,20 +1601,21 @@ function AppInner() {
                   </Guard>
             } />
 
-            {/* ── Boulders (home) ── */}
-            <Route path="/" element={
-              !activeCompetition
-                ? <Navigate to={`/${lang}/competitions`} replace />
-                : (isOrganizer || isJudge || canAccessActiveComp)
-                  ? <BouldersPage
-                      competition={activeCompetition} boulders={activeBoulders}
-                      completions={activeCompletions} currentUser={currentUser}
-                      isOrganizer={isOrganizer}
-                      theme={theme} lang={lang}
-                      canSelfScore={!isJudge && activeCompetition.canSelfScore}
-                      onToggle={handleToggleCompletion} onUpdateBoulders={updateBoulders}
-                    />
-                  : <Navigate to={`/${lang}/competitions`} replace />
+            {/* Root → competitions list */}
+            <Route path="/" element={<Navigate to={`/${lang}/competitions`} replace />} />
+
+            {/* ── Boulders ── */}
+            <Route path="boulders" element={
+              (isOrganizer || isJudge || canAccessActiveComp)
+                ? <BouldersPage
+                    competition={activeCompetition} boulders={activeBoulders}
+                    completions={activeCompletions} currentUser={currentUser}
+                    isOrganizer={isOrganizer}
+                    theme={theme} lang={lang}
+                    canSelfScore={!isJudge && activeCompetition.canSelfScore}
+                    onToggle={handleToggleCompletion} onUpdateBoulders={updateBoulders}
+                  />
+                : <Navigate to={`/${lang}/competitions`} replace />
             } />
 
             <Route path="leaderboard" element={
