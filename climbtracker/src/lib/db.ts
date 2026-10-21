@@ -156,22 +156,35 @@ export async function fetchAllBouldersForComps(ids: string[]): Promise<Record<st
   return result
 }
 
+// Upsert in place. NEVER delete-and-reinsert everything: completions.boulder_id
+// references boulders(id) ON DELETE CASCADE, so that would wipe every user's
+// completions whenever any boulder attribute is edited.
 export async function upsertBoulders(competitionId: string, boulders: Boulder[]): Promise<void> {
-  const { error: delErr } = await supabase
+  if (boulders.length > 0) {
+    const { error } = await supabase.from('boulders').upsert(
+      boulders.map((b, idx) => ({
+        id:             b.id,
+        competition_id: competitionId,
+        position:       idx,
+        data:           b as unknown as Json,
+      })),
+      { onConflict: 'id' },
+    )
+    if (error) throw error
+  }
+
+  // Remove only boulders that no longer exist in the list.
+  const { data: existing, error: selErr } = await supabase
     .from('boulders')
-    .delete()
+    .select('id')
     .eq('competition_id', competitionId)
-  if (delErr) throw delErr
-  if (boulders.length === 0) return
-  const { error } = await supabase.from('boulders').insert(
-    boulders.map((b, idx) => ({
-      id:             b.id,
-      competition_id: competitionId,
-      position:       idx,
-      data:           b as unknown as Json,
-    }))
-  )
-  if (error) throw error
+  if (selErr) throw selErr
+  const keep  = new Set(boulders.map(b => b.id))
+  const stale = (existing ?? []).map(r => r.id).filter(id => !keep.has(id))
+  if (stale.length > 0) {
+    const { error } = await supabase.from('boulders').delete().in('id', stale)
+    if (error) throw error
+  }
 }
 
 // ─── COMPLETIONS ──────────────────────────────────────────────────────────────
