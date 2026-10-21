@@ -115,6 +115,20 @@ function AttemptStepper({ current, theme, triesLabel, onChange }: StepperProps) 
   )
 }
 
+// ─── COLOUR CONTRAST ──────────────────────────────────────────────────────────
+
+// Relative luminance (0 = black, 1 = white) of a #rgb / #rrggbb colour; 0.5 if unparseable.
+function luminance(hex: string): number {
+  const m = hex.trim().replace('#', '')
+  const full = m.length === 3 ? m.split('').map(c => c + c).join('') : m
+  if (!/^[0-9a-fA-F]{6}$/.test(full)) return 0.5
+  const [r, g, b] = [0, 2, 4].map(i => {
+    const v = parseInt(full.slice(i, i + 2), 16) / 255
+    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4
+  })
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b
+}
+
 // ─── BOULDER CARD ─────────────────────────────────────────────────────────────
 
 export default function BoulderCard({
@@ -166,6 +180,19 @@ export default function BoulderCard({
 
   const dk = theme === 'dark'
 
+  // Colours that blend into the background (white in light mode, black in dark
+  // mode) get a neutral contrast ring; every card gets a soft shadow so it
+  // stands out in both themes.
+  const lum         = luminance(holdColor)
+  const lowContrast = dk ? lum < 0.08 : lum > 0.75
+  const ring        = dk ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.35)'
+  const cardShadow  = [
+    lowContrast ? `0 0 0 1px ${ring}` : '',
+    `0 4px 14px -4px color-mix(in srgb, ${holdColor} 55%, transparent)`,
+    dk ? '0 2px 8px rgba(0,0,0,0.55)' : '0 2px 8px rgba(0,0,0,0.12)',
+  ].filter(Boolean).join(', ')
+  const dotShadow   = `0 0 0 2px ${dk ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.18)'}`
+
   return (
     <motion.div
       onClick={handleClick}
@@ -173,7 +200,7 @@ export default function BoulderCard({
       transition={{ type: 'spring', stiffness: 420, damping: 26, mass: 0.7 }}
       // Thin outline in the hold colour. Completed cards keep the exact same
       // outline and are just more transparent.
-      style={{ borderColor: holdColor }}
+      style={{ borderColor: holdColor, boxShadow: cardShadow }}
       className={`
         relative rounded border cursor-pointer overflow-hidden
         transition-[background-color,opacity] duration-[330ms]
@@ -190,8 +217,8 @@ export default function BoulderCard({
         <div className="flex items-start justify-between mb-2">
           <div className="flex items-center gap-2">
             <div
-              className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-              style={{ backgroundColor: holdColor }}
+              className="w-3 h-3 rounded-full flex-shrink-0"
+              style={{ backgroundColor: holdColor, boxShadow: dotShadow }}
             />
             <span className={`text-lg font-medium leading-none ${isTopped ? 'text-[#7F8BAD]' : theme === 'dark' ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
               #{boulder.number}

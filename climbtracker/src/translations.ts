@@ -10,7 +10,7 @@ export const translations = {
     boulders:       'Boulders',
     leaderboard:    'Standings',
     analytics:      'Statistics',
-    rules:          'Competition Rules',
+    rules:          'Rules',
     settings:       'Settings',
     profile:        'Profile',
     judging:        'Judging',
