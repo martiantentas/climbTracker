@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Trophy, Target, Zap, ArrowLeft, Share2, Check, Radio, Sun, Moon } from 'lucide-react'
+import { ArrowLeft, Share2, Check, Radio, Sun, Moon } from 'lucide-react'
 import { motion } from 'motion/react'
 import ascendiaLogo from '../assets/Ascendr.webp'
 
@@ -24,9 +24,6 @@ interface PublicLeaderboardPageProps {
 // ─── RANK BADGE ───────────────────────────────────────────────────────────────
 
 function RankBadge({ rank }: { rank: number }) {
-  if (rank === 1) return <span className="text-lg">🥇</span>
-  if (rank === 2) return <span className="text-lg">🥈</span>
-  if (rank === 3) return <span className="text-lg">🥉</span>
   return (
     <span className="text-sm font-medium text-[#5C5E62] w-7 text-center inline-block">
       #{rank}
@@ -144,9 +141,6 @@ export default function PublicLeaderboardPage({
   }, [])
 
   const isLive     = competition?.status === 'LIVE'
-  const totalTops  = rankings.reduce((s, r) => s + r.totalTops, 0)
-  const topFlasher = rankings.reduce<typeof rankings[0] | null>((best, r) =>
-    !best || r.flashCount > best.flashCount ? r : best, null)
 
   if (!competition && remoteLoading) {
     return (
@@ -249,23 +243,6 @@ export default function PublicLeaderboardPage({
           </p>
         </div>
 
-        {/* ── Stats row ── */}
-        <div className="flex gap-2 flex-wrap mb-6">
-          {[
-            { icon: <Trophy size={12} />, label: t.publicClimbers(rankings.length),   color: 'text-[#7F8BAD]' },
-            { icon: <Target size={12} />, label: t.publicTotalTops(totalTops),         color: 'text-green-400' },
-            { icon: <Zap    size={12} />, label: topFlasher && topFlasher.flashCount > 0
-                ? t.publicTopFlasher(topFlasher.flashCount, topFlasher.name)
-                : t.publicNoFlashes,
-              color: 'text-amber-400'
-            },
-          ].map(s => (
-            <div key={s.label} className={`flex items-center gap-1.5 px-3 py-1.5 rounded border text-xs font-medium ${s.color} ${dk ? 'bg-white/[0.03] border-white/[0.07]' : 'bg-white border-[#EEEEEE]'}`}>
-              {s.icon} {s.label}
-            </div>
-          ))}
-        </div>
-
         {/* ── Rankings ── */}
         {rankings.length === 0 ? (
           <div className="text-center py-20 text-[#5C5E62]">
@@ -319,12 +296,6 @@ export default function PublicLeaderboardPage({
 
                   {/* Stats */}
                   <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
-                    {result.flashCount > 0 && (
-                      <div className="text-center hidden sm:block">
-                        <p className="text-sm font-medium text-amber-400">{result.flashCount}</p>
-                        <p className="text-[9px] text-[#5C5E62]">⚡</p>
-                      </div>
-                    )}
                     <div className="text-center hidden sm:block">
                       <p className="text-sm font-medium text-green-400">{result.totalTops}</p>
                       <p className="text-[9px] text-[#5C5E62]">tops</p>

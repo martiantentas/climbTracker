@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { Trophy, Zap, Target, X, Download, FileText, Link2, ChevronDown as ChevDown } from 'lucide-react'
+import { Trophy, X, Download, FileText, Link2, ChevronDown as ChevDown } from 'lucide-react'
 
 import type { Competition, Competitor, RankResult } from '../types'
 import { CompetitionStatus } from '../types'
@@ -49,9 +49,6 @@ function FilterChip({ label, active, theme, onClick }: {
 // ─── RANK BADGE ───────────────────────────────────────────────────────────────
 
 function RankBadge({ rank, theme }: { rank: number; theme: 'light' | 'dark' }) {
-  if (rank === 1) return <span className="text-lg">🥇</span>
-  if (rank === 2) return <span className="text-lg">🥈</span>
-  if (rank === 3) return <span className="text-lg">🥉</span>
   return (
     <span className={`text-sm font-medium tabular-nums w-7 text-center ${theme === 'dark' ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
       #{rank}
@@ -63,7 +60,6 @@ function RankBadge({ rank, theme }: { rank: number; theme: 'light' | 'dark' }) {
 
 const PODIUM_STYLES = {
   1: {
-    medal:    '🥇',
     border:   'border-amber-400/30',
     bgDark:   'bg-amber-400/[0.07]',
     bgLight:  'bg-amber-50',
@@ -71,7 +67,6 @@ const PODIUM_STYLES = {
     avatarRing: 'border-amber-400/40',
   },
   2: {
-    medal:    '🥈',
     border:   'border-[#7F8BAD]/30',
     bgDark:   'bg-[#7F8BAD]/[0.07]',
     bgLight:  'bg-[#7F8BAD]/5',
@@ -79,7 +74,6 @@ const PODIUM_STYLES = {
     avatarRing: 'border-[#7F8BAD]/40',
   },
   3: {
-    medal:    '🥉',
     border:   'border-orange-700/30',
     bgDark:   'bg-orange-900/[0.08]',
     bgLight:  'bg-orange-50',
@@ -133,7 +127,7 @@ function PodiumCard({
 
       {/* Medal + label */}
       <div className="flex flex-col items-center gap-0.5">
-        <span className="text-2xl">{s.medal}</span>
+        <span className={`text-2xl font-medium tabular-nums ${s.text}`}>#{position}</span>
         <span className={`text-[10px] font-medium uppercase tracking-widest ${s.text}`}>{posLabel}</span>
       </div>
 
@@ -433,8 +427,10 @@ export default function LeaderboardPage({
     return GENDER_OPTIONS.filter(g => present.has(g))
   }, [competitors, rankings])
 
+  // Position is recomputed within the filtered list, so it reflects the
+  // selected categories/genders. Ties (same tiebreak values) share a position.
   const visible = useMemo(() => {
-    return rankings.filter(r => {
+    const filtered = rankings.filter(r => {
       if (categoryFilters.length > 0) {
         const cats = competitorCategoryMap.get(r.competitorId) ?? []
         if (!categoryFilters.some(f => cats.includes(f))) return false
@@ -446,12 +442,20 @@ export default function LeaderboardPage({
       }
       return true
     })
+    return filtered.map((r, i) => {
+      const prev = filtered[i - 1]
+      const tied = prev &&
+        r.totalPoints === prev.totalPoints && r.totalTops === prev.totalTops &&
+        r.totalAttempts === prev.totalAttempts && r.totalZones === prev.totalZones &&
+        r.zoneAttempts === prev.zoneAttempts && r.flashCount === prev.flashCount
+      return { ...r, rank: tied ? -1 : i + 1 }
+    }).reduce<RankResult[]>((acc, r) => {
+      acc.push(r.rank === -1 ? { ...r, rank: acc[acc.length - 1].rank } : r)
+      return acc
+    }, [])
   }, [rankings, categoryFilters, genderFilters, competitorCategoryMap, competitors])
 
   const hasActiveFilters = categoryFilters.length > 0 || genderFilters.length > 0
-  const totalTops  = rankings.reduce((s, r) => s + r.totalTops, 0)
-  const topFlasher = rankings.reduce<RankResult | null>((best, r) =>
-    !best || r.flashCount > best.flashCount ? r : best, null)
 
   return (
     <motion.div
@@ -507,19 +511,6 @@ export default function LeaderboardPage({
             )}
           </div>
         )}
-      </div>
-
-      {/* Summary chips */}
-      <div className="flex flex-wrap gap-3 mb-6">
-        {[
-          { icon: <Trophy size={12} />, label: t.leaderboardClimbers(rankings.length),    color: 'text-[#7F8BAD]'  },
-          { icon: <Target size={12} />, label: t.leaderboardTotalTops(totalTops),        color: 'text-green-500'  },
-          { icon: <Zap size={12} />,    label: topFlasher ? `${topFlasher.flashCount} ${t.flashes} — ${topFlasher.name}` : t.noFlashes, color: 'text-amber-500' },
-        ].map(s => (
-          <div key={s.label} className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium border ${dk ? 'bg-white/[0.03] border-white/10' : 'bg-white border-[#EEEEEE]'} ${s.color}`}>
-            {s.icon}{s.label}
-          </div>
-        ))}
       </div>
 
       {/* ── Podium (FINISHED / ARCHIVED only) ── */}
@@ -680,14 +671,6 @@ export default function LeaderboardPage({
                       <p className={`text-sm font-medium ${dk ? 'text-purple-400' : 'text-purple-600'}`}>{result.totalZones ?? 0}</p>
                       <p className={`text-[9px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.zones}</p>
                     </div>
-                    <div className="text-center hidden lg:block">
-                      <p className={`text-sm font-medium ${dk ? 'text-[#8E8E8E]' : 'text-[#5C5E62]'}`}>{result.totalAttempts}</p>
-                      <p className={`text-[9px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.leaderboardTries}</p>
-                    </div>
-                    <div className="text-center hidden sm:block">
-                      <p className="text-sm font-medium text-amber-500">{result.flashCount}</p>
-                      <p className={`text-[9px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>⚡</p>
-                    </div>
                     <div className="text-right min-w-[56px]">
                       <p className="text-xl font-medium text-[#7F8BAD]">{result.totalPoints}</p>
                       <p className={`text-[9px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>pts</p>
@@ -707,7 +690,7 @@ export default function LeaderboardPage({
                 <AnimatePresence>
                   {isOpen && (
                     <motion.div
-                      className={`md:hidden grid grid-cols-4 border-t px-5 py-3 gap-2 ${dk ? 'border-white/8' : 'border-[#EEEEEE]'}`}
+                      className={`md:hidden grid grid-cols-2 border-t px-5 py-3 gap-2 ${dk ? 'border-white/8' : 'border-[#EEEEEE]'}`}
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
@@ -721,14 +704,6 @@ export default function LeaderboardPage({
                       <div className="text-center">
                         <p className={`text-sm font-medium ${dk ? 'text-purple-400' : 'text-purple-600'}`}>{result.totalZones ?? 0}</p>
                         <p className={`text-[9px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.zones}</p>
-                      </div>
-                      <div className="text-center">
-                        <p className={`text-sm font-medium ${dk ? 'text-[#8E8E8E]' : 'text-[#5C5E62]'}`}>{result.totalAttempts}</p>
-                        <p className={`text-[9px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.leaderboardTries}</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-sm font-medium text-amber-500">{result.flashCount}</p>
-                        <p className={`text-[9px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>⚡</p>
                       </div>
                     </motion.div>
                   )}
