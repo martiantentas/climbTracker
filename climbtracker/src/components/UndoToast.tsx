@@ -10,7 +10,7 @@ interface UndoToastProps {
   onDismiss: () => void
 }
 
-const DURATION = 5000
+const DURATION = 3000
 
 export default function UndoToast({ message, theme, onUndo, onCommit, onDismiss }: UndoToastProps) {
   const [progress, setProgress]   = useState(100)
@@ -19,7 +19,15 @@ export default function UndoToast({ message, theme, onUndo, onCommit, onDismiss 
   const commitedRef = useRef(false)
   const dk          = theme === 'dark'
 
+  // Always call the latest callbacks without restarting the countdown on re-render.
+  const onCommitRef  = useRef(onCommit)
+  const onDismissRef = useRef(onDismiss)
+  const mountedRef   = useRef(false)
+  onCommitRef.current  = onCommit
+  onDismissRef.current = onDismiss
+
   useEffect(() => {
+    mountedRef.current = true
     function tick() {
       const elapsed   = Date.now() - startRef.current
       const remaining = Math.max(0, 100 - (elapsed / DURATION) * 100)
@@ -28,13 +36,24 @@ export default function UndoToast({ message, theme, onUndo, onCommit, onDismiss 
         rafRef.current = requestAnimationFrame(tick)
       } else if (!commitedRef.current) {
         commitedRef.current = true
-        onCommit()
-        onDismiss()
+        onCommitRef.current()
+        onDismissRef.current()
       }
     }
     rafRef.current = requestAnimationFrame(tick)
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }
-  }, [onCommit, onDismiss])
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+      // Toast removed (e.g. replaced by another action) before undo/timeout: commit the
+      // action instead of silently dropping it. Deferred so StrictMode's fake unmount is ignored.
+      mountedRef.current = false
+      setTimeout(() => {
+        if (!mountedRef.current && !commitedRef.current) {
+          commitedRef.current = true
+          onCommitRef.current()
+        }
+      }, 0)
+    }
+  }, [])
 
   function handleUndo() {
     if (rafRef.current) cancelAnimationFrame(rafRef.current)

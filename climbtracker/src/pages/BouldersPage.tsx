@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { Plus, SlidersHorizontal, Lock, Mountain, ChevronDown, Layers } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
 
@@ -155,10 +155,13 @@ export default function BouldersPage({
     setPendingDelete(boulder)
   }
 
-  function commitDeleteBoulder() {
-    if (!pendingDelete) return
-    onUpdateBoulders(boulders.map(b =>
-      b.id === pendingDelete.id ? { ...b, status: 'removed' as const } : b
+  // Latest boulders, so a commit fired from an older toast never overwrites newer changes.
+  const bouldersRef = useRef(boulders)
+  bouldersRef.current = boulders
+
+  function commitDeleteBoulder(target: Boulder) {
+    onUpdateBoulders(bouldersRef.current.map(b =>
+      b.id === target.id ? { ...b, status: 'removed' as const } : b
     ))
     setPendingDelete(null)
   }
@@ -504,7 +507,7 @@ export default function BouldersPage({
             message={`Boulder #${pendingDelete.number}${pendingDelete.name ? ` "${pendingDelete.name}"` : ''} deleted`}
             theme={theme}
             onUndo={() => setPendingDelete(null)}
-            onCommit={commitDeleteBoulder}
+            onCommit={() => commitDeleteBoulder(pendingDelete)}
             onDismiss={() => setPendingDelete(null)}
           />
         )}
