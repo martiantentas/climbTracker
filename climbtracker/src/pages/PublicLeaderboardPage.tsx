@@ -9,6 +9,8 @@ import { calculateRankings } from '../utils/scoring'
 import { translations } from '../translations'
 import type { Language } from '../translations'
 import UserAvatar from '../components/UserAvatar'
+import { fetchPublicLeaderboard } from '../lib/db'
+import type { PublicLeaderboardData } from '../lib/db'
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -62,10 +64,29 @@ export default function PublicLeaderboardPage({
     })
   }, [])
 
-  const competition = competitions.find(c => c.id === compId)
-  const competitors = competitorsMap[compId ?? ''] ?? []
-  const boulders    = bouldersMap[compId ?? '']    ?? []
-  const completions = completionsMap[compId ?? ''] ?? []
+  // Anonymous visitors have no data in app state, so fetch a public snapshot
+  // and refresh it periodically. Logged-in users with the competition loaded
+  // keep using live app state.
+  const localComp = competitions.find(c => c.id === compId)
+  const [remote,        setRemote]        = useState<PublicLeaderboardData | null>(null)
+  const [remoteLoading, setRemoteLoading] = useState(!localComp)
+
+  useEffect(() => {
+    if (localComp || !compId) return
+    let cancelled = false
+    const load = () => fetchPublicLeaderboard(compId)
+      .then(d => { if (!cancelled) { setRemote(d); setLastUpdated(new Date()) } })
+      .catch(() => { /* keep last snapshot */ })
+      .finally(() => { if (!cancelled) setRemoteLoading(false) })
+    load()
+    const id = setInterval(load, 30_000)
+    return () => { cancelled = true; clearInterval(id) }
+  }, [compId, !!localComp]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const competition = localComp ?? remote?.competition
+  const competitors = localComp ? (competitorsMap[compId ?? ''] ?? []) : (remote?.competitors ?? [])
+  const boulders    = localComp ? (bouldersMap[compId ?? '']    ?? []) : (remote?.boulders    ?? [])
+  const completions = localComp ? (completionsMap[compId ?? ''] ?? []) : (remote?.completions ?? [])
 
   const [copied,      setCopied]      = useState(false)
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
@@ -126,6 +147,14 @@ export default function PublicLeaderboardPage({
   const totalTops  = rankings.reduce((s, r) => s + r.totalTops, 0)
   const topFlasher = rankings.reduce<typeof rankings[0] | null>((best, r) =>
     !best || r.flashCount > best.flashCount ? r : best, null)
+
+  if (!competition && remoteLoading) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center ${dk ? 'bg-[#121212]' : 'bg-[#F9F9F9]'}`}>
+        <div className="w-6 h-6 rounded-full border-2 border-[#7F8BAD] border-t-transparent animate-spin" />
+      </div>
+    )
+  }
 
   // ── Not found ──
   if (!competition) {

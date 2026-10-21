@@ -371,3 +371,30 @@ export async function loadAllUserData(
 
   return { comps, boulders, completions, members, waitlists, activeId }
 }
+
+// ─── PUBLIC LEADERBOARD ───────────────────────────────────────────────────────
+
+// Anonymous, read-only snapshot for shared result links. Backed by the
+// get_public_leaderboard SECURITY DEFINER RPC (supabase/05_public_leaderboard.sql).
+export interface PublicLeaderboardData {
+  competition: Competition
+  boulders:    Boulder[]
+  completions: Completion[]
+  competitors: Competitor[]
+}
+
+export async function fetchPublicLeaderboard(competitionId: string): Promise<PublicLeaderboardData | null> {
+  const { data, error } = await (supabase as any).rpc('get_public_leaderboard', { p_competition_id: competitionId })
+  if (error) throw error
+  if (!data) return null
+  const d = data as any
+  return {
+    competition: d.competition as Competition,
+    boulders:    (d.boulders    ?? []) as Boulder[],
+    completions: (d.completions ?? []) as Completion[],
+    competitors: (d.competitors ?? []).map((r: any) => memberRowToCompetitor({
+      ...r,
+      profiles: { email: '', display_name: r.display_name, avatar_url: r.avatar_url, emoji: r.emoji },
+    })),
+  }
+}
