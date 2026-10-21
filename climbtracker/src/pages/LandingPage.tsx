@@ -12,6 +12,7 @@ import { translations } from '../translations'
 
 import DotPattern    from '../components/DotPattern'
 import PlexusCanvas  from '../components/PlexusCanvas'
+import GlowingEffect from '../components/GlowingEffect'
 import { openCookiePreferences } from '../components/CookieBanner'
 
 const THEME_KEY = 'ascendr_landing_theme'
@@ -140,17 +141,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
         .nav-btn { font-size: 13px; font-weight: 500; color: ${isDark ? '#5C5E62' : '#888888'}; background: transparent; border: none; cursor: pointer; padding: 6px 14px; border-radius: 6px; transition: color 0.33s, background 0.33s; }
         .nav-btn:hover { color: ${isDark ? '#EEEEEE' : '#111111'} !important; background: ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'} !important; }
         @keyframes lp-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .lp-brand-wrap { position: relative; border-radius: 14px; padding: 2px; overflow: hidden; }
-        .lp-brand-wrap::before {
-          content: '';
-          position: absolute;
-          width: 200vw; height: 200vw;
-          top: 50%; left: 50%;
-          transform: translate(-50%, -50%);
-          background: conic-gradient(from 0deg at 50% 50%, transparent 0deg, var(--lp-ba, #7F8BAD) 65deg, transparent 130deg);
-          animation: lp-spin 5s linear infinite;
-          pointer-events: none;
-        }
+        .lp-brand-wrap { position: relative; border-radius: 12px; }
         @media (max-width: 768px) {
           .hide-mobile { display: none !important; }
           .bento-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
@@ -386,9 +377,10 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
             </div>
           </div>
 
-          {/* White-label — animated border sweep */}
+          {/* White-label — pointer-following glow border */}
           <div className="span-12 lp-brand-wrap" style={{ '--lp-ba': C.accent, gridColumn: 'span 12' } as React.CSSProperties}>
           <div className="lp-card" style={{ position: 'relative', borderRadius: 12, padding: 40, display: 'flex', alignItems: 'center', gap: 48, flexWrap: 'wrap', background: isDark ? '#1A1D24' : '#F5F4F1', border: `1px solid ${isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'}` }}>
+            <GlowingEffect borderWidth={2} />
             <div style={{ flex: 1, minWidth: 260 }}>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 16, padding: '4px 12px', borderRadius: 999, background: `${C.accent}15`, border: `1px solid ${C.accent}30`, fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.accent }}>
                 <Sparkles size={10} fill={C.accent} /> {t.pricingPrem}

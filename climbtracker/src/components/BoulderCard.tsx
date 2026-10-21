@@ -1,5 +1,6 @@
 import { Check, RotateCcw, ShieldCheck, Plus, Minus, Trash2 } from 'lucide-react'
 import { motion } from 'motion/react'
+import GlowingEffect from './GlowingEffect'
 import type { Boulder, Completion, DifficultyLevel, AttemptTracking } from '../types'
 import type { Language } from '../translations'
 import { translations } from '../translations'
@@ -163,31 +164,42 @@ export default function BoulderCard({
     !boulder.isPuntuable &&
     attemptTracking !== 'none'
 
+  const dk = theme === 'dark'
+  // Completed: the whole outline is filled with the hold colour (soft gradient),
+  // drawn as a 2px ring around the card surface. -m-px keeps the grid cell size.
+  const ringStyle = isTopped
+    ? { background: `linear-gradient(135deg, ${holdColor}, color-mix(in srgb, ${holdColor} 55%, white))` }
+    : undefined
+
   return (
     <motion.div
       onClick={handleClick}
       whileTap={isLocked ? undefined : { scale: 0.95 }}
       transition={{ type: 'spring', stiffness: 420, damping: 26, mass: 0.7 }}
+      style={ringStyle}
       className={`
-        relative rounded border cursor-pointer
-        transition-colors duration-[330ms] overflow-hidden
+        relative rounded cursor-pointer overflow-hidden
+        transition-colors duration-[330ms]
         ${isTopped
-          ? theme === 'dark'
-            ? 'bg-[#7F8BAD]/18 border-[#7F8BAD]/45 shadow-[inset_0_0_0_1px_rgba(127,139,173,0.15)]'
-            : 'bg-[#7F8BAD]/10 border-[#7F8BAD]/35 shadow-[inset_0_0_0_1px_rgba(127,139,173,0.08)]'
-          : theme === 'dark'
-            ? 'bg-white/5 border-white/10 hover:bg-white/8 hover:border-white/20'
-            : 'bg-white border-[#EEEEEE] hover:bg-[#F4F4F4] hover:border-[#D0D1D2]'
+          ? '-m-px p-[2px]'
+          : dk
+            ? 'border bg-white/5 border-white/10 hover:bg-white/8 hover:border-white/20'
+            : 'border bg-white border-[#EEEEEE] hover:bg-[#F4F4F4] hover:border-[#D0D1D2]'
         }
         ${isLocked ? 'opacity-60 cursor-not-allowed' : ''}
       `}
     >
-      {/* Colour accent bar */}
-      <div
-        className="absolute left-0 top-0 bottom-0 w-1"
-        style={{ backgroundColor: holdColor }}
-      />
+      <GlowingEffect borderWidth={2} delay={-(boulder.number % 10)} disabled={isLocked} />
 
+      {/* Colour accent bar (only while not completed; completed uses the full ring) */}
+      {!isTopped && (
+        <div
+          className="absolute left-0 top-0 bottom-0 w-1"
+          style={{ backgroundColor: holdColor }}
+        />
+      )}
+
+      <div className={isTopped ? `rounded-[3px] ${dk ? 'bg-[#171A1F]' : 'bg-white'}` : undefined}>
       <div className="p-4 pl-5">
 
         {/* Top row: number + badge */}
@@ -336,6 +348,7 @@ export default function BoulderCard({
           </div>
         )}
 
+      </div>
       </div>
     </motion.div>
   )

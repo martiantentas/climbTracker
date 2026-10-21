@@ -26,3 +26,20 @@
   --brand-bg-light:     #FFFFFF;
   --brand-bg-dark:      #121212;
 }
+
+/* ── GlowingEffect: periodic border sweep (no JS listeners) ─────────────────── */
+@property --glow-start  { syntax: '<number>'; inherits: true; initial-value: 0; }
+@property --glow-active { syntax: '<number>'; inherits: true; initial-value: 0; }
+
+/* One sweep around the border (~2s of the cycle), then idle until the next one. */
+@keyframes glow-sweep {
+  0%   { --glow-start: 0;   --glow-active: 0; }
+  3%   { --glow-active: 1; }
+  17%  { --glow-start: 360; --glow-active: 1; }
+  21%  { --glow-start: 360; --glow-active: 0; }
+  100% { --glow-start: 360; --glow-active: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glow-sweep { animation: none !important; }
+}

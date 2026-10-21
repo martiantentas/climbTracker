@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Undo2, X } from 'lucide-react'
+import { CheckCircle2, Undo2, X } from 'lucide-react'
 import { motion } from 'motion/react'
 
 interface UndoToastProps {
@@ -75,39 +75,39 @@ export default function UndoToast({ message, theme, onUndo, onCommit, onDismiss 
 
   return (
     <motion.div
+      role="status"
       className={`
-        fixed bottom-6 left-1/2 -translate-x-1/2 z-[600]
-        min-w-[320px] max-w-sm w-full mx-4
-        rounded border overflow-hidden
+        fixed inset-x-4 bottom-4 z-[600] mx-auto w-auto max-w-sm
+        sm:left-auto sm:right-4 sm:mx-0 sm:w-full
+        rounded-2xl border shadow-lg overflow-hidden select-none
         ${dk
           ? 'bg-[#1C1F24] border-white/15 text-[#EEEEEE]'
           : 'bg-white border-[#EEEEEE] text-[#121212]'
         }
       `}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 16 }}
+      initial={{ opacity: 0, y: 20, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 16, scale: 0.97 }}
       transition={{ type: 'spring', stiffness: 380, damping: 30, mass: 0.85 }}
     >
-      <div className="flex items-center gap-3 px-4 py-3.5">
-        <div className={`w-7 h-7 rounded flex items-center justify-center flex-shrink-0 ${dk ? 'bg-red-400/15' : 'bg-red-50'}`}>
-          <Undo2 size={13} className="text-red-400" />
-        </div>
+      <div className="flex items-center gap-3 p-4">
+        <CheckCircle2 size={16} className={`shrink-0 ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`} aria-hidden="true" />
 
-        <p className={`flex-1 text-sm font-medium ${dk ? 'text-[#D0D1D2]' : 'text-[#393C41]'}`}>
-          {message}
-        </p>
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <p className="text-sm font-medium">{message}</p>
+        </div>
 
         <button
           onClick={handleUndo}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors duration-[330ms] bg-[#7F8BAD] text-white hover:bg-[#6D799B] flex-shrink-0"
+          className={`shrink-0 inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border text-xs font-medium transition-colors duration-[330ms] ${dk ? 'border-white/15 text-[#EEEEEE] hover:bg-white/5' : 'border-[#D0D1D2] text-[#121212] hover:bg-[#F4F4F4]'}`}
         >
-          <Undo2 size={11} /> Undo
+          <Undo2 size={12} /> Undo
         </button>
 
         <button
           onClick={handleDismiss}
-          className={`p-1.5 rounded transition-colors duration-[330ms] flex-shrink-0 ${dk ? 'text-[#5C5E62] hover:text-[#D0D1D2] hover:bg-white/5' : 'text-[#8E8E8E] hover:text-[#393C41] hover:bg-[#F4F4F4]'}`}
+          aria-label="Close toast"
+          className={`relative shrink-0 p-1.5 rounded-lg transition-colors duration-[330ms] after:absolute after:-inset-2 after:content-[''] ${dk ? 'text-[#5C5E62] hover:text-[#EEEEEE] hover:bg-white/5' : 'text-[#8E8E8E] hover:text-[#121212] hover:bg-[#F4F4F4]'}`}
         >
           <X size={14} />
         </button>
@@ -115,7 +115,7 @@ export default function UndoToast({ message, theme, onUndo, onCommit, onDismiss 
 
       <div className={`h-0.5 ${dk ? 'bg-white/5' : 'bg-[#EEEEEE]'}`}>
         <div
-          className="h-full bg-[#7F8BAD] transition-none"
+          className={`h-full transition-none ${dk ? 'bg-[#D0D1D2]' : 'bg-[#393C41]'}`}
           style={{ width: `${progress}%` }}
         />
       </div>

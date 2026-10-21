@@ -42,7 +42,7 @@ function NavTab({ to, label, dk }: NavTabProps) {
   const isActive = location.pathname === to
 
   return (
-    <Link to={to} className="relative flex items-center h-10 px-3 select-none shrink-0">
+    <Link to={to} className="relative flex items-center h-14 px-3 select-none shrink-0">
       <span
         className="text-sm font-medium transition-colors duration-200"
         style={{ color: isActive ? '#7F8BAD' : dk ? '#5C5E62' : '#8E8E8E' }}
@@ -83,7 +83,6 @@ export default function NavBar({
   const isCompListPage = pathEnd === 'competitions'
   const showCompNav   = !isCompListPage && !!activeCompetition
 
-  const borderCls = dk ? 'border-white/[0.08]' : 'border-[#EEEEEE]'
   const btnBase   = `p-2 rounded-md transition-colors duration-200 flex items-center ${
     dk
       ? 'text-[#5C5E62] hover:text-[#EEEEEE] hover:bg-white/5'
@@ -98,8 +97,11 @@ export default function NavBar({
       style={{ borderBottom: `1px solid ${dk ? 'rgba(255,255,255,0.08)' : '#EEEEEE'}` }}
     >
 
-      {/* ── Row 1: Global bar ──────────────────────────────────────────────── */}
-      <div className="max-w-5xl mx-auto px-4 md:px-6 h-14 flex items-center gap-3">
+      {/* ── Global bar: left | center tabs | right ──────────────────────────────────────────────── */}
+      <div className="max-w-7xl mx-auto px-4 md:px-6 h-14 flex items-center gap-3 lg:grid lg:grid-cols-[1fr_auto_1fr]">
+
+        {/* Left: logo + back link + competition name */}
+        <div className="flex items-center gap-3 min-w-0">
 
         {/* Logo */}
         <motion.div
@@ -116,7 +118,7 @@ export default function NavBar({
 
         {/* Competition context: back link + comp name */}
         {showCompNav && (
-          <div className="hidden md:flex items-center gap-2 shrink-0 ml-3">
+          <div className="hidden md:flex items-center gap-2 min-w-0 ml-3">
             <span data-walkthrough="competitions">
               <Link
                 to={`/${lang}/competitions`}
@@ -136,7 +138,7 @@ export default function NavBar({
               style={{ backgroundColor: getStatusColor(activeCompetition!.status) }}
             />
             <span
-              className="text-xs font-medium whitespace-nowrap max-w-[160px] truncate"
+              className="text-xs font-medium whitespace-nowrap max-w-[110px] xl:max-w-[200px] truncate"
               style={{ color: dk ? '#8E8E8E' : '#5C5E62' }}
             >
               {activeCompetition!.name}
@@ -144,11 +146,35 @@ export default function NavBar({
           </div>
         )}
 
-        {/* Spacer */}
-        <div className="flex-1" />
+        </div>
+
+        {/* Center: competition tabs (desktop) */}
+        {showCompNav && canAccessComp ? (
+          <nav className="hidden lg:flex items-center justify-center">
+            <span data-walkthrough="boulders">
+              <NavTab to={`/${lang}/boulders`}      label={t.boulders}      dk={dk} />
+            </span>
+            <span data-walkthrough="leaderboard">
+              <NavTab to={`/${lang}/leaderboard`}   label={t.leaderboard}   dk={dk} />
+            </span>
+            <NavTab to={`/${lang}/rules`}           label={t.rules}         dk={dk} />
+            {!isOrganizer && !isJudge && (
+              <NavTab to={`/${lang}/event-profile`} label={t.eventSettings} dk={dk} />
+            )}
+            {(isOrganizer || isJudge) && (
+              <>
+                <NavTab to={`/${lang}/users`}     label={t.users}     dk={dk} />
+                <NavTab to={`/${lang}/analytics`} label={t.analytics} dk={dk} />
+                <NavTab to={`/${lang}/judging`}   label={t.judging}   dk={dk} />
+              </>
+            )}
+          </nav>
+        ) : (
+          <div className="hidden lg:block" />
+        )}
 
         {/* Right controls */}
-        <div className="flex items-center gap-0.5">
+        <div className="flex items-center justify-end gap-0.5 ml-auto lg:ml-0">
 
           {/* Language selector */}
           <select
@@ -218,35 +244,6 @@ export default function NavBar({
 
         </div>
       </div>
-
-      {/* ── Row 2: Competition tab bar (competition mode, desktop) ──────────── */}
-      {showCompNav && (
-        <div className={`border-t ${borderCls}`}>
-          <nav className="max-w-5xl mx-auto px-4 md:px-6 hidden lg:flex items-center gap-0 overflow-x-auto">
-            {canAccessComp && (
-              <>
-                <span data-walkthrough="boulders">
-                  <NavTab to={`/${lang}/boulders`}      label={t.boulders}      dk={dk} />
-                </span>
-                <span data-walkthrough="leaderboard">
-                  <NavTab to={`/${lang}/leaderboard`}   label={t.leaderboard}   dk={dk} />
-                </span>
-                <NavTab to={`/${lang}/rules`}           label={t.rules}         dk={dk} />
-                {!isOrganizer && !isJudge && (
-                  <NavTab to={`/${lang}/event-profile`} label={t.eventSettings} dk={dk} />
-                )}
-                {(isOrganizer || isJudge) && (
-                  <>
-                    <NavTab to={`/${lang}/users`}     label={t.users}     dk={dk} />
-                    <NavTab to={`/${lang}/analytics`} label={t.analytics} dk={dk} />
-                    <NavTab to={`/${lang}/judging`}   label={t.judging}   dk={dk} />
-                  </>
-                )}
-              </>
-            )}
-          </nav>
-        </div>
-      )}
 
     </header>
   )

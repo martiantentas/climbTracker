@@ -13,6 +13,7 @@ import type { Language } from '../translations'
 import { translations } from '../translations'
 import { authedFetchInit } from '../lib/supabase'
 import { trackEvent } from '../lib/analytics'
+import { DIALOG_OVERLAY, dialogPanel } from '../components/dialogStyles'
 
 interface SettingsPageProps {
   competition:     Competition
@@ -1208,13 +1209,13 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
         {showBlockModal && (
           <>
             <motion.div
-              className="fixed inset-0 z-[500] bg-black/60"
+              className={`fixed inset-0 z-[500] ${DIALOG_OVERLAY}`}
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               transition={{ duration: 0.18 }}
               onClick={() => setShowBlockModal(false)}
             />
             <motion.div
-              className={`fixed inset-x-4 top-1/2 -translate-y-1/2 z-[501] max-w-sm mx-auto rounded border p-6 ${dk ? 'bg-[#121212] border-white/10' : 'bg-white border-[#EEEEEE]'}`}
+              className={`fixed inset-x-4 top-1/2 -translate-y-1/2 z-[501] max-w-sm mx-auto p-6 ${dialogPanel(dk)}`}
               initial={{ opacity: 0, scale: 0.96, y: '-48%' }}
               animate={{ opacity: 1, scale: 1,    y: '-50%' }}
               exit={{   opacity: 0, scale: 0.96, y: '-48%' }}

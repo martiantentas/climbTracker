@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Lock, LogIn, X, AlertCircle, MapPin, Calendar } from 'lucide-react'
 import type { Competition } from '../types'
+import { DIALOG_OVERLAY, dialogPanel } from './dialogStyles'
 
 interface PasswordModalProps {
   competition:    Competition
@@ -53,12 +54,12 @@ export default function PasswordModal({
 
   return (
     <>
-      <div className="fixed inset-0 z-[600] bg-black/70 backdrop-blur-sm" onClick={onCancel} />
+      <div className={`fixed inset-0 z-[600] ${DIALOG_OVERLAY}`} onClick={onCancel} />
 
       <div className={`
         fixed inset-x-4 top-1/2 -translate-y-1/2 z-[700]
-        max-w-sm mx-auto rounded border
-        ${dk ? 'bg-[#121212] border-white/10' : 'bg-white border-[#EEEEEE]'}
+        max-w-sm mx-auto
+        ${dialogPanel(dk)}
       `}>
 
         <div className={`flex items-center justify-between px-6 py-4 border-b ${dk ? 'border-white/10' : 'border-[#EEEEEE]'}`}>

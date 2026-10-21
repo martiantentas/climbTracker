@@ -6,6 +6,7 @@ import UserAvatar from '../components/UserAvatar'
 import type { Competitor, Competition } from '../types'
 import type { Language } from '../translations'
 import { translations } from '../translations'
+import { DIALOG_OVERLAY, dialogPanel, dialogFooter } from '../components/dialogStyles'
 interface UsersPageProps {
   competitors:     Competitor[]
   competition:     Competition
@@ -125,8 +126,8 @@ function UserDetailModal({ competitor, allCompetitors, competition, isMe, viewOn
 
   return (
     <>
-      <div className="fixed inset-0 z-[400] bg-black/60" onClick={onClose} />
-      <div className={`fixed inset-x-4 top-1/2 -translate-y-1/2 z-[500] max-w-md mx-auto rounded border ${dk ? 'bg-[#121212] border-white/10' : 'bg-white border-[#EEEEEE]'}`}>
+      <div className={`fixed inset-0 z-[400] ${DIALOG_OVERLAY}`} onClick={onClose} />
+      <div className={`fixed inset-x-4 top-1/2 -translate-y-1/2 z-[500] max-w-md mx-auto ${dialogPanel(dk)}`}>
 
         <div className={`flex items-center justify-between px-6 py-4 border-b ${dk ? 'border-white/10' : 'border-[#EEEEEE]'}`}>
           <div className="flex items-center gap-3">
@@ -243,7 +244,7 @@ function UserDetailModal({ competitor, allCompetitors, competition, isMe, viewOn
         </div>
 
         {!isMe && !viewOnly && (
-          <div className={`px-6 py-4 border-t ${dk ? 'border-white/10' : 'border-[#EEEEEE]'}`}>
+          <div className={`px-6 py-4 ${dialogFooter(dk)}`}>
             {dangerAction === 'remove' ? (
               <div className="flex items-center gap-3">
                 <p className={`text-xs font-medium flex-1 ${dk ? 'text-[#8E8E8E]' : 'text-[#5C5E62]'}`}>{t.confirmRemove(competitor.displayName)}</p>

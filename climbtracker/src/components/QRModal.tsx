@@ -3,6 +3,7 @@ import { X, Download, Printer } from 'lucide-react'
 import QRCode from 'qrcode'
 import type { Language } from '../translations'
 import { translations } from '../translations'
+import { DIALOG_OVERLAY, dialogPanel } from './dialogStyles'
 
 interface QRModalProps {
   url:             string
@@ -86,8 +87,8 @@ export default function QRModal({ url, competitionName, theme, lang, onClose }: 
 
   return (
     <>
-      <div className="fixed inset-0 z-[400] bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className={`fixed inset-x-4 top-1/2 -translate-y-1/2 z-[500] max-w-sm mx-auto rounded border ${dk ? 'bg-[#121212] border-white/10' : 'bg-white border-[#EEEEEE]'}`}>
+      <div className={`fixed inset-0 z-[400] ${DIALOG_OVERLAY}`} onClick={onClose} />
+      <div className={`fixed inset-x-4 top-1/2 -translate-y-1/2 z-[500] max-w-sm mx-auto ${dialogPanel(dk)}`}>
 
         {/* Header */}
         <div className={`flex items-center justify-between px-6 py-4 border-b ${dk ? 'border-white/10' : 'border-[#EEEEEE]'}`}>

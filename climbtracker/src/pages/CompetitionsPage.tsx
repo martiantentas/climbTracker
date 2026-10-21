@@ -10,6 +10,7 @@ import { translations } from '../translations'
 import PasswordModal from '../components/PasswordModal'
 import UndoToast from '../components/UndoToast'
 import QRModal from '../components/QRModal'
+import { DIALOG_OVERLAY, dialogPanel } from '../components/dialogStyles'
 
 interface CompetitionsPageProps {
   competitions:    Competition[]
@@ -76,8 +77,8 @@ function CreateModal({ theme, lang, onSave, onClose }: {
 
   return (
     <>
-      <div className="fixed inset-0 z-[400] bg-black/60" onClick={onClose} />
-      <div className={`fixed inset-x-4 top-1/2 -translate-y-1/2 z-[500] max-w-md mx-auto rounded border ${dk ? 'bg-[#121212] border-white/10' : 'bg-white border-[#EEEEEE]'}`}>
+      <div className={`fixed inset-0 z-[400] ${DIALOG_OVERLAY}`} onClick={onClose} />
+      <div className={`fixed inset-x-4 top-1/2 -translate-y-1/2 z-[500] max-w-md mx-auto ${dialogPanel(dk)}`}>
         <div className={`flex items-center justify-between p-6 border-b ${dk ? 'border-white/10' : 'border-[#EEEEEE]'}`}>
           <h2 className={`text-lg font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>{t.newCompetition}</h2>
           <button onClick={onClose} className={`p-2 rounded transition-colors duration-[330ms] ${dk ? 'hover:bg-white/5 text-[#5C5E62]' : 'hover:bg-[#F4F4F4] text-[#5C5E62]'}`}><X size={17} /></button>

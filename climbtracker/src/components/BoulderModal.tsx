@@ -6,6 +6,7 @@ type PenaltyOverride = 'inherit' | 'penalize' | 'no_penalty'
 import type { Language } from '../translations'
 import { translations } from '../translations'
 import Toggle from './Toggle'
+import { DIALOG_OVERLAY, dialogPanel } from './dialogStyles'
 
 interface BoulderModalProps {
   boulder?:         Boulder
@@ -133,7 +134,7 @@ export default function BoulderModal({
   return (
     <>
       <motion.div
-        className="fixed inset-0 z-[400] bg-black/60 backdrop-blur-sm"
+        className={`fixed inset-0 z-[400] ${DIALOG_OVERLAY}`}
         onClick={onClose}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -143,8 +144,8 @@ export default function BoulderModal({
       <motion.div
         className={`
           fixed inset-x-4 top-1/2 -translate-y-1/2 z-[500] max-w-lg mx-auto
-          rounded border max-h-[90vh] overflow-y-auto
-          ${dk ? 'bg-[#121212] border-white/10' : 'bg-white border-[#EEEEEE]'}
+          max-h-[90vh] overflow-y-auto
+          ${dialogPanel(dk)}
         `}
         initial={{ opacity: 0, y: 24, scale: 0.96 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -153,7 +154,7 @@ export default function BoulderModal({
       >
 
         {/* Header */}
-        <div className={`sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b ${dk ? 'bg-[#121212] border-white/10' : 'bg-white border-[#EEEEEE]'}`}>
+        <div className={`sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b ${dk ? 'bg-[#1C1F24] border-white/10' : 'bg-white border-[#EEEEEE]'}`}>
           <h2 className={`text-base font-medium ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
             {isEditing ? t.modalEditBoulder(boulder.number) : t.modalAddBoulder}
           </h2>
@@ -423,7 +424,7 @@ export default function BoulderModal({
         </div>
 
         {/* Footer */}
-        <div className={`sticky bottom-0 flex items-center justify-between gap-3 px-6 py-4 border-t ${dk ? 'bg-[#121212] border-white/10' : 'bg-white border-[#EEEEEE]'}`}>
+        <div className={`sticky bottom-0 flex items-center justify-between gap-3 px-6 py-4 border-t ${dk ? 'bg-[#1C1F24] border-white/10' : 'bg-white border-[#EEEEEE]'}`}>
           {isEditing && onDelete && (
             confirmDelete ? (
               <div className="flex items-center gap-2">
