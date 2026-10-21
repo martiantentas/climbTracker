@@ -248,6 +248,7 @@ async function fetchMembersByStatus(competitionId: string, status: string): Prom
     .select('user_id, role, status, bib_number, trait_ids, gender')
     .eq('competition_id', competitionId)
     .eq('status', status)
+    .order('joined_at', { ascending: true })
   if (e1) throw e1
   if (!rows || rows.length === 0) return []
 
@@ -272,6 +273,7 @@ async function fetchAllMembersByStatus(ids: string[], status: string): Promise<R
     .select('competition_id, user_id, role, status, bib_number, trait_ids, gender')
     .in('competition_id', ids)
     .eq('status', status)
+    .order('joined_at', { ascending: true })
   if (e1) throw e1
 
   const result: Record<string, Competitor[]> = Object.fromEntries(ids.map(id => [id, []]))

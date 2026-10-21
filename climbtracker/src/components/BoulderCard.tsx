@@ -165,42 +165,26 @@ export default function BoulderCard({
     attemptTracking !== 'none'
 
   const dk = theme === 'dark'
-  // Completed: the whole outline is filled with the hold colour (soft gradient),
-  // drawn as a 2px ring around the card surface. -m-px keeps the grid cell size.
-  const ringStyle = isTopped
-    ? { background: `linear-gradient(135deg, ${holdColor}, color-mix(in srgb, ${holdColor} 55%, white))` }
-    : undefined
 
   return (
     <motion.div
       onClick={handleClick}
       whileTap={isLocked ? undefined : { scale: 0.95 }}
       transition={{ type: 'spring', stiffness: 420, damping: 26, mass: 0.7 }}
-      style={ringStyle}
+      // Thin outline in the hold colour. Completed cards keep the exact same
+      // outline and are just more transparent.
+      style={{ borderColor: holdColor }}
       className={`
-        relative rounded cursor-pointer overflow-hidden
-        transition-colors duration-[330ms]
-        ${isTopped
-          ? '-m-px p-[2px]'
-          : dk
-            ? 'border bg-white/5 border-white/10 hover:bg-white/8 hover:border-white/20'
-            : 'border bg-white border-[#EEEEEE] hover:bg-[#F4F4F4] hover:border-[#D0D1D2]'
-        }
+        relative rounded border cursor-pointer overflow-hidden
+        transition-[background-color,opacity] duration-[330ms]
+        ${dk ? 'bg-white/5 hover:bg-white/8' : 'bg-white hover:bg-[#F4F4F4]'}
+        ${isTopped ? 'opacity-60' : ''}
         ${isLocked ? 'opacity-60 cursor-not-allowed' : ''}
       `}
     >
       <GlowingEffect borderWidth={2} delay={-(boulder.number % 10)} disabled={isLocked} />
 
-      {/* Colour accent bar (only while not completed; completed uses the full ring) */}
-      {!isTopped && (
-        <div
-          className="absolute left-0 top-0 bottom-0 w-1"
-          style={{ backgroundColor: holdColor }}
-        />
-      )}
-
-      <div className={isTopped ? `rounded-[3px] ${dk ? 'bg-[#171A1F]' : 'bg-white'}` : undefined}>
-      <div className="p-4 pl-5">
+      <div className="p-4">
 
         {/* Top row: number + badge */}
         <div className="flex items-start justify-between mb-2">
@@ -348,7 +332,6 @@ export default function BoulderCard({
           </div>
         )}
 
-      </div>
       </div>
     </motion.div>
   )

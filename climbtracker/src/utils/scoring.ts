@@ -215,32 +215,16 @@ export function calculateRankings(
     }
   })
 
-  // Primary sort: points desc → tops desc → attempts asc → zones desc → zone attempts asc → flashes desc
+  // Strict order, no ties: points desc → tops desc → zones desc. If still equal,
+  // the original order of `competitors` is kept (Array.sort is stable), and that
+  // list is ordered by join date, so whoever joined the competition first goes first.
   results.sort((a, b) => {
-    if (b.totalPoints   !== a.totalPoints)   return b.totalPoints   - a.totalPoints
-    if (b.totalTops     !== a.totalTops)     return b.totalTops     - a.totalTops
-    if (a.totalAttempts !== b.totalAttempts) return a.totalAttempts - b.totalAttempts
-    if (b.totalZones    !== a.totalZones)    return b.totalZones    - a.totalZones
-    if (a.zoneAttempts  !== b.zoneAttempts)  return a.zoneAttempts  - b.zoneAttempts
-    return b.flashCount - a.flashCount
+    if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints
+    if (b.totalTops   !== a.totalTops)   return b.totalTops   - a.totalTops
+    return b.totalZones - a.totalZones
   })
 
-  // Assign ranks (tied competitors share a rank)
-  results.forEach((result, index) => {
-    if (index === 0) {
-      result.rank = 1
-    } else {
-      const prev = results[index - 1]
-      const tied =
-        result.totalPoints   === prev.totalPoints   &&
-        result.totalTops     === prev.totalTops     &&
-        result.totalAttempts === prev.totalAttempts &&
-        result.totalZones    === prev.totalZones    &&
-        result.zoneAttempts  === prev.zoneAttempts  &&
-        result.flashCount    === prev.flashCount
-      result.rank = tied ? prev.rank : index + 1
-    }
-  })
+  results.forEach((result, index) => { result.rank = index + 1 })
 
   return results
 }

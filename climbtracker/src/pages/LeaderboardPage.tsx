@@ -428,7 +428,7 @@ export default function LeaderboardPage({
   }, [competitors, rankings])
 
   // Position is recomputed within the filtered list, so it reflects the
-  // selected categories/genders. Ties (same tiebreak values) share a position.
+  // selected categories/genders. Ranks are unique (no ties).
   const visible = useMemo(() => {
     const filtered = rankings.filter(r => {
       if (categoryFilters.length > 0) {
@@ -442,17 +442,7 @@ export default function LeaderboardPage({
       }
       return true
     })
-    return filtered.map((r, i) => {
-      const prev = filtered[i - 1]
-      const tied = prev &&
-        r.totalPoints === prev.totalPoints && r.totalTops === prev.totalTops &&
-        r.totalAttempts === prev.totalAttempts && r.totalZones === prev.totalZones &&
-        r.zoneAttempts === prev.zoneAttempts && r.flashCount === prev.flashCount
-      return { ...r, rank: tied ? -1 : i + 1 }
-    }).reduce<RankResult[]>((acc, r) => {
-      acc.push(r.rank === -1 ? { ...r, rank: acc[acc.length - 1].rank } : r)
-      return acc
-    }, [])
+    return filtered.map((r, i) => ({ ...r, rank: i + 1 }))
   }, [rankings, categoryFilters, genderFilters, competitorCategoryMap, competitors])
 
   const hasActiveFilters = categoryFilters.length > 0 || genderFilters.length > 0
