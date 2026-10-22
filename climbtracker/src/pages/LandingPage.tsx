@@ -307,7 +307,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
               <h3 style={{ fontSize: 18, fontWeight: 300, letterSpacing: '-0.02em', color: C.txt, margin: 0 }}>{t.featFlexTitle}</h3>
             </div>
             <p style={{ color: C.txtLow, fontSize: 13, lineHeight: 1.55, marginBottom: 20, textAlign: 'justify' }}>{t.featFlexDesc}</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px 16px' }}>
               {['Dynamic Pot', 'Traditional', 'Zone tie-breaker', '% Slash per attempt'].map(f => (
                 <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: C.txtMid }}>
                   <Check size={12} color={C.accent} strokeWidth={2.5} /> {f}
@@ -317,8 +317,8 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
           </div>
 
           {/* Judge modes — interactive */}
-          <div className="lp-card lp-judge-card span-8" style={{ ...glass, gridColumn: 'span 8', padding: 40, display: 'flex', alignItems: 'flex-start', gap: 36 }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="lp-card lp-judge-card span-8" style={{ ...glass, gridColumn: 'span 8', padding: 40, display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 24 }}>
+            <div style={{ minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
                 <div style={{ width: 40, height: 40, borderRadius: 8, background: `${C.accent}1A`, border: `1px solid ${C.accent}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <Shield size={19} color={C.accent} />
@@ -329,7 +329,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
                 {[t.scoringModeSelfDesc, t.scoringModeApprovalDesc, t.scoringModeJudgeDesc][judgeMode]}
               </p>
             </div>
-            <div className="lp-judge-tabs" style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
+            <div className="lp-judge-tabs" style={{ display: 'flex', flexDirection: 'row', gap: 8 }}>
               {([
                 [t.scoringModeSelf, 0],
                 [t.scoringModeApproval, 1],
@@ -338,7 +338,7 @@ export default function LandingPage({ lang, setLang }: LandingPageProps) {
                 <button
                   key={idx}
                   onClick={() => setJudgeMode(idx)}
-                  style={{ padding: '9px 18px', borderRadius: 7, background: judgeMode === idx ? `${C.accent}15` : rowBg, border: `1px solid ${judgeMode === idx ? `${C.accent}35` : C.border}`, fontSize: 12, fontWeight: 600, color: judgeMode === idx ? C.accent : C.txtLow, cursor: 'pointer', transition: 'all 0.22s', textAlign: 'left', fontFamily: F }}
+                  style={{ flex: 1, padding: '10px 18px', borderRadius: 7, background: judgeMode === idx ? `${C.accent}15` : rowBg, border: `1px solid ${judgeMode === idx ? `${C.accent}35` : C.border}`, fontSize: 12, fontWeight: 600, color: judgeMode === idx ? C.accent : C.txtLow, cursor: 'pointer', transition: 'all 0.22s', textAlign: 'left', fontFamily: F }}
                 >
                   {mode}
                 </button>
