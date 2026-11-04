@@ -296,7 +296,8 @@ export default function CompetitionsPage({
                     : 'bg-[#F4F4F4] text-[#393C41] hover:bg-[#EEEEEE]'
               }`}
             >
-              <Trophy size={12} />{active ? 'Currently Active' : t.enterCompetition}
+              {/* Same call to action in both states; the active one is highlighted by colour */}
+              <Trophy size={12} />{t.goToCompetition}
             </motion.button>
           )}
 
