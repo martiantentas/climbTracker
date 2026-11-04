@@ -329,10 +329,18 @@ begin
     end if;
   end if;
 
-  -- Next bib: max existing + 1, starting at 101.
+  -- Next bib: highest COMPETITOR bib + 1 (starting at 101). Staff bibs
+  -- (organizers/judges often have 0, 999, 1000...) are ignored, but a number
+  -- already held by anyone in the competition is never reused.
   select greatest(coalesce(max(bib_number), 100), 100) + 1 into v_bib
     from public.competition_members
-   where competition_id = p_competition_id;
+   where competition_id = p_competition_id
+     and role = 'competitor'
+     and status = 'active';
+  while exists (select 1 from public.competition_members
+                 where competition_id = p_competition_id and bib_number = v_bib) loop
+    v_bib := v_bib + 1;
+  end loop;
 
   -- A waitlisted row is replaced (the self-edit trigger would otherwise
   -- block the status change).
