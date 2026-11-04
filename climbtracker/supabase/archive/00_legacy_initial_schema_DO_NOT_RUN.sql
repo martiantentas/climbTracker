@@ -1,3 +1,11 @@
+-- ============================================================
+-- DO NOT RUN. Historical file kept for reference only.
+-- It does NOT match the production schema (see schema.sql + 01..09) and it
+-- would re-create unsafe policies (e.g. "Users can read any profile").
+-- It was moved out of supabase/migrations/ so the Supabase GitHub
+-- integration stops trying to apply it on every push to main.
+-- ============================================================
+
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Ascendr — Initial Schema Migration
 -- Run this in: Supabase Dashboard → SQL Editor

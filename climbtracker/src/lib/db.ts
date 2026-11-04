@@ -11,17 +11,46 @@ async function withRetry<T>(
   fn: () => Promise<T>,
   maxAttempts = 3,
   baseDelayMs = 600,
+  maxDelayMs  = 8_000,
+  cancel?:     AbortSignal,   // once aborted, no further attempt is made
 ): Promise<T> {
   let lastErr: unknown
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    if (cancel?.aborted) throw cancel.reason ?? new Error('cancelled')
     try { return await fn() } catch (err) {
       lastErr = err
+      if (cancel?.aborted) throw cancel.reason ?? new Error('cancelled')
       if (attempt < maxAttempts - 1)
-        await new Promise(r => setTimeout(r, baseDelayMs * 2 ** attempt))
+        await new Promise(r => setTimeout(r, Math.min(maxDelayMs, baseDelayMs * 2 ** attempt)))
     }
   }
   throw lastErr
 }
+
+// One signal that aborts when any of the given signals aborts.
+function anySignal(signals: (AbortSignal | undefined)[]): AbortSignal {
+  const ctrl = new AbortController()
+  for (const sig of signals) {
+    if (!sig) continue
+    if (sig.aborted) { ctrl.abort(sig.reason); break }
+    sig.addEventListener('abort', () => ctrl.abort(sig.reason), { once: true })
+  }
+  return ctrl.signal
+}
+
+// Abort a request that hangs (gym Wi-Fi often accepts the connection and
+// then never answers). Without this a score write could wait forever.
+function timeoutSignal(ms: number): AbortSignal {
+  const ctrl = new AbortController()
+  setTimeout(() => ctrl.abort(new Error('timeout')), ms)
+  return ctrl.signal
+}
+
+// Score writes: 6 attempts over ~17 s (0.6 + 1.2 + 2.4 + 4.8 + 8 s), each
+// attempt limited to 10 s. Upserts and deletes are idempotent, so retrying
+// a write that actually succeeded is harmless.
+const SCORE_WRITE_ATTEMPTS = 6
+const SCORE_WRITE_TIMEOUT  = 10_000
 
 // ─── PAGINATION ───────────────────────────────────────────────────────────────
 // PostgREST caps every response at the project's "Max rows" setting (1000 by
@@ -324,7 +353,7 @@ export async function fetchAllCompletionsForComps(ids: string[]): Promise<Record
 }
 
 // Wrapped with retry so a transient network blip doesn't silently lose a score.
-export async function upsertCompletion(competitionId: string, completion: Completion): Promise<void> {
+export async function upsertCompletion(competitionId: string, completion: Completion, cancel?: AbortSignal): Promise<void> {
   await withRetry(async () => {
     await supabase
       .from('completions')
@@ -334,20 +363,22 @@ export async function upsertCompletion(competitionId: string, completion: Comple
         boulder_id:     completion.boulderId,
         data:           completion as unknown as Json,
       })
+      .abortSignal(anySignal([timeoutSignal(SCORE_WRITE_TIMEOUT), cancel]))
       .throwOnError()
-  })
+  }, SCORE_WRITE_ATTEMPTS, undefined, undefined, cancel)
 }
 
 export async function deleteCompletion(
-  competitionId: string, competitorId: string, boulderId: string
+  competitionId: string, competitorId: string, boulderId: string, cancel?: AbortSignal,
 ): Promise<void> {
   await withRetry(async () => {
     await supabase
       .from('completions')
       .delete()
       .match({ competition_id: competitionId, competitor_id: competitorId, boulder_id: boulderId })
+      .abortSignal(anySignal([timeoutSignal(SCORE_WRITE_TIMEOUT), cancel]))
       .throwOnError()
-  })
+  }, SCORE_WRITE_ATTEMPTS, undefined, undefined, cancel)
 }
 
 // ─── COMPETITION MEMBERS ──────────────────────────────────────────────────────
@@ -531,7 +562,10 @@ export interface PublicLeaderboardData {
 }
 
 export async function fetchPublicLeaderboard(competitionId: string): Promise<PublicLeaderboardData | null> {
-  const { data, error } = await (supabase as any).rpc('get_public_leaderboard', { p_competition_id: competitionId })
+  // 15 s cap: a hung request must not freeze the venue screen's refresh loop.
+  const { data, error } = await (supabase as any)
+    .rpc('get_public_leaderboard', { p_competition_id: competitionId })
+    .abortSignal(timeoutSignal(15_000))
   if (error) throw error
   if (!data) return null
   const d = data as any

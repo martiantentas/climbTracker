@@ -98,7 +98,10 @@ export default function BoulderModal({
       difficultyId:            difficultyId || undefined,
       style:                   style || undefined,
       isPuntuable,
-      maxPoints,
+      // Only store a per-boulder pot if it really differs from the event pot.
+      // Otherwise leave it empty so the boulder follows the competition's
+      // dynamicPot, including later changes made "on the fly".
+      maxPoints:               maxPoints !== (competition.dynamicPot ?? 1000) ? maxPoints : undefined,
       tags:                    boulder?.tags ?? [],
       status,
       zoneCount,

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { Search, ChevronDown, ChevronUp, Target, CheckCircle2, XCircle, ShieldCheck, Plus, Minus, Star, Mountain } from 'lucide-react'
 
@@ -47,7 +47,7 @@ interface JudgingPageProps {
     isTop:        boolean,
     judgeId:      string,
     zonesReached: number,
-  ) => void
+  ) => void | Promise<boolean>   // resolves true once the database confirmed
   currentUser:  Competitor
   showSuccess:  (msg: string) => void
 }
@@ -90,11 +90,28 @@ function BoulderJudgingRow({
   const [zoneAttempts,  setZoneAttempts]  = useState(completion?.zoneAttempts  ?? 0)
   const [isTop,         setIsTop]         = useState(completion?.topValidated  ?? false)
 
+  // When the stored completion changes (another judge, realtime echo of our
+  // own save, a resync), refresh the inputs ONLY if the judge has not edited
+  // them since the last sync. Otherwise their unsaved input would be wiped.
+  const synced = useRef({ attempts, zonesReached, zoneAttempts, isTop })
   useEffect(() => {
-    setAttempts(completion?.attempts      ?? 0)
-    setZonesReached(completion?.zonesReached ?? 0)
-    setZoneAttempts(completion?.zoneAttempts  ?? 0)
-    setIsTop(completion?.topValidated     ?? false)
+    const next = {
+      attempts:     completion?.attempts      ?? 0,
+      zonesReached: completion?.zonesReached  ?? 0,
+      zoneAttempts: completion?.zoneAttempts  ?? 0,
+      isTop:        completion?.topValidated  ?? false,
+    }
+    const s = synced.current
+    const untouched = attempts === s.attempts && zonesReached === s.zonesReached
+      && zoneAttempts === s.zoneAttempts && isTop === s.isTop
+    synced.current = next
+    if (untouched) {
+      setAttempts(next.attempts)
+      setZonesReached(next.zonesReached)
+      setZoneAttempts(next.zoneAttempts)
+      setIsTop(next.isTop)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [completion])
 
   const totalZones  = boulder.zoneCount ?? 0
@@ -535,15 +552,18 @@ export default function JudgingPage({
   )
   const pendingCount = (actualCompetitors.length * puntuableBoulders.length) - toppedCount - zoneCount
 
-  function handleClear(competitorId: string, boulderId: string) {
-    onLogScore(competitorId, boulderId, 0, false, 0, false, currentUser.id, 0)
-    showSuccess(t.judgingScoreCleared)
+  // "Saved" is only shown once the database has confirmed the write. If it
+  // fails, App shows an error toast naming the competitor and boulder.
+  async function handleClear(competitorId: string, boulderId: string) {
+    const ok = await onLogScore(competitorId, boulderId, 0, false, 0, false, currentUser.id, 0)
+    if (ok !== false) showSuccess(t.judgingScoreCleared)
   }
 
-  function handleLog(...args: Parameters<typeof onLogScore>) {
-    onLogScore(...args)
+  async function handleLog(...args: Parameters<typeof onLogScore>) {
     trackEvent('boulder_scored', { topped: args[5], has_zone: args[3] })
-    showSuccess(t.judgingScoreSaved)
+    const ok = await onLogScore(...args)
+    if (ok !== false) showSuccess(t.judgingScoreSaved)
+    return ok !== false
   }
 
   return (
@@ -625,7 +645,7 @@ export default function JudgingPage({
                 key={competitor.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ type: 'spring', stiffness: 320, damping: 26, mass: 0.8, delay: index * 0.045 }}
+                transition={{ type: 'spring', stiffness: 320, damping: 26, mass: 0.8, delay: Math.min(index, 12) * 0.045 }}
               >
                 <CompetitorCard
                   competitor={competitor}

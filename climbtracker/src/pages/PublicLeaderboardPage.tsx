@@ -61,32 +61,57 @@ export default function PublicLeaderboardPage({
     })
   }, [])
 
-  // Anonymous visitors have no data in app state, so fetch a public snapshot
-  // and refresh it periodically. Logged-in users with the competition loaded
-  // keep using live app state.
-  const localComp = competitions.find(c => c.id === compId)
+  // Always read the official server snapshot (get_public_leaderboard RPC),
+  // for anonymous AND logged-in viewers. Local app state only holds the
+  // completions of the user's ACTIVE competition, so using it here showed
+  // everyone at 0 points for any other competition (e.g. a venue screen).
+  //   • refreshes every 30 s, and immediately when the tab becomes visible
+  //   • pauses while the tab is hidden (saves bandwidth)
+  //   • a network error keeps the last snapshot and retries in 5 s;
+  //     "not found" is shown only when the server says it does not exist
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
   const [remote,        setRemote]        = useState<PublicLeaderboardData | null>(null)
-  const [remoteLoading, setRemoteLoading] = useState(!localComp)
+  const [remoteLoading, setRemoteLoading] = useState(true)
+  const [notFound,      setNotFound]      = useState(false)
 
   useEffect(() => {
-    if (localComp || !compId) return
+    if (!compId) return
     let cancelled = false
-    const load = () => fetchPublicLeaderboard(compId)
-      .then(d => { if (!cancelled) { setRemote(d); setLastUpdated(new Date()) } })
-      .catch(() => { /* keep last snapshot */ })
-      .finally(() => { if (!cancelled) setRemoteLoading(false) })
+    let timer: ReturnType<typeof setTimeout> | undefined
+    let hasData = false
+    const schedule = (ms: number) => { clearTimeout(timer); timer = setTimeout(load, ms) }
+    function load() {
+      if (cancelled) return
+      if (document.visibilityState === 'hidden') { schedule(30_000); return }
+      fetchPublicLeaderboard(compId!)
+        .then(d => {
+          if (cancelled) return
+          if (d) { hasData = true; setRemote(d); setNotFound(false); setLastUpdated(new Date()) }
+          else   { setNotFound(true) }
+          setRemoteLoading(false)
+          schedule(30_000)
+        })
+        .catch(err => {
+          if (cancelled) return
+          console.error('[public] leaderboard fetch failed:', err)
+          schedule(hasData ? 30_000 : 5_000)
+        })
+    }
+    function onVisible() { if (document.visibilityState === 'visible') load() }
     load()
-    const id = setInterval(load, 30_000)
-    return () => { cancelled = true; clearInterval(id) }
-  }, [compId, !!localComp]) // eslint-disable-line react-hooks/exhaustive-deps
+    document.addEventListener('visibilitychange', onVisible)
+    return () => { cancelled = true; clearTimeout(timer); document.removeEventListener('visibilitychange', onVisible) }
+  }, [compId])
 
-  const competition = localComp ?? remote?.competition
-  const competitors = localComp ? (competitorsMap[compId ?? ''] ?? []) : (remote?.competitors ?? [])
-  const boulders    = localComp ? (bouldersMap[compId ?? '']    ?? []) : (remote?.boulders    ?? [])
-  const completions = localComp ? (completionsMap[compId ?? ''] ?? []) : (remote?.completions ?? [])
+  // Kept in the props for compatibility; the page no longer reads app state.
+  void competitions; void competitorsMap; void bouldersMap; void completionsMap
+
+  const competition = remote?.competition
+  const competitors = remote?.competitors ?? []
+  const boulders    = remote?.boulders    ?? []
+  const completions = remote?.completions ?? []
 
   const [copied,      setCopied]      = useState(false)
-  const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
   const [, forceRender]               = useState(0)
 
   // Tick every minute to update "X min ago" label
@@ -142,7 +167,7 @@ export default function PublicLeaderboardPage({
 
   const isLive     = competition?.status === 'LIVE'
 
-  if (!competition && remoteLoading) {
+  if (!competition && (remoteLoading || !notFound)) {
     return (
       <div className={`min-h-screen flex items-center justify-center ${dk ? 'bg-[#121212]' : 'bg-[#F9F9F9]'}`}>
         <div className="w-6 h-6 rounded-full border-2 border-[#7F8BAD] border-t-transparent animate-spin" />
@@ -261,7 +286,7 @@ export default function PublicLeaderboardPage({
                   key={result.competitorId}
                   initial={{ opacity: 0, y: 14 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ type: 'spring', stiffness: 320, damping: 26, mass: 0.8, delay: i * 0.045 }}
+                  transition={{ type: 'spring', stiffness: 320, damping: 26, mass: 0.8, delay: Math.min(i, 12) * 0.045 }}
                   className={`flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3.5 rounded border transition-colors duration-300 ${
                     isFirst
                       ? 'bg-amber-400/[0.04] border-amber-400/[0.15]'

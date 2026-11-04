@@ -259,6 +259,114 @@ function AppInner() {
     pendingWriteTimers.current.set(writeKey, { timer, flush: work })
   }
 
+  // ── Ordered, retried score persistence ─────────────────────────────────────
+  // Writes for the same competitor+boulder run strictly one after another, so a
+  // slow retry of an older value can never land after a newer one. While a
+  // write is in flight the key counts as "pending": realtime echoes and polls
+  // will not overwrite the optimistic value on screen. If a write finally
+  // fails, it is rolled back ONLY if no newer write was issued for that key,
+  // and the toast says exactly which score was not saved.
+  const inFlightWrites = useRef<Map<string, number>>(new Map())
+  const writeSeq       = useRef<Map<string, number>>(new Map())
+  const writeChain     = useRef<Map<string, Promise<boolean>>>(new Map())
+  // Judge saves waiting for their (debounced) write. If a newer save for the
+  // same key replaces a pending one, the older caller gets the newer result.
+  const pendingSaveResolvers = useRef<Map<string, (v: boolean | Promise<boolean>) => void>>(new Map())
+
+  function isPendingWrite(writeKey: string): boolean {
+    return pendingWriteTimers.current.has(writeKey) || inFlightWrites.current.has(writeKey)
+  }
+
+  // Last value the database CONFIRMED per key (null = confirmed deleted).
+  // Rollbacks restore this, never a value that was only optimistic.
+  const confirmedEntries = useRef<Map<string, Completion | null>>(new Map())
+
+  // Put one completion on screen (or remove it when entry is null).
+  function setLocalEntry(compId: string, competitorId: string, boulderId: string, entry: Completion | null) {
+    setCompletionsMap(prev => {
+      const others = (prev[compId] ?? []).filter(c => !(c.competitorId === competitorId && c.boulderId === boulderId))
+      return { ...prev, [compId]: entry ? [...others, entry] : others }
+    })
+  }
+
+  // Merge a fresh database list with local state: keys with a pending write
+  // keep ONLY their local (optimistic) value — or stay absent if the pending
+  // write is a delete — so a poll/resync never undoes what the user just did.
+  function mergeWithPending(dbList: Completion[], cur: Completion[]): Completion[] {
+    const keyOf = (c: Completion) => `${c.competitorId}:${c.boulderId}`
+    const out: Completion[] = []
+    const seen = new Set<string>()
+    for (const d of dbList) {
+      const k = keyOf(d)
+      if (isPendingWrite(k)) {
+        const local = cur.find(c => keyOf(c) === k)
+        if (local && !seen.has(k)) { out.push(local); seen.add(k) }
+      } else if (!seen.has(k)) { out.push(d); seen.add(k); confirmedEntries.current.set(k, d) }
+    }
+    for (const c of cur) {
+      const k = keyOf(c)
+      if (isPendingWrite(k) && !seen.has(k)) { out.push(c); seen.add(k) }
+    }
+    return out
+  }
+
+  const WRITE_HARD_TIMEOUT_MS = 120_000
+
+  function persistCompletion(
+    writeKey: string,
+    op:       (cancel: AbortSignal) => Promise<void>,
+    written:  Completion | null,      // what this write stores (null = delete)
+    rollback: (lastConfirmed: Completion | null | undefined) => void,
+    describe: () => string,
+  ): Promise<boolean> {
+    const seq = (writeSeq.current.get(writeKey) ?? 0) + 1
+    writeSeq.current.set(writeKey, seq)
+    inFlightWrites.current.set(writeKey, (inFlightWrites.current.get(writeKey) ?? 0) + 1)
+    const previous = writeChain.current.get(writeKey) ?? Promise.resolve(true)
+    // Hard cap so the chain ALWAYS settles, even if the request hangs before
+    // the per-request timeout applies (e.g. while refreshing the session).
+    // On timeout the write is really CANCELLED (no further retry, request
+    // aborted), so it can never land later and overwrite a newer value.
+    const withHardTimeout = () => {
+      const ctrl = new AbortController()
+      let timer: ReturnType<typeof setTimeout> | undefined
+      return Promise.race([
+        op(ctrl.signal),
+        new Promise<never>((_, reject) => {
+          timer = setTimeout(() => { ctrl.abort(new Error('write timeout')); reject(new Error('write timeout')) }, WRITE_HARD_TIMEOUT_MS)
+        }),
+      ]).finally(() => clearTimeout(timer))
+    }
+    const next = previous
+      .then(() => withHardTimeout())
+      .then(() => { confirmedEntries.current.set(writeKey, written); return true })
+      .catch(err => {
+        console.error('[db] score write failed:', err)
+        // Roll back only if this is the latest write for the key AND no newer
+        // edit is waiting in the 400 ms debounce.
+        if (writeSeq.current.get(writeKey) === seq && !pendingWriteTimers.current.has(writeKey)) {
+          rollback(confirmedEntries.current.get(writeKey))
+          showToast(t.scoreSaveFailedFor(describe()), 'error')
+        }
+        return false
+      })
+      .finally(() => {
+        const n = (inFlightWrites.current.get(writeKey) ?? 1) - 1
+        if (n <= 0) inFlightWrites.current.delete(writeKey); else inFlightWrites.current.set(writeKey, n)
+        if (writeChain.current.get(writeKey) === next) writeChain.current.delete(writeKey)
+      })
+    writeChain.current.set(writeKey, next)
+    return next
+  }
+
+  // "Name · #12" for error messages
+  function describeScore(compId: string, competitorId: string, boulderId: string): string {
+    const who = (competitorsMap[compId] ?? []).find(c => c.id === competitorId)?.displayName ?? ''
+    const b   = (bouldersMap[compId] ?? []).find(x => x.id === boulderId)
+    const num = b ? `#${(b as Boulder & { number?: number }).number ?? ''}` : ''
+    return [who, num].filter(Boolean).join(' · ')
+  }
+
   // Flush any pending score writes when the tab is about to close or hidden.
   // `visibilitychange` covers mobile (Safari fires pagehide, not beforeunload).
   useEffect(() => {
@@ -419,7 +527,8 @@ function AppInner() {
           // Skip if a local write is still in-flight for this boulder — the
           // Realtime echo would revert the optimistic UI before the write confirms.
           const writeKey = `${completion.competitorId}:${completion.boulderId}`
-          if (pendingWriteTimers.current.has(writeKey)) return
+          if (isPendingWrite(writeKey)) return
+          confirmedEntries.current.set(writeKey, completion)
           setCompletionsMap(prev => {
             const cur = prev[activeCompId] ?? []
             const idx = cur.findIndex(c => c.competitorId === completion.competitorId && c.boulderId === completion.boulderId)
@@ -429,7 +538,8 @@ function AppInner() {
           const old = payload.old as { competitor_id: string; boulder_id: string }
           // Also guard deletes: if a write is pending, don't let a stale delete revert it.
           const writeKey = `${old.competitor_id}:${old.boulder_id}`
-          if (pendingWriteTimers.current.has(writeKey)) return
+          if (isPendingWrite(writeKey)) return
+          confirmedEntries.current.set(writeKey, null)
           setCompletionsMap(prev => ({ ...prev, [activeCompId]: (prev[activeCompId] ?? []).filter(c => !(c.competitorId === old.competitor_id && c.boulderId === old.boulder_id)) }))
         }
       })
@@ -491,18 +601,11 @@ function AppInner() {
       resyncing = true
       console.info(`[realtime] resync (${reason})`)
       Promise.all([
-        fetchCompletions(activeCompId).then(cs => setCompletionsMap(prev => {
-          // Keep any entry with a pending local write (not confirmed yet)
-          const pending = pendingWriteTimers.current
-          const cur     = prev[activeCompId] ?? []
-          const merged  = cs.map(dbEntry => pending.has(`${dbEntry.competitorId}:${dbEntry.boulderId}`)
-            ? (cur.find(c => c.competitorId === dbEntry.competitorId && c.boulderId === dbEntry.boulderId) ?? dbEntry)
-            : dbEntry)
-          for (const c of cur) {
-            if (pending.has(`${c.competitorId}:${c.boulderId}`) && !merged.some(m => m.competitorId === c.competitorId && m.boulderId === c.boulderId)) merged.push(c)
-          }
-          return { ...prev, [activeCompId]: merged }
-        })),
+        fetchCompletions(activeCompId).then(cs => setCompletionsMap(prev => ({
+          ...prev,
+          // Keep pending local writes exactly as the user left them
+          [activeCompId]: mergeWithPending(cs, prev[activeCompId] ?? []),
+        }))),
         fetchBoulders(activeCompId).then(bs => setBouldersMap(prev => ({ ...prev, [activeCompId]: bs }))),
         fetchMembers(activeCompId).then(ms => setCompetitorsMap(prev => ({ ...prev, [activeCompId]: ms }))),
         supabase.from('competitions').select('data').eq('id', activeCompId).maybeSingle().then(({ data }) => {
@@ -536,20 +639,11 @@ function AppInner() {
         console.warn('[realtime] channel not joined — polling fallback')
         Promise.all([
           fetchCompletions(activeCompId)
-            .then(cs => setCompletionsMap(prev => {
-              // Merge DB state but keep any entry that has a pending local write
-              const pending = pendingWriteTimers.current
-              const cur = prev[activeCompId] ?? []
-              const merged = cs.map(dbEntry => {
-                const key = `${dbEntry.competitorId}:${dbEntry.boulderId}`
-                if (pending.has(key)) {
-                  // Preserve local optimistic state — write not yet confirmed
-                  return cur.find(c => c.competitorId === dbEntry.competitorId && c.boulderId === dbEntry.boulderId) ?? dbEntry
-                }
-                return dbEntry
-              })
-              return { ...prev, [activeCompId]: merged }
-            })),
+            .then(cs => setCompletionsMap(prev => ({
+              ...prev,
+              // Keep pending local writes exactly as the user left them
+              [activeCompId]: mergeWithPending(cs, prev[activeCompId] ?? []),
+            }))),
           fetchBoulders(activeCompId)
             .then(bs => setBouldersMap(prev => ({ ...prev, [activeCompId]: bs }))),
         ]).catch(err => console.error('[realtime] poll fallback failed:', err))
@@ -916,46 +1010,41 @@ function AppInner() {
     // (attempt count increments, double-taps) collapse into a single DB write.
     // Deletes are sent immediately since they're always intentional.
     const writeKey = `${competitorId}:${boulderId}`
+    const describe = () => describeScore(compId, competitorId, boulderId)
+    // On failure, go back to the last value the database confirmed; if none is
+    // known yet, to what was on screen before this action.
+    const rollbackTo = (fallback: Completion | null) => (confirmed: Completion | null | undefined) =>
+      setLocalEntry(compId, competitorId, boulderId, confirmed !== undefined ? confirmed : fallback)
+    // If nothing is in flight for this key, what is on screen now IS the
+    // database value: remember it as the rollback target.
+    if (!isPendingWrite(writeKey) && !writeChain.current.has(writeKey))
+      confirmedEntries.current.set(writeKey, existing ?? null)
+    // A judge save pending on this device for the same key is superseded
+    // (only called in the branches that really replace or clear it).
+    const supersedeJudgeSave = () => {
+      const judgeSave = pendingSaveResolvers.current.get(writeKey)
+      if (judgeSave) { pendingSaveResolvers.current.delete(writeKey); judgeSave(false) }
+    }
     if (existing) {
+      supersedeJudgeSave()
       if (forceStatus === false) {
         const pending = pendingWriteTimers.current.get(writeKey)
         if (pending) { clearTimeout(pending.timer); pendingWriteTimers.current.delete(writeKey) }
-        deleteCompletion(compId, competitorId, boulderId).catch(err => {
-          console.error('[db] deleteCompletion:', err)
-          showToast(t.judgingScoreSaveError, 'error')
-          // Rollback: restore the entry that was optimistically removed
-          setCompletionsMap(prev => ({
-            ...prev,
-            [compId]: [...(prev[compId] ?? []).filter(c => !(c.competitorId === competitorId && c.boulderId === boulderId)), existing],
-          }))
-        })
+        void persistCompletion(writeKey,
+          (cancel) => deleteCompletion(compId, competitorId, boulderId, cancel),
+          null, rollbackTo(existing), describe)
       } else {
         const entry = { ...existing, attempts: Math.max(1, attempts) }
-        scheduleCompletionWrite(writeKey, () =>
-          upsertCompletion(compId, entry).catch(err => {
-            console.error('[db] upsertCompletion:', err)
-            showToast(t.judgingScoreSaveError, 'error')
-            // Rollback: restore previous entry state
-            setCompletionsMap(prev => ({
-              ...prev,
-              [compId]: (prev[compId] ?? []).map(c => c.competitorId === competitorId && c.boulderId === boulderId ? existing : c),
-            }))
-          })
-        )
+        scheduleCompletionWrite(writeKey, () => void persistCompletion(writeKey,
+          (cancel) => upsertCompletion(compId, entry, cancel),
+          entry, rollbackTo(existing), describe))
       }
     } else if (forceStatus === true) {
+      supersedeJudgeSave()
       const entry: Completion = { competitorId, boulderId, attempts: Math.max(1, attempts), timestamp: Date.now(), hasZone: false, zoneAttempts: 0, zonesReached: 0, topValidated: true }
-      scheduleCompletionWrite(writeKey, () =>
-        upsertCompletion(compId, entry).catch(err => {
-          console.error('[db] upsertCompletion:', err)
-          showToast(t.judgingScoreSaveError, 'error')
-          // Rollback: remove the optimistically added entry
-          setCompletionsMap(prev => ({
-            ...prev,
-            [compId]: (prev[compId] ?? []).filter(c => !(c.competitorId === competitorId && c.boulderId === boulderId)),
-          }))
-        })
-      )
+      scheduleCompletionWrite(writeKey, () => void persistCompletion(writeKey,
+        (cancel) => upsertCompletion(compId, entry, cancel),
+        entry, rollbackTo(null), describe))
     }
   }
 
@@ -1327,8 +1416,8 @@ function AppInner() {
     competitorId: string, boulderId: string, attempts: number,
     hasZone: boolean, zoneAttempts: number, isTop: boolean,
     judgeId: string, zonesReached: number,
-  ) {
-    if (!activeCompetition || activeCompetition.isLocked) return
+  ): Promise<boolean> {
+    if (!activeCompetition || activeCompetition.isLocked) return Promise.resolve(false)
     const compId = activeCompetition.id
     const entry: Completion = {
       competitorId, boulderId, attempts, timestamp: Date.now(),
@@ -1354,38 +1443,35 @@ function AppInner() {
     })
     const prevEntry = (completionsMap[compId] ?? []).find(c => c.competitorId === competitorId && c.boulderId === boulderId)
     const writeKey  = `${competitorId}:${boulderId}`
+    const describe  = () => describeScore(compId, competitorId, boulderId)
+    const rollbackTo = (fallback: Completion | null) => (confirmed: Completion | null | undefined) =>
+      setLocalEntry(compId, competitorId, boulderId, confirmed !== undefined ? confirmed : fallback)
+    if (!isPendingWrite(writeKey) && !writeChain.current.has(writeKey))
+      confirmedEntries.current.set(writeKey, prevEntry ?? null)
+    const supersededSave = pendingSaveResolvers.current.get(writeKey)
+    pendingSaveResolvers.current.delete(writeKey)
     if (isClearAction) {
       const pending = pendingWriteTimers.current.get(writeKey)
       if (pending) { clearTimeout(pending.timer); pendingWriteTimers.current.delete(writeKey) }
-      deleteCompletion(compId, competitorId, boulderId).catch(err => {
-        console.error('[db] clearScore:', err)
-        showToast(t.judgingScoreSaveError, 'error')
-        // Rollback: restore the entry that was optimistically removed
-        if (prevEntry) {
-          setCompletionsMap(prev => ({
-            ...prev,
-            [compId]: [...(prev[compId] ?? []).filter(c => !(c.competitorId === competitorId && c.boulderId === boulderId)), prevEntry],
-          }))
-        }
-      })
-    } else {
-      scheduleCompletionWrite(writeKey, () =>
-        upsertCompletion(compId, entry).catch(err => {
-          console.error('[db] logScore:', err)
-          showToast(t.judgingScoreSaveError, 'error')
-          // Rollback: remove the optimistically added entry, or restore previous
-          setCompletionsMap(prev => {
-            const cur = prev[compId] ?? []
-            return {
-              ...prev,
-              [compId]: prevEntry
-                ? cur.map(c => c.competitorId === competitorId && c.boulderId === boulderId ? prevEntry : c)
-                : cur.filter(c => !(c.competitorId === competitorId && c.boulderId === boulderId)),
-            }
-          })
-        })
-      )
+      supersededSave?.(false)
+      return persistCompletion(writeKey,
+        (cancel) => deleteCompletion(compId, competitorId, boulderId, cancel),
+        null, rollbackTo(prevEntry ?? null), describe)
     }
+    // Debounced (rapid taps collapse into one write); resolves once the
+    // database has confirmed (true) or the write finally failed (false).
+    const result = new Promise<boolean>(resolve => {
+      pendingSaveResolvers.current.set(writeKey, resolve)
+      scheduleCompletionWrite(writeKey, () => {
+        if (pendingSaveResolvers.current.get(writeKey) === resolve) pendingSaveResolvers.current.delete(writeKey)
+        persistCompletion(writeKey,
+          (cancel) => upsertCompletion(compId, entry, cancel),
+          entry, rollbackTo(prevEntry ?? null), describe,
+        ).then(resolve)
+      })
+    })
+    supersededSave?.(result)
+    return result
   }
 
   // ── Unauthenticated shell: Landing + Auth ─────────────────────────────────

@@ -605,7 +605,7 @@ export default function LeaderboardPage({
                 className={`rounded border overflow-hidden transition-colors duration-[330ms] ${rowColors}`}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ type: 'spring', stiffness: 320, damping: 26, mass: 0.8, delay: index * 0.045 }}
+                transition={{ type: 'spring', stiffness: 320, damping: 26, mass: 0.8, delay: Math.min(index, 12) * 0.045 }}
               >
                 {/* Main row */}
                 <div className="flex items-center gap-4 px-5 py-4">

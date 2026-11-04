@@ -7,6 +7,7 @@ import type { Language } from '../translations'
 import { translations } from '../translations'
 import BackgroundBeams from '../components/BackgroundBeams'
 import LoadingSpinner from '../components/LoadingSpinner'
+import InAppBrowserBanner from '../components/InAppBrowserBanner'
 import { signIn, signUp, signInWithGoogle, signInWithGoogleToken, resetPasswordForEmail, updatePassword } from '../lib/auth'
 
 // Minimal type for the GSI library (loaded on-demand when this page mounts)
@@ -270,6 +271,7 @@ export default function AuthPage({ theme: _theme, lang, setLang, initialTab, onR
 
   return (
     <div className="min-h-screen bg-[#121212] flex">
+      <InAppBrowserBanner lang={lang} />
 
       {/* Left panel — branding (hidden on mobile) */}
       <div className="auth-left-panel hidden flex-col justify-between p-14 relative overflow-hidden bg-[#080A0F]">
