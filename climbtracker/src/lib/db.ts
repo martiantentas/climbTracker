@@ -23,6 +23,48 @@ async function withRetry<T>(
   throw lastErr
 }
 
+// ─── PAGINATION ───────────────────────────────────────────────────────────────
+// PostgREST caps every response at the project's "Max rows" setting (1000 by
+// default) and silently drops the rest. Any table that can grow past that
+// (completions: competitors × boulders) must be read page by page.
+
+const PAGE_SIZE = 1000
+
+async function fetchAllPages<T>(
+  page: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>,
+): Promise<T[]> {
+  const out: T[] = []
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data, error } = await page(from, from + PAGE_SIZE - 1)
+    if (error) throw error
+    const rows = data ?? []
+    out.push(...rows)
+    if (rows.length < PAGE_SIZE) return out
+  }
+}
+
+// Long `.in('id', [...])` lists turn into very long URLs (300 UUIDs ≈ 11 KB),
+// which gateways can reject. Split them into small batches.
+function chunk<T>(items: T[], size = 100): T[][] {
+  const out: T[][] = []
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size))
+  return out
+}
+
+type ProfileRow = { id: string; email: string; display_name: string | null; avatar_url: string | null; emoji: string | null }
+
+async function fetchProfiles(userIds: string[]): Promise<Record<string, ProfileRow>> {
+  const batches = await Promise.all(chunk(userIds).map(async ids => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, email, display_name, avatar_url, emoji')
+      .in('id', ids)
+    if (error) throw error
+    return (data ?? []) as ProfileRow[]
+  }))
+  return Object.fromEntries(batches.flat().map(p => [p.id, p]))
+}
+
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
 function memberRowToCompetitor(row: {
@@ -99,6 +141,18 @@ export async function fetchUserCompetitions(userId: string): Promise<Competition
   return result
 }
 
+// Fields that only exist in local state and must never be written to the DB.
+function toDbData(comp: Competition): Json {
+  const rest: Record<string, unknown> = { ...comp }
+  delete rest._hasJoinPassword
+  delete rest.hasJoinPassword
+  return rest as unknown as Json
+}
+
+// Used ONLY to create a new competition (create / clone).
+// Editing an existing competition must use updateCompetition(): an upsert is
+// checked against the INSERT policy (owner only), so co-organizers would be
+// rejected even though they are allowed to update.
 export async function upsertCompetition(comp: Competition): Promise<void> {
   const { error } = await supabase
     .from('competitions')
@@ -108,9 +162,27 @@ export async function upsertCompetition(comp: Competition): Promise<void> {
       status:      comp.status,
       visibility:  comp.visibility,
       invite_code: comp.inviteCode ?? null,
-      data:        comp as unknown as Json,
+      data:        toDbData(comp),
     })
   if (error) throw error
+}
+
+// Save changes to an existing competition (owner or co-organizer).
+// Throws if the database did not accept the change (e.g. no permission),
+// so the UI can tell the user instead of showing a false "saved".
+export async function updateCompetition(comp: Competition): Promise<void> {
+  const { data, error } = await supabase
+    .from('competitions')
+    .update({
+      status:      comp.status,
+      visibility:  comp.visibility,
+      invite_code: comp.inviteCode ?? null,
+      data:        toDbData(comp),
+    })
+    .eq('id', comp.id)
+    .select('id')
+  if (error) throw error
+  if (!data || data.length === 0) throw new Error('not_permitted')
 }
 
 export async function deleteCompetition(compId: string): Promise<void> {
@@ -118,14 +190,40 @@ export async function deleteCompetition(compId: string): Promise<void> {
   if (error) throw error
 }
 
+// Server-side lookup (get_competition_by_invite RPC) so it also works for
+// PRIVATE competitions the user is not a member of yet. The password and the
+// ban list are stripped; `hasJoinPassword` tells the UI to ask for it.
+// Throws on network/server errors so the UI can tell "not found" apart from
+// "could not check".
 export async function fetchCompetitionByInviteCode(code: string): Promise<Competition | null> {
-  const { data, error } = await supabase
-    .from('competitions')
-    .select('data')
-    .eq('invite_code', code.toUpperCase())
-    .maybeSingle()
-  if (error || !data) return null
-  return data.data as unknown as Competition
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc('get_competition_by_invite', { p_code: code.trim().toUpperCase() })
+  if (error) throw error
+  return (data ?? null) as Competition | null
+}
+
+// ─── JOIN (server-side) ───────────────────────────────────────────────────────
+// join_competition RPC: password, bans, capacity and bib numbers are all
+// enforced in the database, inside one transaction.
+
+export type JoinStatus = 'joined' | 'already' | 'waitlisted' | 'full' | 'banned' | 'bad_password' | 'not_found'
+
+export async function joinCompetitionRpc(
+  competitionId: string,
+  opts: { password?: string; traitIds?: string[]; gender?: string; waitlist?: boolean } = {},
+): Promise<{ status: JoinStatus; bib?: number }> {
+  return withRetry(async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any).rpc('join_competition', {
+      p_competition_id: competitionId,
+      p_password:       opts.password ?? null,
+      p_trait_ids:      opts.traitIds ?? null,
+      p_gender:         opts.gender || null,
+      p_waitlist:       opts.waitlist ?? false,
+    })
+    if (error) throw error
+    return data as { status: JoinStatus; bib?: number }
+  })
 }
 
 // ─── BOULDERS ─────────────────────────────────────────────────────────────────
@@ -145,14 +243,17 @@ export async function fetchBoulders(competitionId: string): Promise<Boulder[]> {
 // to 1.  Returns a map keyed by competition ID.
 export async function fetchAllBouldersForComps(ids: string[]): Promise<Record<string, Boulder[]>> {
   if (ids.length === 0) return {}
-  const { data, error } = await supabase
-    .from('boulders')
-    .select('competition_id, data, position')
-    .in('competition_id', ids)
-    .order('position', { ascending: true })
-  if (error) throw error
+  const rows = await fetchAllPages<{ competition_id: string; data: unknown }>((from, to) =>
+    supabase
+      .from('boulders')
+      .select('competition_id, data, position')
+      .in('competition_id', ids)
+      .order('position', { ascending: true })
+      .order('id',       { ascending: true })
+      .range(from, to)
+  )
   const result: Record<string, Boulder[]> = Object.fromEntries(ids.map(id => [id, []]))
-  for (const row of data ?? []) result[row.competition_id].push(row.data as unknown as Boulder)
+  for (const row of rows) result[row.competition_id]?.push(row.data as unknown as Boulder)
   return result
 }
 
@@ -189,33 +290,43 @@ export async function upsertBoulders(competitionId: string, boulders: Boulder[])
 
 // ─── COMPLETIONS ──────────────────────────────────────────────────────────────
 
+// Paginated: 300 competitors × 30 boulders = 9 000 rows, far above the
+// default 1 000-row response cap. Ordered by the primary key so pages are stable.
 export async function fetchCompletions(competitionId: string): Promise<Completion[]> {
-  const { data, error } = await supabase
-    .from('completions')
-    .select('data')
-    .eq('competition_id', competitionId)
-  if (error) throw error
-  return (data ?? []).map(r => r.data as unknown as Completion)
+  const rows = await fetchAllPages<{ data: unknown }>((from, to) =>
+    supabase
+      .from('completions')
+      .select('data')
+      .eq('competition_id', competitionId)
+      .order('competitor_id', { ascending: true })
+      .order('boulder_id',    { ascending: true })
+      .range(from, to)
+  )
+  return rows.map(r => r.data as unknown as Completion)
 }
 
-// Fetch completions for multiple competitions in one query.
-// Used by the health-check polling fallback and for bulk hydration.
+// Fetch completions for multiple competitions (paginated).
 export async function fetchAllCompletionsForComps(ids: string[]): Promise<Record<string, Completion[]>> {
   if (ids.length === 0) return {}
-  const { data, error } = await supabase
-    .from('completions')
-    .select('competition_id, data')
-    .in('competition_id', ids)
-  if (error) throw error
+  const rows = await fetchAllPages<{ competition_id: string; data: unknown }>((from, to) =>
+    supabase
+      .from('completions')
+      .select('competition_id, data')
+      .in('competition_id', ids)
+      .order('competition_id', { ascending: true })
+      .order('competitor_id',  { ascending: true })
+      .order('boulder_id',     { ascending: true })
+      .range(from, to)
+  )
   const result: Record<string, Completion[]> = Object.fromEntries(ids.map(id => [id, []]))
-  for (const row of data ?? []) result[row.competition_id].push(row.data as unknown as Completion)
+  for (const row of rows) result[row.competition_id]?.push(row.data as unknown as Completion)
   return result
 }
 
 // Wrapped with retry so a transient network blip doesn't silently lose a score.
 export async function upsertCompletion(competitionId: string, completion: Completion): Promise<void> {
-  await withRetry(() =>
-    supabase
+  await withRetry(async () => {
+    await supabase
       .from('completions')
       .upsert({
         competition_id: competitionId,
@@ -224,71 +335,65 @@ export async function upsertCompletion(competitionId: string, completion: Comple
         data:           completion as unknown as Json,
       })
       .throwOnError()
-  )
+  })
 }
 
 export async function deleteCompletion(
   competitionId: string, competitorId: string, boulderId: string
 ): Promise<void> {
-  await withRetry(() =>
-    supabase
+  await withRetry(async () => {
+    await supabase
       .from('completions')
       .delete()
       .match({ competition_id: competitionId, competitor_id: competitorId, boulder_id: boulderId })
       .throwOnError()
-  )
+  })
 }
 
 // ─── COMPETITION MEMBERS ──────────────────────────────────────────────────────
 
 // Single-competition fetch (used by real-time INSERT handler, join flow, etc.)
 async function fetchMembersByStatus(competitionId: string, status: string): Promise<Competitor[]> {
-  const { data: rows, error: e1 } = await supabase
-    .from('competition_members')
-    .select('user_id, role, status, bib_number, trait_ids, gender')
-    .eq('competition_id', competitionId)
-    .eq('status', status)
-    .order('joined_at', { ascending: true })
-  if (e1) throw e1
-  if (!rows || rows.length === 0) return []
-
-  const userIds = rows.map(r => r.user_id)
-  const { data: profiles, error: e2 } = await supabase
-    .from('profiles')
-    .select('id, email, display_name, avatar_url, emoji')
-    .in('id', userIds)
-  if (e2) throw e2
-
-  const profileMap = Object.fromEntries((profiles ?? []).map(p => [p.id, p]))
+  const rows = await fetchAllPages<MemberRow>((from, to) =>
+    supabase
+      .from('competition_members')
+      .select('competition_id, user_id, role, status, bib_number, trait_ids, gender')
+      .eq('competition_id', competitionId)
+      .eq('status', status)
+      .order('joined_at', { ascending: true })
+      .order('user_id',   { ascending: true })
+      .range(from, to)
+  )
+  if (rows.length === 0) return []
+  const profileMap = await fetchProfiles([...new Set(rows.map(r => r.user_id))])
   return rows.map(row => memberRowToCompetitor({ ...row, profiles: profileMap[row.user_id] ?? null }))
 }
 
-// Multi-competition fetch — 2 queries regardless of how many competitions.
-// At login with N competitions this goes from 2×N queries to 2.
-// Returns a map keyed by competition ID.
+type MemberRow = {
+  competition_id: string; user_id: string; role: string; status: string
+  bib_number: number | null; trait_ids: string[]; gender: string | null
+}
+
+// Multi-competition fetch. Returns a map keyed by competition ID.
 async function fetchAllMembersByStatus(ids: string[], status: string): Promise<Record<string, Competitor[]>> {
   if (ids.length === 0) return {}
-  const { data: rows, error: e1 } = await supabase
-    .from('competition_members')
-    .select('competition_id, user_id, role, status, bib_number, trait_ids, gender')
-    .in('competition_id', ids)
-    .eq('status', status)
-    .order('joined_at', { ascending: true })
-  if (e1) throw e1
+  const rows = await fetchAllPages<MemberRow>((from, to) =>
+    supabase
+      .from('competition_members')
+      .select('competition_id, user_id, role, status, bib_number, trait_ids, gender')
+      .in('competition_id', ids)
+      .eq('status', status)
+      .order('joined_at', { ascending: true })
+      .order('user_id',   { ascending: true })
+      .range(from, to)
+  )
 
   const result: Record<string, Competitor[]> = Object.fromEntries(ids.map(id => [id, []]))
-  if (!rows || rows.length === 0) return result
+  if (rows.length === 0) return result
 
-  const userIds = [...new Set(rows.map(r => r.user_id))]
-  const { data: profiles, error: e2 } = await supabase
-    .from('profiles')
-    .select('id, email, display_name, avatar_url, emoji')
-    .in('id', userIds)
-  if (e2) throw e2
-
-  const profileMap = Object.fromEntries((profiles ?? []).map(p => [p.id, p]))
+  const profileMap = await fetchProfiles([...new Set(rows.map(r => r.user_id))])
   for (const row of rows) {
-    result[row.competition_id].push(
+    result[row.competition_id]?.push(
       memberRowToCompetitor({ ...row, profiles: profileMap[row.user_id] ?? null })
     )
   }
@@ -303,19 +408,41 @@ export async function fetchWaitlist(competitionId: string): Promise<Competitor[]
   return fetchMembersByStatus(competitionId, 'waitlisted')
 }
 
+// Insert a member row as owner/organizer (create / clone competition).
+// Competitors never call this: they join through joinCompetitionRpc().
 export async function upsertMember(
   competitionId: string,
   userId: string,
   fields: { role?: string; status?: string; bib_number?: number | null; trait_ids?: string[]; gender?: string | null }
 ): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await supabase.from('competition_members').upsert({
     competition_id: competitionId,
     user_id:        userId,
-    trait_ids:      [],
     ...fields,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any)
   if (error) throw error
+}
+
+// Update ONLY the given fields of an existing member row (role, bib,
+// categories, gender...). Never touches other columns, so changing a bib no
+// longer wipes the competitor's categories. Throws if no row was changed
+// (no permission / member not found) so the UI can report it.
+export async function updateMember(
+  competitionId: string,
+  userId: string,
+  fields: { role?: string; status?: string; bib_number?: number | null; trait_ids?: string[]; gender?: string | null }
+): Promise<void> {
+  const clean = Object.fromEntries(Object.entries(fields).filter(([, v]) => v !== undefined))
+  if (Object.keys(clean).length === 0) return
+  const { data, error } = await supabase
+    .from('competition_members')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .update(clean as any)
+    .match({ competition_id: competitionId, user_id: userId })
+    .select('user_id')
+  if (error) throw error
+  if (!data || data.length === 0) throw new Error('not_permitted')
 }
 
 export async function deleteMember(competitionId: string, userId: string): Promise<void> {
@@ -354,22 +481,11 @@ export async function loadAllUserData(
 }> {
   const rawComps = await fetchUserCompetitions(userId)
 
-  // Strip sensitive fields from competitions the user doesn't own.
-  // joinPassword must never reach a non-owner's browser — password check is server-side.
-  // bannedEmails leaks moderation data; ban enforcement belongs in the join RPC.
-  const comps: Competition[] = rawComps.map(comp => {
-    if (comp.ownerId === userId) return comp
-    const c = comp as any
-    const hasPassword = !!c.joinPassword
-    const { joinPassword: _jp, bannedEmails: _be, ...safe } = c
-    return { ...safe, _hasJoinPassword: hasPassword } as unknown as Competition
-  })
-
-  if (comps.length === 0) {
+  if (rawComps.length === 0) {
     return { comps: [], boulders: {}, completions: {}, members: {}, waitlists: {}, activeId: '' }
   }
 
-  const ids      = comps.map(c => c.id)
+  const ids      = rawComps.map(c => c.id)
   const activeId = (preferredActiveId && ids.includes(preferredActiveId))
     ? preferredActiveId
     : ids[0]
@@ -380,6 +496,22 @@ export async function loadAllUserData(
     fetchAllMembersByStatus(ids, 'waitlisted'),
     fetchCompletions(activeId),
   ])
+
+  // Strip the join password and the ban list for users who do not manage the
+  // competition (not owner, not organizer). Owners and co-organizers keep them:
+  // they save the whole competition object, and a stripped copy would erase
+  // the password and the bans from the database on their next save.
+  // `hasJoinPassword` tells the UI to ask for the password.
+  const comps: Competition[] = rawComps.map(comp => {
+    const isManager = comp.ownerId === userId
+      || (members[comp.id] ?? []).some(m => m.id === userId && m.role === 'organizer')
+    const c = comp as Competition & { bannedEmails?: string[] }
+    const hasJoinPassword = !!c.joinPassword
+    if (isManager) return { ...c, hasJoinPassword }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { joinPassword: _jp, bannedEmails: _be, ...safe } = c
+    return { ...safe, hasJoinPassword } as Competition
+  })
 
   const completions: Record<string, Completion[]> = Object.fromEntries(ids.map(id => [id, []]))
   completions[activeId] = activeCompletions

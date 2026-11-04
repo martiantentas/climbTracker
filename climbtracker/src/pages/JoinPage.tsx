@@ -13,7 +13,7 @@ interface JoinPageProps {
   theme:            'light' | 'dark'
   lang:             Language
   isRegistered:     (compId: string) => boolean
-  onJoin:           (compId: string, password?: string, traitIds?: string[], gender?: string, externalComp?: Competition) => Promise<boolean | 'full'>
+  onJoin:           (compId: string, password?: string, traitIds?: string[], gender?: string, externalComp?: Competition) => Promise<boolean | 'full' | 'error'>
   waitlistMap:      Record<string, Competitor[]>
   onJoinWaitlist:   (compId: string) => void
   onLeaveWaitlist:  (compId: string) => void
@@ -40,20 +40,23 @@ export default function JoinPage({
   // Competition fetched from DB (user has never seen this competition before)
   const [fetchedComp,  setFetchedComp]  = useState<Competition | null>(null)
   const [fetchLoading, setFetchLoading] = useState(!localComp)
+  const [fetchFailed,  setFetchFailed]  = useState(false)
+  const [joining,      setJoining]      = useState(false)
 
   // If not in local state, look it up by invite code in the DB
   useEffect(() => {
     if (localComp || !code) { setFetchLoading(false); return }
     setFetchLoading(true)
+    setFetchFailed(false)
     fetchCompetitionByInviteCode(code)
       .then(found => { setFetchedComp(found); setFetchLoading(false) })
-      .catch(() => setFetchLoading(false))
+      .catch(err => { console.error('[join] invite lookup:', err); setFetchFailed(true); setFetchLoading(false) })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code, localComp?.id])
 
   const comp          = localComp ?? fetchedComp
   const isExternal    = !localComp && !!fetchedComp   // came from DB, not local state
-  const needsPassword = !!comp?.joinPassword
+  const needsPassword = !!comp?.joinPassword || !!comp?.hasJoinPassword
   const hasTraits     = (comp?.traits?.length ?? 0) > 0
   const requireTraits = comp?.requireTraits ?? false
 
@@ -77,6 +80,24 @@ export default function JoinPage({
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="w-6 h-6 rounded-full border-2 border-[#7F8BAD] border-t-transparent animate-spin" />
+      </div>
+    )
+  }
+
+  // ── Lookup failed (network/server), not "unknown code" ───────────────────
+  if (!comp && fetchFailed) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center max-w-sm mx-auto px-6">
+          <p className="text-5xl mb-4">📶</p>
+          <p className={`text-sm mb-6 ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>{t.joinErrorNetwork}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-6 py-3 bg-[#7F8BAD] text-white rounded font-medium text-sm hover:bg-[#6D799B] transition-colors duration-[330ms]"
+          >
+            {t.appCrashedReload}
+          </button>
+        </div>
       </div>
     )
   }
@@ -111,16 +132,24 @@ export default function JoinPage({
   }
 
   async function attemptJoin(password?: string) {
-    const result = await onJoin(comp!.id, password, selectedTraitIds, gender || undefined, isExternal ? comp! : undefined)
-    if (result === true) {
-      setJoined(true)
-      setShowPasswordModal(false)
-      setTimeout(() => navigate(`/${lang}`), 1200)
-    } else if (result === 'full') {
-      setEventFull(true)
-      setShowPasswordModal(false)
-    } else {
-      setPasswordError(true)
+    if (joining) return            // ignore double taps
+    setJoining(true)
+    setPasswordError(false)
+    try {
+      const result = await onJoin(comp!.id, password, selectedTraitIds, gender || undefined, isExternal ? comp! : undefined)
+      if (result === true) {
+        setJoined(true)
+        setShowPasswordModal(false)
+        setTimeout(() => navigate(`/${lang}`), 1200)
+      } else if (result === 'full') {
+        setEventFull(true)
+        setShowPasswordModal(false)
+      } else if (result === false) {
+        setPasswordError(true)     // wrong password
+      }
+      // 'error': a toast already explained the problem; the user can retry.
+    } finally {
+      setJoining(false)
     }
   }
 
@@ -301,7 +330,7 @@ export default function JoinPage({
           {!isOnWaitlist && !eventFull && (
             <button
               onClick={handleJoinClick}
-              disabled={!canJoin}
+              disabled={!canJoin || joining}
               className="w-full flex items-center justify-center gap-2 py-3.5 rounded font-medium text-sm bg-[#7F8BAD] text-white hover:bg-[#6D799B] transition-colors duration-[330ms] disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <LogIn size={16} />

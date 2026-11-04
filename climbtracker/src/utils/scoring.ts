@@ -1,6 +1,26 @@
 import type { Competition, Boulder, Competitor, Completion, RankResult } from '../types'
 import { ScoringType } from '../types'
 
+// Boulders deleted by an organizer are kept with status 'removed' (soft
+// delete). They must never score. 'hidden' boulders are only hidden from
+// competitors and still score.
+export function isScoringBoulder(b: Boulder): boolean {
+  return b.status !== 'removed'
+}
+
+// Number of validated tops per boulder, computed once per completions array
+// (dynamic scoring needs it for every boulder of every competitor).
+const topsCache = new WeakMap<Completion[], Map<string, number>>()
+function topsByBoulder(all: Completion[]): Map<string, number> {
+  let m = topsCache.get(all)
+  if (!m) {
+    m = new Map()
+    for (const c of all) if (c.topValidated) m.set(c.boulderId, (m.get(c.boulderId) ?? 0) + 1)
+    topsCache.set(all, m)
+  }
+  return m
+}
+
 // ─── TRADITIONAL SCORING ──────────────────────────────────────────────────────
 // Zone points behaviour depends on zoneScoring setting:
 //   adds_to_score  — zone pts always added regardless of top
@@ -13,7 +33,7 @@ function calcTraditionalPoints(
   boulder:    Boulder,
   comp:       Competition,
 ): number {
-  const difficulty = comp.difficultyLevels.find(d => d.id === boulder.difficultyId)
+  const difficulty = (comp.difficultyLevels ?? []).find(d => d.id === boulder.difficultyId)
   if (!difficulty) return 0
 
   let points = 0
@@ -41,7 +61,7 @@ function calcTraditionalPoints(
       : boulder.penaltyOverride === 'no_penalty'
         ? false
         : comp.penalizeAttempts
-    const penaltyValue = boulder.penaltyValueOverride ?? comp.penaltyValue
+    const penaltyValue = boulder.penaltyValueOverride ?? comp.penaltyValue ?? 0
 
     if (shouldPenalize && completion.attempts > 1) {
       if (comp.penaltyType === 'fixed') {
@@ -52,7 +72,7 @@ function calcTraditionalPoints(
       }
     }
 
-    points += Math.max(Math.round(topPoints), comp.minScorePerBoulder)
+    points += Math.max(Math.round(topPoints), comp.minScorePerBoulder ?? 0)
   }
 
   return Math.max(points, 0)
@@ -68,9 +88,7 @@ function calcDynamicPointsForBoulder(
   allCompletions: Completion[],
   comp:        Competition,
 ): number {
-  const topsCount = allCompletions.filter(
-    c => c.boulderId === boulder.id && c.topValidated
-  ).length
+  const topsCount = topsByBoulder(allCompletions).get(boulder.id) ?? 0
 
   if (topsCount === 0) return boulder.maxPoints ?? comp.dynamicPot ?? 1000
 
@@ -102,7 +120,7 @@ function calcZonePoints(
     (zs === 'without_top' && !completion.topValidated)
   if (!award) return 0
 
-  const difficulty = competition.difficultyLevels.find(d => d.id === boulder.difficultyId)
+  const difficulty = (competition.difficultyLevels ?? []).find(d => d.id === boulder.difficultyId)
   if (!difficulty) return 0
   return difficulty.zonePoints * zonesReached
 }
@@ -113,6 +131,7 @@ export function calcBoulderPoints(
   competition:    Competition,
   allCompletions: Completion[],
 ): number {
+  if (!isScoringBoulder(boulder)) return 0
   // Flash bonus — per-boulder value takes priority; falls back to event-level setting
   const eventFlash = competition.flashBonusEnabled ? (competition.flashBonusPoints ?? 0) : 0
   const flashBonus = (completion.topValidated && completion.attempts === 1)
@@ -132,7 +151,7 @@ export function calcBoulderPoints(
       : boulder.penaltyOverride === 'no_penalty'
         ? false
         : competition.penalizeAttempts
-    const penaltyValue = boulder.penaltyValueOverride ?? competition.penaltyValue
+    const penaltyValue = boulder.penaltyValueOverride ?? competition.penaltyValue ?? 0
 
     if (shouldPenalize && completion.attempts > 1) {
       if (competition.penaltyType === 'fixed') {
@@ -154,15 +173,13 @@ export function calcBoulderPoints(
 // ─── TOTAL SCORE FOR ONE COMPETITOR ───────────────────────────────────────────
 
 function calcCompetitorScore(
-  competitor:  Competitor,
+  mine:        Completion[],
   competition: Competition,
-  boulders:    Boulder[],
+  boulderById: Map<string, Boulder>,
   completions: Completion[],
 ): number {
-  const mine = completions.filter(c => c.competitorId === competitor.id)
-
   const scores = mine.map(completion => {
-    const boulder = boulders.find(b => b.id === completion.boulderId)
+    const boulder = boulderById.get(completion.boulderId)
     if (!boulder) return 0
     return calcBoulderPoints(completion, boulder, competition, completions)
   })
@@ -189,15 +206,25 @@ export function calculateRankings(
     // Deduplicate: keep only the first entry per id (most up-to-date after trait edits)
     .filter((c, idx, arr) => arr.findIndex(x => x.id === c.id) === idx)
 
-  const results = actualCompetitors.map(competitor => {
-    const mine = completions.filter(c => c.competitorId === competitor.id)
+  // Only completions on boulders that still score count — for points, tops,
+  // zones, attempts and the dynamic pot split alike.
+  const boulderById = new Map(boulders.filter(isScoringBoulder).map(b => [b.id, b]))
+  const counted     = completions.filter(c => boulderById.has(c.boulderId))
+  const byCompetitor = new Map<string, Completion[]>()
+  for (const c of counted) {
+    const list = byCompetitor.get(c.competitorId)
+    if (list) list.push(c); else byCompetitor.set(c.competitorId, [c])
+  }
 
-    const totalPoints   = calcCompetitorScore(competitor, competition, boulders, completions)
+  const results = actualCompetitors.map(competitor => {
+    const mine = byCompetitor.get(competitor.id) ?? []
+
+    const totalPoints   = calcCompetitorScore(mine, competition, boulderById, counted)
     const totalTops     = mine.filter(c => c.topValidated).length
-    const totalAttempts = mine.reduce((sum, c) => sum + c.attempts, 0)
+    const totalAttempts = mine.reduce((sum, c) => sum + (c.attempts ?? 0), 0)
     const flashCount    = mine.filter(c => c.attempts === 1 && c.topValidated).length
     const totalZones    = mine.reduce((sum, c) => sum + (c.zonesReached ?? 0), 0)
-    const zoneAttempts  = mine.reduce((sum, c) => sum + c.zoneAttempts, 0)
+    const zoneAttempts  = mine.reduce((sum, c) => sum + (c.zoneAttempts ?? 0), 0)
 
     return {
       competitorId:  competitor.id,

@@ -24,7 +24,7 @@ interface CompetitionsPageProps {
   onCreate:        (name: string, location: string, description: string) => void
   onDelete:        (compId: string) => void
   onLeave:         (compId: string) => void
-  onJoinByCode:    (code: string, password?: string, traitIds?: string[], gender?: string) => Promise<boolean | 'full'>
+  onJoinByCode:    (code: string, password?: string, traitIds?: string[], gender?: string) => Promise<boolean | 'full' | 'error'>
   isRegistered:    (compId: string) => boolean
   competitorsMap:  Record<string, Competitor[]>
   onJoinSuccess?:  (comp: Competition) => void
@@ -162,16 +162,12 @@ export default function CompetitionsPage({
     e.preventDefault()
     setCodeError(false)
     setJoinFull(false)
-    const target = competitions.find(c => c.inviteCode === joinCode.trim().toUpperCase())
-    if (!target) { setCodeError(true); return }
-    if (target.joinPassword) {
-      setPendingComp(target); setPasswordError(false)
-    } else {
-      const ok = await onJoinByCode(joinCode.trim().toUpperCase())
-      if (ok === true) { setJoinCode(''); afterJoin(target) }
-      else if (ok === 'full') setJoinFull(true)
-      else setCodeError(true)
-    }
+    // Typed codes open the invite page, which handles private competitions,
+    // passwords, categories and gender in one place.
+    const code = joinCode.trim().toUpperCase()
+    if (!code) { setCodeError(true); return }
+    setJoinCode('')
+    navigate(`/${lang}/join/${code}`)
   }
 
   async function handlePasswordConfirm(password: string) {
@@ -179,12 +175,13 @@ export default function CompetitionsPage({
     const ok = await onJoinByCode(pendingComp.inviteCode, password)
     if (ok === true) { afterJoin(pendingComp); setPendingComp(null); setJoinCode(''); setPasswordError(false) }
     else if (ok === 'full') { setPendingComp(null); setJoinFull(true) }
-    else setPasswordError(true)
+    else if (ok === false) setPasswordError(true)
+    else setPendingComp(null)   // 'error': a toast already explained it
   }
 
   async function handleJoinAvailable(comp: Competition) {
     setJoinFull(false)
-    if (comp.joinPassword) { setPendingComp(comp); setPasswordError(false) }
+    if (comp.joinPassword || comp.hasJoinPassword) { setPendingComp(comp); setPasswordError(false) }
     else { const ok = await onJoinByCode(comp.inviteCode); if (ok === true) afterJoin(comp); else if (ok === 'full') setJoinFull(true) }
   }
 
@@ -239,7 +236,7 @@ export default function CompetitionsPage({
                 if (role === 'organizer' && !isMine) return <span className="inline-flex items-center gap-1 text-[9px] font-medium px-2 py-0.5 rounded border bg-amber-400/10 text-amber-400 border-amber-400/20"><Shield size={8} /> Co-organizer</span>
                 return null
               })()}
-              {comp.joinPassword && (
+              {(comp.joinPassword || comp.hasJoinPassword) && (
                 <span className={`inline-flex items-center gap-1 text-[9px] font-medium px-2 py-0.5 rounded border ${dk ? 'bg-amber-400/10 text-amber-400 border-amber-400/20' : 'bg-amber-50 text-amber-600 border-amber-200'}`}>
                   <Lock size={8} /> Password
                 </span>
@@ -463,7 +460,7 @@ export default function CompetitionsPage({
             value={joinCode}
             onChange={e => { setJoinCode(e.target.value.toUpperCase()); setCodeError(false) }}
             placeholder={t.enterInviteCode}
-            maxLength={8}
+            maxLength={12}
             className={`${inputClass} pl-9 uppercase tracking-widest font-medium placeholder:normal-case placeholder:tracking-normal placeholder:font-normal ${codeError ? dk ? '!border-red-400/60' : '!border-red-400' : ''}`}
           />
         </div>
@@ -531,7 +528,7 @@ export default function CompetitionsPage({
                   <StatusBadge status={comp.status} />
                   <h3 className={`font-medium text-base mt-1 ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>{comp.name}</h3>
                   {comp.location && <p className={`text-xs mt-0.5 text-[#5C5E62]`}>{comp.location}</p>}
-                  {comp.joinPassword && (
+                  {(comp.joinPassword || comp.hasJoinPassword) && (
                     <span className="inline-flex items-center gap-1 mt-1 text-[9px] font-medium text-amber-400"><Lock size={8} /> Password required</span>
                   )}
                 </div>
