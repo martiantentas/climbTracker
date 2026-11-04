@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'motion/react'
 import { User, Mail, Edit3, Save, X, Key, Tag, Info, ChevronDown, Award } from 'lucide-react'
 
@@ -15,7 +16,7 @@ interface ProfilePageProps {
   theme:        'light' | 'dark'
   lang:         Language
   badges:       Badge[]
-  onJoinByCode: (code: string) => Promise<boolean | 'full'>
+  onJoinByCode: (code: string) => Promise<boolean | 'full' | 'error'>
   onSave:       (updated: Competitor) => void
 }
 
@@ -72,10 +73,10 @@ export default function ProfilePage({
   theme,
   lang,
   badges,
-  onJoinByCode,
   onSave,
 }: ProfilePageProps) {
   const t  = translations[lang]
+  const navigate = useNavigate()
   const dk = theme === 'dark'
 
   const genderOptions = [t.profileMale, t.profileFemale, t.profileOther]
@@ -112,21 +113,17 @@ export default function ProfilePage({
     setIsEditing(false)
   }
 
+  // Typed codes open the invite page, which handles private competitions,
+  // passwords, categories and gender in one place.
   async function handleJoinCode(e: React.FormEvent) {
     e.preventDefault()
     setCodeError(false)
     setCodeFull(false)
     setCodeSuccess(false)
-    const result = await onJoinByCode(joinCode.trim().toUpperCase())
-    if (result === true) {
-      setCodeSuccess(true)
-      setJoinCode('')
-      setTimeout(() => setCodeSuccess(false), 3000)
-    } else if (result === 'full') {
-      setCodeFull(true)
-    } else {
-      setCodeError(true)
-    }
+    const code = joinCode.trim().toUpperCase()
+    if (!code) return
+    setJoinCode('')
+    navigate(`/${lang}/join/${code}`)
   }
 
   const inputClass = `
@@ -425,7 +422,7 @@ export default function ProfilePage({
                 value={joinCode}
                 onChange={e => { setJoinCode(e.target.value.toUpperCase()); setCodeError(false) }}
                 placeholder={t.enterInviteCode}
-                maxLength={8}
+                maxLength={12}
                 className={`${inputClass} pl-9 uppercase tracking-widest font-medium`}
               />
             </div>

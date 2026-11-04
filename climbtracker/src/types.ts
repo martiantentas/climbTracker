@@ -126,6 +126,9 @@ export interface Competition {
   inviteCode:         string
   // Optional — when set, required in addition to the invite code or join link
   joinPassword?:      string
+  // Client-only flag (never saved): true when the competition requires a
+  // password. Set for users who cannot see joinPassword itself.
+  hasJoinPassword?:   boolean
 
   // Visibility — 'public' shows in the discover list; 'private' is invite-only
   visibility:         'public' | 'private'

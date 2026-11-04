@@ -6,7 +6,8 @@ import { getProfile, upsertProfile, supabaseUserToCompetitor, signOutUser } from
 import {
   loadAllUserData, upsertCompetition, deleteCompetition,
   upsertBoulders, upsertCompletion, deleteCompletion,
-  upsertMember, deleteMember, fetchMembers, fetchBoulders, fetchCompletions,
+  upsertMember, updateMember, deleteMember, fetchMembers, fetchBoulders, fetchCompletions,
+  updateCompetition as dbUpdateCompetition, joinCompetitionRpc, fetchCompetitionByInviteCode,
 } from './lib/db'
 
 import type { Competition, Boulder, Competitor, Completion, Badge } from './types'
@@ -404,6 +405,9 @@ function AppInner() {
   useEffect(() => {
     if (!activeCompId || !currentUser) return
 
+    let hasJoinedOnce = false   // first SUBSCRIBED = initial join, later ones = reconnects
+    let resyncing     = false
+
     const channel = supabase
       .channel(`comp:${activeCompId}`)
 
@@ -471,7 +475,54 @@ function AppInner() {
         setCompetitorsMap(prev => ({ ...prev, [activeCompId]: (prev[activeCompId] ?? []).filter(c => c.id !== old.user_id) }))
       })
 
-      .subscribe()
+      .subscribe((status) => {
+        // First successful join: initial data was already loaded.
+        // Any later join is a RE-connection: events sent while we were
+        // offline are lost, so reload this competition from the database.
+        if (status === 'SUBSCRIBED') {
+          if (hasJoinedOnce) resync('reconnected')
+          hasJoinedOnce = true
+        }
+      })
+
+    // ── Full resync (after reconnect / phone wake-up) ─────────────────────────
+    function resync(reason: string) {
+      if (resyncing) return
+      resyncing = true
+      console.info(`[realtime] resync (${reason})`)
+      Promise.all([
+        fetchCompletions(activeCompId).then(cs => setCompletionsMap(prev => {
+          // Keep any entry with a pending local write (not confirmed yet)
+          const pending = pendingWriteTimers.current
+          const cur     = prev[activeCompId] ?? []
+          const merged  = cs.map(dbEntry => pending.has(`${dbEntry.competitorId}:${dbEntry.boulderId}`)
+            ? (cur.find(c => c.competitorId === dbEntry.competitorId && c.boulderId === dbEntry.boulderId) ?? dbEntry)
+            : dbEntry)
+          for (const c of cur) {
+            if (pending.has(`${c.competitorId}:${c.boulderId}`) && !merged.some(m => m.competitorId === c.competitorId && m.boulderId === c.boulderId)) merged.push(c)
+          }
+          return { ...prev, [activeCompId]: merged }
+        })),
+        fetchBoulders(activeCompId).then(bs => setBouldersMap(prev => ({ ...prev, [activeCompId]: bs }))),
+        fetchMembers(activeCompId).then(ms => setCompetitorsMap(prev => ({ ...prev, [activeCompId]: ms }))),
+        supabase.from('competitions').select('data').eq('id', activeCompId).maybeSingle().then(({ data }) => {
+          const fresh = data?.data as unknown as Competition | undefined
+          if (fresh) setCompetitions(prev => prev.map(c => c.id === activeCompId ? { ...c, ...fresh } : c))
+        }),
+      ])
+        .catch(err => console.error('[realtime] resync failed:', err))
+        .finally(() => { resyncing = false })
+    }
+
+    // Phones suspend the page (and its websocket) while locked. When the user
+    // comes back after more than 15 s, reload so the screen is not stale.
+    let hiddenAt = 0
+    function onVisibility() {
+      if (document.visibilityState === 'hidden') { hiddenAt = Date.now(); return }
+      if (hiddenAt && Date.now() - hiddenAt > 15_000) resync('page visible again')
+      hiddenAt = 0
+    }
+    document.addEventListener('visibilitychange', onVisibility)
 
     // ── Realtime health-check ─────────────────────────────────────────────────
     // If the channel drops (network blip, plan limit hit, server restart) events
@@ -505,8 +556,12 @@ function AppInner() {
       }
     }, 20_000)
 
+    const onOnline = () => resync('network back')
+    window.addEventListener('online', onOnline)
     return () => {
       clearInterval(healthCheck)
+      document.removeEventListener('visibilitychange', onVisibility)
+      window.removeEventListener('online', onOnline)
       supabase.removeChannel(channel)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -906,9 +961,16 @@ function AppInner() {
 
   function updateBoulders(newBoulders: Boulder[]) {
     if (!activeCompetition) return
-    setBouldersMap(prev => ({ ...prev, [activeCompetition.id]: newBoulders }))
-    showToast(t.successSaved)
-    upsertBoulders(activeCompetition.id, newBoulders).catch(err => console.error('[db] upsertBoulders:', err))
+    const compId   = activeCompetition.id
+    const previous = bouldersMap[compId] ?? []
+    setBouldersMap(prev => ({ ...prev, [compId]: newBoulders }))
+    upsertBoulders(compId, newBoulders)
+      .then(() => showToast(t.successSaved))
+      .catch(err => {
+        console.error('[db] upsertBoulders:', err)
+        setBouldersMap(prev => ({ ...prev, [compId]: previous }))
+        showToast(`Save failed: ${err?.message ?? err}`)
+      })
   }
 
   function updateCompetition(updated: Competition) {
@@ -947,11 +1009,14 @@ function AppInner() {
       }
     }
     setCompetitions(p => p.map(c => c.id === merged.id ? merged : c))
-    showToast(t.successSaved)
-    upsertCompetition(merged).catch(err => {
-      console.error('[db] updateCompetition:', err)
-      showToast(`Save failed: ${err?.message ?? err}`)
-    })
+    dbUpdateCompetition(merged)
+      .then(() => showToast(t.successSaved))
+      .catch(err => {
+        console.error('[db] updateCompetition:', err)
+        // Roll back so the screen never shows a change the database refused.
+        if (prev) setCompetitions(p => p.map(c => c.id === prev.id ? prev : c))
+        showToast(`Save failed: ${err?.message ?? err}`)
+      })
   }
 
   function handleCreateCompetition(name: string, location: string, description: string) {
@@ -1009,7 +1074,7 @@ function AppInner() {
       startDate: new Date().toISOString(),
       endDate:   new Date(Date.now() + 86_400_000).toISOString(),
     } as any
-    const ownerEntry = { ...currentUser, bibNumber: 101, role: 'competitor' as const }
+    const ownerEntry = { ...currentUser, bibNumber: 0, role: 'organizer' as const }
     setCompetitions(prev => [...prev, cloned])
     setBouldersMap(prev    => ({ ...prev, [newId]: [] }))
     setCompletionsMap(prev => ({ ...prev, [newId]: [] }))
@@ -1017,8 +1082,11 @@ function AppInner() {
     setActiveCompId(newId)
     showToast(t.successSaved)
     upsertCompetition(cloned)
-      .then(() => upsertMember(newId, currentUser.id, { role: 'competitor', status: 'active', bib_number: 101 }))
-      .catch(err => console.error('[db] cloneCompetition:', err))
+      .then(() => upsertMember(newId, currentUser.id, { role: 'organizer', status: 'active', bib_number: 0 }))
+      .catch(err => {
+        console.error('[db] cloneCompetition:', err)
+        showToast(`Save failed: ${err?.message ?? err}`)
+      })
   }
 
   function handleDeleteCompetition(compId: string) {
@@ -1031,212 +1099,228 @@ function AppInner() {
   }
 
   // ── Core join logic (shared) ──────────────────────────────────────────────
-  function joinCompetition(compId: string, user: Competitor, traitIds?: string[], gender?: string): boolean {
-    const comp = competitions.find(c => c.id === compId) as any
-    // Block banned emails
-    if ((comp?.bannedEmails ?? []).includes(user.email.toLowerCase())) return false
-    // Enforce participant capacity limit (organisers and judges are exempt)
-    if (comp?.participantLimit) {
-      const currentList     = competitorsMap[compId] ?? []
-      const competitorCount = currentList.filter(c => c.role === 'competitor' || !c.role).length
-      const totalCapacity   = comp.participantLimit + (comp.additionalCapacity ?? 0)
-      const isAlreadyIn     = currentList.some(c => c.id === user.id)
-      if (!isAlreadyIn && user.role !== 'judge' && user.role !== 'organizer' && competitorCount >= totalCapacity) {
-        return false
-      }
+  // Joining is done by the join_competition RPC: the database checks the
+  // password, bans and capacity and assigns a unique bib, all in one
+  // transaction. The UI only reports what the database decided.
+  //   true    → joined (or already a member)
+  //   false   → wrong password
+  //   'full'  → competition full (UI offers the waitlist)
+  //   'error' → anything else; a toast has already explained it
+  type JoinResult = boolean | 'full' | 'error'
+
+  async function joinViaServer(
+    comp: Competition,
+    opts: { password?: string; traitIds?: string[]; gender?: string },
+  ): Promise<JoinResult> {
+    if (!currentUser) return 'error'
+    let res: Awaited<ReturnType<typeof joinCompetitionRpc>>
+    try {
+      res = await joinCompetitionRpc(comp.id, opts)
+    } catch (err) {
+      console.error('[db] join_competition:', err)
+      showToast(t.joinErrorNetwork)
+      return 'error'
     }
-    let nextBib = 101
-    setCompetitorsMap(prev => {
-      const list = prev[compId] ?? []
-      const deduped = list.filter((c, idx) =>
-        c.id !== user.id || idx === list.findIndex(x => x.id === user.id)
-      )
-      if (deduped.some(c => c.id === user.id)) {
-        const updates: Partial<Competitor> = {}
-        if (traitIds) updates.traitIds = traitIds
-        if (gender)   (updates as any).gender = gender
-        if (Object.keys(updates).length) {
-          // Update traits/gender in Supabase
-          upsertMember(compId, user.id, {
-            trait_ids: traitIds ?? undefined,
-            gender:    gender    ?? undefined,
-          }).catch(err => console.error('[db] joinCompetition update:', err))
-          return { ...prev, [compId]: deduped.map(c => c.id === user.id ? { ...c, ...updates } : c) }
-        }
-        return prev
+
+    switch (res.status) {
+      case 'bad_password': return false
+      case 'full':         return 'full'
+      case 'banned':       showToast(t.joinErrorBanned); return 'error'
+      case 'not_found':    showToast(t.joinNotFound);    return 'error'
+      case 'waitlisted':   return 'full'
+    }
+
+    // joined / already: hydrate this competition from the database so the
+    // local state matches exactly what was saved (bib, categories, members).
+    const compId = comp.id
+    if (!competitions.some(c => c.id === compId)) {
+      setCompetitions(prev => prev.some(c => c.id === compId) ? prev : [...prev, comp])
+    }
+    try {
+      const [boulders, completions, members] = await Promise.all([
+        fetchBoulders(compId), fetchCompletions(compId), fetchMembers(compId),
+      ])
+      loadedCompletionsRef.current.add(compId)
+      setBouldersMap(prev    => ({ ...prev, [compId]: boulders }))
+      setCompletionsMap(prev => ({ ...prev, [compId]: completions }))
+      setCompetitorsMap(prev => ({ ...prev, [compId]: members }))
+    } catch (err) {
+      // The join itself succeeded; show at least the user's own entry.
+      console.error('[db] join hydrate:', err)
+      const self = {
+        ...currentUser, bibNumber: res.bib ?? 0, role: 'competitor' as const,
+        traitIds: opts.traitIds ?? currentUser.traitIds ?? [],
+        ...(opts.gender ? { gender: opts.gender } : {}),
       }
-      nextBib = deduped.filter(c => c.bibNumber > 0).length > 0
-        ? Math.max(...deduped.map(c => c.bibNumber)) + 1
-        : 101
-      const entry = { ...user, bibNumber: nextBib, traitIds: traitIds ?? user.traitIds ?? [], role: 'competitor' as const }
-      if (gender) (entry as any).gender = gender
-      return { ...prev, [compId]: [...deduped, entry] }
-    })
+      setCompetitorsMap(prev => {
+        const list = prev[compId] ?? []
+        return list.some(c => c.id === currentUser.id) ? prev : { ...prev, [compId]: [...list, self] }
+      })
+    }
+    setWaitlistMap(prev => ({ ...prev, [compId]: (prev[compId] ?? []).filter(c => c.id !== currentUser.id) }))
     setActiveCompId(compId)
     showToast(t.welcomeBack)
-    // Persist the new member
-    upsertMember(compId, user.id, {
-      role:      'competitor',
-      status:    'active',
-      bib_number: nextBib,
-      trait_ids: traitIds ?? user.traitIds ?? [],
-      gender:    gender ?? null,
-    }).catch(err => console.error('[db] joinCompetition insert:', err))
     return true
   }
 
   // ── handleJoinByCode — used by CompetitionsPage and ProfilePage ───────────
-  // The code is the invite code string.
-  // password is optional; if the competition has joinPassword set and the
-  // supplied password doesn't match, returns false so the UI can show an error.
-  async function handleJoinByCode(code: string, password?: string, traitIds?: string[], gender?: string): Promise<boolean | 'full'> {
-    const target = competitions.find(c => c.inviteCode === code.toUpperCase())
-    if (!target || !currentUser) return false
-    // Owner: compare directly (they have the plaintext in state).
-    // Non-owner: password was stripped server-side; validate via RPC.
-    if (target.joinPassword) {
-      if (password !== target.joinPassword) return false
-    } else if ((target as any)._hasJoinPassword) {
-      const { data: ok } = await supabase.rpc('verify_join_password', {
-        p_competition_id: target.id,
-        p_password: password ?? '',
-      })
-      if (!ok) return false
+  async function handleJoinByCode(code: string, password?: string, traitIds?: string[], gender?: string): Promise<JoinResult> {
+    const normalized = code.trim().toUpperCase()
+    let target: Competition | null = competitions.find(c => c.inviteCode === normalized) ?? null
+    if (!target) {
+      try { target = await fetchCompetitionByInviteCode(normalized) }
+      catch (err) { console.error('[db] invite lookup:', err); showToast(t.joinErrorNetwork); return 'error' }
     }
-    const result = joinCompetition(target.id, currentUser, traitIds, gender)
-    return result ? true : 'full'
+    if (!target || !currentUser) return 'error'
+    return joinViaServer(target, { password, traitIds, gender })
   }
 
-  // ── handleJoinByCompId — used by JoinPage (code already resolved to ID) ──
-  // externalComp is passed when the competition was not in local state (fetched
-  // from DB by invite code). We add it to state immediately and hydrate its
-  // boulders / completions / members in the background.
-  async function handleJoinByCompId(compId: string, password?: string, traitIds?: string[], gender?: string, externalComp?: Competition): Promise<boolean | 'full'> {
+  // ── handleJoinByCompId — used by JoinPage (code already resolved) ─────────
+  async function handleJoinByCompId(compId: string, password?: string, traitIds?: string[], gender?: string, externalComp?: Competition): Promise<JoinResult> {
     const target = competitions.find(c => c.id === compId) ?? externalComp
-    if (!target || !currentUser) return false
-    if (target.joinPassword) {
-      if (password !== target.joinPassword) return false
-    } else if ((target as any)._hasJoinPassword) {
-      const { data: ok } = await supabase.rpc('verify_join_password', {
-        p_competition_id: target.id,
-        p_password: password ?? '',
-      })
-      if (!ok) return false
-    }
-
-    if (externalComp && !competitions.some(c => c.id === compId)) {
-      setCompetitions(prev => [...prev, externalComp])
-      setBouldersMap(prev    => ({ ...prev, [compId]: [] }))
-      setCompletionsMap(prev => ({ ...prev, [compId]: [] }))
-      setCompetitorsMap(prev => ({ ...prev, [compId]: [] }))
-      // Hydrate competition data in the background
-      Promise.all([fetchBoulders(compId), fetchCompletions(compId), fetchMembers(compId)])
-        .then(([boulders, completions, members]) => {
-          setBouldersMap(prev    => ({ ...prev, [compId]: boulders }))
-          setCompletionsMap(prev => ({ ...prev, [compId]: completions }))
-          setCompetitorsMap(prev => ({ ...prev, [compId]: members }))
-        })
-        .catch(err => console.error('[db] joinExternal hydrate:', err))
-    }
-
-    const ok = joinCompetition(compId, currentUser, traitIds, gender)
-    return ok ? true : 'full'
+    if (!target || !currentUser) return 'error'
+    return joinViaServer(target, { password, traitIds, gender })
   }
 
-  function handleJoinWaitlist(compId: string) {
+  async function handleJoinWaitlist(compId: string) {
     if (!currentUser) return
-    setWaitlistMap(prev => {
-      const list = prev[compId] ?? []
-      if (list.some(c => c.id === currentUser.id)) return prev
-      return { ...prev, [compId]: [...list, currentUser] }
-    })
-    showToast(t.waitlistJoined)
-    upsertMember(compId, currentUser.id, { role: 'competitor', status: 'waitlisted' })
-      .catch(err => console.error('[db] joinWaitlist:', err))
+    try {
+      const res = await joinCompetitionRpc(compId, { waitlist: true })
+      if (res.status === 'waitlisted') {
+        setWaitlistMap(prev => {
+          const list = prev[compId] ?? []
+          return list.some(c => c.id === currentUser.id) ? prev : { ...prev, [compId]: [...list, currentUser] }
+        })
+        showToast(t.waitlistJoined)
+      } else if (res.status === 'joined' || res.status === 'already') {
+        // A spot opened up in the meantime: the user is in.
+        const comp = competitions.find(c => c.id === compId)
+        if (comp) await joinViaServer(comp, {})
+      } else if (res.status === 'banned') {
+        showToast(t.joinErrorBanned)
+      }
+    } catch (err) {
+      console.error('[db] joinWaitlist:', err)
+      showToast(t.joinErrorNetwork)
+    }
   }
 
   function handleLeaveWaitlist(compId: string) {
     if (!currentUser) return
+    const previous = waitlistMap[compId] ?? []
     setWaitlistMap(prev => ({ ...prev, [compId]: (prev[compId] ?? []).filter(c => c.id !== currentUser.id) }))
-    deleteMember(compId, currentUser.id).catch(err => console.error('[db] leaveWaitlist:', err))
+    deleteMember(compId, currentUser.id).catch(err => {
+      console.error('[db] leaveWaitlist:', err)
+      setWaitlistMap(prev => ({ ...prev, [compId]: previous }))
+      showToast(t.saveErrorGeneric)
+    })
   }
 
+  // Waitlisted users are NOT auto-promoted from the leaving user's browser any
+  // more: that write was always rejected by the database (a competitor cannot
+  // edit another member). Waitlisted users get in by tapping Join again once a
+  // spot is free; join_competition re-checks capacity on the server.
   function handleLeaveCompetition(compId: string) {
     if (!currentUser) return
+    const previous = competitorsMap[compId] ?? []
     setCompetitorsMap(prev => ({ ...prev, [compId]: (prev[compId] ?? []).filter(c => c.id !== currentUser.id) }))
-    deleteMember(compId, currentUser.id).catch(err => console.error('[db] leaveCompetition:', err))
-    // Auto-promote the first waitlisted competitor into the now-free spot
-    const waitlist = waitlistMap[compId] ?? []
-    if (waitlist.length > 0) {
-      const [promoted, ...remaining] = waitlist
-      setCompetitorsMap(prev => {
-        const list = prev[compId] ?? []
-        const nextBib = list.filter(c => c.bibNumber > 0).length > 0
-          ? Math.max(...list.map(c => c.bibNumber)) + 1
-          : 101
-        upsertMember(compId, promoted.id, { status: 'active', bib_number: nextBib })
-          .catch(err => console.error('[db] promoteWaitlist:', err))
-        return { ...prev, [compId]: [...list, { ...promoted, bibNumber: nextBib }] }
-      })
-      setWaitlistMap(prev => ({ ...prev, [compId]: remaining }))
-    }
+    deleteMember(compId, currentUser.id).catch(err => {
+      console.error('[db] leaveCompetition:', err)
+      setCompetitorsMap(prev => ({ ...prev, [compId]: previous }))
+      showToast(t.saveErrorGeneric)
+    })
   }
 
   function isUserRegistered(compId: string): boolean {
     return (competitorsMap[compId] ?? []).some(c => c.id === currentUser?.id)
   }
 
+  // Optimistically patch one member, persist ONLY the changed columns, and
+  // roll back with a visible error if the database refuses.
+  function patchMember(
+    compId: string,
+    competitorId: string,
+    local: Partial<Competitor>,
+    dbFields: Parameters<typeof updateMember>[2],
+    label: string,
+  ) {
+    const previous = (competitorsMap[compId] ?? []).find(c => c.id === competitorId)
+    setCompetitorsMap(prev => ({ ...prev, [compId]: (prev[compId] ?? []).map(c => c.id === competitorId ? { ...c, ...local } : c) }))
+    updateMember(compId, competitorId, dbFields)
+      .then(() => showToast(t.successSaved))
+      .catch(err => {
+        console.error(`[db] ${label}:`, err)
+        if (previous) setCompetitorsMap(prev => ({ ...prev, [compId]: (prev[compId] ?? []).map(c => c.id === competitorId ? previous : c) }))
+        showToast(t.saveErrorGeneric)
+      })
+  }
+
   function handleUpdateRole(competitorId: string, role: 'competitor' | 'judge' | 'organizer') {
     if (!activeCompetition) return
-    setCompetitorsMap(prev => ({ ...prev, [activeCompetition.id]: (prev[activeCompetition.id] ?? []).map(c => c.id === competitorId ? { ...c, role } : c) }))
-    showToast(t.successSaved)
-    upsertMember(activeCompetition.id, competitorId, { role }).catch(err => console.error('[db] updateRole:', err))
+    patchMember(activeCompetition.id, competitorId, { role }, { role }, 'updateRole')
   }
 
   function handleRemoveUser(competitorId: string) {
     if (!activeCompetition) return
-    setCompetitorsMap(prev => ({ ...prev, [activeCompetition.id]: (prev[activeCompetition.id] ?? []).filter(c => c.id !== competitorId) }))
-    showToast(t.successSaved)
-    deleteMember(activeCompetition.id, competitorId).catch(err => console.error('[db] removeUser:', err))
+    const compId   = activeCompetition.id
+    const previous = competitorsMap[compId] ?? []
+    setCompetitorsMap(prev => ({ ...prev, [compId]: (prev[compId] ?? []).filter(c => c.id !== competitorId) }))
+    deleteMember(compId, competitorId)
+      .then(() => showToast(t.successSaved))
+      .catch(err => {
+        console.error('[db] removeUser:', err)
+        setCompetitorsMap(prev => ({ ...prev, [compId]: previous }))
+        showToast(t.saveErrorGeneric)
+      })
   }
 
   function handleUnbanUser(email: string) {
     if (!activeCompetition) return
-    const updated = { ...activeCompetition, bannedEmails: (activeCompetition.bannedEmails ?? []).filter(e => e !== email.toLowerCase()) } as Competition
-    setCompetitions(prev => prev.map(comp => comp.id === activeCompetition.id ? updated : comp))
-    showToast(t.successSaved)
-    upsertCompetition(updated).catch(err => console.error('[db] unbanUser:', err))
+    const previous = activeCompetition
+    const updated  = { ...activeCompetition, bannedEmails: (activeCompetition.bannedEmails ?? []).filter(e => e !== email.toLowerCase()) } as Competition
+    setCompetitions(prev => prev.map(comp => comp.id === updated.id ? updated : comp))
+    dbUpdateCompetition(updated)
+      .then(() => showToast(t.successSaved))
+      .catch(err => {
+        console.error('[db] unbanUser:', err)
+        setCompetitions(prev => prev.map(comp => comp.id === previous.id ? previous : comp))
+        showToast(t.saveErrorGeneric)
+      })
   }
 
   function handleBanUser(competitorId: string) {
     if (!activeCompetition) return
-    const competitor = (competitorsMap[activeCompetition.id] ?? []).find(c => c.id === competitorId)
+    const compId     = activeCompetition.id
+    const competitor = (competitorsMap[compId] ?? []).find(c => c.id === competitorId)
     if (!competitor) return
-    setCompetitorsMap(prev => ({ ...prev, [activeCompetition.id]: (prev[activeCompetition.id] ?? []).filter(c => c.id !== competitorId) }))
-    const updated = { ...activeCompetition, bannedEmails: [...(activeCompetition.bannedEmails ?? []), competitor.email.toLowerCase()] } as Competition
-    setCompetitions(prev => prev.map(comp => comp.id === activeCompetition.id ? updated : comp))
-    showToast(t.successSaved)
-    deleteMember(activeCompetition.id, competitorId)
-      .then(() => upsertCompetition(updated))
-      .catch(err => console.error('[db] banUser:', err))
+    const previousComp    = activeCompetition
+    const previousMembers = competitorsMap[compId] ?? []
+    const email   = (competitor.email ?? '').toLowerCase()
+    const updated = { ...activeCompetition, bannedEmails: [...new Set([...(activeCompetition.bannedEmails ?? []), email].filter(Boolean))] } as Competition
+    setCompetitorsMap(prev => ({ ...prev, [compId]: (prev[compId] ?? []).filter(c => c.id !== competitorId) }))
+    setCompetitions(prev => prev.map(comp => comp.id === compId ? updated : comp))
+    // Save the ban first, then remove the member: if the ban fails, nobody is removed.
+    dbUpdateCompetition(updated)
+      .then(() => deleteMember(compId, competitorId))
+      .then(() => showToast(t.successSaved))
+      .catch(err => {
+        console.error('[db] banUser:', err)
+        setCompetitions(prev => prev.map(comp => comp.id === compId ? previousComp : comp))
+        setCompetitorsMap(prev => ({ ...prev, [compId]: previousMembers }))
+        showToast(t.saveErrorGeneric)
+      })
   }
 
   function handleUpdateBib(competitorId: string, bib: number) {
     if (!activeCompetition) return
-    setCompetitorsMap(prev => ({ ...prev, [activeCompetition.id]: (prev[activeCompetition.id] ?? []).map(c => c.id === competitorId ? { ...c, bibNumber: bib } : c) }))
-    showToast(t.successSaved)
-    upsertMember(activeCompetition.id, competitorId, { bib_number: bib }).catch(err => console.error('[db] updateBib:', err))
+    patchMember(activeCompetition.id, competitorId, { bibNumber: bib }, { bib_number: bib }, 'updateBib')
   }
 
-  function handleUpdateCompetitorTraits(competitorId: string, traitIds: string[]) {
+  function handleUpdateCompetitorTraits(competitorId: string, traitIds: string[], gender?: string) {
     if (!activeCompetition) return
-    setCompetitorsMap(prev => {
-      const list = prev[activeCompetition.id] ?? []
-      const seen = new Set<string>()
-      const deduped = list.filter(c => { if (seen.has(c.id)) return false; seen.add(c.id); return true })
-      return { ...prev, [activeCompetition.id]: deduped.map(c => c.id === competitorId ? { ...c, traitIds } : c) }
-    })
-    upsertMember(activeCompetition.id, competitorId, { trait_ids: traitIds }).catch(err => console.error('[db] updateTraits:', err))
+    const local: Partial<Competitor> = { traitIds }
+    if (gender) (local as Competitor & { gender?: string }).gender = gender
+    patchMember(activeCompetition.id, competitorId, local, { trait_ids: traitIds, gender: gender || undefined }, 'updateTraits')
   }
 
   function handleLogScore(
@@ -1470,7 +1554,7 @@ function AppInner() {
             lang={lang}
             onComplete={updated => {
               // Persist gender + traits into competitorsMap
-              handleUpdateCompetitorTraits(updated.id, (updated as any).traitIds ?? [])
+              handleUpdateCompetitorTraits(updated.id, (updated as any).traitIds ?? [], (updated as any).gender || undefined)
               setCurrentUser({ ...currentUser, gender: updated.gender } as any)
               setJoinProfileComp(null)
               goto('/event-profile')

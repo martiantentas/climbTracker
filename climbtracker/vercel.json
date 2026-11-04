@@ -9,6 +9,6 @@
     "api/contact.ts":                { "maxDuration": 10 }
   },
   "rewrites": [
-    { "source": "/((?!api/|robots\\.txt|sitemap\\.xml).*)", "destination": "/index.html" }
+    { "source": "/((?!api/|assets/|robots\\.txt|sitemap\\.xml).*)", "destination": "/index.html" }
   ]
 }
