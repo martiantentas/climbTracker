@@ -402,6 +402,9 @@ function AppInner() {
   const [reloadToken, setReloadToken] = useState(0)
   const loadAttemptsRef = useRef(0)
   // Always-current mirrors for long-lived callbacks (realtime handlers)
+  // Per-member counter of realtime events: an async fetch started for an
+  // older event is ignored if a newer one for the same member arrived.
+  const memberEventSeq    = useRef<Map<string, number>>(new Map())
   const competitorsMapRef = useRef(competitorsMap)
   const waitlistMapRef    = useRef(waitlistMap)
   competitorsMapRef.current = competitorsMap
@@ -441,6 +444,8 @@ function AppInner() {
           authUserIdRef.current = null
           setAuthUser(null)
           setCurrentUser(null)
+          setLoadFailed(false)
+          loadAttemptsRef.current = 0
           setCompetitions([])
           setBouldersMap({})
           setCompletionsMap({})
@@ -600,7 +605,10 @@ function AppInner() {
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'competition_members', filter: `competition_id=eq.${activeCompId}` }, (payload) => {
         const row = payload.new as MemberRow
         if (row.competition_id !== activeCompId) return
+        const seq = (memberEventSeq.current.get(row.user_id) ?? 0) + 1
+        memberEventSeq.current.set(row.user_id, seq)
         fetchMemberFromRow(row).then(member => {
+          if (memberEventSeq.current.get(row.user_id) !== seq) return
           const setMap = row.status === 'waitlisted' ? setWaitlistMap : setCompetitorsMap
           setMap(prev => {
             const list = prev[activeCompId] ?? []
@@ -624,20 +632,29 @@ function AppInner() {
         // subscription, so the state captured in its closure would be stale).
         const current = (competitorsMapRef.current[activeCompId] ?? []).find(c => c.id === row.user_id)
         const waiting = (waitlistMapRef.current[activeCompId] ?? []).find(c => c.id === row.user_id)
-        if (row.status === 'waitlisted') {
-          const base = current ?? waiting
-          setCompetitorsMap(prev => ({ ...prev, [activeCompId]: (prev[activeCompId] ?? []).filter(c => c.id !== row.user_id) }))
-          if (base) setWaitlistMap(prev => ({ ...prev, [activeCompId]: [...(prev[activeCompId] ?? []).filter(c => c.id !== row.user_id), patch(base)] }))
-        } else if (current) {
-          setCompetitorsMap(prev => ({ ...prev, [activeCompId]: (prev[activeCompId] ?? []).map(c => c.id === row.user_id ? patch(c) : c) }))
-        } else {
-          // Promoted from the waitlist (or not loaded yet): fetch and add
-          fetchMemberFromRow(row).then(member => {
+        const seq = (memberEventSeq.current.get(row.user_id) ?? 0) + 1
+        memberEventSeq.current.set(row.user_id, seq)
+        const upsertIn = (list: Competitor[], m: Competitor) =>
+          list.some(c => c.id === m.id) ? list.map(c => c.id === m.id ? m : c) : [...list, m]
+        // Put the member in the right list (active or waitlist), out of the other.
+        const place = (m: Competitor) => {
+          if (row.status === 'waitlisted') {
+            setCompetitorsMap(prev => ({ ...prev, [activeCompId]: (prev[activeCompId] ?? []).filter(c => c.id !== row.user_id) }))
+            setWaitlistMap(prev => ({ ...prev, [activeCompId]: upsertIn(prev[activeCompId] ?? [], m) }))
+          } else {
             setWaitlistMap(prev => ({ ...prev, [activeCompId]: (prev[activeCompId] ?? []).filter(c => c.id !== row.user_id) }))
-            setCompetitorsMap(prev => {
-              const list = prev[activeCompId] ?? []
-              return { ...prev, [activeCompId]: list.some(c => c.id === member.id) ? list.map(c => c.id === member.id ? member : c) : [...list, member] }
-            })
+            setCompetitorsMap(prev => ({ ...prev, [activeCompId]: upsertIn(prev[activeCompId] ?? [], m) }))
+          }
+        }
+        const known = row.status === 'waitlisted' ? (waiting ?? current) : current
+        if (known) {
+          place(patch(known))
+        } else {
+          // Moved between lists or not loaded yet: fetch this member. Skip the
+          // result if a newer event for the same member arrived meanwhile.
+          fetchMemberFromRow(row).then(member => {
+            if (memberEventSeq.current.get(row.user_id) !== seq) return
+            place(member)
           }).catch(err => console.error('[realtime] member update:', err))
         }
       })
@@ -1449,7 +1466,7 @@ function AppInner() {
     const previousMembers = competitorsMap[compId] ?? []
     const email   = (competitor.email ?? '').toLowerCase()
     // Bans are by email; only owners/organizers receive members' emails.
-    if (!email) { showToast(t.saveErrorGeneric, 'error'); return }
+    if (!email) { showToast(t.banNeedsEmail, 'error'); return }
     const updated = { ...activeCompetition, bannedEmails: [...new Set([...(activeCompetition.bannedEmails ?? []), email].filter(Boolean))] } as Competition
     setCompetitorsMap(prev => ({ ...prev, [compId]: (prev[compId] ?? []).filter(c => c.id !== competitorId) }))
     setCompetitions(prev => prev.map(comp => comp.id === compId ? updated : comp))
@@ -1908,7 +1925,12 @@ function AppInner() {
                     viewOnly={isJudge}
                     onUpdateRole={handleUpdateRole} onUpdateBib={handleUpdateBib}
                     onInitiateRemove={c => setPendingRemoveUser(c)}
-                    onInitiateBan={c => setPendingBanUser(c)}
+                    onInitiateBan={c => {
+                      // Bans are by email; without it the ban cannot be saved,
+                      // so never show the "banned" undo toast in that case.
+                      if (!c.email) { showToast(t.banNeedsEmail, 'error'); return }
+                      setPendingBanUser(c)
+                    }}
                     onUnbanUser={handleUnbanUser}
                   />
                 : <Navigate to={`/${lang}/competitions`} replace />

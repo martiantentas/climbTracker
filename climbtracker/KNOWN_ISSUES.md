@@ -1,6 +1,6 @@
 # Ascendr: problemas conocidos y arreglos pendientes
 
-Última revisión: 2026-11-04. Evento objetivo: Open Bloc Vic 2026 (`comp-1777411314368`), 6 y 7 de noviembre.
+Última revisión: 2026-11-05. Evento objetivo: Open Bloc Vic 2026 (`comp-1777411314368`), 6 y 7 de noviembre.
 
 Cómo leer cada punto: **qué falla**, **a quién afecta**, **dónde está** (archivo:línea en el código actual), **cómo arreglarlo** y **esfuerzo** (S = menos de 1 hora, M = medio día, L = más de un día).
 
@@ -17,6 +17,8 @@ Prioridades:
 
 ### P1-1. Guardar los bloques puede borrar bloques de otro organizador, y sus puntuaciones
 
+**Estado: resuelto el 2026-11-05.**
+
 - **Qué falla:** al guardar la lista de bloques, se borran de la base de datos todos los bloques que no estén en la copia local. Las puntuaciones de esos bloques se borran con ellos.
 - **A quién afecta:** a un organizador con la lista desactualizada, por ejemplo una pestaña abierta desde por la mañana, o a dos organizadores editando a la vez. Un guardado puede borrar el bloque que otro acaba de crear, con todas sus puntuaciones.
 - **Dónde:** `src/lib/db.ts:306` (`upsertBoulders`, bloque "Remove only boulders that no longer exist").
@@ -24,6 +26,8 @@ Prioridades:
 - **Esfuerzo:** S.
 
 ### P1-2. Cada inscripción hace que todos los conectados recarguen la lista completa de miembros
+
+**Estado: resuelto el 2026-11-05.**
 
 - **Qué falla:** cuando alguien se une, cada dispositivo conectado vuelve a descargar todos los miembros y sus perfiles.
 - **A quién afecta:** al día de inscripciones. Con 100 personas conectadas y 300 inscripciones salen unas 30.000 consultas. La app puede ir lenta para todos.
@@ -33,6 +37,8 @@ Prioridades:
 
 ### P1-3. Al borrar un miembro de otra competición puede desaparecer de la tuya en pantalla
 
+**Estado: resuelto el 2026-11-05.**
+
 - **Qué falla:** Supabase no filtra por competición los avisos en vivo de borrado. El código quita a ese usuario de la competición activa sin comprobar de qué competición era el borrado.
 - **A quién afecta:** a quien está en varias competiciones. Desaparece de la lista en pantalla hasta recargar. No se pierden datos.
 - **Dónde:** `src/App.tsx:583` (escucha en vivo `DELETE` de `competition_members`).
@@ -40,6 +46,8 @@ Prioridades:
 - **Esfuerzo:** S.
 
 ### P1-4. El aviso de "puntuación no guardada" culpa a la conexión aunque el motivo sea otro
+
+**Estado: resuelto el 2026-11-05.**
 
 - **Qué falla:** si la base de datos rechaza una puntuación porque la competición está cerrada, los resultados bloqueados o el bloque es de juez, el aviso dice "revisa la conexión".
 - **A quién afecta:** a los competidores al final del evento. Pensarán que les falla el móvil.
@@ -49,6 +57,8 @@ Prioridades:
 
 ### P1-5. La carga inicial falla entera si una sola consulta falla, y no avisa
 
+**Estado: resuelto el 2026-11-05.**
+
 - **Qué falla:** si falla cualquiera de las consultas del inicio, el usuario ve "no tienes competiciones", sin mensaje ni botón para reintentar.
 - **A quién afecta:** a cualquiera con mal wifi al abrir la app.
 - **Dónde:** `src/App.tsx:462` (`loadAllUserData`).
@@ -56,6 +66,8 @@ Prioridades:
 - **Esfuerzo:** S.
 
 ### P1-6. El login con Google puede quedarse en el indicador de carga para siempre
+
+**Estado: resuelto el 2026-11-05.**
 
 - **Qué falla:** la alternativa al login rápido de Google depende de una función que Google ya no cumple del todo (`isNotDisplayed`). No hay límite de tiempo.
 - **A quién afecta:** a algunos navegadores y móviles, en el momento de inscribirse.
@@ -96,6 +108,8 @@ Prioridades:
 - **Esfuerzo:** M.
 
 ### P2-2. Los cambios de estado o género de un miembro no llegan en vivo
+
+**Estado: resuelto el 2026-11-05.**
 - **Qué falla:** la escucha en vivo de cambios en miembros ignora `status` (lista de espera o activo) y `gender`.
 - **Dónde:** `src/App.tsx:576`.
 - **Esfuerzo:** S.
@@ -106,6 +120,8 @@ Prioridades:
 - **Esfuerzo:** M.
 
 ### P2-4. Jueces y competidores pueden ver los emails de los demás miembros
+
+**Estado: resuelto el 2026-11-05.** Requiere ejecutar `supabase/12_hide_member_emails.sql` después de publicar la app.
 - **Qué falla:** cada miembro descarga el email de todos los demás miembros de su competición. Es un tema de privacidad (RGPD).
 - **Dónde:** `src/lib/db.ts:89` (`fetchProfiles` pide `email`) y `src/pages/UsersPage.tsx:142`.
 - **Arreglo:** retirar el permiso de lectura de la columna `email` y crear una función RPC que solo devuelva emails al propietario y a los organizadores.
@@ -162,6 +178,13 @@ Prioridades:
 - **Dónde:** `src/pages/LeaderboardPage.tsx:445`.
 - **Arreglo:** paginar o virtualizar la lista. Ya existe `src/hooks/usePagination.ts`.
 - **Esfuerzo:** S.
+
+---
+
+### P2-14. Comprobación de borrado rechazado con una carrera improbable
+- **Qué falla:** si otro dispositivo vuelve a crear la misma puntuación justo entre el borrado y la comprobación posterior, el borrado se informa como "no se puede cambiar" y se deshace en pantalla.
+- **Dónde:** `src/lib/db.ts` (`deleteCompletion`).
+- **Esfuerzo:** S. Riesgo muy bajo.
 
 ---
 
