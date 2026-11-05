@@ -19,7 +19,7 @@ interface SettingsPageProps {
   competition:     Competition
   theme:           'light' | 'dark'
   lang:            Language
-  onUpdate:        (updated: Competition) => void
+  onUpdate:        (updated: Competition) => void | Promise<boolean>
   competitorCount?: number
 }
 
@@ -539,11 +539,20 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
     traits:           (competition as any).traits ?? [],
   })
 
+  // Fields the user has edited since the last save. Only these are saved,
+  // and only these keep the user's value when the competition changes
+  // elsewhere (another device, another organizer, a payment...). Every other
+  // field always shows the latest value, so a tab left open for hours can no
+  // longer overwrite newer changes with stale ones.
+  const touched = useRef<Set<string>>(new Set())
+  // Always-current draft (handleSave awaits, so its closure would be stale)
+  const draftRef = useRef(draft)
+  draftRef.current = draft
+
   // Full re-init when the user switches to a different competition.
-  // Without this, the draft retains the previous competition's branding/logo
-  // and can bleed it into the new competition on the first save.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
+    touched.current.clear()
     setDraft({
       ...competition,
       difficultyLevels: competition.difficultyLevels ?? [],
@@ -551,21 +560,18 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
     } as any)
   }, [competition.id])
 
-  // Keep billing/tier/branding fields in sync with the competition prop.
-  // BrandingSection and PaymentModal call onUpdate directly (bypassing the draft),
-  // so without this effect the draft would be stale and clobber those fields on save.
-  const comp = competition as any
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // Follow changes made elsewhere for every field the user has NOT edited.
   useEffect(() => {
-    setDraft(prev => ({
-      ...prev,
-      subscription:       comp.subscription,
-      tier:               comp.tier,
-      participantLimit:   comp.participantLimit,
-      additionalCapacity: comp.additionalCapacity,
-      branding:           comp.branding,
-    } as any))
-  }, [comp.subscription, comp.tier, comp.participantLimit, comp.additionalCapacity, comp.branding])
+    setDraft(prev => {
+      const next: Record<string, unknown> = {
+        ...competition,
+        difficultyLevels: competition.difficultyLevels ?? [],
+        traits:           (competition as any).traits ?? [],
+      }
+      for (const key of touched.current) next[key] = (prev as unknown as Record<string, unknown>)[key]
+      return next as unknown as Competition
+    })
+  }, [competition])
 
   // ── Publish state (inline Stripe redirect for unpaid competitions) ───────────
   const [publishLoading, setPublishLoading] = useState<'standard' | 'premium' | null>(null)
@@ -595,14 +601,27 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
   useEffect(() => { setIsDirty(false) }, [competition.id])
 
   function set<K extends keyof Competition>(key: K, value: Competition[K]) {
+    touched.current.add(key as string)
     setDraft(prev => ({ ...prev, [key]: value }))
     setIsDirty(true)
   }
 
-  function handleSave() {
-    onUpdate(draft)
+  async function handleSave() {
+    // Latest competition + only the fields edited here
+    const changes: Record<string, unknown> = {}
+    for (const key of touched.current) changes[key] = (draft as unknown as Record<string, unknown>)[key]
+    const savedKeys = new Set(touched.current)
+    const ok = await onUpdate({ ...competition, ...changes } as Competition)
+    // Forget the edits ONLY if the database accepted them. On failure the
+    // form keeps the user's values and stays "dirty" so they can retry.
+    if (ok === false) return
+    const current = draftRef.current as unknown as Record<string, unknown>
+    for (const key of savedKeys) {
+      // Keep keys edited again while the save was in flight
+      if (current[key] === changes[key]) touched.current.delete(key)
+    }
     trackEvent('settings_saved', { status: draft.status, scoring_type: draft.scoringType })
-    setIsDirty(false)
+    if (touched.current.size === 0) setIsDirty(false)
   }
 
   // Block in-app navigation (HashRouter) when there are unsaved changes.

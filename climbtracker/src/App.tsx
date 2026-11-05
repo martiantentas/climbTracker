@@ -7,7 +7,7 @@ import {
   loadAllUserData, upsertCompetition, deleteCompetition,
   upsertBoulders, upsertCompletion, deleteCompletion,
   upsertMember, updateMember, deleteMember, fetchMembers, fetchBoulders, fetchCompletions,
-  updateCompetition as dbUpdateCompetition, joinCompetitionRpc, fetchCompetitionByInviteCode,
+  saveCompetitionChanges, joinCompetitionRpc, fetchCompetitionByInviteCode,
   fetchMemberFromRow, type MemberRow, isPermissionError,
 } from './lib/db'
 
@@ -1142,7 +1142,9 @@ function AppInner() {
       })
   }
 
-  function updateCompetition(updated: Competition) {
+  // Resolves true once the database accepted the change, false otherwise
+  // (refused by the publish gate, by permissions, or a network failure).
+  function updateCompetition(updated: Competition): Promise<boolean> {
     const prev = competitions.find(c => c.id === updated.id)
     // Always carry over billing/tier/branding fields from the authoritative state.
     // SettingsPage's draft is initialized once on mount and will be stale for any
@@ -1174,17 +1176,30 @@ function AppInner() {
       const needsNewPayment = isRerun || isExpired
       if (!merged.subscription || needsNewPayment) {
         showToast('Please choose a plan in Settings to publish this competition.')
-        return
+        return Promise.resolve(false)
       }
     }
     setCompetitions(p => p.map(c => c.id === merged.id ? merged : c))
-    dbUpdateCompetition(merged)
-      .then(() => showToast(t.successSaved))
+    // Only the fields that differ from what this screen had are sent; the
+    // database merges them onto its CURRENT row (no stale overwrite).
+    return saveCompetitionChanges(prev ?? merged, merged)
+      .then(serverData => {
+        if (serverData) {
+          // Show exactly what the database now holds (managers receive the
+          // full row, so hasJoinPassword can be derived from it directly)
+          setCompetitions(p => p.map(c => c.id === merged.id
+            ? { ...serverData, hasJoinPassword: !!serverData.joinPassword } as Competition
+            : c))
+        }
+        showToast(t.successSaved)
+        return true
+      })
       .catch(err => {
         console.error('[db] updateCompetition:', err)
         // Roll back so the screen never shows a change the database refused.
         if (prev) setCompetitions(p => p.map(c => c.id === prev.id ? prev : c))
         showToast(`Save failed: ${err?.message ?? err}`)
+        return false
       })
   }
 
@@ -1448,7 +1463,7 @@ function AppInner() {
     const previous = activeCompetition
     const updated  = { ...activeCompetition, bannedEmails: (activeCompetition.bannedEmails ?? []).filter(e => e !== email.toLowerCase()) } as Competition
     setCompetitions(prev => prev.map(comp => comp.id === updated.id ? updated : comp))
-    dbUpdateCompetition(updated)
+    saveCompetitionChanges(previous, updated)
       .then(() => showToast(t.successSaved))
       .catch(err => {
         console.error('[db] unbanUser:', err)
@@ -1471,7 +1486,7 @@ function AppInner() {
     setCompetitorsMap(prev => ({ ...prev, [compId]: (prev[compId] ?? []).filter(c => c.id !== competitorId) }))
     setCompetitions(prev => prev.map(comp => comp.id === compId ? updated : comp))
     // Save the ban first, then remove the member: if the ban fails, nobody is removed.
-    dbUpdateCompetition(updated)
+    saveCompetitionChanges(previousComp, updated)
       .then(() => deleteMember(compId, competitorId))
       .then(() => showToast(t.successSaved))
       .catch(err => {

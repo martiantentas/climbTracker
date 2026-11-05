@@ -405,7 +405,7 @@ export default function AuthPage({ theme: _theme, lang, setLang, initialTab, onR
                     {errors._global}
                   </div>
                 )}
-                <Field label={tr.authEmailAddr} type="email" value={email} onChange={setEmail} error={errors.email} placeholder="you@example.com" />
+                <Field label={tr.authEmailAddr} type="email" value={email} onChange={setEmail} error={errors.email} placeholder={tr.authEmailPh} />
                 <motion.button
                   type="submit"
                   disabled={loading}
@@ -502,12 +502,12 @@ export default function AuthPage({ theme: _theme, lang, setLang, initialTab, onR
 
             {tab === 'signup' && (
               <div className="grid grid-cols-2 gap-3">
-                <Field label={tr.authFirstName} type="text" value={firstName} onChange={setFirstName} error={errors.firstName} placeholder="Alex" />
-                <Field label={tr.authLastName}  type="text" value={lastName}  onChange={setLastName}  error={errors.lastName}  placeholder="Honnold" />
+                <Field label={tr.authFirstName} type="text" value={firstName} onChange={setFirstName} error={errors.firstName} placeholder={tr.authFirstNamePh} />
+                <Field label={tr.authLastName}  type="text" value={lastName}  onChange={setLastName}  error={errors.lastName}  placeholder={tr.authLastNamePh} />
               </div>
             )}
 
-            <Field label={tr.authEmailAddr} type="email"    value={email}    onChange={setEmail}    error={errors.email}    placeholder="you@example.com" />
+            <Field label={tr.authEmailAddr} type="email"    value={email}    onChange={setEmail}    error={errors.email}    placeholder={tr.authEmailPh} />
             <Field
               label={tr.password}
               type="password"

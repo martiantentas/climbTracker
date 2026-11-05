@@ -77,6 +77,8 @@ Prioridades:
 
 ### P1-7. Guardar ajustes desde una pestaña antigua sobrescribe cambios más recientes
 
+**Estado: resuelto el 2026-11-05.** Requiere `supabase/13_patch_competition.sql` (la app funciona sin ella, con el guardado completo anterior).
+
 - **Qué falla:** la pantalla de ajustes copia la competición al abrirse y, al guardar, envía la competición entera.
 - **A quién afecta:** a los organizadores. Un ejemplo: bloqueas los resultados en el móvil, y una pestaña del portátil abierta desde antes guarda un cambio y los desbloquea sin avisar. Lo mismo puede pasar con el aforo que ampliamos por SQL.
 - **Dónde:** `src/App.tsx:1065` (`updateCompetition`) y `src/pages/SettingsPage.tsx:536-560` (copia de trabajo `draft`).
@@ -184,6 +186,12 @@ Prioridades:
 ### P2-14. Comprobación de borrado rechazado con una carrera improbable
 - **Qué falla:** si otro dispositivo vuelve a crear la misma puntuación justo entre el borrado y la comprobación posterior, el borrado se informa como "no se puede cambiar" y se deshace en pantalla.
 - **Dónde:** `src/lib/db.ts` (`deleteCompletion`).
+- **Esfuerzo:** S. Riesgo muy bajo.
+
+### P2-15. Dos organizadores bloqueando a la vez pueden perder un bloqueo
+- **Qué falla:** la lista `bannedEmails` se guarda entera. Si dos organizadores bloquean a personas distintas en el mismo instante, gana el último y el otro bloqueo se pierde. El miembro sí queda eliminado de la competición.
+- **Dónde:** `src/App.tsx` (`handleBanUser` y `handleUnbanUser`).
+- **Arreglo:** funciones SQL que añadan o quiten un solo email de la lista.
 - **Esfuerzo:** S. Riesgo muy bajo.
 
 ---

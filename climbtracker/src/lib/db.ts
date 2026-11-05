@@ -243,6 +243,45 @@ export async function updateCompetition(comp: Competition): Promise<void> {
   if (!data || data.length === 0) throw new Error('not_permitted')
 }
 
+// Save ONLY what changed between `before` (what this screen started from)
+// and `after`, merged onto the CURRENT database row by the patch_competition
+// RPC (13_patch_competition.sql). A stale copy can therefore never overwrite
+// fields it did not change (e.g. unlock results locked from another device).
+// Falls back to a full update if the RPC is not installed yet.
+const CLIENT_ONLY_KEYS = new Set(['_hasJoinPassword', 'hasJoinPassword'])
+
+export function diffCompetition(before: Competition, after: Competition): { set: Record<string, unknown>; unset: string[] } {
+  const b = before as unknown as Record<string, unknown>
+  const a = after  as unknown as Record<string, unknown>
+  const set: Record<string, unknown> = {}
+  const unset: string[] = []
+  for (const key of new Set([...Object.keys(b), ...Object.keys(a)])) {
+    if (CLIENT_ONLY_KEYS.has(key) || key === 'id' || key === 'ownerId') continue
+    const av = a[key], bv = b[key]
+    if (av === undefined) { if (bv !== undefined) unset.push(key); continue }
+    if (JSON.stringify(av) !== JSON.stringify(bv)) set[key] = av
+  }
+  return { set, unset }
+}
+
+export async function saveCompetitionChanges(before: Competition, after: Competition): Promise<Competition | null> {
+  const { set, unset } = diffCompetition(before, after)
+  if (Object.keys(set).length === 0 && unset.length === 0) return null   // nothing to save
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc('patch_competition', {
+    p_competition_id: after.id, p_set: set, p_unset: unset,
+  })
+  if (error) {
+    // RPC not deployed yet → previous behaviour (full update)
+    if (error.code === 'PGRST202' || error.code === '42883') {
+      await updateCompetition(after)
+      return null
+    }
+    throw error
+  }
+  return data as Competition
+}
+
 export async function deleteCompetition(compId: string): Promise<void> {
   const { error } = await supabase.from('competitions').delete().eq('id', compId)
   if (error) throw error
