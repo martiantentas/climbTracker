@@ -92,12 +92,16 @@ Prioridades:
 - **No publicar cambios** durante la competición.
 - **Esfuerzo:** S.
 
-### P1-9. Prueba de carga realista
+### P1-9. Prueba de carga realista ✅ Resuelto (2026-11-05)
 
-- **Qué falta:** la única prueba de carga insertó 50 usuarios directamente en la base de datos. Nunca se ha probado el flujo real de inscripción ni 300 personas puntuando a la vez.
-- **Dónde:** `load-tests/competition_load.js` y `supabase/seed_loadtest.sql`.
-- **Arreglo:** prueba con k6 contra una competición de pruebas. Debe cubrir inscripciones por `join_competition`, puntuaciones concurrentes y la página de resultados públicos. Antes, borrar los datos de prueba.
-- **Esfuerzo:** M.
+- **Qué se hizo:** `load-tests/ascendr_load.js` (k6) contra `comp-loadtest`, con `01_seed.sql`, `02_verify.sql` y `03_cleanup.sql`. Simula inscripciones reales, puntuaciones, bloqueos del móvil con recarga, jueces y espectadores de resultados públicos.
+- **Lo que encontró, en orden:**
+  1. **Resultados públicos:** cada visita recalculaba la clasificación entera. 50 espectadores tumbaban la base de datos. Arreglo: `14_public_leaderboard_cache.sql`, que la calcula como mucho cada 20 s.
+  2. **Servidor Nano:** subido a Large para el evento.
+  3. **Reglas de lectura fila por fila:** las puntuaciones tardaban 6-10 s en guardarse. Arreglo: `15_fast_read_policies.sql`.
+  4. **Tiempo real limitado a 200 clientes,** el valor que quedó del plan gratuito. Subido a 2000 en Realtime Settings.
+- **Resultado final, con 400 competidores, 10 jueces y 50 espectadores:** 0 fallos en 38.975 peticiones. Una puntuación se guarda en 0,1 s. El 99,97% de las puntuaciones llegan a los demás móviles, con unos 2 s de retraso medio (5,6 s en el peor 5%).
+- **Después del evento:** bajar el servidor de Large a Micro y volver a activar el límite de gasto.
 
 ---
 
