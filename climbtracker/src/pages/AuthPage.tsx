@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion } from 'motion/react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Eye, EyeOff, ArrowLeft, CheckCircle2, Mail } from 'lucide-react'
@@ -180,6 +180,14 @@ export default function AuthPage({ theme: _theme, lang, setLang, initialTab, onR
     }
   }
 
+  // Google's quick sign-in (One Tap / FedCM) sometimes never calls back
+  // (blocked prompt, browser without FedCM...). After 10 s without an answer
+  // the button stops spinning, and the NEXT click uses the classic redirect
+  // sign-in, which always works.
+  const gsiAttempted = useRef(false)
+  const gsiWatchdog  = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  useEffect(() => () => clearTimeout(gsiWatchdog.current), [])
+
   async function handleGoogle() {
     setLoading(true)
     setErrors({})
@@ -187,7 +195,10 @@ export default function AuthPage({ theme: _theme, lang, setLang, initialTab, onR
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined
     const g = (window as unknown as { google?: GoogleAccounts }).google
 
-    if (clientId && g) {
+    if (clientId && g && !gsiAttempted.current) {
+      gsiAttempted.current = true
+      clearTimeout(gsiWatchdog.current)
+      gsiWatchdog.current = setTimeout(() => setLoading(false), 10_000)
       // Generate a nonce — Google receives the SHA-256 hash, Supabase receives the raw value.
       // Without this, Supabase rejects the id_token in production ("nonce":"not_provided").
       const rawNonce    = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2,'0')).join('')
@@ -200,6 +211,7 @@ export default function AuthPage({ theme: _theme, lang, setLang, initialTab, onR
         client_id: clientId,
         nonce:     hashedNonce,
         callback: async ({ credential }) => {
+          clearTimeout(gsiWatchdog.current)
           const { error } = await signInWithGoogleToken(credential, rawNonce)
           if (error) {
             // Network / CORS error (e.g. www subdomain) → fall back to OAuth redirect
@@ -216,6 +228,7 @@ export default function AuthPage({ theme: _theme, lang, setLang, initialTab, onR
       g.accounts.id.prompt((notification) => {
         // One Tap blocked (dismissed before, ITP, private browsing) → fall back to redirect
         if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+          clearTimeout(gsiWatchdog.current)
           signInWithGoogle().then(({ error }) => {
             if (error) {
               setErrors({ _global: 'Google sign-in failed. Please try again.' })

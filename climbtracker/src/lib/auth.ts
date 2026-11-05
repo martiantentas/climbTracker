@@ -58,10 +58,14 @@ export function supabaseUserToCompetitor(
 
 // ─── PROFILE ──────────────────────────────────────────────────────────────────
 
+const PROFILE_COLUMNS = 'id, display_name, avatar_url, emoji, lang, theme, location, bio, trait_ids, created_at, updated_at'
+
 export async function getProfile(userId: string) {
   const { data } = await supabase
     .from('profiles')
-    .select('*')
+    // Explicit columns: email is not readable through the API (it comes
+    // from the login session instead).
+    .select(PROFILE_COLUMNS)
     .eq('id', userId)
     .single()
   return data
@@ -84,7 +88,7 @@ export async function upsertProfile(
     .from('profiles')
     .update(updates)
     .eq('id', userId)
-    .select()
+    .select(PROFILE_COLUMNS)
     .single()
 }
 

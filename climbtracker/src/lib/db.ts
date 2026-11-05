@@ -20,11 +20,20 @@ async function withRetry<T>(
     try { return await fn() } catch (err) {
       lastErr = err
       if (cancel?.aborted) throw cancel.reason ?? new Error('cancelled')
+      // The database said "not allowed": retrying will not change that.
+      if (isPermissionError(err)) throw err
       if (attempt < maxAttempts - 1)
         await new Promise(r => setTimeout(r, Math.min(maxDelayMs, baseDelayMs * 2 ** attempt)))
     }
   }
   throw lastErr
+}
+
+// True when the database refused the write because of the access rules
+// (competition finished/locked, judge-required boulder, not a member...).
+export function isPermissionError(err: unknown): boolean {
+  const e = err as { code?: string; message?: string } | null
+  return e?.code === '42501' || /row-level security|permission denied/i.test(e?.message ?? '')
 }
 
 // One signal that aborts when any of the given signals aborts.
@@ -80,13 +89,14 @@ function chunk<T>(items: T[], size = 100): T[][] {
   return out
 }
 
-type ProfileRow = { id: string; email: string; display_name: string | null; avatar_url: string | null; emoji: string | null }
+// Emails are NOT part of the public profile (see 12_hide_member_emails.sql).
+type ProfileRow = { id: string; display_name: string | null; avatar_url: string | null; emoji: string | null }
 
 async function fetchProfiles(userIds: string[]): Promise<Record<string, ProfileRow>> {
   const batches = await Promise.all(chunk(userIds).map(async ids => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, email, display_name, avatar_url, emoji')
+      .select('id, display_name, avatar_url, emoji')
       .in('id', ids)
     if (error) throw error
     return (data ?? []) as ProfileRow[]
@@ -94,19 +104,38 @@ async function fetchProfiles(userIds: string[]): Promise<Record<string, ProfileR
   return Object.fromEntries(batches.flat().map(p => [p.id, p]))
 }
 
+// Members' emails, only for competitions the caller owns or organizes
+// (get_member_emails RPC). Everyone else gets an empty map. Never fails the
+// caller: if the RPC is missing or errors, emails are simply not shown.
+async function fetchMemberEmails(competitionIds: string[]): Promise<Record<string, string>> {
+  if (competitionIds.length === 0) return {}
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any).rpc('get_member_emails', { p_competition_ids: competitionIds })
+    if (error) { console.warn('[db] get_member_emails:', error.message); return {} }
+    return Object.fromEntries(((data ?? []) as { competition_id: string; user_id: string; email: string }[])
+      .map(r => [`${r.competition_id}:${r.user_id}`, r.email ?? '']))
+  } catch (err) {
+    console.warn('[db] get_member_emails:', err)
+    return {}
+  }
+}
+
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
 function memberRowToCompetitor(row: {
   user_id: string; role: string; status: string
   bib_number: number | null; trait_ids: string[]; gender: string | null
-  profiles: { email: string; display_name: string | null; avatar_url: string | null; emoji: string | null } | null
-}): Competitor {
+  profiles: { display_name: string | null; avatar_url: string | null; emoji: string | null } | null
+}, email = ''): Competitor {
   const profile     = row.profiles
-  const displayName = profile?.display_name ?? profile?.email ?? ''
+  // No email fallback any more (emails are private): use the bib instead.
+  const displayName = profile?.display_name?.trim()
+    || (row.bib_number && row.bib_number > 0 ? `#${row.bib_number}` : '—')
   const parts       = displayName.trim().split(' ')
   return {
     id:          row.user_id,
-    email:       profile?.email ?? '',
+    email,
     firstName:   parts[0] ?? '',
     lastName:    parts.slice(1).join(' '),
     displayName,
@@ -303,18 +332,10 @@ export async function upsertBoulders(competitionId: string, boulders: Boulder[])
     if (error) throw error
   }
 
-  // Remove only boulders that no longer exist in the list.
-  const { data: existing, error: selErr } = await supabase
-    .from('boulders')
-    .select('id')
-    .eq('competition_id', competitionId)
-  if (selErr) throw selErr
-  const keep  = new Set(boulders.map(b => b.id))
-  const stale = (existing ?? []).map(r => r.id).filter(id => !keep.has(id))
-  if (stale.length > 0) {
-    const { error } = await supabase.from('boulders').delete().in('id', stale)
-    if (error) throw error
-  }
+  // Boulders are NEVER hard-deleted here. Deleting is a soft delete
+  // (status 'removed') done by the UI. Hard-deleting "whatever is not in my
+  // local list" wiped boulders created by another organizer (or missing from
+  // a stale tab) together with all their scores (ON DELETE CASCADE).
 }
 
 // ─── COMPLETIONS ──────────────────────────────────────────────────────────────
@@ -372,12 +393,23 @@ export async function deleteCompletion(
   competitionId: string, competitorId: string, boulderId: string, cancel?: AbortSignal,
 ): Promise<void> {
   await withRetry(async () => {
-    await supabase
+    const { data } = await supabase
       .from('completions')
       .delete()
       .match({ competition_id: competitionId, competitor_id: competitorId, boulder_id: boulderId })
+      .select('boulder_id')
       .abortSignal(anySignal([timeoutSignal(SCORE_WRITE_TIMEOUT), cancel]))
       .throwOnError()
+    if (data && data.length > 0) return
+    // Nothing deleted: either it never existed (fine) or the access rules
+    // silently refused it. A refused delete must not look like a success.
+    const { data: still } = await supabase
+      .from('completions')
+      .select('boulder_id')
+      .match({ competition_id: competitionId, competitor_id: competitorId, boulder_id: boulderId })
+      .abortSignal(anySignal([timeoutSignal(SCORE_WRITE_TIMEOUT), cancel]))
+      .throwOnError()
+    if (still && still.length > 0) throw Object.assign(new Error('delete not permitted'), { code: '42501' })
   }, SCORE_WRITE_ATTEMPTS, undefined, undefined, cancel)
 }
 
@@ -396,11 +428,29 @@ async function fetchMembersByStatus(competitionId: string, status: string): Prom
       .range(from, to)
   )
   if (rows.length === 0) return []
-  const profileMap = await fetchProfiles([...new Set(rows.map(r => r.user_id))])
-  return rows.map(row => memberRowToCompetitor({ ...row, profiles: profileMap[row.user_id] ?? null }))
+  const [profileMap, emails] = await Promise.all([
+    fetchProfiles([...new Set(rows.map(r => r.user_id))]),
+    fetchMemberEmails([competitionId]),
+  ])
+  return rows.map(row => memberRowToCompetitor(
+    { ...row, profiles: profileMap[row.user_id] ?? null },
+    emails[`${row.competition_id}:${row.user_id}`] ?? '',
+  ))
 }
 
-type MemberRow = {
+// One member, built from a realtime INSERT row (fetches only that profile).
+export async function fetchMemberFromRow(row: MemberRow): Promise<Competitor> {
+  const [profileMap, emails] = await Promise.all([
+    fetchProfiles([row.user_id]),
+    fetchMemberEmails([row.competition_id]),
+  ])
+  return memberRowToCompetitor(
+    { ...row, trait_ids: row.trait_ids ?? [], profiles: profileMap[row.user_id] ?? null },
+    emails[`${row.competition_id}:${row.user_id}`] ?? '',
+  )
+}
+
+export type MemberRow = {
   competition_id: string; user_id: string; role: string; status: string
   bib_number: number | null; trait_ids: string[]; gender: string | null
 }
@@ -422,11 +472,15 @@ async function fetchAllMembersByStatus(ids: string[], status: string): Promise<R
   const result: Record<string, Competitor[]> = Object.fromEntries(ids.map(id => [id, []]))
   if (rows.length === 0) return result
 
-  const profileMap = await fetchProfiles([...new Set(rows.map(r => r.user_id))])
+  const [profileMap, emails] = await Promise.all([
+    fetchProfiles([...new Set(rows.map(r => r.user_id))]),
+    fetchMemberEmails(ids),
+  ])
   for (const row of rows) {
-    result[row.competition_id]?.push(
-      memberRowToCompetitor({ ...row, profiles: profileMap[row.user_id] ?? null })
-    )
+    result[row.competition_id]?.push(memberRowToCompetitor(
+      { ...row, profiles: profileMap[row.user_id] ?? null },
+      emails[`${row.competition_id}:${row.user_id}`] ?? '',
+    ))
   }
   return result
 }
@@ -575,7 +629,7 @@ export async function fetchPublicLeaderboard(competitionId: string): Promise<Pub
     completions: (d.completions ?? []) as Completion[],
     competitors: (d.competitors ?? []).map((r: any) => memberRowToCompetitor({
       ...r,
-      profiles: { email: '', display_name: r.display_name, avatar_url: r.avatar_url, emoji: r.emoji },
+      profiles: { display_name: r.display_name, avatar_url: r.avatar_url, emoji: r.emoji },
     })),
   }
 }

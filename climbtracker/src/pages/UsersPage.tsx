@@ -139,7 +139,7 @@ function UserDetailModal({ competitor, allCompetitors, competition, isMe, viewOn
                 {competitor.displayName}
                 {isMe && <span className="ml-2 text-[9px] font-medium text-[#7F8BAD] bg-[#7F8BAD]/10 px-1.5 py-0.5 rounded">{t.youLabel}</span>}
               </p>
-              <p className={`text-xs mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{competitor.email}</p>
+              {competitor.email && <p className={`text-xs mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{competitor.email}</p>}
             </div>
           </div>
           <motion.button onClick={onClose} className={`p-2 rounded transition-colors duration-[330ms] ${dk ? 'hover:bg-white/5 text-[#5C5E62]' : 'hover:bg-[#F4F4F4] text-[#8E8E8E]'}`}
@@ -298,7 +298,7 @@ export default function UsersPage({ competitors, competition, currentUser, theme
       const q = search.toLowerCase()
       list = list.filter(c =>
         c.displayName.toLowerCase().includes(q) || c.firstName.toLowerCase().includes(q) ||
-        c.lastName.toLowerCase().includes(q) || c.email.toLowerCase().includes(q) ||
+        c.lastName.toLowerCase().includes(q) || (c.email ?? '').toLowerCase().includes(q) ||
         String(c.bibNumber).includes(q)
       )
     }
@@ -419,7 +419,7 @@ export default function UsersPage({ competitors, competition, currentUser, theme
                       </p>
                       <p className={`text-xs truncate mt-0.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
                         {competitor.email}
-                        {competitor.role !== 'judge' && competitor.role !== 'organizer' && <span className="ml-1">· BIB #{competitor.bibNumber}</span>}
+                        {competitor.role !== 'judge' && competitor.role !== 'organizer' && <span className={competitor.email ? 'ml-1' : ''}>{competitor.email ? '· ' : ''}BIB #{competitor.bibNumber}</span>}
                         {(competitor.traitIds ?? []).length > 0 && (
                           <span className="ml-1">· {(competitor.traitIds ?? []).map(id => competition.traits?.find(tr => tr.id === id)?.name).filter(Boolean).join(', ')}</span>
                         )}

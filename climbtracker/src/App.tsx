@@ -8,6 +8,7 @@ import {
   upsertBoulders, upsertCompletion, deleteCompletion,
   upsertMember, updateMember, deleteMember, fetchMembers, fetchBoulders, fetchCompletions,
   updateCompetition as dbUpdateCompetition, joinCompetitionRpc, fetchCompetitionByInviteCode,
+  fetchMemberFromRow, type MemberRow, isPermissionError,
 } from './lib/db'
 
 import type { Competition, Boulder, Competitor, Completion, Badge } from './types'
@@ -346,7 +347,7 @@ function AppInner() {
         // edit is waiting in the 400 ms debounce.
         if (writeSeq.current.get(writeKey) === seq && !pendingWriteTimers.current.has(writeKey)) {
           rollback(confirmedEntries.current.get(writeKey))
-          showToast(t.scoreSaveFailedFor(describe()), 'error')
+          showToast(isPermissionError(err) ? t.scoreRejectedFor(describe()) : t.scoreSaveFailedFor(describe()), 'error')
         }
         return false
       })
@@ -396,6 +397,15 @@ function AppInner() {
   const [completionsMap, setCompletionsMap] = useState<Record<string, Completion[]>>({})
   const [competitorsMap, setCompetitorsMap] = useState<Record<string, Competitor[]>>({})
   const [waitlistMap,    setWaitlistMap]    = useState<Record<string, Competitor[]>>({})
+  // Initial data load failure handling (see the data-loading effect)
+  const [loadFailed,  setLoadFailed]  = useState(false)
+  const [reloadToken, setReloadToken] = useState(0)
+  const loadAttemptsRef = useRef(0)
+  // Always-current mirrors for long-lived callbacks (realtime handlers)
+  const competitorsMapRef = useRef(competitorsMap)
+  const waitlistMapRef    = useRef(waitlistMap)
+  competitorsMapRef.current = competitorsMap
+  waitlistMapRef.current    = waitlistMap
   const [dataLoading,    setDataLoading]    = useState(false)
 
   // ── Supabase auth subscription ────────────────────────────────────────────
@@ -452,6 +462,7 @@ function AppInner() {
   useEffect(() => {
     if (!authUser) return
     let cancelled = false
+    let retryTimer: ReturnType<typeof setTimeout> | undefined
 
     // Pass the current activeCompId so loadAllUserData pre-fetches completions
     // for the competition that will be visible immediately after login.
@@ -466,6 +477,18 @@ function AppInner() {
       const userData = dataResult.status    === 'fulfilled' ? dataResult.value      : null
       if (dataResult.status === 'rejected') {
         console.error('[auth] loadAllUserData failed:', dataResult.reason)
+        // Retry once automatically after 3 s; if it fails again, show the
+        // "could not load" bar with a retry button (instead of an empty
+        // "no competitions" screen that looks like real data).
+        if (loadAttemptsRef.current < 1) {
+          loadAttemptsRef.current += 1
+          retryTimer = setTimeout(() => setReloadToken(n => n + 1), 3_000)
+        } else {
+          setLoadFailed(true)
+        }
+      } else {
+        loadAttemptsRef.current = 0
+        setLoadFailed(false)
       }
       setCurrentUser(supabaseUserToCompetitor(authUser, profile))
       if (shouldShowWalkthrough('login')) setWalkthrough('login')
@@ -485,9 +508,9 @@ function AppInner() {
       setAuthLoading(false)
     })
 
-    return () => { cancelled = true }
+    return () => { cancelled = true; clearTimeout(retryTimer) }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authUser?.id])
+  }, [authUser?.id, reloadToken])
 
   // Persist active competition selection as a UI preference
   useEffect(() => {
@@ -535,7 +558,8 @@ function AppInner() {
             return { ...prev, [activeCompId]: idx >= 0 ? cur.map((c, i) => i === idx ? completion : c) : [...cur, completion] }
           })
         } else if (payload.eventType === 'DELETE') {
-          const old = payload.old as { competitor_id: string; boulder_id: string }
+          const old = payload.old as { competitor_id: string; boulder_id: string; competition_id?: string }
+          if (old.competition_id && old.competition_id !== activeCompId) return
           // Also guard deletes: if a write is pending, don't let a stale delete revert it.
           const writeKey = `${old.competitor_id}:${old.boulder_id}`
           if (isPendingWrite(writeKey)) return
@@ -568,21 +592,60 @@ function AppInner() {
       })
 
       // ── competition_members ────────────────────────────────────────────────
-      // INSERT needs profile data not present in the row, so we refetch all members.
-      // UPDATE and DELETE have enough info to patch in place.
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'competition_members', filter: `competition_id=eq.${activeCompId}` }, () => {
-        fetchMembers(activeCompId).then(members => setCompetitorsMap(prev => ({ ...prev, [activeCompId]: members }))).catch(console.error)
+      // INSERT: add only the new member (fetching just their profile). With
+      // 300 sign-ups and many people online, refetching the whole list on
+      // every join multiplied the load on the database.
+      // UPDATE / DELETE: patched in place. Supabase does not filter DELETE
+      // events by column, so we check competition_id ourselves.
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'competition_members', filter: `competition_id=eq.${activeCompId}` }, (payload) => {
+        const row = payload.new as MemberRow
+        if (row.competition_id !== activeCompId) return
+        fetchMemberFromRow(row).then(member => {
+          const setMap = row.status === 'waitlisted' ? setWaitlistMap : setCompetitorsMap
+          setMap(prev => {
+            const list = prev[activeCompId] ?? []
+            return { ...prev, [activeCompId]: list.some(c => c.id === member.id)
+              ? list.map(c => c.id === member.id ? member : c)
+              : [...list, member] }
+          })
+        }).catch(err => console.error('[realtime] member insert:', err))
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'competition_members', filter: `competition_id=eq.${activeCompId}` }, (payload) => {
-        const row = payload.new as { user_id: string; role: string; status: string; bib_number: number | null; trait_ids: string[]; gender: string | null }
-        setCompetitorsMap(prev => ({
-          ...prev,
-          [activeCompId]: (prev[activeCompId] ?? []).map(c => c.id === row.user_id ? { ...c, role: row.role as Competitor['role'], bibNumber: row.bib_number ?? c.bibNumber, traitIds: row.trait_ids ?? c.traitIds } : c),
-        }))
+        const row = payload.new as MemberRow
+        if (row.competition_id !== activeCompId) return
+        const patch = (c: Competitor): Competitor => ({
+          ...c,
+          role:      row.role as Competitor['role'],
+          bibNumber: row.bib_number ?? c.bibNumber,
+          traitIds:  row.trait_ids ?? c.traitIds,
+          ...(row.gender != null ? { gender: row.gender } : {}),
+        } as Competitor)
+        // Read CURRENT state through refs (this handler is created once per
+        // subscription, so the state captured in its closure would be stale).
+        const current = (competitorsMapRef.current[activeCompId] ?? []).find(c => c.id === row.user_id)
+        const waiting = (waitlistMapRef.current[activeCompId] ?? []).find(c => c.id === row.user_id)
+        if (row.status === 'waitlisted') {
+          const base = current ?? waiting
+          setCompetitorsMap(prev => ({ ...prev, [activeCompId]: (prev[activeCompId] ?? []).filter(c => c.id !== row.user_id) }))
+          if (base) setWaitlistMap(prev => ({ ...prev, [activeCompId]: [...(prev[activeCompId] ?? []).filter(c => c.id !== row.user_id), patch(base)] }))
+        } else if (current) {
+          setCompetitorsMap(prev => ({ ...prev, [activeCompId]: (prev[activeCompId] ?? []).map(c => c.id === row.user_id ? patch(c) : c) }))
+        } else {
+          // Promoted from the waitlist (or not loaded yet): fetch and add
+          fetchMemberFromRow(row).then(member => {
+            setWaitlistMap(prev => ({ ...prev, [activeCompId]: (prev[activeCompId] ?? []).filter(c => c.id !== row.user_id) }))
+            setCompetitorsMap(prev => {
+              const list = prev[activeCompId] ?? []
+              return { ...prev, [activeCompId]: list.some(c => c.id === member.id) ? list.map(c => c.id === member.id ? member : c) : [...list, member] }
+            })
+          }).catch(err => console.error('[realtime] member update:', err))
+        }
       })
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'competition_members', filter: `competition_id=eq.${activeCompId}` }, (payload) => {
-        const old = payload.old as { user_id: string }
+        const old = payload.old as { user_id: string; competition_id?: string }
+        if (old.competition_id && old.competition_id !== activeCompId) return
         setCompetitorsMap(prev => ({ ...prev, [activeCompId]: (prev[activeCompId] ?? []).filter(c => c.id !== old.user_id) }))
+        setWaitlistMap(prev => ({ ...prev, [activeCompId]: (prev[activeCompId] ?? []).filter(c => c.id !== old.user_id) }))
       })
 
       .subscribe((status) => {
@@ -1385,6 +1448,8 @@ function AppInner() {
     const previousComp    = activeCompetition
     const previousMembers = competitorsMap[compId] ?? []
     const email   = (competitor.email ?? '').toLowerCase()
+    // Bans are by email; only owners/organizers receive members' emails.
+    if (!email) { showToast(t.saveErrorGeneric, 'error'); return }
     const updated = { ...activeCompetition, bannedEmails: [...new Set([...(activeCompetition.bannedEmails ?? []), email].filter(Boolean))] } as Competition
     setCompetitorsMap(prev => ({ ...prev, [compId]: (prev[compId] ?? []).filter(c => c.id !== competitorId) }))
     setCompetitions(prev => prev.map(comp => comp.id === compId ? updated : comp))
@@ -1506,6 +1571,17 @@ function AppInner() {
   if (!activeCompetition) {
     return (
       <div className={`min-h-screen ${theme === 'dark' ? 'bg-[#121212] text-[#EEEEEE]' : 'bg-white text-[#121212]'}`}>
+        {loadFailed && (
+          <div role="alert" style={{ position: 'fixed', left: 16, right: 16, bottom: 16, zIndex: 900, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 16px', borderRadius: 6, background: '#B91C1C', color: '#fff', fontSize: 14, boxShadow: '0 4px 16px rgba(0,0,0,.35)' }}>
+            <span>{t.loadFailedTitle}</span>
+            <button
+              onClick={() => { loadAttemptsRef.current = 0; setLoadFailed(false); setReloadToken(n => n + 1) }}
+              style={{ background: '#fff', color: '#B91C1C', border: 0, borderRadius: 4, padding: '8px 12px', fontWeight: 600, cursor: 'pointer' }}
+            >
+              {t.loadFailedRetry}
+            </button>
+          </div>
+        )}
         <NavBar
           theme={theme} setTheme={setTheme} lang={lang} setLang={handleSetLang}
           currentUser={currentUser}
@@ -1597,6 +1673,17 @@ function AppInner() {
           })(),
         }}
       >
+        {loadFailed && (
+          <div role="alert" style={{ position: 'fixed', left: 16, right: 16, bottom: 16, zIndex: 900, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 16px', borderRadius: 6, background: '#B91C1C', color: '#fff', fontSize: 14, boxShadow: '0 4px 16px rgba(0,0,0,.35)' }}>
+            <span>{t.loadFailedTitle}</span>
+            <button
+              onClick={() => { loadAttemptsRef.current = 0; setLoadFailed(false); setReloadToken(n => n + 1) }}
+              style={{ background: '#fff', color: '#B91C1C', border: 0, borderRadius: 4, padding: '8px 12px', fontWeight: 600, cursor: 'pointer' }}
+            >
+              {t.loadFailedRetry}
+            </button>
+          </div>
+        )}
 
         <Toast message={toast.message} visible={toast.visible} theme={theme} variant={toast.variant} />
 
