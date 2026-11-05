@@ -123,8 +123,10 @@ function headers(token, extra) {
   return Object.assign(h, extra || {})
 }
 function params(token, name, body, extra) {
-  return { headers: headers(token, extra && extra.headers), tags: { name }, timeout: (extra && extra.timeout) || '30s',
-           responseType: body ? 'text' : 'none', responseCallback: extra && extra.expect }
+  const p = { headers: headers(token, extra && extra.headers), tags: { name }, timeout: (extra && extra.timeout) || '30s',
+              responseType: body ? 'text' : 'none' }
+  if (extra && extra.expect) p.responseCallback = extra.expect   // an undefined callback would disable http_req_failed
+  return p
 }
 const rest  = p => `${URL}/rest/v1/${p}`
 const get   = (token, path, name, body) => http.get(rest(path), params(token, name, body))
