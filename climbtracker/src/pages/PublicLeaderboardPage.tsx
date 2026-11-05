@@ -1,6 +1,6 @@
-import { useMemo, useState, useEffect, useCallback } from 'react'
+import { useMemo, useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Share2, Check, Radio, Sun, Moon } from 'lucide-react'
+import { ArrowLeft, Share2, Check, Radio, Sun, Moon, RefreshCw } from 'lucide-react'
 import { motion } from 'motion/react'
 import ascendiaLogo from '../assets/Ascendr.webp'
 
@@ -20,6 +20,11 @@ interface PublicLeaderboardPageProps {
   bouldersMap:    Record<string, Boulder[]>
   completionsMap: Record<string, Completion[]>
 }
+
+// Auto-refresh choices for the public page (ms; 0 = manual only).
+const REFRESH_OPTIONS = [60_000, 120_000, 300_000, 600_000, 0]
+const DEFAULT_REFRESH = 120_000
+const REFRESH_KEY     = 'ct-pub-refresh'
 
 // ─── RANK BADGE ───────────────────────────────────────────────────────────────
 
@@ -65,43 +70,92 @@ export default function PublicLeaderboardPage({
   // for anonymous AND logged-in viewers. Local app state only holds the
   // completions of the user's ACTIVE competition, so using it here showed
   // everyone at 0 points for any other competition (e.g. a venue screen).
-  //   • refreshes every 30 s, and immediately when the tab becomes visible
-  //   • pauses while the tab is hidden (saves bandwidth)
-  //   • a network error keeps the last snapshot and retries in 5 s;
-  //     "not found" is shown only when the server says it does not exist
+  // Each snapshot is the whole competition (~1.5-2 MB with 400 climbers), so:
+  //   • the viewer picks how often it refreshes (default 2 min, or manual),
+  //     remembered in this browser; "Refresh now" loads it on demand
+  //   • nothing loads while the tab is hidden; coming back reloads only if
+  //     the snapshot is older than the chosen interval
+  //   • a competition that is not LIVE refreshes at most every 10 min
+  //   • a network error keeps the last snapshot and retries (5 s while there
+  //     is nothing on screen); "not found" only when the server says so
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
   const [remote,        setRemote]        = useState<PublicLeaderboardData | null>(null)
   const [remoteLoading, setRemoteLoading] = useState(true)
   const [notFound,      setNotFound]      = useState(false)
+  const [refreshing,    setRefreshing]    = useState(false)
+  const [refreshMs,     setRefreshMs]     = useState<number>(() => {
+    try {
+      const raw = localStorage.getItem(REFRESH_KEY)
+      const v   = raw === null ? NaN : Number(raw)
+      return REFRESH_OPTIONS.includes(v) ? v : DEFAULT_REFRESH
+    } catch { return DEFAULT_REFRESH }
+  })
+  const lastFetchRef = useRef(0)          // when the last snapshot arrived (0 = never)
+  const liveRef      = useRef(true)       // competition status is LIVE
+  const loadNowRef   = useRef<() => void>(() => {})
 
+  const changeRefresh = useCallback((ms: number) => {
+    setRefreshMs(ms)
+    try { localStorage.setItem(REFRESH_KEY, String(ms)) } catch { /* ignore */ }
+  }, [])
+
+  const snapshotCompRef = useRef(compId)
   useEffect(() => {
     if (!compId) return
+    if (snapshotCompRef.current !== compId) { snapshotCompRef.current = compId; lastFetchRef.current = 0 }
     let cancelled = false
+    let inFlight  = false
     let timer: ReturnType<typeof setTimeout> | undefined
-    let hasData = false
+    const interval = () => (refreshMs === 0 ? 0 : liveRef.current ? refreshMs : Math.max(refreshMs, 600_000))
     const schedule = (ms: number) => { clearTimeout(timer); timer = setTimeout(load, ms) }
+    const scheduleNext = () => {
+      clearTimeout(timer)
+      const every = interval()
+      if (every > 0) schedule(Math.max(1_000, lastFetchRef.current + every - Date.now()))
+    }
     function load() {
-      if (cancelled) return
-      if (document.visibilityState === 'hidden') { schedule(30_000); return }
+      if (cancelled || inFlight) return
+      if (document.visibilityState === 'hidden') return   // resumes in onVisible
+      inFlight = true
+      setRefreshing(true)
       fetchPublicLeaderboard(compId!)
         .then(d => {
           if (cancelled) return
-          if (d) { hasData = true; setRemote(d); setNotFound(false); setLastUpdated(new Date()) }
-          else   { setNotFound(true) }
+          lastFetchRef.current = Date.now()
+          if (d) {
+            liveRef.current = d.competition?.status === 'LIVE'
+            setRemote(d); setNotFound(false); setLastUpdated(new Date())
+          } else {
+            setNotFound(true)
+          }
           setRemoteLoading(false)
-          schedule(30_000)
+          scheduleNext()
         })
         .catch(err => {
           if (cancelled) return
           console.error('[public] leaderboard fetch failed:', err)
-          schedule(hasData ? 30_000 : 5_000)
+          if (lastFetchRef.current === 0) schedule(5_000)            // nothing on screen yet
+          else if (interval() > 0) schedule(Math.min(interval(), 30_000))
         })
+        .finally(() => { inFlight = false; setRefreshing(false) })
     }
-    function onVisible() { if (document.visibilityState === 'visible') load() }
-    load()
+    function onVisible() {
+      if (document.visibilityState !== 'visible') return
+      const every = interval()
+      if (lastFetchRef.current === 0 || (every > 0 && Date.now() - lastFetchRef.current >= every)) load()
+      else scheduleNext()
+    }
+    loadNowRef.current = load
+    if (lastFetchRef.current === 0) load()   // first visit
+    else scheduleNext()                      // interval changed: keep the current snapshot
     document.addEventListener('visibilitychange', onVisible)
-    return () => { cancelled = true; clearTimeout(timer); document.removeEventListener('visibilitychange', onVisible) }
-  }, [compId])
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+      loadNowRef.current = () => {}
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [compId, refreshMs])
 
   // Kept in the props for compatibility; the page no longer reads app state.
   void competitions; void competitorsMap; void bouldersMap; void completionsMap
@@ -255,6 +309,30 @@ export default function PublicLeaderboardPage({
             {isLive && (
               <span className={`text-[11px] ${dk ? 'text-[#393C41]' : 'text-[#D0D1D2]'}`}>{updatedLabel}</span>
             )}
+            <div className="flex items-center gap-1.5 ml-auto">
+              <label className={`flex items-center gap-1.5 text-[11px] ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
+                <span className="hidden sm:inline">{t.publicRefreshLabel}</span>
+                <select
+                  value={refreshMs}
+                  onChange={e => changeRefresh(Number(e.target.value))}
+                  aria-label={t.publicRefreshLabel}
+                  className={`px-1.5 py-1 rounded border text-[11px] cursor-pointer outline-none ${dk ? 'border-white/10 bg-[#1A1A1A] text-[#D0D1D2]' : 'border-[#EEEEEE] bg-white text-[#393C41]'}`}
+                >
+                  {REFRESH_OPTIONS.map(ms => (
+                    <option key={ms} value={ms}>{ms === 0 ? t.publicRefreshOff : `${ms / 60_000} min`}</option>
+                  ))}
+                </select>
+              </label>
+              <button
+                onClick={() => loadNowRef.current()}
+                disabled={refreshing}
+                title={t.publicRefreshNow}
+                aria-label={t.publicRefreshNow}
+                className={`p-1.5 rounded border transition-colors duration-[330ms] disabled:opacity-60 ${dk ? 'border-white/10 bg-white/[0.04] text-[#5C5E62] hover:text-[#D0D1D2]' : 'border-[#EEEEEE] bg-[#F4F4F4] text-[#8E8E8E] hover:text-[#393C41]'}`}
+              >
+                <RefreshCw size={12} className={refreshing ? 'animate-spin' : ''} />
+              </button>
+            </div>
           </div>
 
           <h1 className={`text-2xl sm:text-3xl font-medium mb-1.5 leading-tight ${dk ? 'text-[#EEEEEE]' : 'text-[#121212]'}`}>
