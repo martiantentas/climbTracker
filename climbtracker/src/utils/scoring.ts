@@ -1,4 +1,4 @@
-import type { Competition, Boulder, Competitor, Completion, RankResult } from '../types'
+import type { Competition, Boulder, Competitor, Completion, DifficultyLevel, RankResult } from '../types'
 import { ScoringType } from '../types'
 
 // Boulders deleted by an organizer are kept with status 'removed' (soft
@@ -27,6 +27,20 @@ function topsByBoulder(all: Completion[]): Map<string, number> {
 //   with_top       — zone pts only if the boulder was also topped
 //   without_top    — zone pts only if the boulder was NOT topped (consolation)
 //   tie_breaker_only (legacy) — zones never add points
+
+// Floor for attempt penalties, most specific first: the boulder's own value,
+// else its difficulty level's, else the competition-wide value (0 = none).
+// It only limits the penalty, so it never exceeds the points the top is
+// worth without penalty. undefined = no floor.
+function penaltyFloor(
+  boulder:     Boulder,
+  difficulty:  DifficultyLevel | undefined,
+  unpenalized: number,
+  globalFloor: number | undefined,
+): number | undefined {
+  const floor = boulder.minPointsOverride ?? difficulty?.minPoints ?? (globalFloor ? globalFloor : undefined)
+  return floor === undefined ? undefined : Math.min(floor, unpenalized)
+}
 
 function calcTraditionalPoints(
   completion: Completion,
@@ -70,9 +84,13 @@ function calcTraditionalPoints(
         // Compound decay: each extra attempt reduces by penaltyValue% of the running total
         topPoints = difficulty.basePoints * Math.pow(1 - penaltyValue / 100, completion.attempts - 1)
       }
+      const floor = penaltyFloor(boulder, difficulty, difficulty.basePoints, comp.minScorePerBoulder)
+      if (floor !== undefined) topPoints = Math.max(topPoints, floor)
     }
 
-    points += Math.max(Math.round(topPoints), comp.minScorePerBoulder ?? 0)
+    // The minimum only limits penalties (see penaltyFloor): an unpenalized
+    // top is worth exactly its basePoints, never more.
+    points += Math.max(Math.round(topPoints), 0)
   }
 
   return Math.max(points, 0)
@@ -154,12 +172,17 @@ export function calcBoulderPoints(
     const penaltyValue = boulder.penaltyValueOverride ?? competition.penaltyValue ?? 0
 
     if (shouldPenalize && completion.attempts > 1) {
+      const share = topPoints
       if (competition.penaltyType === 'fixed') {
         topPoints -= (completion.attempts - 1) * penaltyValue
       } else {
         // Compound decay: each extra attempt reduces by penaltyValue% of the running total
         topPoints = topPoints * Math.pow(1 - penaltyValue / 100, completion.attempts - 1)
       }
+      const difficulty = (competition.difficultyLevels ?? []).find(d => d.id === boulder.difficultyId)
+      // Dynamic mode keeps its own competition-wide floor (minDynamicPoints, below).
+      const floor = penaltyFloor(boulder, difficulty, share, undefined)
+      if (floor !== undefined) topPoints = Math.max(topPoints, floor)
       topPoints = Math.max(Math.round(topPoints), competition.minDynamicPoints ?? 0)
     }
 

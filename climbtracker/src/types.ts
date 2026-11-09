@@ -35,6 +35,9 @@ export interface DifficultyLevel {
   label:      string
   basePoints: number
   zonePoints: number
+  // Optional floor for attempt penalties: a top on this level never drops
+  // below it (capped at basePoints). Empty = no floor.
+  minPoints?: number
 }
 
 // ─── BOULDER ──────────────────────────────────────────────────────────────────
@@ -55,6 +58,7 @@ export interface Boulder {
   flashBonus?:              number  // extra pts awarded when topped on the first attempt
   penaltyOverride?:         'inherit' | 'penalize' | 'no_penalty'
   penaltyValueOverride?:    number  // overrides comp.penaltyValue when penaltyOverride === 'penalize'
+  minPointsOverride?:       number  // penalty floor for this boulder; overrides the level's minPoints
 }
 
 // ─── COMPETITOR ───────────────────────────────────────────────────────────────

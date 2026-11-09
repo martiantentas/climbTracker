@@ -70,7 +70,11 @@ export default function BoulderModal({
   const [penaltyValueOverride, setPenaltyValueOverride] = useState<number | ''>(
     boulder?.penaltyValueOverride ?? ''
   )
+  const [minPointsOverride, setMinPointsOverride] = useState<number | ''>(
+    boulder?.minPointsOverride ?? ''
+  )
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const levelMinPoints = competition.difficultyLevels.find(d => d.id === difficultyId)?.minPoints
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
@@ -109,6 +113,7 @@ export default function BoulderModal({
       attemptTrackingOverride: trackingOverride === 'inherit' ? undefined : trackingOverride,
       penaltyOverride:         penaltyOverride === 'inherit' ? undefined : penaltyOverride,
       penaltyValueOverride:    penaltyOverride === 'penalize' && penaltyValueOverride !== '' ? penaltyValueOverride : undefined,
+      minPointsOverride:       penaltyOverride !== 'no_penalty' && minPointsOverride !== '' ? minPointsOverride : undefined,
     })
     onClose()
   }
@@ -388,6 +393,34 @@ export default function BoulderModal({
               </motion.div>
             )}
             </AnimatePresence>
+
+            {penaltyOverride !== 'no_penalty' && (
+              <div className="mt-3 pl-1">
+                <label className={labelCls}>{t.modalMinPointsLabel}</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="number"
+                    min={0}
+                    value={minPointsOverride}
+                    placeholder={levelMinPoints === undefined ? '–' : String(levelMinPoints)}
+                    onChange={e => setMinPointsOverride(e.target.value === '' ? '' : Math.max(0, Math.round(Number(e.target.value))))}
+                    className={`${inputCls} w-32`}
+                  />
+                  <span className={`text-xs ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>pts</span>
+                  {minPointsOverride !== '' && (
+                    <button
+                      onClick={() => setMinPointsOverride('')}
+                      className={`text-xs transition-colors duration-[330ms] ${dk ? 'text-[#5C5E62] hover:text-[#D0D1D2]' : 'text-[#8E8E8E] hover:text-[#393C41]'}`}
+                    >
+                      {t.remove}
+                    </button>
+                  )}
+                </div>
+                <p className={`text-[10px] mt-1.5 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>
+                  {t.modalMinPointsHint(levelMinPoints)}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Dynamic pot override */}

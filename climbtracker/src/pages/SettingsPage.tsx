@@ -678,7 +678,7 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
     const remaining = draft.difficultyLevels.filter(d => d.id !== id)
     set('difficultyLevels', remaining.map((d, i) => ({ ...d, level: i + 1 })))
   }
-  function updateDifficulty(id: string, field: keyof DifficultyLevel, value: string | number) {
+  function updateDifficulty(id: string, field: keyof DifficultyLevel, value: string | number | undefined) {
     set('difficultyLevels', (draft.difficultyLevels ?? []).map(d => d.id === id ? { ...d, [field]: value } : d))
   }
 
@@ -1164,6 +1164,17 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
                   <label className={`text-[10px] font-medium mb-1 block ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.zonePts}</label>
                   <input type="number" value={d.zonePoints} onChange={e => updateDifficulty(d.id, 'zonePoints', Math.round(Number(e.target.value)))} className={`${inputClass} py-2`} />
                 </div>
+                <div className="flex-1">
+                  <label className={`text-[10px] font-medium mb-1 block ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.minPts}</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={d.minPoints ?? ''}
+                    placeholder="–"
+                    onChange={e => updateDifficulty(d.id, 'minPoints', e.target.value === '' ? undefined : Math.max(0, Math.round(Number(e.target.value))))}
+                    className={`${inputClass} py-2`}
+                  />
+                </div>
                 <motion.button
                   onClick={() => removeDifficulty(d.id)}
                   disabled={draft.difficultyLevels.length <= 1}
@@ -1178,6 +1189,7 @@ export default function SettingsPage({ competition, theme, lang, onUpdate, compe
             </div>
           ))}
         </div>
+        <p className={`text-[10px] -mt-2 mb-4 ${dk ? 'text-[#5C5E62]' : 'text-[#8E8E8E]'}`}>{t.minPtsHint}</p>
         <motion.button
           onClick={addDifficulty}
           className={`w-full py-3 rounded border-2 border-dashed text-sm font-medium flex items-center justify-center gap-2 transition-colors duration-[330ms] ${dk ? 'border-white/10 text-[#5C5E62] hover:border-[#7F8BAD]/30 hover:text-[#7F8BAD]' : 'border-[#EEEEEE] text-[#8E8E8E] hover:border-[#7F8BAD]/40 hover:text-[#7F8BAD]'}`}
