@@ -23,6 +23,8 @@ import Toast from './components/Toast'
 import WalkthroughModal, { shouldShowWalkthrough, markWalkthroughSeen } from './components/WalkthroughModal'
 import UndoToast from './components/UndoToast'
 import MobileMenu from './components/MobileMenu'
+import { NotificationBell, NotificationPopup } from './components/NotificationCenter'
+import { useNotifications } from './hooks/useNotifications'
 import ProtectedRoute from './components/ProtectedRoute'
 
 // ─── LAZY PAGE IMPORTS (code-split per route) ─────────────────────────────────
@@ -36,6 +38,10 @@ const SettingsPage          = lazy(() => import('./pages/SettingsPage'))
 const JudgingPage           = lazy(() => import('./pages/JudgingPage'))
 const AnalyticsPage         = lazy(() => import('./pages/AnalyticsPage'))
 const JoinPage              = lazy(() => import('./pages/JoinPage'))
+
+// Stable empty lists (a new [] on every render would re-run effects that depend on them)
+const EMPTY_COMPLETIONS: Completion[] = []
+const EMPTY_BOULDERS:    Boulder[]    = []
 const EventProfilePage      = lazy(() => import('./pages/EventProfilePage'))
 const LandingPage           = lazy(() => import('./pages/LandingPage'))
 const AuthPage              = lazy(() => import('./pages/AuthPage'))
@@ -925,6 +931,19 @@ function AppInner() {
 
   const isJudge = compRole === 'judge'
 
+  // In-app notifications (bell + pop-ups) for the active competition.
+  // Only members and staff of the competition load them.
+  const canAccessForNotifications =
+    !!activeCompetition && !!currentUser &&
+    (compRole !== null || (competitorsMap[activeCompetition.id] ?? []).some(c => c.id === currentUser.id))
+  const notifications = useNotifications({
+    competition: canAccessForNotifications ? activeCompetition : undefined,
+    userId:      currentUser?.id,
+    myRole:      compRole,
+    completions: completionsMap[activeCompetition?.id ?? ''] ?? EMPTY_COMPLETIONS,
+    boulders:    bouldersMap[activeCompetition?.id ?? '']    ?? EMPTY_BOULDERS,
+  })
+
   const canAccessActiveComp = useMemo(() =>
     isOrganizer || isJudge || (activeCompetition
       ? (competitorsMap[activeCompetition.id] ?? []).some(c => c.id === currentUser?.id)
@@ -1780,7 +1799,17 @@ function AppInner() {
             })()}
           onOpenMenu={() => setIsMenuOpen(true)}
           onLogout={() => { setCurrentUser(null); signOutUser(); goto('/', { replace: true }) }}
+          notificationBell={canAccessForNotifications && activeCompetition ? (
+            <NotificationBell
+              state={notifications} competition={activeCompetition} members={activeCompetitors}
+              theme={theme} lang={lang}
+            />
+          ) : undefined}
         />
+
+        {canAccessForNotifications && (
+          <NotificationPopup state={notifications} theme={theme} lang={lang} />
+        )}
 
         <MobileMenu
           isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)}

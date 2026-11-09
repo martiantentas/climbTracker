@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { motion } from 'motion/react'
 import { Sun, Moon, User, Menu, LogOut, Settings, ChevronLeft } from 'lucide-react'
@@ -23,6 +24,7 @@ interface NavBarProps {
   branding?:          { logoDataUrl?: string; accentColor?: string; lightBg?: string; darkBg?: string }
   onOpenMenu:         () => void
   onLogout:           () => void
+  notificationBell?:  ReactNode   // shown in the right controls when set
 }
 
 const TAB_SPRING = { type: 'spring', stiffness: 400, damping: 32, mass: 0.8 } as const
@@ -74,6 +76,7 @@ export default function NavBar({
   branding,
   onOpenMenu,
   onLogout,
+  notificationBell,
 }: NavBarProps) {
   const t   = translations[lang]
   const loc = useLocation()
@@ -189,6 +192,9 @@ export default function NavBar({
             <option value="es">ES</option>
             <option value="ca">CA</option>
           </select>
+
+          {/* Notifications */}
+          {notificationBell}
 
           {/* Theme toggle */}
           <motion.button
