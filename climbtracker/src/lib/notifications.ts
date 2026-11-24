@@ -65,6 +65,7 @@ export async function fetchNotifications(competitionId: string): Promise<AppNoti
   const { data, error } = await table()
     .select('id, competition_id, title, body, target_roles, target_traits, target_genders, target_bibs, created_by, created_at')
     .eq('competition_id', competitionId)
+    .is('deleted_at', null)
     .order('created_at', { ascending: false })
     .limit(100)
   if (error) throw error
@@ -93,8 +94,10 @@ export async function sendNotification(
   return rowToNotification(data as NotificationRow)
 }
 
+// "Delete" marks the announcement as deleted (the database erases its text).
+// A real DELETE would be broadcast to every connected app, see 17_notifications_soft_delete.sql.
 export async function deleteNotification(id: string): Promise<void> {
-  const { error } = await table().delete().eq('id', id)
+  const { error } = await table().update({ deleted_at: new Date().toISOString() }).eq('id', id)
   if (error) throw error
 }
 

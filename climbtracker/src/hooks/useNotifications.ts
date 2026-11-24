@@ -93,12 +93,14 @@ export function useNotifications({ competition, userId, myRole, completions, bou
           if (n.createdBy !== userId) pushPopup(n)
         }
       })
-      // Delete events cannot be filtered by competition: ignore unknown ids.
-      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'notifications' }, payload => {
-        const id = (payload.old as { id?: string }).id
-        if (!id) return
-        setRemote(prev => prev.filter(p => p.id !== id))
-        setPopups(prev => prev.filter(p => p.id !== id))
+      // An organizer deleted an announcement: it arrives as an UPDATE that sets
+      // deleted_at. (DELETE events are not used: they cannot be filtered by
+      // competition, so every app would receive them.)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'notifications', filter: `competition_id=eq.${compId}` }, payload => {
+        const row = payload.new as { id?: string; deleted_at?: string | null }
+        if (!row.id || !row.deleted_at) return
+        setRemote(prev => prev.filter(p => p.id !== row.id))
+        setPopups(prev => prev.filter(p => p.id !== row.id))
       })
       .subscribe(status => {
         // A re-join means events may have been missed while offline.
