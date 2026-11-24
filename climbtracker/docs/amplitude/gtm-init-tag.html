@@ -1,0 +1,29 @@
+<script>
+(function () {
+  var key = {{Amplitude API key}};
+  // Safety: do nothing until a real 32-character project key is in the lookup variable.
+  if (!/^[0-9a-f]{32}$/.test(key)) { console.warn('[Amplitude] API key not set, tracking disabled'); return; }
+  if (window.__ascendrAmplitudeLoading) return;
+  window.__ascendrAmplitudeLoading = true;
+
+  // The analytics library only, pinned to one version and checked with a hash.
+  // Do NOT use the project's install snippet (cdn.eu.amplitude.com/script/KEY.js):
+  // it also loads Session Replay and asks Amplitude for remote settings.
+  // To upgrade: change the version here and the hash (see the guide, section 7).
+  var s = document.createElement('script');
+  s.async = true;
+  s.crossOrigin = 'anonymous';
+  s.integrity = 'sha384-lKBFu+lrE+l3rHaNqttqd3e3ga1kwCKyeO1JiVVq2NlrrkHTdt8SobN3bqqLSKSw';
+  s.src = 'https://cdn.eu.amplitude.com/libs/analytics-browser-2.42.4-min.js.gz';   // EU host: same file, same hash
+  s.onload = function () {
+    window.amplitude.init(key, {
+      serverZone: 'EU',                            // EU data region: needs an EU project key
+      autocapture: false,                          // only the events in the tracking plan
+      fetchRemoteConfig: false,                    // the code, not the Amplitude UI, decides the settings
+      remoteConfig: { fetchRemoteConfig: false }
+    });
+    window.amplitude.setOptOut(false);
+  };
+  document.head.appendChild(s);
+})();
+</script>

@@ -115,12 +115,14 @@ Hacen falta dos cosas a la vez para estar en la UE: la clave de un proyecto de l
 |---|---|
 | Variable `Amplitude API key` | Elige la clave según el dominio. `ascendr.top` y `www.ascendr.top` usan la de prod. Cualquier otro (localhost, previews de Vercel) usa la de dev. |
 | Variables `DLV - amp_payload` y `DLV - analytics_consent` | Leen del dataLayer el mensaje y la decisión de cookies. |
-| Tag `Amplitude - Init` | Carga solo la librería de analítica (versión 2.42.4, con comprobación de hash) y la arranca con la región de la UE, sin autocapture y sin ajustes remotos. Se dispara una vez por página, solo con consentimiento. |
+| Tag `Amplitude - Init` | Carga solo la librería de analítica (versión 2.42.4, desde el servidor de la UE y con comprobación de hash) y la arranca con la región de la UE, sin autocapture y sin ajustes remotos. Se dispara una vez por página, solo con consentimiento. |
 | Tag `Amplitude - Dispatcher` | Es el único que envía datos. Reenvía los tres tipos de mensaje de la app. Exige consentimiento. |
 | Tag `Amplitude - Opt out` | Apaga Amplitude si la persona retira el consentimiento. No exige consentimiento, porque solo detiene el seguimiento. |
 | Trigger `CE - cookie_consent_update granted` | Se activa cuando el banner informa de que se aceptaron las cookies. El banner lo envía en cada carga, también para quien aceptó en una visita anterior. |
 | Trigger `CE - cookie_consent_update denied` | Se activa cuando se rechazan o se retiran. |
 | Trigger `CE - amplitude messages` | Se activa con `amplitude_event`, `amplitude_identify` o `amplitude_reset`. |
+
+**Si tienes que editar un tag a mano.** Abre el tag, borra todo el contenido del campo HTML y pega solo el contenido de [gtm-init-tag.html](gtm-init-tag.html). Es HTML normal, de `<script>` a `</script>`. No pegues nunca el archivo `.json` en un tag: es el archivo de importación y GTM no puede publicarlo como HTML.
 
 Mientras la variable `Amplitude API key` tenga los valores de ejemplo, `Amplitude - Init` no carga nada y avisa por consola. Es una protección para que un olvido no envíe datos a ninguna parte.
 
@@ -193,8 +195,8 @@ Para añadir un evento nuevo:
 
 Para actualizar la versión de la librería de Amplitude:
 
-1. Cambia el número de versión en la dirección del tag `Amplitude - Init`.
-2. Calcula el hash nuevo con este comando, cambiando la versión: `curl -s --compressed https://cdn.amplitude.com/libs/analytics-browser-VERSION-min.js.gz | openssl dgst -sha384 -binary | openssl base64 -A`
+1. Cambia el número de versión en la dirección del tag `Amplitude - Init` y comprueba que existe en el servidor de la UE.
+2. Calcula el hash nuevo con este comando, cambiando la versión: `curl -s --compressed https://cdn.eu.amplitude.com/libs/analytics-browser-VERSION-min.js.gz | openssl dgst -sha384 -binary | openssl base64 -A`
 3. Pon el resultado en el tag, precedido de `sha384-`.
 4. Si el hash no coincide, el navegador bloquea la librería y no se mide nada. Es una protección a propósito.
 
