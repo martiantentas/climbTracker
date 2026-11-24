@@ -58,7 +58,7 @@ export default function PrivacyPolicyPage({ lang }: { lang: Language }) {
   const L = {
     en: {
       title1: 'Privacy ', title2: 'Policy',
-      updated: 'Last updated: September 2026',
+      updated: 'Last updated: November 2026',
       cookieBtn: 'Manage cookie preferences',
       chipLabels: { tradingName: 'Trading name', address: 'Address' },
       sections: [
@@ -81,6 +81,7 @@ export default function PrivacyPolicyPage({ lang }: { lang: Language }) {
           ['Competition data',   'Categories, BIB numbers, scores (tops, zones, attempts), timestamps of logged ascents, and per-competition traits assigned by organisers.'],
           ['Profile data',       'An optional emoji avatar chosen by the user. No profile photos or biometric data are processed.'],
           ['Usage session data', 'Standard web server logs (IP address, browser type, pages visited) retained briefly for security and debugging. No cross-site tracking is performed.'],
+          ['Product usage data (with consent)', 'If you accept analytics cookies: the actions you take inside the application after signing in (for example signing in, creating or joining a competition, saving a score), the language and role you use, your browser and device type, and an approximate location derived from your IP address. These events are linked to a random user identifier, not to your name or email address.'],
         ] as [string, string][],
         s3intro: 'Ascendr uses a limited set of cookies and local storage entries. We do not use advertising cookies or share browsing data with data brokers.',
         s3essentialHeading: 'Technically necessary (no consent required)',
@@ -91,18 +92,21 @@ export default function PrivacyPolicyPage({ lang }: { lang: Language }) {
         ] as [string, string, string, string][],
         s3analyticsHeading: 'Analytics cookies (consent required)',
         s3analyticsBefore: 'With your consent, Ascendr uses ',
-        s3analyticsAfter: ' (via Google Tag Manager) to understand how visitors use the site and to improve it. No advertising or cross-site profiling is performed.',
+        s3analyticsAfter: ' (via Google Tag Manager) to understand how the website is used, and Amplitude to understand how the application is used once you have signed in. Both help us improve the product. No advertising or cross-site profiling is performed.',
         s3analyticsCookies: [
           ['_ga',             'Google Analytics', 'Identifies unique users across sessions.',      '2 years'],
           ['_ga_SL24MGJ1ZX',  'Google Analytics', 'Stores and counts page-view sessions.',         '2 years'],
+          ['AMP_*', 'Amplitude', 'Stores a random device identifier, your user identifier and your visit (session), so that your actions can be linked within and across visits. Set only after you accept analytics cookies.', '1 year'],
         ] as [string, string, string, string][],
         s3gdprPara: "Data collected by Google Analytics is processed by Google LLC (USA) under the EU–US Data Privacy Framework. For more information see",
         s3gdprLinkText: "Google's Privacy Policy",
+        s3amplitudePara: "Data collected by Amplitude is stored in Amplitude's European data region and processed on our behalf by Amplitude, Inc. (USA). Any access from outside the European Economic Area is subject to appropriate safeguards under Chapter V of the GDPR. For more information see",
+        s3amplitudeLinkText: "Amplitude's Privacy Notice",
         s4purposes: [
           ['Account management & service delivery', 'To create and maintain your user account and provide access to the Ascendr platform.',                                                                                                                          'Performance of contract — Art. 6(1)(b) GDPR'],
           ['Competition participation',             'To register you in competitions, assign BIB numbers, record scores, and display your results on rankings.',                                                                                                    'Performance of contract — Art. 6(1)(b) GDPR'],
           ['Public leaderboards',                   'Competition results (name, BIB, score) may be displayed on public results pages linked by the competition organiser.',                                                                                         'Legitimate interest — Art. 6(1)(f) GDPR'],
-          ['Analytics (with consent)',              'We use Google Analytics 4 to understand how the site is used and to improve the product. Analytics cookies are only set after you give explicit consent via the cookie banner.',                               'Consent — Art. 6(1)(a) GDPR'],
+          ['Analytics (with consent)', 'We use Google Analytics 4 to understand how the website is used and Amplitude to understand how the application is used once you have signed in, so that we can improve the product. Analytics cookies are only set, and Amplitude only receives data, after you give explicit consent via the cookie banner. You can withdraw consent at any time with "Manage cookie preferences".', 'Consent — Art. 6(1)(a) GDPR'],
           ['Security & abuse prevention',           'Server logs and session data are processed to detect and prevent unauthorised access.',                                                                                                                        'Legitimate interest — Art. 6(1)(f) GDPR'],
           ['Legal compliance',                      'We retain data as required by applicable tax and legal obligations.',                                                                                                                                          'Legal obligation — Art. 6(1)(c) GDPR'],
         ] as [string, string, string][],
@@ -111,11 +115,13 @@ export default function PrivacyPolicyPage({ lang }: { lang: Language }) {
           'Account data is kept for as long as your account is active. If you request account deletion, your data will be removed within 30 days, unless retention is required by law.',
           'Competition result data (scores, rankings) may be retained in anonymised or aggregated form beyond account deletion for statistical and historical purposes.',
           'Server logs are retained for a maximum of 90 days for security purposes.',
+          'Product analytics data in Amplitude is kept while your account is active. If you ask us to delete your account, we also send a deletion request to Amplitude, which completes it within 30 days.',
         ],
         s6intro: 'Ascendr does not sell your personal data to third parties. Your data may be shared only with:',
         s6items: [
           'Hosting and infrastructure providers (Supabase, Vercel) that process data on our behalf under appropriate data processing agreements.',
           'Google LLC — for analytics via Google Analytics 4 and Google Tag Manager, only when you have given consent. Data may be processed in the USA under the EU–US Data Privacy Framework.',
+          'Amplitude, Inc.: for product analytics inside the application, only when you have given consent. Data is stored in Amplitude\'s European data region.',
           'Payment processors (Stripe) for the processing of competition fees. Payment data is handled directly by the payment provider and is not stored by Ascendr.',
           'Public authorities, when required by law.',
         ],
@@ -138,7 +144,7 @@ export default function PrivacyPolicyPage({ lang }: { lang: Language }) {
     },
     es: {
       title1: 'Política de ', title2: 'Privacidad',
-      updated: 'Última actualización: septiembre de 2026',
+      updated: 'Última actualización: noviembre de 2026',
       cookieBtn: 'Gestionar preferencias de cookies',
       chipLabels: { tradingName: 'Nombre comercial', address: 'Dirección' },
       sections: [
@@ -161,6 +167,7 @@ export default function PrivacyPolicyPage({ lang }: { lang: Language }) {
           ['Datos de competición',     'Categorías, dorsales, puntuaciones (cimas, zonas, intentos), marcas de tiempo de las vías registradas y atributos por competición asignados por los organizadores.'],
           ['Datos de perfil',          'Un avatar emoji opcional elegido por el usuario. No se procesan fotografías de perfil ni datos biométricos.'],
           ['Datos de sesión de uso',   'Registros estándar del servidor web (dirección IP, tipo de navegador, páginas visitadas) conservados brevemente por motivos de seguridad y depuración. No se realiza seguimiento entre sitios.'],
+          ['Datos de uso del producto (con consentimiento)', 'Si acepta las cookies analíticas: las acciones que realiza dentro de la aplicación después de iniciar sesión (por ejemplo, iniciar sesión, crear o unirse a una competición, guardar una puntuación), el idioma y el rol que utiliza, el tipo de navegador y de dispositivo, y una ubicación aproximada deducida de su dirección IP. Estos eventos se asocian a un identificador de usuario aleatorio, no a su nombre ni a su correo electrónico.'],
         ] as [string, string][],
         s3intro: 'Ascendr utiliza un conjunto limitado de cookies y entradas de almacenamiento local. No utilizamos cookies publicitarias ni compartimos datos de navegación con intermediarios de datos.',
         s3essentialHeading: 'Técnicamente necesarias (no requieren consentimiento)',
@@ -171,18 +178,21 @@ export default function PrivacyPolicyPage({ lang }: { lang: Language }) {
         ] as [string, string, string, string][],
         s3analyticsHeading: 'Cookies analíticas (requieren consentimiento)',
         s3analyticsBefore: 'Con su consentimiento, Ascendr utiliza ',
-        s3analyticsAfter: ' (a través de Google Tag Manager) para comprender cómo los visitantes utilizan el sitio y mejorarlo. No se realiza publicidad ni perfilado entre sitios.',
+        s3analyticsAfter: ' (a través de Google Tag Manager) para comprender cómo se utiliza el sitio web, y Amplitude para comprender cómo se utiliza la aplicación una vez iniciada la sesión. Ambas nos ayudan a mejorar el producto. No se realiza publicidad ni perfilado entre sitios.',
         s3analyticsCookies: [
           ['_ga',            'Google Analytics', 'Identifica usuarios únicos entre sesiones.',                 '2 años'],
           ['_ga_SL24MGJ1ZX', 'Google Analytics', 'Almacena y contabiliza las sesiones de páginas vistas.',    '2 años'],
+          ['AMP_*', 'Amplitude', 'Almacena un identificador aleatorio del dispositivo, su identificador de usuario y su visita (sesión), para poder relacionar sus acciones dentro de una visita y entre visitas. Solo se establece después de aceptar las cookies analíticas.', '1 año'],
         ] as [string, string, string, string][],
         s3gdprPara: 'Los datos recopilados por Google Analytics son procesados por Google LLC (EE. UU.) en virtud del Marco de Privacidad de Datos UE-EE. UU. Para más información, consulte',
         s3gdprLinkText: 'la Política de Privacidad de Google',
+        s3amplitudePara: 'Los datos recopilados por Amplitude se almacenan en la región de datos europea de Amplitude y los trata en nuestro nombre Amplitude, Inc. (EE. UU.). Cualquier acceso desde fuera del Espacio Económico Europeo está sujeto a las garantías adecuadas del Capítulo V del RGPD. Para más información, consulte',
+        s3amplitudeLinkText: 'el Aviso de Privacidad de Amplitude',
         s4purposes: [
           ['Gestión de cuenta y prestación del servicio', 'Para crear y mantener su cuenta de usuario y proporcionar acceso a la plataforma Ascendr.',                                                                                                                                           'Ejecución de contrato — Art. 6(1)(b) RGPD'],
           ['Participación en competiciones',              'Para inscribirle en competiciones, asignar dorsales, registrar puntuaciones y mostrar sus resultados en las clasificaciones.',                                                                                                        'Ejecución de contrato — Art. 6(1)(b) RGPD'],
           ['Clasificaciones públicas',                    'Los resultados de la competición (nombre, dorsal, puntuación) pueden mostrarse en páginas de resultados públicas enlazadas por el organizador de la competición.',                                                                    'Interés legítimo — Art. 6(1)(f) RGPD'],
-          ['Analíticas (con consentimiento)',             'Utilizamos Google Analytics 4 para entender cómo se usa el sitio y mejorar el producto. Las cookies analíticas solo se establecen una vez que otorga su consentimiento explícito mediante el banner de cookies.',                   'Consentimiento — Art. 6(1)(a) RGPD'],
+          ['Analíticas (con consentimiento)', 'Utilizamos Google Analytics 4 para entender cómo se usa el sitio web y Amplitude para entender cómo se usa la aplicación una vez iniciada la sesión, con el fin de mejorar el producto. Las cookies analíticas solo se establecen, y Amplitude solo recibe datos, una vez que otorga su consentimiento explícito mediante el banner de cookies. Puede retirar el consentimiento en cualquier momento con «Gestionar preferencias de cookies».', 'Consentimiento — Art. 6(1)(a) RGPD'],
           ['Seguridad y prevención del abuso',            'Los registros del servidor y los datos de sesión se procesan para detectar y prevenir accesos no autorizados.',                                                                                                                       'Interés legítimo — Art. 6(1)(f) RGPD'],
           ['Cumplimiento legal',                          'Conservamos los datos según exigen las obligaciones fiscales y legales aplicables.',                                                                                                                                                   'Obligación legal — Art. 6(1)(c) RGPD'],
         ] as [string, string, string][],
@@ -191,11 +201,13 @@ export default function PrivacyPolicyPage({ lang }: { lang: Language }) {
           'Los datos de la cuenta se conservan mientras su cuenta esté activa. Si solicita la eliminación de su cuenta, sus datos se suprimirán en un plazo de 30 días, salvo que la ley exija su conservación.',
           'Los datos de resultados de competiciones (puntuaciones, clasificaciones) pueden conservarse en forma anonimizada o agregada más allá de la eliminación de la cuenta con fines estadísticos e históricos.',
           'Los registros del servidor se conservan un máximo de 90 días por motivos de seguridad.',
+          'Los datos de analítica de producto en Amplitude se conservan mientras su cuenta esté activa. Si solicita la eliminación de su cuenta, también enviamos una solicitud de eliminación a Amplitude, que la completa en un plazo de 30 días.',
         ],
         s6intro: 'Ascendr no vende sus datos personales a terceros. Sus datos solo pueden compartirse con:',
         s6items: [
           'Proveedores de alojamiento e infraestructura (Supabase, Vercel) que tratan los datos en nuestro nombre bajo acuerdos de tratamiento de datos apropiados.',
           'Google LLC — para analíticas mediante Google Analytics 4 y Google Tag Manager, únicamente cuando haya dado su consentimiento. Los datos pueden procesarse en EE. UU. bajo el Marco de Privacidad de Datos UE-EE. UU.',
+          'Amplitude, Inc.: para analítica de producto dentro de la aplicación, únicamente cuando haya dado su consentimiento. Los datos se almacenan en la región de datos europea de Amplitude.',
           'Procesadores de pago (Stripe) para el procesamiento de las tarifas de competición. Los datos de pago son gestionados directamente por el proveedor de pago y no son almacenados por Ascendr.',
           'Autoridades públicas, cuando así lo exija la ley.',
         ],
@@ -218,7 +230,7 @@ export default function PrivacyPolicyPage({ lang }: { lang: Language }) {
     },
     ca: {
       title1: 'Política de ', title2: 'Privacitat',
-      updated: 'Darrera actualització: setembre de 2026',
+      updated: 'Darrera actualització: novembre de 2026',
       cookieBtn: 'Gestionar preferències de galetes',
       chipLabels: { tradingName: 'Nom comercial', address: 'Adreça' },
       sections: [
@@ -241,6 +253,7 @@ export default function PrivacyPolicyPage({ lang }: { lang: Language }) {
           ["Dades de competició",      "Categories, dorsals, puntuacions (cims, zones, intents), marques de temps de les vies registrades i atributs per competició assignats pels organitzadors."],
           ["Dades de perfil",          "Un avatar emoji opcional escollit per l'usuari. No es processen fotografies de perfil ni dades biomètriques."],
           ["Dades de sessió d'ús",     "Registres estàndard del servidor web (adreça IP, tipus de navegador, pàgines visitades) conservats breument per motius de seguretat i depuració. No es realitza cap seguiment entre llocs."],
+          ["Dades d'ús del producte (amb consentiment)", "Si accepta les cookies analítiques: les accions que fa dins de l'aplicació després d'iniciar sessió (per exemple, iniciar sessió, crear una competició o unir-s'hi, desar una puntuació), l'idioma i el rol que utilitza, el tipus de navegador i de dispositiu, i una ubicació aproximada deduïda de la seva adreça IP. Aquests esdeveniments s'associen a un identificador d'usuari aleatori, no al seu nom ni al seu correu electrònic."],
         ] as [string, string][],
         s3intro: "Ascendr utilitza un conjunt limitat de cookies i entrades d'emmagatzematge local. No fem servir cookies publicitàries ni compartim dades de navegació amb intermediaris de dades.",
         s3essentialHeading: 'Tècnicament necessàries (no requereixen consentiment)',
@@ -251,18 +264,21 @@ export default function PrivacyPolicyPage({ lang }: { lang: Language }) {
         ] as [string, string, string, string][],
         s3analyticsHeading: 'Cookies analítiques (requereixen consentiment)',
         s3analyticsBefore: "Amb el vostre consentiment, Ascendr fa servir ",
-        s3analyticsAfter: " (a través de Google Tag Manager) per entendre com els visitants fan servir el lloc i millorar-lo. No es realitza publicitat ni perfilatge entre llocs.",
+        s3analyticsAfter: " (a través de Google Tag Manager) per entendre com es fa servir el lloc web, i Amplitude per entendre com es fa servir l'aplicació un cop iniciada la sessió. Totes dues ens ajuden a millorar el producte. No es realitza publicitat ni perfilatge entre llocs.",
         s3analyticsCookies: [
           ['_ga',            'Google Analytics', 'Identifica usuaris únics entre sessions.',                  '2 anys'],
           ['_ga_SL24MGJ1ZX', 'Google Analytics', 'Emmagatzema i comptabilitza les sessions de pàgines vistes.', '2 anys'],
+          ['AMP_*', 'Amplitude', "Emmagatzema un identificador aleatori del dispositiu, el seu identificador d'usuari i la seva visita (sessió), per poder relacionar les seves accions dins d'una visita i entre visites. Només s'estableix després d'acceptar les cookies analítiques.", '1 any'],
         ] as [string, string, string, string][],
         s3gdprPara: "Les dades recollides per Google Analytics són processades per Google LLC (EUA) en virtut del Marc de Privacitat de Dades UE-EUA. Per a més informació, consulteu",
         s3gdprLinkText: "la Política de Privacitat de Google",
+        s3amplitudePara: "Les dades recollides per Amplitude s'emmagatzemen a la regió de dades europea d'Amplitude i les tracta en nom nostre Amplitude, Inc. (EUA). Qualsevol accés des de fora de l'Espai Econòmic Europeu està subjecte a les garanties adequades del Capítol V del RGPD. Per a més informació, consulteu",
+        s3amplitudeLinkText: "l'Avís de Privacitat d'Amplitude",
         s4purposes: [
           ["Gestió de compte i prestació del servei", "Per crear i mantenir el seu compte d'usuari i proporcionar accés a la plataforma Ascendr.",                                                                                                                                              "Execució de contracte — Art. 6(1)(b) RGPD"],
           ["Participació en competicions",            "Per inscriure-la en competicions, assignar dorsals, registrar puntuacions i mostrar els seus resultats en les classificacions.",                                                                                                          "Execució de contracte — Art. 6(1)(b) RGPD"],
           ["Classificacions públiques",               "Els resultats de la competició (nom, dorsal, puntuació) es poden mostrar en pàgines de resultats públiques enllaçades per l'organitzador de la competició.",                                                                             "Interès legítim — Art. 6(1)(f) RGPD"],
-          ["Analítiques (amb consentiment)",          "Fem servir Google Analytics 4 per entendre com s'utilitza el lloc i millorar el producte. Les cookies analítiques només s'estableixen un cop vostè dóna el seu consentiment explícit mitjançant el bàner de cookies.",               "Consentiment — Art. 6(1)(a) RGPD"],
+          ["Analítiques (amb consentiment)", "Fem servir Google Analytics 4 per entendre com s'utilitza el lloc web i Amplitude per entendre com s'utilitza l'aplicació un cop iniciada la sessió, amb la finalitat de millorar el producte. Les cookies analítiques només s'estableixen, i Amplitude només rep dades, un cop vostè dóna el seu consentiment explícit mitjançant el bàner de cookies. Pot retirar el consentiment en qualsevol moment amb «Gestionar preferències de galetes».", "Consentiment — Art. 6(1)(a) RGPD"],
           ["Seguretat i prevenció de l'abús",         "Els registres del servidor i les dades de sessió es processen per detectar i prevenir accessos no autoritzats.",                                                                                                                          "Interès legítim — Art. 6(1)(f) RGPD"],
           ["Compliment legal",                        "Conservem les dades segons exigeixen les obligacions fiscals i legals aplicables.",                                                                                                                                                        "Obligació legal — Art. 6(1)(c) RGPD"],
         ] as [string, string, string][],
@@ -271,11 +287,13 @@ export default function PrivacyPolicyPage({ lang }: { lang: Language }) {
           "Les dades del compte es conserven mentre el seu compte estigui actiu. Si sol·licita l'eliminació del compte, les seves dades seran suprimides en un termini de 30 dies, llevat que la llei n'exigeixi la conservació.",
           "Les dades de resultats de competicions (puntuacions, classificacions) poden conservar-se en forma anonimitzada o agregada més enllà de l'eliminació del compte amb finalitats estadístiques i històriques.",
           "Els registres del servidor es conserven un màxim de 90 dies per motius de seguretat.",
+          "Les dades d'analítica de producte a Amplitude es conserven mentre el seu compte estigui actiu. Si sol·licita l'eliminació del compte, també enviem una sol·licitud d'eliminació a Amplitude, que la completa en un termini de 30 dies.",
         ],
         s6intro: "Ascendr no ven les seves dades personals a tercers. Les seves dades només es poden compartir amb:",
         s6items: [
           "Proveïdors d'allotjament i infraestructura (Supabase, Vercel) que tracten les dades en nom nostre sota acords de tractament de dades adequats.",
           "Google LLC — per a analítiques mitjançant Google Analytics 4 i Google Tag Manager, únicament quan vostè hagi donat el seu consentiment. Les dades poden processar-se als EUA sota el Marc de Privacitat de Dades UE-EUA.",
+          "Amplitude, Inc.: per a analítica de producte dins de l'aplicació, únicament quan vostè hagi donat el seu consentiment. Les dades s'emmagatzemen a la regió de dades europea d'Amplitude.",
           "Processadors de pagament (Stripe) per al processament de les tarifes de competició. Les dades de pagament són gestionades directament pel proveïdor de pagament i no s'emmagatzemen per Ascendr.",
           "Autoritats públiques, quan així ho exigeixi la llei.",
         ],
@@ -394,6 +412,10 @@ export default function PrivacyPolicyPage({ lang }: { lang: Language }) {
           <P>
             {L.body.s3gdprPara}{' '}
             <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" style={{ color: C.accent }}>{L.body.s3gdprLinkText}</a>.
+          </P>
+          <P>
+            {L.body.s3amplitudePara}{' '}
+            <a href="https://amplitude.com/privacy" target="_blank" rel="noopener noreferrer" style={{ color: C.accent }}>{L.body.s3amplitudeLinkText}</a>.
           </P>
           <div style={{ marginTop: 8 }}>
             <button
