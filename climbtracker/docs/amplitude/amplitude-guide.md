@@ -75,7 +75,7 @@ Cada decisión lleva su motivo, para que puedas cambiarla con criterio.
 | Cuenta de Amplitude en la región de la UE. | Los datos de personas de la UE se guardan en la UE. La región se elige al crear la cuenta. |
 | No pegar el snippet de Amplitude en `index.html`. | Ese snippet arranca al cargar la página, antes de que la persona elija sobre las cookies. Eso incumple tu propio banner de consentimiento. |
 | `autocapture` desactivado. | Autocapture envía clics, formularios y descargas sin que los hayamos definido. Con un plan de etiquetado queremos solo lo que decidimos medir. |
-| Session Replay desactivado. | Graba la pantalla de la persona, con nombres y dorsales. Requiere una decisión de privacidad aparte. |
+| Session Replay desactivado, y por eso no se usa el snippet de instalación de Amplitude. | Ese snippet (`cdn.amplitude.com/script/CLAVE.js`) carga también Session Replay y pide ajustes remotos. Replay graba la pantalla, con nombres y dorsales. Cargamos solo la librería de analítica, con la versión fijada y verificada por hash. |
 | Page views desde el `page_view` que ya existe. | La app usa rutas con `#`. Una sola fuente evita eventos duplicados. |
 | Solo producto con login. | Cada visitante anónimo cuenta como usuario mensual. La landing ya está cubierta por GA4. |
 | Dos proyectos: dev y prod. | Así las pruebas no ensucian los datos reales. GTM elige la clave según el dominio. |
@@ -95,7 +95,7 @@ Tu cuenta actual es de EE. UU. (`app.amplitude.com`). La región de datos se eli
 3. Cambia el nombre del proyecto que se crea solo a `ascendr-dev` y crea otro llamado `ascendr-prod`.
 4. Anota la clave API de cada uno (Settings, Projects). La clave de un navegador es pública por diseño. Aun así, no la pegues en el código: irá solo en GTM.
 5. En ambos proyectos pon la misma zona horaria de informes.
-6. Abre las instrucciones de instalación del proyecto dev y mira la dirección de su snippet. Si empieza por `https://cdn.amplitude.com/script/`, no cambies nada. Si el dominio es otro, anótalo para el paso 5.2.
+6. Ignora el snippet de instalación que te muestra Amplitude. No lo uses: el contenedor de GTM ya carga lo necesario, y ese snippet añade Session Replay.
 
 Hacen falta dos cosas a la vez para estar en la UE: la clave de un proyecto de la UE y `serverZone: 'EU'` al arrancar. El contenedor ya incluye lo segundo.
 
@@ -107,8 +107,7 @@ Hacen falta dos cosas a la vez para estar en la UE: la clave de un proyecto de l
 4. En la opción de importación, elige **Combinar** y marca "Cambiar el nombre de las etiquetas, activadores y variables en conflicto". No elijas nunca Sobrescribir: borraría tus tags de GA4.
 5. Confirma. GTM te enseña un resumen: 3 tags, 3 triggers y 3 variables nuevos, más dos variables integradas (`Event` y `Page Hostname`).
 6. Abre la variable `Amplitude API key`. Cambia el valor por defecto (`REPLACE_WITH_EU_DEV_API_KEY`) por la clave del proyecto dev. En las dos filas de la tabla, cambia `REPLACE_WITH_EU_PROD_API_KEY` por la clave del proyecto prod.
-7. Si en el paso 5.1 anotaste un dominio distinto para el snippet, abre el tag `Amplitude - Init` y cámbialo donde indica el comentario.
-8. No publiques todavía. Haz primero la prueba de la sección 5.4.
+7. No publiques todavía. Haz primero la prueba de la sección 5.4.
 
 **Qué contiene el contenedor.** Todo lo demás se explica solo con esta tabla.
 
@@ -116,7 +115,7 @@ Hacen falta dos cosas a la vez para estar en la UE: la clave de un proyecto de l
 |---|---|
 | Variable `Amplitude API key` | Elige la clave según el dominio. `ascendr.top` y `www.ascendr.top` usan la de prod. Cualquier otro (localhost, previews de Vercel) usa la de dev. |
 | Variables `DLV - amp_payload` y `DLV - analytics_consent` | Leen del dataLayer el mensaje y la decisión de cookies. |
-| Tag `Amplitude - Init` | Carga Amplitude y lo arranca con la región de la UE, sin autocapture. Se dispara una vez por página, solo con consentimiento. |
+| Tag `Amplitude - Init` | Carga solo la librería de analítica (versión 2.42.4, con comprobación de hash) y la arranca con la región de la UE, sin autocapture y sin ajustes remotos. Se dispara una vez por página, solo con consentimiento. |
 | Tag `Amplitude - Dispatcher` | Es el único que envía datos. Reenvía los tres tipos de mensaje de la app. Exige consentimiento. |
 | Tag `Amplitude - Opt out` | Apaga Amplitude si la persona retira el consentimiento. No exige consentimiento, porque solo detiene el seguimiento. |
 | Trigger `CE - cookie_consent_update granted` | Se activa cuando el banner informa de que se aceptaron las cookies. El banner lo envía en cada carga, también para quien aceptó en una visita anterior. |
@@ -142,12 +141,12 @@ Haz esta prueba con el proyecto dev, en GTM con el modo Vista previa. Repítela 
 1. Abre la web en una ventana privada, sin haber aceptado cookies. En la pestaña Network no debe haber ninguna petición a Amplitude. En Application, Session Storage, no debe existir la clave `ascendr_login_intent`.
 2. Pulsa Rechazar. Sigue sin haber peticiones.
 3. Recarga, pulsa Aceptar e inicia sesión. En Vista previa debe dispararse `Amplitude - Init` una sola vez.
-4. En Network, las peticiones de eventos deben ir a `api.eu.amplitude.com`. Si van a `api2.amplitude.com`, la clave o la región no son las de la UE.
+4. En Network, las peticiones de eventos deben ir a `api.eu.amplitude.com` y deben responder 200. Si responden 400 con "Invalid API key", la clave no pertenece a un proyecto de la UE. El único archivo de Amplitude que se descarga es `analytics-browser-2.42.4-min.js.gz`.
 5. En Amplitude, abre User Lookup y busca tu user id. Debe aparecer tu perfil con las propiedades de usuario.
 6. Crea una competición de prueba. En Event Explorer debe aparecer `Competition Created` con sus propiedades.
 7. Haz dos acciones seguidas con propiedades distintas, por ejemplo guardar un bloque y volver a iniciar sesión. El segundo evento no debe llevar las propiedades del primero.
 8. Comprueba que no llegan eventos que no definimos, como `[Amplitude] Element Clicked`. Si llegan, el autocapture sigue activo en el proyecto. Desactívalo en su configuración.
-9. Comprueba que no hay tráfico de Session Replay y que la pestaña Replay de Amplitude está vacía.
+9. Comprueba en Network que no aparece ninguna petición a `sr-client-cfg` ni un archivo `plugin-session-replay`, y que la pestaña Replay de Amplitude está vacía.
 10. Cierra sesión. En el siguiente evento el user id debe haber desaparecido.
 11. Vuelve a abrir las preferencias de cookies, pulsa Rechazar y haz otra acción. No debe llegar ningún evento nuevo.
 12. Recarga justo después de una compra de prueba. `Purchase Completed` no debe duplicarse.
@@ -191,6 +190,13 @@ Para añadir un evento nuevo:
 1. Añade una fila al plan de etiquetado, con su prioridad y su momento exacto de disparo.
 2. Añade la llamada en el código, con el nombre exacto del plan.
 3. Pruébalo con el proyecto dev. No hace falta tocar GTM.
+
+Para actualizar la versión de la librería de Amplitude:
+
+1. Cambia el número de versión en la dirección del tag `Amplitude - Init`.
+2. Calcula el hash nuevo con este comando, cambiando la versión: `curl -s --compressed https://cdn.amplitude.com/libs/analytics-browser-VERSION-min.js.gz | openssl dgst -sha384 -binary | openssl base64 -A`
+3. Pon el resultado en el tag, precedido de `sha384-`.
+4. Si el hash no coincide, el navegador bloquea la librería y no se mide nada. Es una protección a propósito.
 
 Reglas que evitan que los datos se ensucien:
 
