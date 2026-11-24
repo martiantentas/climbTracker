@@ -3,7 +3,7 @@ import { X, Check, Lock, Zap, ArrowLeft, Sparkles, Palette } from 'lucide-react'
 // Check is used in the plan feature lists below
 import type { Competition } from '../types'
 import { authedFetchInit } from '../lib/supabase'
-import { trackEvent } from '../lib/analytics'
+import { trackEvent, track } from '../lib/analytics'
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -91,6 +91,7 @@ export default function PaymentModal({
         return
       }
       trackEvent('begin_checkout', { currency: 'EUR', tier, participant_count: confirmedCount })
+      track('Checkout Started', { 'competition id': competition.id, tier, 'participant count': confirmedCount, currency: 'EUR' })
       window.location.href = data.url
     } catch {
       setStripeError('Network error. Please try again.')

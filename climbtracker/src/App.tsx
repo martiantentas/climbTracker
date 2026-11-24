@@ -1,7 +1,10 @@
 import { useState, useMemo, useEffect, useRef, lazy, Suspense } from 'react'
 import { HashRouter, Routes, Route, Navigate, useNavigate, useParams, useLocation } from 'react-router-dom'
 import { supabase, authedFetchInit } from './lib/supabase'
-import { trackEvent } from './lib/analytics'
+import {
+  trackEvent, track, identify, resetIdentity, setAnalyticsContext,
+  consumeLoginIntent, isFirstSignIn,
+} from './lib/analytics'
 import { getProfile, upsertProfile, supabaseUserToCompetitor, signOutUser } from './lib/auth'
 import {
   loadAllUserData, upsertCompetition, deleteCompetition,
@@ -232,13 +235,20 @@ function AppInner() {
 
   // Raw Supabase user — set synchronously in onAuthStateChange so we never
   // make API calls inside the navigator lock that Supabase holds during the callback.
-  const [authUser, setAuthUser] = useState<{ id: string; email?: string; user_metadata?: Record<string, string> } | null>(null)
+  const [authUser, setAuthUser] = useState<{
+    id: string; email?: string; user_metadata?: Record<string, string>
+    // Used by Amplitude to tell a new account from a returning one
+    app_metadata?: { provider?: string }
+    created_at?: string; email_confirmed_at?: string; last_sign_in_at?: string
+  } | null>(null)
 
   // Tracks the user ID we last triggered a data-load for. Used to skip redundant
   // SIGNED_IN events fired for the same user (tab focus, post-OAuth double-fires, etc.)
   // Without this, setDataLoading(true) would be called again but authUser?.id wouldn't
   // change, so the second useEffect wouldn't re-run → dataLoading stuck true forever.
   const authUserIdRef = useRef<string | null>(null)
+  // Amplitude: user id already identified in this page load (the data effect can run again on retry)
+  const analyticsUserRef = useRef<string | null>(null)
 
   // Set of competition IDs whose completions have already been fetched.
   // Prevents redundant DB reads when the user switches back to a competition
@@ -448,6 +458,7 @@ function AppInner() {
           setAuthUser(session.user)
         } else {
           authUserIdRef.current = null
+          analyticsUserRef.current = null
           setAuthUser(null)
           setCurrentUser(null)
           setLoadFailed(false)
@@ -502,6 +513,25 @@ function AppInner() {
         setLoadFailed(false)
       }
       setCurrentUser(supabaseUserToCompetitor(authUser, profile))
+
+      // Amplitude (needs analytics consent; the helper sends nothing without it).
+      // Identify on every load with a session; "Signed Up" / "Logged In" only once
+      // per sign-in, and only for an active login (not a restored session).
+      if (analyticsUserRef.current !== authUser.id) {
+        analyticsUserRef.current = authUser.id
+        const method = authUser.app_metadata?.provider === 'google' ? 'google' : 'email'
+        const comps  = userData?.comps
+        identify(authUser.id, {
+          'language':          lang,
+          'sign up method':    method,
+          'is organizer':      comps ? comps.some(c => c.ownerId === authUser.id) : undefined,
+          'competitions count': comps ? comps.length : undefined,
+        })
+        const activeLogin = consumeLoginIntent()
+        if (isFirstSignIn(authUser)) track('Signed Up', { method }, { insertId: `signed-up-${authUser.id}` })
+        else if (activeLogin)        track('Logged In', { method })
+      }
+
       if (shouldShowWalkthrough('login')) setWalkthrough('login')
       if (userData) {
         // Mark the pre-fetched competition so the lazy loader skips it.
@@ -867,6 +897,16 @@ function AppInner() {
                   : prev
               )
               trackEvent('purchase', { transaction_id: sessionId, currency: 'EUR', purchase_type: type, tier: params.get('tier') ?? undefined })
+              // Amplitude: skip a repeated confirmation (page reloaded after paying).
+              if (!data.duplicate) {
+                track('Purchase Completed', {
+                  'competition id':   compId,
+                  'purchase type':    type ?? undefined,
+                  'tier':             params.get('tier') ?? undefined,
+                  'currency':         'EUR',
+                  'transaction id':   sessionId,
+                }, { insertId: `purchase-${sessionId}` })
+              }
               const msg =
                 type === 'bundle'  ? 'Capacity added! Your competition now has more slots.' :
                 type === 'upgrade' ? 'Upgraded to Premium! Branding tools are now unlocked.' :
@@ -930,6 +970,11 @@ function AppInner() {
   }, [currentUser, activeCompetition, competitorsMap])
 
   const isJudge = compRole === 'judge'
+
+  // Properties Amplitude adds to every event.
+  useEffect(() => {
+    setAnalyticsContext({ language: lang, competitionId: activeCompetition?.id, competitionRole: compRole })
+  }, [lang, activeCompetition?.id, compRole])
 
   // In-app notifications (bell + pop-ups) for the active competition.
   // Only members and staff of the competition load them.
@@ -1222,6 +1267,15 @@ function AppInner() {
       })
   }
 
+  function handleLogout() {
+    track('Logged Out')     // before reset, so it still carries the user id
+    resetIdentity()
+    analyticsUserRef.current = null
+    setCurrentUser(null)
+    signOutUser()
+    goto('/', { replace: true })
+  }
+
   function handleCreateCompetition(name: string, location: string, description: string) {
     if (!currentUser) return
     const newId = `comp-${Date.now()}`
@@ -1252,6 +1306,7 @@ function AppInner() {
     // policies (which check competition_members.role = 'organizer') work correctly.
     upsertCompetition(newComp)
       .then(() => upsertMember(newId, currentUser.id, { role: 'organizer', status: 'active', bib_number: 0 }))
+      .then(() => track('Competition Created', { 'competition id': newId, 'competition role': 'organizer' }))
       .catch(err => {
         console.error('[db] createCompetition:', err)
         showToast(`Save failed: ${err?.message ?? err}`)
@@ -1314,6 +1369,7 @@ function AppInner() {
   async function joinViaServer(
     comp: Competition,
     opts: { password?: string; traitIds?: string[]; gender?: string },
+    via:  'invite' | 'direct' | 'waitlist',   // only for analytics
   ): Promise<JoinResult> {
     if (!currentUser) return 'error'
     let res: Awaited<ReturnType<typeof joinCompetitionRpc>>
@@ -1331,6 +1387,16 @@ function AppInner() {
       case 'banned':       showToast(t.joinErrorBanned); return 'error'
       case 'not_found':    showToast(t.joinNotFound);    return 'error'
       case 'waitlisted':   return 'full'
+    }
+
+    // Only a new membership counts, not a repeat visit by someone already in.
+    if (res.status === 'joined') {
+      track('Competition Joined', {
+        'competition id':   comp.id,
+        'competition role': 'competitor',
+        'join method':      via,
+        'has categories':   (opts.traitIds?.length ?? 0) > 0,
+      })
     }
 
     // joined / already: hydrate this competition from the database so the
@@ -1375,14 +1441,14 @@ function AppInner() {
       catch (err) { console.error('[db] invite lookup:', err); showToast(t.joinErrorNetwork); return 'error' }
     }
     if (!target || !currentUser) return 'error'
-    return joinViaServer(target, { password, traitIds, gender })
+    return joinViaServer(target, { password, traitIds, gender }, 'direct')
   }
 
   // ── handleJoinByCompId — used by JoinPage (code already resolved) ─────────
   async function handleJoinByCompId(compId: string, password?: string, traitIds?: string[], gender?: string, externalComp?: Competition): Promise<JoinResult> {
     const target = competitions.find(c => c.id === compId) ?? externalComp
     if (!target || !currentUser) return 'error'
-    return joinViaServer(target, { password, traitIds, gender })
+    return joinViaServer(target, { password, traitIds, gender }, 'invite')
   }
 
   async function handleJoinWaitlist(compId: string) {
@@ -1398,7 +1464,7 @@ function AppInner() {
       } else if (res.status === 'joined' || res.status === 'already') {
         // A spot opened up in the meantime: the user is in.
         const comp = competitions.find(c => c.id === compId)
-        if (comp) await joinViaServer(comp, {})
+        if (comp) await joinViaServer(comp, {}, 'waitlist')
       } else if (res.status === 'banned') {
         showToast(t.joinErrorBanned)
       }
@@ -1583,7 +1649,18 @@ function AppInner() {
         persistCompletion(writeKey,
           (cancel) => upsertCompletion(compId, entry, cancel),
           entry, rollbackTo(prevEntry ?? null), describe,
-        ).then(resolve)
+        ).then(ok => {
+          // Only once the database has confirmed the save (rapid taps collapse into one write).
+          if (ok) {
+            track('Boulder Scored', {
+              'competition id': compId,
+              'scored by':      competitorId === judgeId ? 'self' : 'judge',
+              'topped':         isTop,
+              'has zone':       hasZone,
+            })
+          }
+          resolve(ok)
+        })
       })
     })
     supersededSave?.(result)
@@ -1638,14 +1715,14 @@ function AppInner() {
           currentUser={currentUser}
           isOrganizer={false} isJudge={false} canAccessComp={false}
           onOpenMenu={() => setIsMenuOpen(true)}
-          onLogout={() => { setCurrentUser(null); signOutUser(); goto('/', { replace: true }) }}
+          onLogout={handleLogout}
         />
         <MobileMenu
           isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)}
           theme={theme} lang={lang} currentUser={currentUser}
           isOrganizer={false} isJudge={false}
           canAccessComp={false}
-          onLogout={() => { setCurrentUser(null); signOutUser(); goto('/', { replace: true }) }}
+          onLogout={handleLogout}
         />
         <main className="max-w-5xl mx-auto px-4 md:px-6 py-8">
           <Suspense fallback={<PageSpinner />}>
@@ -1798,7 +1875,7 @@ function AppInner() {
               return (isReg || isOwn) ? comp.branding : undefined
             })()}
           onOpenMenu={() => setIsMenuOpen(true)}
-          onLogout={() => { setCurrentUser(null); signOutUser(); goto('/', { replace: true }) }}
+          onLogout={handleLogout}
           notificationBell={canAccessForNotifications && activeCompetition ? (
             <NotificationBell
               state={notifications} competition={activeCompetition} members={activeCompetitors}
@@ -1823,7 +1900,7 @@ function AppInner() {
               const isOwn = comp?.ownerId === currentUser?.id
               return (isReg || isOwn) ? comp.branding : undefined
             })()}
-          onLogout={() => { setCurrentUser(null); signOutUser(); goto('/', { replace: true }) }}
+          onLogout={handleLogout}
         />
 
         <main className="max-w-5xl mx-auto px-4 md:px-6 py-8">

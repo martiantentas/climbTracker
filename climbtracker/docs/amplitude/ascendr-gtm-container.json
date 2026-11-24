@@ -1,0 +1,379 @@
+{
+  "exportFormatVersion": 2,
+  "exportTime": "2026-11-24 12:00:00",
+  "containerVersion": {
+    "path": "accounts/0/containers/0/versions/0",
+    "accountId": "0",
+    "containerId": "0",
+    "containerVersionId": "0",
+    "container": {
+      "path": "accounts/0/containers/0",
+      "accountId": "0",
+      "containerId": "0",
+      "name": "Ascendr",
+      "publicId": "GTM-NJBNLZ9K",
+      "usageContext": [
+        "WEB"
+      ],
+      "fingerprint": "1700000000999",
+      "tagManagerUrl": "https://tagmanager.google.com/#/container/accounts/0/containers/0/workspaces?apiLink=container"
+    },
+    "tag": [
+      {
+        "accountId": "0",
+        "containerId": "0",
+        "tagId": "20",
+        "name": "Amplitude - Init",
+        "type": "html",
+        "notes": "Loads Amplitude and starts it, only after the person accepted analytics cookies. Once per page.",
+        "parameter": [
+          {
+            "type": "TEMPLATE",
+            "key": "html",
+            "value": "<script>\n(function () {\n  var key = {{Amplitude API key}};\n  // Safety: do nothing until a real 32-character project key is in the lookup variable.\n  if (!/^[0-9a-f]{32}$/.test(key)) { console.warn('[Amplitude] API key not set, tracking disabled'); return; }\n  if (window.__ascendrAmplitudeLoading) return;\n  window.__ascendrAmplitudeLoading = true;\n\n  var s = document.createElement('script');\n  s.async = true;\n  // If your EU project's own install snippet uses a different host, put that host here.\n  s.src = 'https://cdn.amplitude.com/script/' + key + '.js';\n  s.onload = function () {\n    window.amplitude.init(key, {\n      serverZone: 'EU',          // EU data region: needs an EU project key\n      autocapture: false,        // only the events in the tracking plan\n      fetchRemoteConfig: false   // the code, not the Amplitude UI, decides the settings\n    });\n    window.amplitude.setOptOut(false);\n  };\n  document.head.appendChild(s);\n})();\n</script>"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "supportDocumentWrite",
+            "value": "false"
+          }
+        ],
+        "fingerprint": "1700000000220",
+        "firingTriggerId": [
+          "10"
+        ],
+        "tagFiringOption": "ONCE_PER_LOAD",
+        "monitoringMetadata": {
+          "type": "MAP"
+        },
+        "consentSettings": {
+          "consentStatus": "NEEDED",
+          "consentType": {
+            "type": "LIST",
+            "list": [
+              {
+                "type": "TEMPLATE",
+                "value": "analytics_storage"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "accountId": "0",
+        "containerId": "0",
+        "tagId": "21",
+        "name": "Amplitude - Dispatcher",
+        "type": "html",
+        "notes": "The only tag that sends data. Forwards the app's amplitude_event / amplitude_identify / amplitude_reset messages. Needs analytics consent.",
+        "parameter": [
+          {
+            "type": "TEMPLATE",
+            "key": "html",
+            "value": "<script>\n(function () {\n  var ev = {{Event}};\n  var payload = {};\n  try { payload = JSON.parse({{DLV - amp_payload}} || '{}'); } catch (e) { return; }\n  var tries = 0;\n\n  function send(a) {\n    if (ev === 'amplitude_event' && payload.name) {\n      a.track(payload.name, payload.props || {}, payload.insertId ? { insert_id: payload.insertId } : undefined);\n    } else if (ev === 'amplitude_identify' && payload.userId) {\n      a.setUserId(payload.userId);\n      var id = new a.Identify();\n      var props = payload.props || {};\n      Object.keys(props).forEach(function (k) { id.set(k, props[k]); });\n      a.identify(id);\n    } else if (ev === 'amplitude_reset') {\n      a.reset();\n    }\n  }\n\n  // Amplitude may still be loading: wait up to 5 seconds.\n  (function wait() {\n    var a = window.amplitude;\n    if (a && a.track) return send(a);\n    if (++tries < 20) setTimeout(wait, 250);\n  })();\n})();\n</script>"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "supportDocumentWrite",
+            "value": "false"
+          }
+        ],
+        "fingerprint": "1700000000221",
+        "firingTriggerId": [
+          "12"
+        ],
+        "tagFiringOption": "ONCE_PER_EVENT",
+        "monitoringMetadata": {
+          "type": "MAP"
+        },
+        "consentSettings": {
+          "consentStatus": "NEEDED",
+          "consentType": {
+            "type": "LIST",
+            "list": [
+              {
+                "type": "TEMPLATE",
+                "value": "analytics_storage"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "accountId": "0",
+        "containerId": "0",
+        "tagId": "22",
+        "name": "Amplitude - Opt out",
+        "type": "html",
+        "notes": "Turns Amplitude off when consent is withdrawn. No consent needed: it only stops tracking.",
+        "parameter": [
+          {
+            "type": "TEMPLATE",
+            "key": "html",
+            "value": "<script>\n  if (window.amplitude && window.amplitude.setOptOut) window.amplitude.setOptOut(true);\n</script>"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "supportDocumentWrite",
+            "value": "false"
+          }
+        ],
+        "fingerprint": "1700000000222",
+        "firingTriggerId": [
+          "11"
+        ],
+        "tagFiringOption": "ONCE_PER_EVENT",
+        "monitoringMetadata": {
+          "type": "MAP"
+        },
+        "consentSettings": {
+          "consentStatus": "NOT_SET"
+        }
+      }
+    ],
+    "trigger": [
+      {
+        "accountId": "0",
+        "containerId": "0",
+        "triggerId": "10",
+        "name": "CE - cookie_consent_update granted",
+        "type": "CUSTOM_EVENT",
+        "customEventFilter": [
+          {
+            "type": "EQUALS",
+            "parameter": [
+              {
+                "type": "TEMPLATE",
+                "key": "arg0",
+                "value": "{{_event}}"
+              },
+              {
+                "type": "TEMPLATE",
+                "key": "arg1",
+                "value": "cookie_consent_update"
+              }
+            ]
+          }
+        ],
+        "fingerprint": "1700000000110",
+        "filter": [
+          {
+            "type": "EQUALS",
+            "parameter": [
+              {
+                "type": "TEMPLATE",
+                "key": "arg0",
+                "value": "{{DLV - analytics_consent}}"
+              },
+              {
+                "type": "TEMPLATE",
+                "key": "arg1",
+                "value": "granted"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "accountId": "0",
+        "containerId": "0",
+        "triggerId": "11",
+        "name": "CE - cookie_consent_update denied",
+        "type": "CUSTOM_EVENT",
+        "customEventFilter": [
+          {
+            "type": "EQUALS",
+            "parameter": [
+              {
+                "type": "TEMPLATE",
+                "key": "arg0",
+                "value": "{{_event}}"
+              },
+              {
+                "type": "TEMPLATE",
+                "key": "arg1",
+                "value": "cookie_consent_update"
+              }
+            ]
+          }
+        ],
+        "fingerprint": "1700000000111",
+        "filter": [
+          {
+            "type": "EQUALS",
+            "parameter": [
+              {
+                "type": "TEMPLATE",
+                "key": "arg0",
+                "value": "{{DLV - analytics_consent}}"
+              },
+              {
+                "type": "TEMPLATE",
+                "key": "arg1",
+                "value": "denied"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "accountId": "0",
+        "containerId": "0",
+        "triggerId": "12",
+        "name": "CE - amplitude messages",
+        "type": "CUSTOM_EVENT",
+        "customEventFilter": [
+          {
+            "type": "MATCH_REGEX",
+            "parameter": [
+              {
+                "type": "TEMPLATE",
+                "key": "arg0",
+                "value": "{{_event}}"
+              },
+              {
+                "type": "TEMPLATE",
+                "key": "arg1",
+                "value": "^amplitude_(event|identify|reset)$"
+              }
+            ]
+          }
+        ],
+        "fingerprint": "1700000000112"
+      }
+    ],
+    "variable": [
+      {
+        "accountId": "0",
+        "containerId": "0",
+        "variableId": "1",
+        "name": "Amplitude API key",
+        "type": "smm",
+        "notes": "Replace the two placeholders with the keys of your EU Amplitude projects. Production hostnames get the prod key, anything else (localhost, Vercel previews) gets the dev key.",
+        "parameter": [
+          {
+            "type": "BOOLEAN",
+            "key": "setDefaultValue",
+            "value": "true"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "input",
+            "value": "{{Page Hostname}}"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "defaultValue",
+            "value": "REPLACE_WITH_EU_DEV_API_KEY"
+          },
+          {
+            "type": "LIST",
+            "key": "map",
+            "list": [
+              {
+                "type": "MAP",
+                "map": [
+                  {
+                    "type": "TEMPLATE",
+                    "key": "key",
+                    "value": "ascendr.top"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "REPLACE_WITH_EU_PROD_API_KEY"
+                  }
+                ]
+              },
+              {
+                "type": "MAP",
+                "map": [
+                  {
+                    "type": "TEMPLATE",
+                    "key": "key",
+                    "value": "www.ascendr.top"
+                  },
+                  {
+                    "type": "TEMPLATE",
+                    "key": "value",
+                    "value": "REPLACE_WITH_EU_PROD_API_KEY"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "fingerprint": "1700000000001",
+        "formatValue": {}
+      },
+      {
+        "accountId": "0",
+        "containerId": "0",
+        "variableId": "2",
+        "name": "DLV - amp_payload",
+        "type": "v",
+        "parameter": [
+          {
+            "type": "INTEGER",
+            "key": "dataLayerVersion",
+            "value": "2"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "setDefaultValue",
+            "value": "false"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "amp_payload"
+          }
+        ],
+        "fingerprint": "1700000000002",
+        "formatValue": {}
+      },
+      {
+        "accountId": "0",
+        "containerId": "0",
+        "variableId": "3",
+        "name": "DLV - analytics_consent",
+        "type": "v",
+        "parameter": [
+          {
+            "type": "INTEGER",
+            "key": "dataLayerVersion",
+            "value": "2"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "setDefaultValue",
+            "value": "false"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "analytics_consent"
+          }
+        ],
+        "fingerprint": "1700000000003",
+        "formatValue": {}
+      }
+    ],
+    "builtInVariable": [
+      {
+        "accountId": "0",
+        "containerId": "0",
+        "type": "EVENT",
+        "name": "Event"
+      },
+      {
+        "accountId": "0",
+        "containerId": "0",
+        "type": "PAGE_HOSTNAME",
+        "name": "Page Hostname"
+      }
+    ],
+    "fingerprint": "1700000000998",
+    "tagManagerUrl": "https://tagmanager.google.com/#/versions/accounts/0/containers/0/versions/0?apiLink=version"
+  }
+}

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { COOKIE_CONSENT_KEY, resendIdentity } from '../lib/analytics'
 
-export const COOKIE_CONSENT_KEY = 'ascendr_cookie_consent'
 type Consent = 'accepted' | 'rejected'
 
 // ─── CONSENT LOGIC ────────────────────────────────────────────────────────────
@@ -21,6 +21,8 @@ function updateConsentMode(value: Consent) {
     event:             'cookie_consent_update',
     analytics_consent: granted ? 'granted' : 'denied',
   })
+  // Amplitude identity messages sent before this choice were blocked: send it again now.
+  if (granted) resendIdentity()
 }
 
 // Call this from any "Manage cookies" link to re-open the banner

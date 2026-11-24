@@ -9,6 +9,7 @@ import BackgroundBeams from '../components/BackgroundBeams'
 import LoadingSpinner from '../components/LoadingSpinner'
 import InAppBrowserBanner from '../components/InAppBrowserBanner'
 import { signIn, signUp, signInWithGoogle, signInWithGoogleToken, resetPasswordForEmail, updatePassword } from '../lib/auth'
+import { markLoginIntent, clearLoginIntent } from '../lib/analytics'
 
 // Minimal type for the GSI library (loaded on-demand when this page mounts)
 interface GsiCredentialResponse { credential: string }
@@ -144,8 +145,10 @@ export default function AuthPage({ theme: _theme, lang, setLang, initialTab, onR
 
     try {
       if (tab === 'signin') {
+        markLoginIntent()   // lets App tell an active login from a restored session
         const { error } = await signIn(email.trim(), password)
         if (error) {
+          clearLoginIntent()
           setErrors({ _global: error.message === 'Invalid login credentials'
             ? tr.authInvalidCreds
             : error.message })
@@ -156,8 +159,10 @@ export default function AuthPage({ theme: _theme, lang, setLang, initialTab, onR
 
       } else {
         const displayName = `${firstName.trim()} ${lastName.trim()}`
+        markLoginIntent()
         const { data, error } = await signUp(email.trim(), password, displayName)
         if (error) {
+          clearLoginIntent()
           const isDuplicate = error.message.toLowerCase().includes('already registered')
             || error.message.toLowerCase().includes('already exists')
           setErrors({ _global: isDuplicate ? tr.authEmailExists : error.message })
@@ -165,6 +170,7 @@ export default function AuthPage({ theme: _theme, lang, setLang, initialTab, onR
         }
         if (!data.session) {
           // Email confirmation is ON — show "check your inbox" success state
+          clearLoginIntent()   // nobody is signed in yet
           setConfirmPending(true)
           setSuccess(true)
           return
@@ -191,6 +197,7 @@ export default function AuthPage({ theme: _theme, lang, setLang, initialTab, onR
   async function handleGoogle() {
     setLoading(true)
     setErrors({})
+    markLoginIntent()   // survives the Google redirect (sessionStorage)
 
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined
     const g = (window as unknown as { google?: GoogleAccounts }).google
@@ -217,7 +224,7 @@ export default function AuthPage({ theme: _theme, lang, setLang, initialTab, onR
             // Network / CORS error (e.g. www subdomain) → fall back to OAuth redirect
             signInWithGoogle().then(({ error: e2 }) => {
               if (e2) {
-                setErrors({ _global: 'Google sign-in failed. Please try again.' })
+                clearLoginIntent(); setErrors({ _global: 'Google sign-in failed. Please try again.' })
                 setLoading(false)
               }
             })
@@ -231,7 +238,7 @@ export default function AuthPage({ theme: _theme, lang, setLang, initialTab, onR
           clearTimeout(gsiWatchdog.current)
           signInWithGoogle().then(({ error }) => {
             if (error) {
-              setErrors({ _global: 'Google sign-in failed. Please try again.' })
+              clearLoginIntent(); setErrors({ _global: 'Google sign-in failed. Please try again.' })
               setLoading(false)
             }
           })
@@ -242,7 +249,7 @@ export default function AuthPage({ theme: _theme, lang, setLang, initialTab, onR
       // hasn't loaded yet or VITE_GOOGLE_CLIENT_ID is not set)
       const { error } = await signInWithGoogle()
       if (error) {
-        setErrors({ _global: 'Google sign-in failed. Please try again.' })
+        clearLoginIntent(); setErrors({ _global: 'Google sign-in failed. Please try again.' })
         setLoading(false)
       }
     }
