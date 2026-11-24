@@ -37,7 +37,9 @@ let context: EventParams = {}
 
 export function setAnalyticsContext(ctx: { language?: string; competitionId?: string; competitionRole?: string | null }) {
   context = clean({
-    'language':         ctx.language,
+    // Not 'language': the SDK already sends the browser language under that name (ca-ES).
+    // This one is the language of the app interface (ca, es, en).
+    'app language':     ctx.language,
     'competition id':   ctx.competitionId || undefined,
     'competition role': ctx.competitionRole || undefined,
   })

@@ -24,7 +24,7 @@ Estos términos aparecen en toda la guía. Léelos una vez.
 |---|---|
 | Evento | Algo que hizo una persona, con nombre y hora. Ejemplo: `Competition Created`. |
 | Propiedad de evento | Un dato que describe ese evento concreto. Ejemplo: `competition id`. |
-| Propiedad de usuario | Un dato que describe a la persona y que se guarda en su perfil. Ejemplo: `language`. |
+| Propiedad de usuario | Un dato que describe a la persona y que se guarda en su perfil. Ejemplo: `app language`. |
 | User id | El identificador de la persona. Lo ponemos nosotros. Será el id de usuario de Supabase. |
 | Device id | Identificador que Amplitude asigna al navegador. Existe aunque nadie haya iniciado sesión. |
 | dataLayer | Una lista en la página donde la app deja mensajes para GTM. Ya la usas para GA4. |
@@ -56,7 +56,7 @@ El código solo usa tres tipos de mensaje. Es el único acuerdo entre la app y G
 
 // Identificar a la persona (al cargar la app con sesión)
 { event: 'amplitude_identify',
-  amp_payload: '{"userId":"<id de Supabase>","props":{"language":"es","is organizer":true}}' }
+  amp_payload: '{"userId":"<id de Supabase>","props":{"app language":"es","is organizer":true}}' }
 
 // Olvidar a la persona (al cerrar sesión)
 { event: 'amplitude_reset' }

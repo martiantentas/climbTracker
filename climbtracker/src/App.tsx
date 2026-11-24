@@ -522,7 +522,7 @@ function AppInner() {
         const method = authUser.app_metadata?.provider === 'google' ? 'google' : 'email'
         const comps  = userData?.comps
         identify(authUser.id, {
-          'language':          lang,
+          'app language':      lang,
           'sign up method':    method,
           'is organizer':      comps ? comps.some(c => c.ownerId === authUser.id) : undefined,
           'competitions count': comps ? comps.length : undefined,
